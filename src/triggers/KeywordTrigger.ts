@@ -7,6 +7,24 @@ export class KeywordTrigger implements Trigger {
   private keywords: string[];
   private stems: string[];
 
+  private static similarity(a: string, b: string): number {
+    const s1 = a.toLowerCase();
+    const s2 = b.toLowerCase();
+    let max = 0;
+    for (let i = 0; i < s1.length; i++) {
+      for (let j = 0; j < s2.length; j++) {
+        let k = 0;
+        while (s1[i + k] && s2[j + k] && s1[i + k] === s2[j + k]) {
+          k++;
+        }
+        if (k > max) {
+          max = k;
+        }
+      }
+    }
+    return max / Math.max(s1.length, s2.length);
+  }
+
   constructor(filename: string) {
     const data = readFileSync(filename, 'utf-8');
     this.keywords = data
@@ -20,9 +38,10 @@ export class KeywordTrigger implements Trigger {
     const text = ((ctx.message as any)?.text ?? '').toLowerCase();
     const words = text.match(/\p{L}+/gu) || [];
     for (const word of words) {
-      const stem = Stemmer.stem(word);
-      if (this.stems.some((s) => stem.includes(s) || s.includes(stem))) {
-        return true;
+      for (const keyword of this.keywords) {
+        if (KeywordTrigger.similarity(word, keyword) >= 0.75) {
+          return true;
+        }
       }
     }
     return false;
