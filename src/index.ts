@@ -9,11 +9,19 @@ if (!token) {
 
 const bot = new Telegraf(token);
 
-bot.start((ctx) => ctx.reply('Привет! Я Аркадий.'));
+// Хранилище истории сообщений для каждого чата
+const chatHistories = new Map<number, Array<{ role: 'user' | 'assistant', content: string }>>();
+
+bot.start((ctx) => ctx.reply('Привет! Я Карл.'));
+
+bot.command('reset', (ctx) => {
+  chatHistories.delete(ctx.chat.id);
+  ctx.reply('Контекст диалога сброшен!');
+});
 
 bot.on('text', async (ctx) => {
   const mention = `@${ctx.me}`;
-  const nameMention = /^Аркадий[,:\s]/i;
+  const nameMention = /^Карл[,:\s]/i;
 
   console.log(ctx.message);
 
@@ -25,7 +33,38 @@ bot.on('text', async (ctx) => {
     if (isNameMentioned) {
       text = text.replace(nameMention, '').trim();
     }
-    const answer = await askChatGPT(text);
+    let replyText = '';
+    if (
+      ctx.message.reply_to_message &&
+      // @ts-ignore: text may not exist on all types, but we check for its presence
+      typeof ctx.message.reply_to_message.text === 'string'
+    ) {
+      // @ts-ignore
+      replyText = ctx.message.reply_to_message.text;
+    }
+
+    // Получаем историю для чата
+    const chatId = ctx.chat.id;
+    let history = chatHistories.get(chatId) || [];
+    // Добавляем сообщение пользователя
+    let userPrompt = text;
+    if (replyText) {
+      userPrompt = `В ответ на сообщение: "${replyText}"\n${text}`;
+    }
+    history.push({ role: 'user', content: userPrompt });
+    // Обрезаем историю до 10 последних сообщений
+    if (history.length > 10) {
+      history = history.slice(history.length - 10);
+    }
+
+    const answer = await askChatGPT(history);
+    // Добавляем ответ бота в историю
+    history.push({ role: 'assistant', content: answer });
+    if (history.length > 10) {
+      history = history.slice(history.length - 10);
+    }
+    chatHistories.set(chatId, history);
+
     ctx.reply(answer, { reply_parameters: { message_id: ctx.message.message_id } });
   }
 });

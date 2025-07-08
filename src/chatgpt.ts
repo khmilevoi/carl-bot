@@ -13,15 +13,18 @@ export async function loadPersona() {
   return BOT_PERSONA;
 }
 
-export async function askChatGPT(prompt: string): Promise<string> {
+export async function askChatGPT(
+  history: Array<{ role: 'user' | 'assistant', content: string }>
+): Promise<string> {
   const persona = await loadPersona();
-
+  // Приводим историю к типу OpenAI.ChatCompletionMessageParam[]
+  const messages: OpenAI.ChatCompletionMessageParam[] = [
+    { role: 'system', content: persona },
+    ...history.map(m => ({ role: m.role, content: m.content }))
+  ];
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [
-      { role: "system", content: persona },
-      { role: "user", content: prompt },
-    ],
+    model: 'gpt-4o',
+    messages,
   });
-  return completion.choices[0]?.message?.content ?? "";
+  return completion.choices[0]?.message?.content ?? '';
 }
