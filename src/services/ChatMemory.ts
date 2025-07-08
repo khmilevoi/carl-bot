@@ -10,13 +10,16 @@ export class ChatMemory {
   ) {}
 
   public async addMessage(role: 'user' | 'assistant', content: string) {
-    await this.store.addMessage(this.chatId, role, content);
     const history = await this.store.getMessages(this.chatId);
+
+    await this.store.addMessage(this.chatId, role, content);
+    
     if (history.length > this.limit) {
       const summary = await this.store.getSummary(this.chatId);
       const newSummary = await this.gpt.summarize(history, summary);
       await this.store.setSummary(this.chatId, newSummary);
       await this.store.clearMessages(this.chatId);
+      await this.addMessage(role, history[history.length - 1].content);
     }
   }
 

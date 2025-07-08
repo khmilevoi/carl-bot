@@ -12,7 +12,7 @@ if (!token || !apiKey) {
 
 const gpt = new ChatGPTService(apiKey);
 const storage = new SQLiteMemoryStorage();
-const memories = new ChatMemoryManager(gpt, storage);
+const memories = new ChatMemoryManager(gpt, storage, 20);
 const bot = new Telegraf(token);
 
 bot.start((ctx) => ctx.reply('Привет! Я Карл.'));
@@ -33,6 +33,8 @@ bot.on('text', async (ctx) => {
     return;
   }
 
+  await ctx.sendChatAction('typing'); // Показываем статус "печатает..."
+
   let text = ctx.message.text.replace(mention, '').trim();
   if (isNameMentioned) {
     text = text.replace(nameMention, '').trim();
@@ -50,10 +52,13 @@ bot.on('text', async (ctx) => {
   const chatId = ctx.chat.id;
   const memory = memories.get(chatId);
 
-  let userPrompt = text;
+  let userPrompt = '';
   if (replyText) {
-    userPrompt = `В ответ на сообщение: "${replyText}"\n${text}`;
+    userPrompt += `Пользователь ответил на это сообщение: "${replyText}";`;
   }
+
+  userPrompt += `Сообщение пользователя: "${text}";`;
+
   await memory.addMessage('user', userPrompt);
 
   const answer = await gpt.ask(await memory.getHistory(), await memory.getSummary());

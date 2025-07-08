@@ -13,9 +13,9 @@ A Telegram bot named "Аркадий" written in TypeScript. It integrates OpenA
 
 ## Setup
 
-1. Install dependencies using **pnpm**:
+1. Install dependencies using **npm**:
    ```bash
-   pnpm install
+   npm install
    ```
 2. Create a `.env` file with tokens for Telegram and OpenAI:
    ```
@@ -24,15 +24,15 @@ A Telegram bot named "Аркадий" written in TypeScript. It integrates OpenA
    ```
 3. Run in development mode:
    ```bash
-   pnpm exec ts-node src/index.ts
+   npm exec ts-node src/index.ts
    ```
 4. Build the project:
    ```bash
-   pnpm run build
+   npm run build
    ```
 5. Start the compiled bot:
    ```bash
-   pnpm start
+   npm start
    ```
 
 ## Project structure
@@ -42,5 +42,5 @@ A Telegram bot named "Аркадий" written in TypeScript. It integrates OpenA
 - `src/services/ChatMemory.ts` – manages conversation history and summaries.
 - `dist/` – compiled output after running the build.
 
-The repository uses pnpm and TypeScript. Run `pnpm exec tsc` to ensure the
+The repository uses npm and TypeScript. Run `npm exec tsc` to ensure the
 project compiles without errors.
