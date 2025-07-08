@@ -8,6 +8,8 @@ A Telegram bot named "Аркадий" written in TypeScript. It integrates OpenA
 - Listens for mentions of `@<botname>` in messages.
 - Detects replies to messages sent by the bot.
 - Sends the message text to ChatGPT&nbsp;4o and posts the response back.
+- Keeps context by summarizing long conversations so the bot remembers earlier
+  messages.
 
 ## Setup
 
@@ -36,7 +38,8 @@ A Telegram bot named "Аркадий" written in TypeScript. It integrates OpenA
 ## Project structure
 
 - `src/index.ts` – bot entry point using Telegraf.
-- `src/chatgpt.ts` – helper functions for working with the OpenAI API.
+- `src/services/ChatGPTService.ts` – wrapper around the OpenAI API.
+- `src/services/ChatMemory.ts` – manages conversation history and summaries.
 - `dist/` – compiled output after running the build.
 
 The repository uses pnpm and TypeScript. Run `pnpm exec tsc` to ensure the
