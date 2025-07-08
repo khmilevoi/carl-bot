@@ -3,6 +3,11 @@ import { Telegraf } from 'telegraf';
 import { ChatGPTService } from './services/ChatGPTService';
 import { ChatMemoryManager } from './services/ChatMemory';
 import { SQLiteMemoryStorage } from './services/MemoryStorage';
+import { DialogueManager } from './services/DialogueManager';
+import { MentionTrigger } from './triggers/MentionTrigger';
+import { ReplyTrigger } from './triggers/ReplyTrigger';
+import { NameTrigger } from './triggers/NameTrigger';
+import { KeywordTrigger } from './triggers/KeywordTrigger';
 
 const token = process.env.BOT_TOKEN;
 const apiKey = process.env.OPENAI_API_KEY;
@@ -14,6 +19,11 @@ const gpt = new ChatGPTService(apiKey);
 const storage = new SQLiteMemoryStorage();
 const memories = new ChatMemoryManager(gpt, storage, 20);
 const bot = new Telegraf(token);
+const dialogue = new DialogueManager();
+const mentionTrigger = new MentionTrigger();
+const replyTrigger = new ReplyTrigger();
+const nameTrigger = new NameTrigger('Карл');
+const keywordTrigger = new KeywordTrigger('keywords.txt');
 
 bot.start((ctx) => ctx.reply('Привет! Я Карл.'));
 
@@ -23,21 +33,26 @@ bot.command('reset', async (ctx) => {
 });
 
 bot.on('text', async (ctx) => {
-  const mention = `@${ctx.me}`;
-  const nameMention = /^Карл[,:\s]/i;
+  const isMentioned = mentionTrigger.matches(ctx);
+  const isReply = replyTrigger.matches(ctx);
+  const isNameMentioned = nameTrigger.matches(ctx);
+  const chatId = ctx.chat.id;
+  const inDialogue = dialogue.isActive(chatId);
 
-  const isMentioned = ctx.message.text.includes(mention);
-  const isNameMentioned = nameMention.test(ctx.message.text);
-  const isReply = ctx.message.reply_to_message?.from?.username === ctx.me;
-  if (!(isMentioned || isReply || isNameMentioned)) {
-    return;
+  if (!(isMentioned || isReply || isNameMentioned || inDialogue)) {
+    if (!keywordTrigger.matches(ctx)) {
+      return;
+    }
   }
 
-  await ctx.sendChatAction('typing'); // Показываем статус "печатает..."
+  await ctx.sendChatAction('typing');
 
-  let text = ctx.message.text.replace(mention, '').trim();
+  let text = ctx.message.text;
+  if (isMentioned) {
+    text = text.replace(`@${ctx.me}`, '').trim();
+  }
   if (isNameMentioned) {
-    text = text.replace(nameMention, '').trim();
+    text = text.replace(/^Карл[,:\s]/i, '').trim();
   }
   let replyText = '';
   if (
@@ -49,7 +64,11 @@ bot.on('text', async (ctx) => {
     replyText = ctx.message.reply_to_message.text;
   }
 
-  const chatId = ctx.chat.id;
+  if (isMentioned || isReply || isNameMentioned) {
+    dialogue.start(chatId);
+  } else if (inDialogue) {
+    dialogue.extend(chatId);
+  }
   const memory = memories.get(chatId);
 
   let userPrompt = '';
