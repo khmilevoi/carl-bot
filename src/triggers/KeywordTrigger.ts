@@ -1,11 +1,9 @@
 import { readFileSync } from 'fs';
 import { Context } from 'telegraf';
 import { Trigger } from './Trigger';
-import { PorterStemmerRu as Stemmer } from 'natural';
 
 export class KeywordTrigger implements Trigger {
   private keywords: string[];
-  private stems: string[];
 
   private static similarity(a: string, b: string): number {
     const s1 = a.toLowerCase();
@@ -31,7 +29,6 @@ export class KeywordTrigger implements Trigger {
       .split(/\r?\n/)
       .map((k) => k.trim().toLowerCase())
       .filter(Boolean);
-    this.stems = this.keywords.map((k) => Stemmer.stem(k));
   }
 
   matches(ctx: Context): boolean {

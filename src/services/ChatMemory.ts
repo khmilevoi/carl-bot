@@ -19,7 +19,7 @@ export class ChatMemory {
       const newSummary = await this.gpt.summarize(history, summary);
       await this.store.setSummary(this.chatId, newSummary);
       await this.store.clearMessages(this.chatId);
-      await this.addMessage(role, history[history.length - 1].content);
+      await this.addMessage(history[history.length - 1].role, history[history.length - 1].content);
     }
   }
 
