@@ -1,7 +1,6 @@
 # arkadius-bot
 
-A Telegram bot named "Аркадий" written in TypeScript.
-It integrates OpenAI's ChatGPT&nbsp;4o and replies in group chats when you mention it or reply to one of its messages.
+A Telegram bot named "Аркадий" written in TypeScript. It integrates OpenAI's ChatGPT&nbsp;4o and replies in group chats when you mention it or reply to one of its messages.
 
 ## Features
 
