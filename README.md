@@ -24,7 +24,7 @@ A Telegram bot named "Аркадий" written in TypeScript. It integrates OpenA
    ```
 3. Run in development mode:
    ```bash
-   npm exec ts-node src/index.ts
+   npm run dev
    ```
 4. Build the project:
    ```bash
