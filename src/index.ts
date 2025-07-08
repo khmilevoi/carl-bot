@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { Telegraf } from 'telegraf';
 import { ChatGPTService } from './services/ChatGPTService';
 import { ChatMemoryManager } from './services/ChatMemory';
+import { SQLiteMemoryStorage } from './services/MemoryStorage';
 
 const token = process.env.BOT_TOKEN;
 const apiKey = process.env.OPENAI_API_KEY;
@@ -10,13 +11,14 @@ if (!token || !apiKey) {
 }
 
 const gpt = new ChatGPTService(apiKey);
-const memories = new ChatMemoryManager(gpt);
+const storage = new SQLiteMemoryStorage();
+const memories = new ChatMemoryManager(gpt, storage);
 const bot = new Telegraf(token);
 
 bot.start((ctx) => ctx.reply('Привет! Я Карл.'));
 
-bot.command('reset', (ctx) => {
-  memories.reset(ctx.chat.id);
+bot.command('reset', async (ctx) => {
+  await memories.reset(ctx.chat.id);
   ctx.reply('Контекст диалога сброшен!');
 });
 
@@ -54,7 +56,7 @@ bot.on('text', async (ctx) => {
   }
   await memory.addMessage('user', userPrompt);
 
-  const answer = await gpt.ask(memory.getHistory(), memory.getSummary());
+  const answer = await gpt.ask(await memory.getHistory(), await memory.getSummary());
   await memory.addMessage('assistant', answer);
 
   ctx.reply(answer, { reply_parameters: { message_id: ctx.message.message_id } });

@@ -1,43 +1,46 @@
 import { ChatMessage, ChatGPTService } from './ChatGPTService';
+import { MemoryStorage } from './MemoryStorage';
 
 export class ChatMemory {
-  private history: ChatMessage[] = [];
-  private summary = '';
-
-  constructor(private gpt: ChatGPTService, private limit = 10) {}
+  constructor(
+    private gpt: ChatGPTService,
+    private store: MemoryStorage,
+    private chatId: number,
+    private limit = 10
+  ) {}
 
   public async addMessage(role: 'user' | 'assistant', content: string) {
-    this.history.push({ role, content });
-    if (this.history.length > this.limit) {
-      this.summary = await this.gpt.summarize(this.history, this.summary);
-      this.history = [];
+    await this.store.addMessage(this.chatId, role, content);
+    const history = await this.store.getMessages(this.chatId);
+    if (history.length > this.limit) {
+      const summary = await this.store.getSummary(this.chatId);
+      const newSummary = await this.gpt.summarize(history, summary);
+      await this.store.setSummary(this.chatId, newSummary);
+      await this.store.clearMessages(this.chatId);
     }
   }
 
-  public getHistory(): ChatMessage[] {
-    return this.history;
+  public getHistory(): Promise<ChatMessage[]> {
+    return this.store.getMessages(this.chatId);
   }
 
-  public getSummary(): string {
-    return this.summary;
+  public getSummary(): Promise<string> {
+    return this.store.getSummary(this.chatId);
   }
 }
 
 export class ChatMemoryManager {
-  private memories = new Map<number, ChatMemory>();
-
-  constructor(private gpt: ChatGPTService, private limit = 10) {}
+  constructor(
+    private gpt: ChatGPTService,
+    private store: MemoryStorage,
+    private limit = 10
+  ) {}
 
   public get(chatId: number): ChatMemory {
-    let mem = this.memories.get(chatId);
-    if (!mem) {
-      mem = new ChatMemory(this.gpt, this.limit);
-      this.memories.set(chatId, mem);
-    }
-    return mem;
+    return new ChatMemory(this.gpt, this.store, chatId, this.limit);
   }
 
-  public reset(chatId: number) {
-    this.memories.delete(chatId);
+  public async reset(chatId: number) {
+    await this.store.reset(chatId);
   }
 }
