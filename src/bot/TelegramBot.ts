@@ -48,6 +48,8 @@ export class TelegramBot {
     assert(!!chatId, 'This is not a chat');
 
     if (!this.filter.isAllowed(chatId)) {
+      console.log(`Попытка доступа из неразрешённого чата: ${chatId}`);
+      ctx.reply('Этот чат не находится в списке разрешённых.');
       return;
     }
 
