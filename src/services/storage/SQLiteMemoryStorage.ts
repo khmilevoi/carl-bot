@@ -1,47 +1,7 @@
-export interface MemoryStorage {
-  addMessage(chatId: number, role: 'user' | 'assistant', content: string): Promise<void>;
-  getMessages(chatId: number): Promise<{ role: 'user' | 'assistant'; content: string }[]>;
-  clearMessages(chatId: number): Promise<void>;
-  getSummary(chatId: number): Promise<string>;
-  setSummary(chatId: number, summary: string): Promise<void>;
-  reset(chatId: number): Promise<void>;
-}
-
-export class InMemoryStorage implements MemoryStorage {
-  private messages = new Map<number, { role: 'user' | 'assistant'; content: string }[]>();
-  private summaries = new Map<number, string>();
-
-  async addMessage(chatId: number, role: 'user' | 'assistant', content: string) {
-    const list = this.messages.get(chatId) ?? [];
-    list.push({ role, content });
-    this.messages.set(chatId, list);
-  }
-
-  async getMessages(chatId: number) {
-    return this.messages.get(chatId) ?? [];
-  }
-
-  async clearMessages(chatId: number) {
-    this.messages.set(chatId, []);
-  }
-
-  async getSummary(chatId: number) {
-    return this.summaries.get(chatId) ?? '';
-  }
-
-  async setSummary(chatId: number, summary: string) {
-    this.summaries.set(chatId, summary);
-  }
-
-  async reset(chatId: number) {
-    this.messages.delete(chatId);
-    this.summaries.delete(chatId);
-  }
-}
-
 import { open, Database } from 'sqlite';
 import sqlite3 from 'sqlite3';
-import { ChatMessage } from './ChatGPTService';
+import { MemoryStorage } from './MemoryStorage.interface';
+import { ChatMessage } from '../ChatGPTService';
 
 export class SQLiteMemoryStorage implements MemoryStorage {
   private db: Promise<Database>;
@@ -108,4 +68,4 @@ export class SQLiteMemoryStorage implements MemoryStorage {
     await this.clearMessages(chatId);
     await this.setSummary(chatId, '');
   }
-}
+} 

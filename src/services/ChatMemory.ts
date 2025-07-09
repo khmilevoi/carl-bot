@@ -1,5 +1,5 @@
 import { ChatMessage, ChatGPTService } from "./ChatGPTService";
-import { MemoryStorage } from "./MemoryStorage";
+import { MemoryStorage } from "./storage/MemoryStorage.interface";
 
 export class ChatMemory {
   constructor(
