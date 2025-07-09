@@ -1,5 +1,5 @@
-import { ChatMessage, ChatGPTService } from './ChatGPTService';
-import { MemoryStorage } from './MemoryStorage';
+import { ChatMessage, ChatGPTService } from "./ChatGPTService";
+import { MemoryStorage } from "./MemoryStorage";
 
 export class ChatMemory {
   constructor(
@@ -9,18 +9,17 @@ export class ChatMemory {
     private limit = 10
   ) {}
 
-  public async addMessage(role: 'user' | 'assistant', content: string) {
+  public async addMessage(role: "user" | "assistant", content: string) {
     const history = await this.store.getMessages(this.chatId);
 
-    await this.store.addMessage(this.chatId, role, content);
-    
     if (history.length > this.limit) {
       const summary = await this.store.getSummary(this.chatId);
       const newSummary = await this.gpt.summarize(history, summary);
       await this.store.setSummary(this.chatId, newSummary);
       await this.store.clearMessages(this.chatId);
-      await this.addMessage(history[history.length - 1].role, history[history.length - 1].content);
     }
+
+    await this.store.addMessage(this.chatId, role, content);
   }
 
   public getHistory(): Promise<ChatMessage[]> {
