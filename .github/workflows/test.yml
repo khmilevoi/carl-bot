@@ -16,5 +16,5 @@ jobs:
       - run: npm install
       - run: npm run lint
       - run: npm run format
-      - run: npm exec tsc
+      - run: npm run build
       - run: npm test --silent
