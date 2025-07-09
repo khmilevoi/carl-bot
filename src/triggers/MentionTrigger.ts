@@ -7,7 +7,6 @@ export class MentionTrigger implements Trigger {
     const text = (ctx.message as any)?.text ?? '';
     if (text.includes(`@${ctx.me}`)) {
       context.text = text.replace(`@${(ctx as any).me}`, '').trim();
-      dialogue.start(context.chatId);
       return true;
     }
     return false;

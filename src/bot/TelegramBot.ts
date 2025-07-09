@@ -7,6 +7,7 @@ import { ReplyTrigger } from "../triggers/ReplyTrigger";
 import { NameTrigger } from "../triggers/NameTrigger";
 import { KeywordTrigger } from "../triggers/KeywordTrigger";
 import { TriggerContext } from "../triggers/Trigger";
+import assert from "node:assert";
 
 export class TelegramBot {
   private bot: Telegraf;
@@ -33,16 +34,26 @@ export class TelegramBot {
       ctx.reply("Контекст диалога сброшен!");
     });
 
-    this.bot.on("message", (ctx) => console.log(ctx.message));
 
     this.bot.on("text", (ctx) => this.handleText(ctx));
   }
 
   private async handleText(ctx: Context) {
-    const chatId = ctx.chat!.id as number;
+    const chatId = ctx.chat?.id;
+    assert(!!chatId, 'This is not a chat');
+
+    const message = ctx.message as any;
+    assert(message && typeof message.text === 'string', 'Нет текста сообщения');
+
+    let replyText = '';
+    if (message.reply_to_message) {
+      assert(typeof message.reply_to_message.text === 'string' || typeof message.reply_to_message.caption === 'string', 'Нет текста или подписи в reply_to_message');
+      replyText = `Пользователь ответил на: ${message.reply_to_message.text}; ${message.reply_to_message.caption}`;
+    }
+
     const context: TriggerContext = {
-      text: `Текст сообщения: ${(ctx.message as any).text};`,
-      replyText: "",
+      text: `${message.text};`,
+      replyText,
       chatId,
     };
 
@@ -52,6 +63,10 @@ export class TelegramBot {
     matched = this.mentionTrigger.apply(ctx, context, this.dialogue) || matched;
     matched = this.replyTrigger.apply(ctx, context, this.dialogue) || matched;
     matched = this.nameTrigger.apply(ctx, context, this.dialogue) || matched;
+
+    if (matched && !inDialogue) {
+      this.dialogue.start(chatId);
+    }
 
     if (!matched && !inDialogue) {
       if (!this.keywordTrigger.apply(ctx, context, this.dialogue)) {
@@ -67,7 +82,7 @@ export class TelegramBot {
 
     let userPrompt = "";
     if (context.replyText) {
-      userPrompt += `Пользователь ответил на это сообщение: "${context.replyText}";`;
+      userPrompt += `"${context.replyText}";`;
     }
     userPrompt += `Сообщение пользователя: "${context.text}";`;
 

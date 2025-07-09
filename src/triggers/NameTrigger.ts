@@ -9,9 +9,9 @@ export class NameTrigger implements Trigger {
   }
   apply(ctx: Context, context: TriggerContext, dialogue: DialogueManager): boolean {
     const text = context.text;
+    console.log({text})
     if (this.pattern.test(text)) {
       context.text = text.replace(this.pattern, '').trim();
-      dialogue.start(context.chatId);
       return true;
     }
     return false;
