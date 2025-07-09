@@ -1,0 +1,14 @@
+{
+  "jsc": {
+    "parser": {
+      "syntax": "typescript",
+      "tsx": false,
+      "decorators": false
+    },
+    "target": "es2016"
+  },
+  "module": {
+    "type": "commonjs"
+  },
+  "sourceMaps": true
+}
