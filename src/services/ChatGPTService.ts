@@ -1,5 +1,6 @@
-import OpenAI from 'openai';
 import { readFile } from 'fs/promises';
+import OpenAI from 'openai';
+
 import { AIService, ChatMessage } from './AIService';
 
 export class ChatGPTService implements AIService {
@@ -30,7 +31,9 @@ export class ChatGPTService implements AIService {
       });
     }
 
-    messages.push(...history.map((m) => ({ role: m.role, content: m.content })));
+    messages.push(
+      ...history.map((m) => ({ role: m.role, content: m.content }))
+    );
 
     const completion = await this.openai.chat.completions.create({
       model: 'gpt-4o',
@@ -39,19 +42,30 @@ export class ChatGPTService implements AIService {
     return completion.choices[0]?.message?.content ?? '';
   }
 
-  public async summarize(history: ChatMessage[], prev?: string): Promise<string> {
-    const summaryPrompt =
-      `Просуммируй ключенвые моменты диалога для дальнейшего использования в качестве системного промпта. Не давай оценку тексту, а просто выдели ключевые элементы речи пользователей и ответов ассистента.`;
+  public async summarize(
+    history: ChatMessage[],
+    prev?: string
+  ): Promise<string> {
+    const summaryPrompt = `Просуммируй ключенвые моменты диалога для дальнейшего использования в качестве системного промпта. Не давай оценку тексту, а просто выдели ключевые элементы речи пользователей и ответов ассистента.`;
     const messages: OpenAI.ChatCompletionMessageParam[] = [
       { role: 'system', content: summaryPrompt },
     ];
     if (prev) {
-      messages.push({ role: 'user', content: `Предыдущее резюме (выдели ключевые элементы): ${prev}` });
+      messages.push({
+        role: 'user',
+        content: `Предыдущее резюме (выдели ключевые элементы): ${prev}`,
+      });
     }
     const historyText = history
-      .map((m) => `${m.role === 'user' ? 'Пользователь' : 'Ассистент'}: ${m.content}`)
+      .map(
+        (m) =>
+          `${m.role === 'user' ? 'Пользователь' : 'Ассистент'}: ${m.content}`
+      )
       .join('\n');
-    messages.push({ role: 'user', content: `История диалога:\n${historyText}` });
+    messages.push({
+      role: 'user',
+      content: `История диалога:\n${historyText}`,
+    });
     const completion = await this.openai.chat.completions.create({
       model: 'gpt-4o',
       messages,

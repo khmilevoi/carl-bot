@@ -7,4 +7,3 @@ export interface AIService {
   ask(history: ChatMessage[], summary?: string): Promise<string>;
   summarize(history: ChatMessage[], prev?: string): Promise<string>;
 }
-

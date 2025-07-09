@@ -1,10 +1,17 @@
 import { MemoryStorage } from './MemoryStorage.interface';
 
 export class InMemoryStorage implements MemoryStorage {
-  private messages = new Map<number, { role: 'user' | 'assistant'; content: string }[]>();
+  private messages = new Map<
+    number,
+    { role: 'user' | 'assistant'; content: string }[]
+  >();
   private summaries = new Map<number, string>();
 
-  async addMessage(chatId: number, role: 'user' | 'assistant', content: string) {
+  async addMessage(
+    chatId: number,
+    role: 'user' | 'assistant',
+    content: string
+  ) {
     const list = this.messages.get(chatId) ?? [];
     list.push({ role, content });
     this.messages.set(chatId, list);
@@ -30,4 +37,4 @@ export class InMemoryStorage implements MemoryStorage {
     this.messages.delete(chatId);
     this.summaries.delete(chatId);
   }
-} 
+}

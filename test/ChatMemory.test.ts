@@ -1,7 +1,8 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { AIService, ChatMessage } from '../src/services/AIService';
 import { ChatMemory } from '../src/services/ChatMemory';
 import { InMemoryStorage } from '../src/services/storage/InMemoryStorage';
-import { AIService, ChatMessage } from '../src/services/AIService';
 
 class FakeAI implements AIService {
   ask = vi.fn(async () => 'ok');
