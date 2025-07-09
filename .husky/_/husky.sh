@@ -1,16 +1,9 @@
-#!/bin/sh
-if [ -z "$husky_skip_init" ]; then
-  debug () {
-    [ "$HUSKY_DEBUG" = "1" ] && echo "husky (debug) - $*"
-  }
-  readonly hook_name="$(basename "$0")"
-  debug "starting $hook_name..."
-  if [ -f ~/.huskyrc ]; then
-    debug "found ~/.huskyrc"
-    . ~/.huskyrc
-  fi
-  export PATH="$PATH:$(npm bin)"
-  husky_skip_init=1
-  [ -f ~/.huskyrc.local ] && . ~/.huskyrc.local
-  debug "$hook_name finished"
-fi
+echo "husky - DEPRECATED
+
+Please remove the following two lines from $0:
+
+#!/usr/bin/env sh
+. \"\$(dirname -- \"\$0\")/_/husky.sh\"
+
+They WILL FAIL in v10.0.0
+"

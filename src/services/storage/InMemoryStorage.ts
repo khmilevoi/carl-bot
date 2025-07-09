@@ -36,4 +36,5 @@ export class InMemoryStorage implements MemoryStorage {
   async reset(chatId: number) {
     this.messages.delete(chatId);
     this.summaries.delete(chatId);
-  }}
+  }
+}

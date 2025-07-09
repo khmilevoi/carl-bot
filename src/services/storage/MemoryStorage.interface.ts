@@ -10,4 +10,5 @@ export interface MemoryStorage {
   clearMessages(chatId: number): Promise<void>;
   getSummary(chatId: number): Promise<string>;
   setSummary(chatId: number, summary: string): Promise<void>;
-  reset(chatId: number): Promise<void>;}
+  reset(chatId: number): Promise<void>;
+}

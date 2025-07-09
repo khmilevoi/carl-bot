@@ -72,4 +72,5 @@ export class SQLiteMemoryStorage implements MemoryStorage {
   async reset(chatId: number) {
     await this.clearMessages(chatId);
     await this.setSummary(chatId, '');
-  }}
+  }
+}
