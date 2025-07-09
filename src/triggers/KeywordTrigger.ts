@@ -32,6 +32,19 @@ export class KeywordTrigger implements Trigger {
       .filter(Boolean);
   }
 
+  matches(ctx: Context): boolean {
+    const text = ((ctx.message as any)?.text ?? '').toLowerCase();
+    const words = text.match(/\p{L}+/gu) || [];
+    for (const word of words) {
+      for (const keyword of this.keywords) {
+        if (KeywordTrigger.similarity(word, keyword) >= 0.75) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   apply(ctx: Context, context: TriggerContext, _dialogue: DialogueManager): boolean {
     const text = context.text.toLowerCase();
     const words = text.match(/\p{L}+/gu) || [];
