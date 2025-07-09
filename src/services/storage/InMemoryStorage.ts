@@ -1,3 +1,4 @@
+import logger from '../logger';
 import { MemoryStorage } from './MemoryStorage.interface';
 
 export class InMemoryStorage implements MemoryStorage {
@@ -12,6 +13,7 @@ export class InMemoryStorage implements MemoryStorage {
     role: 'user' | 'assistant',
     content: string
   ) {
+    logger.debug({ chatId, role }, 'Storing message in memory');
     const list = this.messages.get(chatId) ?? [];
     list.push({ role, content });
     this.messages.set(chatId, list);
@@ -22,6 +24,7 @@ export class InMemoryStorage implements MemoryStorage {
   }
 
   async clearMessages(chatId: number) {
+    logger.debug({ chatId }, 'Clearing stored messages');
     this.messages.set(chatId, []);
   }
 
@@ -30,10 +33,12 @@ export class InMemoryStorage implements MemoryStorage {
   }
 
   async setSummary(chatId: number, summary: string) {
+    logger.debug({ chatId }, 'Setting summary');
     this.summaries.set(chatId, summary);
   }
 
   async reset(chatId: number) {
+    logger.debug({ chatId }, 'Resetting in-memory storage');
     this.messages.delete(chatId);
     this.summaries.delete(chatId);
   }

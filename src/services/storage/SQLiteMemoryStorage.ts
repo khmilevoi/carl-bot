@@ -2,6 +2,7 @@ import { Database, open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 
 import { ChatMessage } from '../AIService';
+import logger from '../logger';
 import { MemoryStorage } from './MemoryStorage.interface';
 
 export class SQLiteMemoryStorage implements MemoryStorage {
@@ -9,6 +10,7 @@ export class SQLiteMemoryStorage implements MemoryStorage {
 
   constructor(filename = 'memory.db') {
     this.db = open({ filename, driver: sqlite3.Database }).then(async (db) => {
+      logger.debug({ filename }, 'Initializing SQLite storage');
       await db.run(
         'CREATE TABLE IF NOT EXISTS messages (chat_id INTEGER, role TEXT, content TEXT)'
       );
@@ -28,6 +30,7 @@ export class SQLiteMemoryStorage implements MemoryStorage {
     role: 'user' | 'assistant',
     content: string
   ) {
+    logger.debug({ chatId, role }, 'Inserting message into database');
     const db = await this.getDb();
     await db.run(
       'INSERT INTO messages (chat_id, role, content) VALUES (?, ?, ?)',
@@ -38,6 +41,7 @@ export class SQLiteMemoryStorage implements MemoryStorage {
   }
 
   async getMessages(chatId: number): Promise<ChatMessage[]> {
+    logger.debug({ chatId }, 'Fetching messages from database');
     const db = await this.getDb();
     const rows = await db.all<ChatMessage[]>(
       'SELECT role, content FROM messages WHERE chat_id = ? ORDER BY rowid',
@@ -47,11 +51,13 @@ export class SQLiteMemoryStorage implements MemoryStorage {
   }
 
   async clearMessages(chatId: number) {
+    logger.debug({ chatId }, 'Clearing messages table');
     const db = await this.getDb();
     await db.run('DELETE FROM messages WHERE chat_id = ?', chatId);
   }
 
   async getSummary(chatId: number) {
+    logger.debug({ chatId }, 'Fetching summary');
     const db = await this.getDb();
     const row = await db.get<{ summary: string }>(
       'SELECT summary FROM summaries WHERE chat_id = ?',
@@ -61,6 +67,7 @@ export class SQLiteMemoryStorage implements MemoryStorage {
   }
 
   async setSummary(chatId: number, summary: string) {
+    logger.debug({ chatId }, 'Storing summary');
     const db = await this.getDb();
     await db.run(
       'INSERT INTO summaries (chat_id, summary) VALUES (?, ?) ON CONFLICT(chat_id) DO UPDATE SET summary=excluded.summary',
@@ -70,6 +77,7 @@ export class SQLiteMemoryStorage implements MemoryStorage {
   }
 
   async reset(chatId: number) {
+    logger.debug({ chatId }, 'Resetting chat data');
     await this.clearMessages(chatId);
     await this.setSummary(chatId, '');
   }

@@ -2,6 +2,7 @@ import { readFileSync } from 'fs';
 import { Context } from 'telegraf';
 
 import { DialogueManager } from '../services/DialogueManager';
+import logger from '../services/logger';
 import { Trigger, TriggerContext } from './Trigger';
 
 export class KeywordTrigger implements Trigger {
@@ -31,6 +32,7 @@ export class KeywordTrigger implements Trigger {
       .split(/\r?\n/)
       .map((k) => k.trim().toLowerCase())
       .filter(Boolean);
+    logger.debug({ count: this.keywords.length }, 'Loaded keywords');
   }
 
   apply(
@@ -43,6 +45,10 @@ export class KeywordTrigger implements Trigger {
     for (const word of words) {
       for (const keyword of this.keywords) {
         if (KeywordTrigger.similarity(word, keyword) >= 0.75) {
+          logger.debug(
+            { chatId: context.chatId, keyword },
+            'Keyword trigger matched'
+          );
           return true;
         }
       }
