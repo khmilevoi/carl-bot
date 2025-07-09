@@ -37,10 +37,11 @@ A Telegram bot named "Аркадий" written in TypeScript. It integrates OpenA
 
 ## Project structure
 
-- `src/index.ts` – bot entry point using Telegraf.
-- `src/services/ChatGPTService.ts` – wrapper around the OpenAI API.
-- `src/services/ChatMemory.ts` – manages conversation history and summaries.
-- `dist/` – compiled output after running the build.
+ - `src/index.ts` – minimal entry point that boots the application.
+ - `src/bot/TelegramBot.ts` – orchestrates Telegraf and message handling.
+ - `src/services/ChatGPTService.ts` – implementation of the `AIService` interface.
+ - `src/services/ChatMemory.ts` – manages conversation history and summaries.
+ - `dist/` – compiled output after running the build.
 
 The repository uses npm and TypeScript. Run `npm exec tsc` to ensure the
 project compiles without errors.

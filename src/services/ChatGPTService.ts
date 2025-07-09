@@ -1,12 +1,8 @@
 import OpenAI from 'openai';
 import { readFile } from 'fs/promises';
+import { AIService, ChatMessage } from './AIService';
 
-export interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-}
-
-export class ChatGPTService {
+export class ChatGPTService implements AIService {
   private openai: OpenAI;
   private persona: string | null = null;
 

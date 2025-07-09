@@ -1,9 +1,15 @@
 import { Context } from 'telegraf';
-import { Trigger } from './Trigger';
+import { Trigger, TriggerContext } from './Trigger';
+import { DialogueManager } from '../services/DialogueManager';
 
 export class MentionTrigger implements Trigger {
-  matches(ctx: Context): boolean {
+  apply(ctx: Context, context: TriggerContext, dialogue: DialogueManager): boolean {
     const text = (ctx.message as any)?.text ?? '';
-    return text.includes(`@${ctx.me}`);
+    if (text.includes(`@${ctx.me}`)) {
+      context.text = text.replace(`@${(ctx as any).me}`, '').trim();
+      dialogue.start(context.chatId);
+      return true;
+    }
+    return false;
   }
 }

@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs';
 import { Context } from 'telegraf';
-import { Trigger } from './Trigger';
+import { Trigger, TriggerContext } from './Trigger';
+import { DialogueManager } from '../services/DialogueManager';
 
 export class KeywordTrigger implements Trigger {
   private keywords: string[];
@@ -31,8 +32,8 @@ export class KeywordTrigger implements Trigger {
       .filter(Boolean);
   }
 
-  matches(ctx: Context): boolean {
-    const text = ((ctx.message as any)?.text ?? '').toLowerCase();
+  apply(ctx: Context, context: TriggerContext, _dialogue: DialogueManager): boolean {
+    const text = context.text.toLowerCase();
     const words = text.match(/\p{L}+/gu) || [];
     for (const word of words) {
       for (const keyword of this.keywords) {
