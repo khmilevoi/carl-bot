@@ -1,47 +1,54 @@
 # arkadius-bot
 
-A Telegram bot named "Аркадий" written in TypeScript. It integrates OpenAI's ChatGPT&nbsp;4o and replies in group chats when you mention it or reply to one of its messages.
+Карл — Telegram бот, написанный на TypeScript. Он использует ChatGPT 4o и отвечает в групповых чатах при упоминании или ответе на его сообщение.
 
-## Features
+## Возможности
 
-- Responds to the `/start` command with a greeting.
-- Listens for mentions of `@<botname>` in messages.
-- Detects replies to messages sent by the bot.
-- Sends the message text to ChatGPT&nbsp;4o and posts the response back.
-- Keeps context by summarizing long conversations so the bot remembers earlier
-  messages.
+- Команда `/start` выводит приветствие.
+- `/ping` просто отвечает `pong`.
+- `/reset` сбрасывает память диалога.
+- Откликается, если его упомянут, ответят на сообщение бота или начнут сообщение с имени Карл.
+- Может откликаться на ключевые слова из `keywords.txt`.
+- Запоминает предыдущие сообщения в SQLite и суммирует длинные чаты для сохранения контекста.
+- Персона бота описана в `persona.md`.
 
-## Setup
+## Установка
 
-1. Install dependencies using **npm**:
+1. Установите зависимости:
    ```bash
    npm install
    ```
-2. Create a `.env` file with tokens for Telegram and OpenAI:
+2. Создайте `.env` с токенами Telegram и OpenAI:
    ```
    BOT_TOKEN=your-telegram-token
    OPENAI_API_KEY=your-openai-key
    ```
-3. Run in development mode:
+3. Запустите в режиме разработки:
    ```bash
    npm run dev
    ```
-4. Build the project:
+4. Собрайте проект:
    ```bash
    npm run build
    ```
-5. Start the compiled bot:
+5. Запустите собранную версию:
    ```bash
    npm start
    ```
 
-## Project structure
+Для проверки типов и тестов можно выполнить:
 
-- `src/index.ts` – minimal entry point that boots the application.
-- `src/bot/TelegramBot.ts` – orchestrates Telegraf and message handling.
-- `src/services/ChatGPTService.ts` – implementation of the `AIService` interface.
-- `src/services/ChatMemory.ts` – manages conversation history and summaries.
-- `dist/` – compiled output after running the build.
+```bash
+npm exec tsc
+npm test
+```
 
-The repository uses npm and TypeScript. Run `npm exec tsc` to ensure the
-project compiles without errors.
+## Структура проекта
+
+- `src/index.ts` — точка входа приложения.
+- `src/bot/TelegramBot.ts` — логика бота и обработка сообщений.
+- `src/services/ChatGPTService.ts` — взаимодействие c OpenAI.
+- `src/services/ChatMemory.ts` — хранение истории и ее суммаризация.
+- `dist/` — собранные файлы.
+
+Репозиторий полностью базируется на npm и TypeScript.
