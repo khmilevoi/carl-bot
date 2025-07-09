@@ -1,7 +1,7 @@
 import { open, Database } from 'sqlite';
 import sqlite3 from 'sqlite3';
 import { MemoryStorage } from './MemoryStorage.interface';
-import { ChatMessage } from '../ChatGPTService';
+import { ChatMessage } from '../AIService';
 
 export class SQLiteMemoryStorage implements MemoryStorage {
   private db: Promise<Database>;

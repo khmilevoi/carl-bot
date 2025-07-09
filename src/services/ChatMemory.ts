@@ -1,9 +1,9 @@
-import { ChatMessage, ChatGPTService } from "./ChatGPTService";
+import { ChatMessage, AIService } from "./AIService";
 import { MemoryStorage } from "./storage/MemoryStorage.interface";
 
 export class ChatMemory {
   constructor(
-    private gpt: ChatGPTService,
+    private gpt: AIService,
     private store: MemoryStorage,
     private chatId: number,
     private limit = 10
@@ -33,7 +33,7 @@ export class ChatMemory {
 
 export class ChatMemoryManager {
   constructor(
-    private gpt: ChatGPTService,
+    private gpt: AIService,
     private store: MemoryStorage,
     private limit = 10
   ) {}
