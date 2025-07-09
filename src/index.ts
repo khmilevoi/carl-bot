@@ -1,8 +1,9 @@
 import 'dotenv/config';
+
+import { TelegramBot } from './bot/TelegramBot';
 import { ChatGPTService } from './services/ChatGPTService';
 import { ChatMemoryManager } from './services/ChatMemory';
 import { SQLiteMemoryStorage } from './services/storage/SQLiteMemoryStorage';
-import { TelegramBot } from './bot/TelegramBot';
 
 const token = process.env.BOT_TOKEN;
 const apiKey = process.env.OPENAI_API_KEY;
@@ -20,4 +21,3 @@ bot.launch();
 
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
-

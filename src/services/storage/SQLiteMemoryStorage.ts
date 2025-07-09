@@ -1,7 +1,8 @@
-import { open, Database } from 'sqlite';
+import { Database, open } from 'sqlite';
 import sqlite3 from 'sqlite3';
-import { MemoryStorage } from './MemoryStorage.interface';
+
 import { ChatMessage } from '../AIService';
+import { MemoryStorage } from './MemoryStorage.interface';
 
 export class SQLiteMemoryStorage implements MemoryStorage {
   private db: Promise<Database>;
@@ -22,7 +23,11 @@ export class SQLiteMemoryStorage implements MemoryStorage {
     return this.db;
   }
 
-  async addMessage(chatId: number, role: 'user' | 'assistant', content: string) {
+  async addMessage(
+    chatId: number,
+    role: 'user' | 'assistant',
+    content: string
+  ) {
     const db = await this.getDb();
     await db.run(
       'INSERT INTO messages (chat_id, role, content) VALUES (?, ?, ?)',
@@ -67,5 +72,4 @@ export class SQLiteMemoryStorage implements MemoryStorage {
   async reset(chatId: number) {
     await this.clearMessages(chatId);
     await this.setSummary(chatId, '');
-  }
-} 
+  }}

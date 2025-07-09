@@ -1,10 +1,11 @@
-import { describe, it, expect } from 'vitest';
-import { KeywordTrigger } from '../src/triggers/KeywordTrigger';
-import { TriggerContext } from '../src/triggers/Trigger';
-import { DialogueManager } from '../src/services/DialogueManager';
 import { writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
+import { describe, expect, it } from 'vitest';
+
+import { DialogueManager } from '../src/services/DialogueManager';
+import { KeywordTrigger } from '../src/triggers/KeywordTrigger';
+import { TriggerContext } from '../src/triggers/Trigger';
 
 describe('KeywordTrigger', () => {
   const file = join(tmpdir(), 'keywords-test.txt');
@@ -12,7 +13,11 @@ describe('KeywordTrigger', () => {
   const trigger = new KeywordTrigger(file);
 
   it('matches similar words', () => {
-    const ctx: TriggerContext = { text: 'HeLLo there', replyText: '', chatId: 1 };
+    const ctx: TriggerContext = {
+      text: 'HeLLo there',
+      replyText: '',
+      chatId: 1,
+    };
     const res = trigger.apply({} as any, ctx, new DialogueManager());
     expect(res).toBe(true);
   });

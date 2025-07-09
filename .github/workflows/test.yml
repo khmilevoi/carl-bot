@@ -2,7 +2,7 @@ name: CI
 
 on:
   pull_request:
-    branches: ["**"]
+    branches: ['**']
 
 jobs:
   test:
@@ -14,5 +14,7 @@ jobs:
           node-version: 20
           cache: 'npm'
       - run: npm install
+      - run: npm run lint
+      - run: npm run format
       - run: npm exec tsc
       - run: npm test --silent

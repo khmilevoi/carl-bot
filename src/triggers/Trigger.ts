@@ -1,4 +1,5 @@
 import { Context } from 'telegraf';
+
 import { DialogueManager } from '../services/DialogueManager';
 
 export interface TriggerContext {
@@ -8,5 +9,9 @@ export interface TriggerContext {
 }
 
 export interface Trigger {
-  apply(ctx: Context, context: TriggerContext, dialogue: DialogueManager): boolean;
+  apply(
+    ctx: Context,
+    context: TriggerContext,
+    dialogue: DialogueManager
+  ): boolean;
 }

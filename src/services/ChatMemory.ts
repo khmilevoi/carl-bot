@@ -1,5 +1,5 @@
-import { ChatMessage, AIService } from "./AIService";
-import { MemoryStorage } from "./storage/MemoryStorage.interface";
+import { AIService, ChatMessage } from './AIService';
+import { MemoryStorage } from './storage/MemoryStorage.interface';
 
 export class ChatMemory {
   constructor(
@@ -9,7 +9,7 @@ export class ChatMemory {
     private limit = 10
   ) {}
 
-  public async addMessage(role: "user" | "assistant", content: string) {
+  public async addMessage(role: 'user' | 'assistant', content: string) {
     const history = await this.store.getMessages(this.chatId);
 
     if (history.length > this.limit) {
