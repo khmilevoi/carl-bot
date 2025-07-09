@@ -1,13 +1,14 @@
 {
   "name": "arkadius-bot",
   "version": "1.0.0",
-  "description": "бот Аркадий",
+  "description": "бот Карл",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "nodemon --watch src --ext ts,js,json,md --exec ts-node src/index.ts",
-    "test": "vitest"
+    "test": "vitest",
+    "coverage": "vitest run --coverage"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +23,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.11",
+    "@vitest/coverage-v8": "^3.2.4",
     "nodemon": "^3.1.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3",
