@@ -14,7 +14,6 @@ export class NameTrigger implements Trigger {
     dialogue: DialogueManager
   ): boolean {
     const text = context.text;
-    console.log({ text });
     if (this.pattern.test(text)) {
       context.text = text.replace(this.pattern, '').trim();
       return true;
