@@ -4,6 +4,12 @@ import pino from 'pino';
 // Using pino.destination with sync:false ensures writes are non-blocking
 const destination = pino.destination({ sync: false });
 
-const logger = pino({ level: process.env.LOG_LEVEL || 'info' }, destination);
+const logger = pino(
+  {
+    level: process.env.LOG_LEVEL ?? 'debug',
+    transport: { target: 'pino-pretty' },
+  },
+  destination
+);
 
 export default logger;
