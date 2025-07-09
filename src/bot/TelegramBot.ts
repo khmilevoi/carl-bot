@@ -3,6 +3,7 @@ import assert from 'node:assert';
 import { Context, Telegraf } from 'telegraf';
 
 import { AIService } from '../services/AIService';
+import { ChatFilter } from '../services/ChatFilter';
 import { ChatMemoryManager } from '../services/ChatMemory';
 import { DialogueManager } from '../services/DialogueManager';
 import { KeywordTrigger } from '../triggers/KeywordTrigger';
@@ -22,7 +23,8 @@ export class TelegramBot {
   constructor(
     token: string,
     private ai: AIService,
-    private memories: ChatMemoryManager
+    private memories: ChatMemoryManager,
+    private filter: ChatFilter
   ) {
     this.bot = new Telegraf(token);
     this.configure();
@@ -44,6 +46,10 @@ export class TelegramBot {
   private async handleText(ctx: Context) {
     const chatId = ctx.chat?.id;
     assert(!!chatId, 'This is not a chat');
+
+    if (!this.filter.isAllowed(chatId)) {
+      return;
+    }
 
     const message = ctx.message as any;
     assert(message && typeof message.text === 'string', 'Нет текста сообщения');
