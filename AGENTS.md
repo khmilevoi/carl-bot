@@ -3,7 +3,7 @@
 - Use **npm** for dependencies. Run `npm install` when needed.
 - After code changes, make sure the TypeScript build succeeds:
   ```bash
-  npm exec tsc
+  npm run build
   ```
 - Run the unit tests with:
   ```bash
