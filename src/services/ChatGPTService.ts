@@ -2,6 +2,7 @@ import { readFile } from 'fs/promises';
 import OpenAI from 'openai';
 
 import { AIService, ChatMessage } from './AIService';
+import logger from './logger';
 
 export class ChatGPTService implements AIService {
   private openai: OpenAI;
@@ -9,10 +10,12 @@ export class ChatGPTService implements AIService {
 
   constructor(apiKey: string) {
     this.openai = new OpenAI({ apiKey });
+    logger.debug('ChatGPTService initialized');
   }
 
   private async loadPersona(): Promise<string> {
     if (!this.persona) {
+      logger.debug('Loading persona file');
       this.persona = await readFile('persona.md', 'utf-8');
     }
 
@@ -21,6 +24,10 @@ export class ChatGPTService implements AIService {
 
   public async ask(history: ChatMessage[], summary?: string): Promise<string> {
     const persona = await this.loadPersona();
+    logger.debug(
+      { messages: history.length, summary: !!summary },
+      'Sending chat completion request'
+    );
     const messages: OpenAI.ChatCompletionMessageParam[] = [
       { role: 'system', content: persona },
     ];
@@ -39,6 +46,7 @@ export class ChatGPTService implements AIService {
       model: 'gpt-4o',
       messages,
     });
+    logger.debug('Received chat completion response');
     return completion.choices[0]?.message?.content ?? '';
   }
 
@@ -50,6 +58,10 @@ export class ChatGPTService implements AIService {
     const messages: OpenAI.ChatCompletionMessageParam[] = [
       { role: 'system', content: summaryPrompt },
     ];
+    logger.debug(
+      { history: history.length, prevLength: prev?.length ?? 0 },
+      'Sending summarization request'
+    );
     if (prev) {
       messages.push({
         role: 'user',
@@ -70,6 +82,7 @@ export class ChatGPTService implements AIService {
       model: 'gpt-4o',
       messages,
     });
+    logger.debug('Received summary response');
     return completion.choices[0]?.message?.content ?? prev ?? '';
   }
 }

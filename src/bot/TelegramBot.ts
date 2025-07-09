@@ -6,6 +6,7 @@ import { AIService } from '../services/AIService';
 import { ChatFilter } from '../services/ChatFilter';
 import { ChatMemoryManager } from '../services/ChatMemory';
 import { DialogueManager } from '../services/DialogueManager';
+import logger from '../services/logger';
 import { KeywordTrigger } from '../triggers/KeywordTrigger';
 import { MentionTrigger } from '../triggers/MentionTrigger';
 import { NameTrigger } from '../triggers/NameTrigger';
@@ -46,9 +47,10 @@ export class TelegramBot {
   private async handleText(ctx: Context) {
     const chatId = ctx.chat?.id;
     assert(!!chatId, 'This is not a chat');
+    logger.debug({ chatId }, 'Received text message');
 
     if (!this.filter.isAllowed(chatId)) {
-      console.log(`Попытка доступа из неразрешённого чата: ${chatId}`);
+      logger.warn({ chatId }, 'Попытка доступа из неразрешённого чата');
       ctx.reply('Этот чат не находится в списке разрешённых.');
       return;
     }
@@ -73,6 +75,7 @@ export class TelegramBot {
     };
 
     const inDialogue = this.dialogue.isActive(chatId);
+    logger.debug({ chatId, inDialogue }, 'Checking triggers');
 
     let matched = false;
     matched = this.mentionTrigger.apply(ctx, context, this.dialogue) || matched;
@@ -85,6 +88,7 @@ export class TelegramBot {
 
     if (!matched && !inDialogue) {
       if (!this.keywordTrigger.apply(ctx, context, this.dialogue)) {
+        logger.debug({ chatId }, 'No trigger matched');
         return;
       }
     } else if (!matched && inDialogue) {
@@ -92,6 +96,7 @@ export class TelegramBot {
     }
 
     await ctx.sendChatAction('typing');
+    logger.debug({ chatId }, 'Generating answer');
 
     const memory = this.memories.get(chatId);
 
@@ -107,14 +112,17 @@ export class TelegramBot {
       await memory.getHistory(),
       await memory.getSummary()
     );
+    logger.debug({ chatId }, 'Answer generated');
     await memory.addMessage('assistant', answer);
 
     ctx.reply(answer, {
       reply_parameters: { message_id: (ctx.message as any).message_id },
     });
+    logger.debug({ chatId }, 'Reply sent');
   }
 
   public async launch() {
+    logger.info('Launching bot');
     if (process.env.NODE_ENV === 'production') {
       assert(process.env.DOMAIN, 'Environment variable DOMAIN is not set');
       assert(process.env.PORT, 'Environment variable PORT is not set');
@@ -127,9 +135,11 @@ export class TelegramBot {
     } else {
       await this.bot.launch();
     }
+    logger.info('Bot launched');
   }
 
   public stop(reason: string) {
+    logger.info({ reason }, 'Stopping bot');
     this.bot.stop(reason);
   }
 }

@@ -1,6 +1,7 @@
 import { Context } from 'telegraf';
 
 import { DialogueManager } from '../services/DialogueManager';
+import logger from '../services/logger';
 import { Trigger, TriggerContext } from './Trigger';
 
 export class ReplyTrigger implements Trigger {
@@ -12,6 +13,7 @@ export class ReplyTrigger implements Trigger {
     const reply = (ctx.message as any)?.reply_to_message;
 
     if (reply?.from?.username === ctx.me) {
+      logger.debug({ chatId: context.chatId }, 'Reply trigger matched');
       return true;
     }
     return false;

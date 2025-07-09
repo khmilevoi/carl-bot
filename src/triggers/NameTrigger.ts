@@ -1,6 +1,7 @@
 import { Context } from 'telegraf';
 
 import { DialogueManager } from '../services/DialogueManager';
+import logger from '../services/logger';
 import { Trigger, TriggerContext } from './Trigger';
 
 export class NameTrigger implements Trigger {
@@ -16,6 +17,7 @@ export class NameTrigger implements Trigger {
     const text = context.text;
     if (this.pattern.test(text)) {
       context.text = text.replace(this.pattern, '').trim();
+      logger.debug({ chatId: context.chatId }, 'Name trigger matched');
       return true;
     }
     return false;

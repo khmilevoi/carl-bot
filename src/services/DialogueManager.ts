@@ -1,3 +1,5 @@
+import logger from './logger';
+
 export class DialogueManager {
   private timers = new Map<number, NodeJS.Timeout>();
 
@@ -10,15 +12,18 @@ export class DialogueManager {
     }
     const timer = setTimeout(() => {
       this.timers.delete(chatId);
+      logger.debug({ chatId }, 'Dialogue timed out');
     }, this.timeoutMs);
     this.timers.set(chatId, timer);
   }
 
   start(chatId: number) {
+    logger.debug({ chatId }, 'Starting dialogue');
     this.setTimer(chatId);
   }
 
   extend(chatId: number) {
+    logger.debug({ chatId }, 'Extending dialogue');
     this.setTimer(chatId);
   }
 
