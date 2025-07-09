@@ -36,6 +36,8 @@ export class TelegramBot {
       ctx.reply('Контекст диалога сброшен!');
     });
 
+    this.bot.command('ping', (ctx) => ctx.reply('pong'));
+
     this.bot.on('text', (ctx) => this.handleText(ctx));
   }
 
@@ -104,8 +106,19 @@ export class TelegramBot {
     });
   }
 
-  public launch() {
-    this.bot.launch();
+  public async launch() {
+    if (process.env.NODE_ENV === 'production') {
+      assert(process.env.DOMAIN, 'Environment variable DOMAIN is not set');
+      assert(process.env.PORT, 'Environment variable PORT is not set');
+      await this.bot.launch({
+        webhook: {
+          domain: process.env.DOMAIN,
+          port: Number(process.env.PORT),
+        },
+      });
+    } else {
+      await this.bot.launch();
+    }
   }
 
   public stop(reason: string) {
