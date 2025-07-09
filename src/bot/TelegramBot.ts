@@ -34,21 +34,45 @@ export class TelegramBot {
 
   private async handleText(ctx: Context) {
     const chatId = ctx.chat!.id as number;
+    const reply = (ctx.message as any).reply_to_message as any;
+    let replyText = '';
+    if (reply) {
+      if (typeof reply.text === 'string') {
+        replyText += `Текст пользователя на сообщение: "${reply.text}"`;
+      }
+      if (typeof reply.caption === 'string') {
+        if (replyText) {
+          replyText += '; ';
+        }
+        replyText += `Содержимое сообщения: "${reply.caption}"`;
+      }
+    }
+
     const context: TriggerContext = {
       text: (ctx.message as any).text as string,
-      replyText: '',
+      replyText,
       chatId,
     };
 
     const inDialogue = this.dialogue.isActive(chatId);
 
     let matched = false;
-    matched = this.mentionTrigger.apply(ctx, context, this.dialogue) || matched;
-    matched = this.replyTrigger.apply(ctx, context, this.dialogue) || matched;
-    matched = this.nameTrigger.apply(ctx, context, this.dialogue) || matched;
+    const triggers = [
+      this.mentionTrigger,
+      this.replyTrigger,
+      this.nameTrigger,
+    ];
+
+    for (const trigger of triggers) {
+      if (trigger.matches(ctx)) {
+        matched = trigger.apply(ctx, context, this.dialogue) || matched;
+      }
+    }
 
     if (!matched && !inDialogue) {
-      if (!this.keywordTrigger.apply(ctx, context, this.dialogue)) {
+      if (this.keywordTrigger.matches(ctx)) {
+        matched = this.keywordTrigger.apply(ctx, context, this.dialogue) || matched;
+      } else {
         return;
       }
     } else if (!matched && inDialogue) {
@@ -61,7 +85,7 @@ export class TelegramBot {
 
     let userPrompt = '';
     if (context.replyText) {
-      userPrompt += `Пользователь ответил на это сообщение: "${context.replyText}";`;
+      userPrompt += `${context.replyText}; `;
     }
     userPrompt += `Сообщение пользователя: "${context.text}";`;
 
