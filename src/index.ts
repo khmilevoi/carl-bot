@@ -13,7 +13,7 @@ if (!token || !apiKey) {
 
 const ai = new ChatGPTService(apiKey);
 const storage = new SQLiteMemoryStorage();
-const memories = new ChatMemoryManager(ai, storage, 20);
+const memories = new ChatMemoryManager(ai, storage, 100);
 
 const bot = new TelegramBot(token, ai, memories);
 
