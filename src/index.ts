@@ -1,6 +1,7 @@
 import 'dotenv/config';
 
 import { TelegramBot } from './bot/TelegramBot';
+import { JSONWhiteListChatFilter } from './services/ChatFilter';
 import { ChatGPTService } from './services/ChatGPTService';
 import { ChatMemoryManager } from './services/ChatMemory';
 import { SQLiteMemoryStorage } from './services/storage/SQLiteMemoryStorage';
@@ -14,8 +15,9 @@ if (!token || !apiKey) {
 const ai = new ChatGPTService(apiKey);
 const storage = new SQLiteMemoryStorage();
 const memories = new ChatMemoryManager(ai, storage, 100);
+const filter = new JSONWhiteListChatFilter('white_list.json');
 
-const bot = new TelegramBot(token, ai, memories);
+const bot = new TelegramBot(token, ai, memories, filter);
 
 bot.launch();
 
