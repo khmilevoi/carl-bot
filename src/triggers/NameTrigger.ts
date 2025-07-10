@@ -12,7 +12,7 @@ export class NameTrigger implements Trigger {
   apply(
     ctx: Context,
     context: TriggerContext,
-    dialogue: DialogueManager
+    _dialogue: DialogueManager
   ): boolean {
     const text = context.text;
     if (this.pattern.test(text)) {

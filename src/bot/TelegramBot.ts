@@ -84,15 +84,18 @@ export class TelegramBot {
 
     if (matched && !inDialogue) {
       this.dialogue.start(chatId);
+    } else if (!matched && inDialogue) {
+      this.dialogue.extend(chatId);
     }
 
-    if (!matched && !inDialogue) {
-      if (!this.keywordTrigger.apply(ctx, context, this.dialogue)) {
+    if (!matched) {
+      if (
+        !this.keywordTrigger.apply(ctx, context, this.dialogue) ||
+        inDialogue
+      ) {
         logger.debug({ chatId }, 'No trigger matched');
         return;
       }
-    } else if (!matched && inDialogue) {
-      this.dialogue.extend(chatId);
     }
 
     await ctx.sendChatAction('typing');

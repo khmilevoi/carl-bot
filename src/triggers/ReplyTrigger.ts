@@ -8,7 +8,7 @@ export class ReplyTrigger implements Trigger {
   apply(
     ctx: Context,
     context: TriggerContext,
-    dialogue: DialogueManager
+    _dialogue: DialogueManager
   ): boolean {
     const reply = (ctx.message as any)?.reply_to_message;
 

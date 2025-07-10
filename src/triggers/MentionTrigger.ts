@@ -8,7 +8,7 @@ export class MentionTrigger implements Trigger {
   apply(
     ctx: Context,
     context: TriggerContext,
-    dialogue: DialogueManager
+    _dialogue: DialogueManager
   ): boolean {
     const text = (ctx.message as any)?.text ?? '';
     if (text.includes(`@${ctx.me}`)) {
