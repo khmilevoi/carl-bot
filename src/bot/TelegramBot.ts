@@ -8,10 +8,10 @@ import { ChatFilter } from '../services/ChatFilter';
 import { ChatMemoryManager } from '../services/ChatMemory';
 import { DialogueManager } from '../services/DialogueManager';
 import logger from '../services/logger';
-import { KeywordTrigger } from '../triggers/KeywordTrigger';
 import { MentionTrigger } from '../triggers/MentionTrigger';
 import { NameTrigger } from '../triggers/NameTrigger';
 import { ReplyTrigger } from '../triggers/ReplyTrigger';
+import { StemDictTrigger } from '../triggers/StemDictTrigger';
 import { TriggerContext } from '../triggers/Trigger';
 
 export class TelegramBot {
@@ -20,7 +20,7 @@ export class TelegramBot {
   private mentionTrigger = new MentionTrigger();
   private replyTrigger = new ReplyTrigger();
   private nameTrigger = new NameTrigger('Карл');
-  private keywordTrigger = new KeywordTrigger('keywords.txt');
+  private keywordTrigger = new StemDictTrigger('keywords.json');
 
   constructor(
     token: string,

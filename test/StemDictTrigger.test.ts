@@ -4,15 +4,15 @@ import { join } from 'path';
 import { describe, expect, it } from 'vitest';
 
 import { DialogueManager } from '../src/services/DialogueManager';
-import { KeywordTrigger } from '../src/triggers/KeywordTrigger';
+import { StemDictTrigger } from '../src/triggers/StemDictTrigger';
 import { TriggerContext } from '../src/triggers/Trigger';
 
-describe('KeywordTrigger', () => {
-  const file = join(tmpdir(), 'keywords-test.txt');
-  writeFileSync(file, 'hello');
-  const trigger = new KeywordTrigger(file);
+describe('StemDictTrigger', () => {
+  const file = join(tmpdir(), 'keywords-test.json');
+  writeFileSync(file, JSON.stringify({ hello: ['hello'] }));
+  const trigger = new StemDictTrigger(file);
 
-  it('matches similar words', () => {
+  it('matches stemmed words', () => {
     const ctx: TriggerContext = {
       text: 'HeLLo there',
       replyText: '',
