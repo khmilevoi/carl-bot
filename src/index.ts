@@ -14,9 +14,9 @@ if (!token || !apiKey) {
   throw new Error('BOT_TOKEN and OPENAI_API_KEY are required');
 }
 
-const ai = new ChatGPTService(apiKey);
+const ai = new ChatGPTService(apiKey, 'gpt-4o', 'gpt-4o-mini');
 const storage = new SQLiteMemoryStorage();
-const memories = new ChatMemoryManager(ai, storage, 100);
+const memories = new ChatMemoryManager(ai, storage, 50);
 const filter = new JSONWhiteListChatFilter('white_list.json');
 
 const bot = new TelegramBot(token, ai, memories, filter);

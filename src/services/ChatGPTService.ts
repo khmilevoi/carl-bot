@@ -1,5 +1,6 @@
 import { readFile } from 'fs/promises';
 import OpenAI from 'openai';
+import { ChatModel } from 'openai/resources/shared';
 
 import { AIService, ChatMessage } from './AIService';
 import logger from './logger';
@@ -8,7 +9,11 @@ export class ChatGPTService implements AIService {
   private openai: OpenAI;
   private persona: string | null = null;
 
-  constructor(apiKey: string) {
+  constructor(
+    apiKey: string,
+    private readonly askModel: ChatModel,
+    private readonly summaryModel: ChatModel
+  ) {
     this.openai = new OpenAI({ apiKey });
     logger.debug('ChatGPTService initialized');
   }
@@ -43,7 +48,7 @@ export class ChatGPTService implements AIService {
     );
 
     const completion = await this.openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: this.askModel,
       messages,
     });
     logger.debug('Received chat completion response');
@@ -79,7 +84,7 @@ export class ChatGPTService implements AIService {
       content: `История диалога:\n${historyText}`,
     });
     const completion = await this.openai.chat.completions.create({
-      model: 'gpt-4o',
+      model: this.summaryModel,
       messages,
     });
     logger.debug('Received summary response');
