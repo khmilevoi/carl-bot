@@ -1,5 +1,3 @@
-import { Context } from 'telegraf';
-
 import { DialogueManager } from '../services/DialogueManager';
 
 export interface TriggerContext {
@@ -8,9 +6,15 @@ export interface TriggerContext {
   chatId: number;
 }
 
+export interface MessageContext {
+  text: string;
+  replyUsername?: string;
+  me: string;
+}
+
 export interface Trigger {
   apply(
-    ctx: Context,
+    ctx: MessageContext,
     context: TriggerContext,
     dialogue: DialogueManager
   ): boolean;

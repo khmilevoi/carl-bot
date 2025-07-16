@@ -1,9 +1,8 @@
 import { readFileSync } from 'fs';
-import { Context } from 'telegraf';
 
 import { DialogueManager } from '../services/DialogueManager';
 import logger from '../services/logger';
-import { Trigger, TriggerContext } from './Trigger';
+import { MessageContext, Trigger, TriggerContext } from './Trigger';
 
 export class KeywordTrigger implements Trigger {
   private keywords: string[];
@@ -36,7 +35,7 @@ export class KeywordTrigger implements Trigger {
   }
 
   apply(
-    ctx: Context,
+    _ctx: MessageContext,
     context: TriggerContext,
     _dialogue: DialogueManager
   ): boolean {
