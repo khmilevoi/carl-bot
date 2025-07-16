@@ -1,6 +1,7 @@
 import assert from 'node:assert';
 
 import { Context, Telegraf } from 'telegraf';
+import { message } from 'telegraf/filters';
 
 import { AIService } from '../services/AIService';
 import { ChatFilter } from '../services/ChatFilter';
@@ -41,7 +42,14 @@ export class TelegramBot {
 
     this.bot.command('ping', (ctx) => ctx.reply('pong'));
 
-    this.bot.on('text', (ctx) => this.handleText(ctx));
+    this.bot.on('message', (ctx) => {
+      logger.debug(
+        { message: ctx.message, chatId: ctx.chat?.id },
+        'Получено сообщение'
+      );
+    });
+
+    this.bot.on(message('text'), (ctx) => this.handleText(ctx));
   }
 
   private async handleText(ctx: Context) {
