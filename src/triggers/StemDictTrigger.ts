@@ -1,14 +1,10 @@
 import { readFileSync } from 'fs';
-import Snowball from 'node-snowball';
+import { PorterStemmerRu } from 'natural';
 import { Context } from 'telegraf';
 
 import { DialogueManager } from '../services/DialogueManager';
 import logger from '../services/logger';
 import { Trigger, TriggerContext } from './Trigger';
-
-const stemmer = Snowball as unknown as {
-  stemword: (w: string, lang?: string) => string;
-};
 
 type Dict = Record<string, string[]>;
 
@@ -20,7 +16,7 @@ export class StemDictTrigger implements Trigger {
 
     for (const [concept, words] of Object.entries(dict)) {
       for (const w of words) {
-        const stem = stemmer.stemword(w.toLowerCase(), 'russian');
+        const stem = PorterStemmerRu.stem(w.toLowerCase());
         this.stemsToConcept.set(stem, concept);
       }
     }
@@ -37,7 +33,7 @@ export class StemDictTrigger implements Trigger {
   ): boolean {
     const tokens = text.match(/\p{L}+/gu) || [];
     for (const t of tokens) {
-      const stem = stemmer.stemword(t.toLowerCase(), 'russian');
+      const stem = PorterStemmerRu.stem(t.toLowerCase());
       const concept = this.stemsToConcept.get(stem);
       if (concept) {
         logger.debug({ chatId, concept, stem }, 'Stem trigger matched');
