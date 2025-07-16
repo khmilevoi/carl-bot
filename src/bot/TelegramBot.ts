@@ -42,12 +42,12 @@ export class TelegramBot {
 
     this.bot.command('ping', (ctx) => ctx.reply('pong'));
 
-    this.bot.on('message', (ctx) => {
-      logger.debug(
-        { message: ctx.message, chatId: ctx.chat?.id },
-        'Получено сообщение'
-      );
-    });
+    // this.bot.on('message', (ctx) => {
+    //   logger.debug(
+    //     { message: ctx.message, chatId: ctx.chat?.id },
+    //     'Получено сообщение'
+    //   );
+    // });
 
     this.bot.on(message('text'), (ctx) => this.handleText(ctx));
   }
