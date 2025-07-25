@@ -47,4 +47,4 @@ VOLUME /data
 # Start the server by default, this can be overwritten at runtime
 EXPOSE 3000
 ENV DATABASE_URL="file:///data/memory.db"
-CMD [ "npm", "run", "start" ]
+CMD ["sh", "-c", "npm run migration:up && npm run start"]
