@@ -12,7 +12,7 @@ export class SQLiteMemoryStorage implements MemoryStorage {
     this.db = open({ filename, driver: sqlite3.Database }).then(async (db) => {
       logger.debug({ filename }, 'Initializing SQLite storage');
       await db.run(
-        'CREATE TABLE IF NOT EXISTS messages (chat_id INTEGER, role TEXT, content TEXT)'
+        'CREATE TABLE IF NOT EXISTS messages (chat_id INTEGER, role TEXT, content TEXT, username TEXT)'
       );
       await db.run(
         'CREATE TABLE IF NOT EXISTS summaries (chat_id INTEGER PRIMARY KEY, summary TEXT)'
@@ -28,15 +28,17 @@ export class SQLiteMemoryStorage implements MemoryStorage {
   async addMessage(
     chatId: number,
     role: 'user' | 'assistant',
-    content: string
+    content: string,
+    username?: string
   ) {
     logger.debug({ chatId, role }, 'Inserting message into database');
     const db = await this.getDb();
     await db.run(
-      'INSERT INTO messages (chat_id, role, content) VALUES (?, ?, ?)',
+      'INSERT INTO messages (chat_id, role, content, username) VALUES (?, ?, ?, ?)',
       chatId,
       role,
-      content
+      content,
+      username ?? null
     );
   }
 
@@ -44,7 +46,7 @@ export class SQLiteMemoryStorage implements MemoryStorage {
     logger.debug({ chatId }, 'Fetching messages from database');
     const db = await this.getDb();
     const rows = await db.all<ChatMessage[]>(
-      'SELECT role, content FROM messages WHERE chat_id = ? ORDER BY rowid',
+      'SELECT role, content, username FROM messages WHERE chat_id = ? ORDER BY rowid',
       chatId
     );
     return rows ?? [];

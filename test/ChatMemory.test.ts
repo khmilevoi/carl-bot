@@ -21,16 +21,18 @@ describe('ChatMemory', () => {
   });
 
   it('summarizes when history exceeds limit', async () => {
-    await memory.addMessage('user', 'm1');
-    await memory.addMessage('assistant', 'm2');
-    await memory.addMessage('user', 'm3');
+    await memory.addMessage('user', 'm1', 'u1');
+    await memory.addMessage('assistant', 'm2', 'bot');
+    await memory.addMessage('user', 'm3', 'u1');
     // No summary yet
     expect(ai.summarize).not.toHaveBeenCalled();
 
-    await memory.addMessage('assistant', 'm4');
+    await memory.addMessage('assistant', 'm4', 'bot');
     expect(ai.summarize).toHaveBeenCalledOnce();
     expect(await memory.getSummary()).toBe('summary');
     const hist = await memory.getHistory();
-    expect(hist).toEqual([{ role: 'assistant', content: 'm4' }]);
+    expect(hist).toEqual([
+      { role: 'assistant', content: 'm4', username: 'bot' },
+    ]);
   });
 });

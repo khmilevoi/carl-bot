@@ -21,3 +21,11 @@
   - `npm run format:fix` – format files
   - `npm run prepare` – set up Git hooks
 - Do not commit `node_modules` or `package-lock.json`.
+
+## Troubleshooting
+
+- `npm run build` may fail with `swc: not found`. Run `npm install` to install
+  dependencies before building.
+- You might see `npm warn Unknown env config "http-proxy"` during npm commands.
+  If this happens, remove or unset the `http-proxy` npm config with
+  `npm config delete http-proxy`.

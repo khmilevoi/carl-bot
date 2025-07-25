@@ -117,14 +117,14 @@ export class TelegramBot {
     }
     userPrompt += `Сообщение пользователя: "${context.text}";`;
 
-    await memory.addMessage('user', userPrompt);
+    await memory.addMessage('user', userPrompt, ctx.from?.username);
 
     const answer = await this.ai.ask(
       await memory.getHistory(),
       await memory.getSummary()
     );
     logger.debug({ chatId }, 'Answer generated');
-    await memory.addMessage('assistant', answer);
+    await memory.addMessage('assistant', answer, ctx.me);
 
     ctx.reply(answer, {
       reply_parameters: { message_id: (ctx.message as any).message_id },
