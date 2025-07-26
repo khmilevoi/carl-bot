@@ -4,18 +4,19 @@ import { MemoryStorage } from './MemoryStorage.interface';
 export class InMemoryStorage implements MemoryStorage {
   private messages = new Map<
     number,
-    { role: 'user' | 'assistant'; content: string }[]
+    { role: 'user' | 'assistant'; content: string; username?: string }[]
   >();
   private summaries = new Map<number, string>();
 
   async addMessage(
     chatId: number,
     role: 'user' | 'assistant',
-    content: string
+    content: string,
+    username?: string
   ) {
     logger.debug({ chatId, role }, 'Storing message in memory');
     const list = this.messages.get(chatId) ?? [];
-    list.push({ role, content });
+    list.push({ role, content, username });
     this.messages.set(chatId, list);
   }
 
