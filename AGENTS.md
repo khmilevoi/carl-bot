@@ -20,6 +20,8 @@
   - `npm run format` – verify formatting
   - `npm run format:fix` – format files
   - `npm run prepare` – set up Git hooks
+  - `npm run migration:up` – apply database migrations
+  - `npm run migration:down` – revert the last migration
 - Do not commit `node_modules` or `package-lock.json`.
 
 ## Troubleshooting
@@ -29,3 +31,5 @@
 - You might see `npm warn Unknown env config "http-proxy"` during npm commands.
   If this happens, remove or unset the `http-proxy` npm config with
   `npm config delete http-proxy`.
+- `npm test` starts Vitest in watch mode. Press `q` to quit or run
+  `npm test -- --run` for a single run.

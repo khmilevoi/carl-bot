@@ -13,7 +13,9 @@
     "lint:fix": "npm run lint -- --fix",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "migration:up": "node -r @swc-node/register src/migrate.ts up",
+    "migration:down": "node -r @swc-node/register src/migrate.ts down"
   },
   "keywords": [],
   "author": "",
