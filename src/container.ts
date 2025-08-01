@@ -3,9 +3,15 @@ import 'reflect-metadata';
 import { Container } from 'inversify';
 
 import { TelegramBot } from './bot/TelegramBot';
-import { JSONWhiteListChatFilter } from './services/ChatFilter';
-import { ChatGPTService } from './services/ChatGPTService';
-import { ChatMemoryManager } from './services/ChatMemory';
+import { AIService } from './services/ai/AIService';
+import { ChatGPTService } from './services/ai/ChatGPTService';
+import {
+  ChatFilter,
+  JSONWhiteListChatFilter,
+} from './services/chat/ChatFilter';
+import { ChatMemoryManager } from './services/chat/ChatMemory';
+import { SERVICE_ID } from './services/identifiers';
+import { MemoryStorage } from './services/storage/MemoryStorage.interface';
 import { SQLiteMemoryStorage } from './services/storage/SQLiteMemoryStorage';
 import { parseDatabaseUrl } from './utils/database';
 
@@ -20,35 +26,37 @@ if (!token || !apiKey) {
 }
 
 container
-  .bind(ChatGPTService)
+  .bind(SERVICE_ID.AIService)
   .toDynamicValue(() => new ChatGPTService(apiKey, 'o3', 'gpt-4o-mini'))
   .inSingletonScope();
 
 container
-  .bind(SQLiteMemoryStorage)
+  .bind(SERVICE_ID.MemoryStorage)
   .toDynamicValue(() => new SQLiteMemoryStorage(dbFileName))
   .inSingletonScope();
 
 container
-  .bind(ChatMemoryManager)
+  .bind(SERVICE_ID.ChatMemoryManager)
   .toDynamicValue(() => {
-    const ai = container.get(ChatGPTService);
-    const storage = container.get(SQLiteMemoryStorage);
+    const ai = container.get<AIService>(SERVICE_ID.AIService);
+    const storage = container.get<MemoryStorage>(SERVICE_ID.MemoryStorage);
     return new ChatMemoryManager(ai, storage, 50);
   })
   .inSingletonScope();
 
 container
-  .bind(JSONWhiteListChatFilter)
+  .bind(SERVICE_ID.ChatFilter)
   .toDynamicValue(() => new JSONWhiteListChatFilter('white_list.json'))
   .inSingletonScope();
 
 container
-  .bind(TelegramBot)
+  .bind(SERVICE_ID.TelegramBot)
   .toDynamicValue(() => {
-    const ai = container.get(ChatGPTService);
-    const memories = container.get(ChatMemoryManager);
-    const filter = container.get(JSONWhiteListChatFilter);
+    const ai = container.get<AIService>(SERVICE_ID.AIService);
+    const memories = container.get<ChatMemoryManager>(
+      SERVICE_ID.ChatMemoryManager
+    );
+    const filter = container.get<ChatFilter>(SERVICE_ID.ChatFilter);
     return new TelegramBot(token, ai, memories, filter);
   })
   .inSingletonScope();

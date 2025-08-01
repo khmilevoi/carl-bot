@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { injectable } from 'inversify';
 import { resolve } from 'path';
 
-import logger from './logger';
+import logger from '../logging/logger';
 
 export interface ChatFilter {
   isAllowed(chatId: number): boolean;

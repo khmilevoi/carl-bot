@@ -1,7 +1,7 @@
 import { Context } from 'telegraf';
 
-import { DialogueManager } from '../services/DialogueManager';
-import logger from '../services/logger';
+import { DialogueManager } from '../services/chat/DialogueManager';
+import logger from '../services/logging/logger';
 import { Trigger, TriggerContext } from './Trigger';
 
 export class ReplyTrigger implements Trigger {

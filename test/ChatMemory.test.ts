@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AIService, ChatMessage } from '../src/services/AIService';
-import { ChatMemory } from '../src/services/ChatMemory';
+import { AIService, ChatMessage } from '../src/services/ai/AIService';
+import { ChatMemory } from '../src/services/chat/ChatMemory';
 import { InMemoryStorage } from '../src/services/storage/InMemoryStorage';
 
 class FakeAI implements AIService {
