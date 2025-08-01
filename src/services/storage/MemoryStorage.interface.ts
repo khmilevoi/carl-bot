@@ -15,3 +15,9 @@ export interface MemoryStorage {
   setSummary(chatId: number, summary: string): Promise<void>;
   reset(chatId: number): Promise<void>;
 }
+
+import type { ServiceIdentifier } from 'inversify';
+
+export const MEMORY_STORAGE_ID = Symbol.for(
+  'MemoryStorage'
+) as ServiceIdentifier<MemoryStorage>;

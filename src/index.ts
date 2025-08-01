@@ -2,10 +2,9 @@ import 'dotenv/config';
 
 import { TelegramBot } from './bot/TelegramBot';
 import container from './container';
-import { SERVICE_ID } from './services/identifiers';
 import logger from './services/logging/logger';
 
-const bot = container.get<TelegramBot>(SERVICE_ID.TelegramBot);
+const bot = container.get<TelegramBot>(TelegramBot);
 
 logger.info('Starting application');
 bot.launch();

@@ -8,6 +8,12 @@ export interface ChatFilter {
   isAllowed(chatId: number): boolean;
 }
 
+import type { ServiceIdentifier } from 'inversify';
+
+export const CHAT_FILTER_ID = Symbol.for(
+  'ChatFilter'
+) as ServiceIdentifier<ChatFilter>;
+
 @injectable()
 export class JSONWhiteListChatFilter implements ChatFilter {
   private ids = new Set<number>();
