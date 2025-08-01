@@ -14,6 +14,23 @@ import { ReplyTrigger } from '../triggers/ReplyTrigger';
 import { StemDictTrigger } from '../triggers/StemDictTrigger';
 import { TriggerContext } from '../triggers/Trigger';
 
+// Хелпер-обёртка: показывает "typing…" всё время работы колбэка
+async function withTyping(ctx: Context, fn: () => Promise<void>) {
+  // запускаем индикатор сразу
+  await ctx.sendChatAction('typing');
+
+  // каждые 4 с шлём ещё один, пока задача не кончится
+  const timer = setInterval(() => {
+    ctx.telegram.sendChatAction(ctx.chat!.id, 'typing').catch(() => {});
+  }, 4000);
+
+  try {
+    await fn(); // ваша долгая логика — запрос к БД, API и т.д.
+  } finally {
+    clearInterval(timer); // убираем таймер даже при ошибке
+  }
+}
+
 export class TelegramBot {
   private bot: Telegraf;
   private dialogue = new DialogueManager(60 * 1000);
@@ -106,30 +123,31 @@ export class TelegramBot {
       }
     }
 
-    await ctx.sendChatAction('typing');
-    logger.debug({ chatId }, 'Generating answer');
+    await withTyping(ctx, async () => {
+      logger.debug({ chatId }, 'Generating answer');
 
-    const memory = this.memories.get(chatId);
+      const memory = this.memories.get(chatId);
 
-    let userPrompt = '';
-    if (context.replyText) {
-      userPrompt += `"${context.replyText}";`;
-    }
-    userPrompt += `Сообщение пользователя: "${context.text}";`;
+      let userPrompt = '';
+      if (context.replyText) {
+        userPrompt += `"${context.replyText}";`;
+      }
+      userPrompt += `Сообщение пользователя: "${context.text}";`;
 
-    await memory.addMessage('user', userPrompt, ctx.from?.username);
+      await memory.addMessage('user', userPrompt, ctx.from?.username);
 
-    const answer = await this.ai.ask(
-      await memory.getHistory(),
-      await memory.getSummary()
-    );
-    logger.debug({ chatId }, 'Answer generated');
-    await memory.addMessage('assistant', answer, ctx.me);
+      const answer = await this.ai.ask(
+        await memory.getHistory(),
+        await memory.getSummary()
+      );
+      logger.debug({ chatId }, 'Answer generated');
+      await memory.addMessage('assistant', answer, ctx.me);
 
-    ctx.reply(answer, {
-      reply_parameters: { message_id: (ctx.message as any).message_id },
+      ctx.reply(answer, {
+        reply_parameters: { message_id: (ctx.message as any).message_id },
+      });
+      logger.debug({ chatId }, 'Reply sent');
     });
-    logger.debug({ chatId }, 'Reply sent');
   }
 
   public async launch() {
