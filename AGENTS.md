@@ -33,3 +33,6 @@
   `npm config delete http-proxy`.
 - `npm test` starts Vitest in watch mode. Press `q` to quit or run
   `npm test -- --run` for a single run.
+- If migrations fail because the existing database lacks the `migrations`
+  table, the migration script will remove `memory.db` and recreate it
+  automatically.

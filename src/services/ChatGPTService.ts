@@ -44,7 +44,10 @@ export class ChatGPTService implements AIService {
     }
 
     messages.push(
-      ...history.map((m) => ({ role: m.role, content: m.content }))
+      ...history.map((m) => ({
+        role: m.role,
+        content: m.username ? `@${m.username}: ${m.content}` : m.content,
+      }))
     );
 
     const completion = await this.openai.chat.completions.create({
