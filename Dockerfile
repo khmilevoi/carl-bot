@@ -20,16 +20,12 @@ ENV NODE_ENV=production
 FROM base AS build
 
 # --- tooling required to compile native deps & build sources
-RUN apt-get update -qq \
-    && apt-get install --no-install-recommends -y \
-    build-essential \
-    python-is-python3 \
-    pkg-config \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -qq && \
+    apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3
 
 # --- install *all* deps (dev+prod) so that TS/SWC can compile
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --include=dev
 
 # --- copy sources & transpile to dist/
 COPY . .
@@ -44,7 +40,8 @@ FROM base AS runtime
 # --- copy only pruned node_modules + built app
 COPY --from=build /app /app
 
-# --- sqlite volume (уберите, если не нужен)
+# --- sqlite volume
+RUN mkdir -p /data
 VOLUME /data
 ENV DATABASE_URL="file:///data/memory.db"
 
