@@ -16,7 +16,7 @@ interface Migration {
 }
 
 const databaseUrl = process.env.DATABASE_URL;
-const filename = databaseUrl?.replace(/^file:\/\/\//, '');
+const filename = databaseUrl?.replace(/^file:\/\/\//, '') as string;
 
 assert(!!filename, 'DATABASE_URL is required');
 
