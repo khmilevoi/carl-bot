@@ -3,7 +3,7 @@
     "parser": {
       "syntax": "typescript",
       "tsx": false,
-      "decorators": false
+      "decorators": true
     },
     "target": "es2016"
   },

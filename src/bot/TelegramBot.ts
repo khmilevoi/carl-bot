@@ -1,5 +1,6 @@
 import assert from 'node:assert';
 
+import { injectable } from 'inversify';
 import { Context, Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
 
@@ -14,6 +15,7 @@ import { ReplyTrigger } from '../triggers/ReplyTrigger';
 import { StemDictTrigger } from '../triggers/StemDictTrigger';
 import { TriggerContext } from '../triggers/Trigger';
 
+@injectable()
 export class TelegramBot {
   private bot: Telegraf;
   private dialogue = new DialogueManager(60 * 1000);

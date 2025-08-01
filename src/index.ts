@@ -1,32 +1,10 @@
 import 'dotenv/config';
 
 import { TelegramBot } from './bot/TelegramBot';
-import { JSONWhiteListChatFilter } from './services/ChatFilter';
-import { ChatGPTService } from './services/ChatGPTService';
-import { ChatMemoryManager } from './services/ChatMemory';
+import container from './container';
 import logger from './services/logger';
-import { SQLiteMemoryStorage } from './services/storage/SQLiteMemoryStorage';
 
-const token = process.env.BOT_TOKEN;
-const apiKey = process.env.OPENAI_API_KEY;
-const dbFileName = process.env.DB_FILE_NAME;
-
-if (!token || !apiKey) {
-  logger.error('BOT_TOKEN and OPENAI_API_KEY are required');
-  throw new Error('BOT_TOKEN and OPENAI_API_KEY are required');
-}
-
-if (!dbFileName) {
-  logger.error('DB_FILE_NAME is required');
-  throw new Error('DB_FILE_NAME is required');
-}
-
-const ai = new ChatGPTService(apiKey, 'o3', 'gpt-4o-mini');
-const storage = new SQLiteMemoryStorage();
-const memories = new ChatMemoryManager(ai, storage, 5);
-const filter = new JSONWhiteListChatFilter('white_list.json');
-
-const bot = new TelegramBot(token, ai, memories, filter);
+const bot = container.get(TelegramBot);
 
 logger.info('Starting application');
 bot.launch();

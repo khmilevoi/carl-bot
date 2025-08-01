@@ -1,7 +1,10 @@
+import { injectable } from 'inversify';
+
 import { AIService, ChatMessage } from './AIService';
 import logger from './logger';
 import { MemoryStorage } from './storage/MemoryStorage.interface';
 
+@injectable()
 export class ChatMemory {
   constructor(
     private gpt: AIService,
@@ -38,6 +41,7 @@ export class ChatMemory {
   }
 }
 
+@injectable()
 export class ChatMemoryManager {
   constructor(
     private gpt: AIService,
