@@ -1,10 +1,12 @@
 import { readFile } from 'fs/promises';
+import { injectable } from 'inversify';
 import OpenAI from 'openai';
 import { ChatModel } from 'openai/resources/shared';
 
 import { AIService, ChatMessage } from './AIService';
 import logger from './logger';
 
+@injectable()
 export class ChatGPTService implements AIService {
   private openai: OpenAI;
   private persona: string | null = null;

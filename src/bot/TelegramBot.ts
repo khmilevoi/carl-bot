@@ -1,5 +1,6 @@
 import assert from 'node:assert';
 
+import { injectable } from 'inversify';
 import { Context, Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
 
@@ -31,6 +32,7 @@ async function withTyping(ctx: Context, fn: () => Promise<void>) {
   }
 }
 
+@injectable()
 export class TelegramBot {
   private bot: Telegraf;
   private dialogue = new DialogueManager(60 * 1000);

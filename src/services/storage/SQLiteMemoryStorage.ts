@@ -1,3 +1,4 @@
+import { injectable } from 'inversify';
 import { Database, open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 
@@ -5,6 +6,7 @@ import { ChatMessage } from '../AIService';
 import logger from '../logger';
 import { MemoryStorage } from './MemoryStorage.interface';
 
+@injectable()
 export class SQLiteMemoryStorage implements MemoryStorage {
   private db: Promise<Database>;
 

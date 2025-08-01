@@ -1,4 +1,5 @@
 import { readFileSync } from 'fs';
+import { injectable } from 'inversify';
 import { resolve } from 'path';
 
 import logger from './logger';
@@ -7,6 +8,7 @@ export interface ChatFilter {
   isAllowed(chatId: number): boolean;
 }
 
+@injectable()
 export class JSONWhiteListChatFilter implements ChatFilter {
   private ids = new Set<number>();
 
