@@ -1,3 +1,4 @@
+import { readFileSync } from 'fs';
 import { readFile } from 'fs/promises';
 import { injectable } from 'inversify';
 
@@ -7,8 +8,26 @@ import { PromptService } from './PromptService';
 @injectable()
 export class FilePromptService implements PromptService {
   private persona: string | null = null;
+  private askSummaryTemplate: string;
+  private summarizationSystemTemplate: string;
+  private previousSummaryTemplate: string;
+  private userPromptTemplate: string;
 
-  constructor(private personaFile = 'persona.md') {}
+  constructor(
+    private personaFile = 'persona.md',
+    askSummaryFile = 'prompts/ask_summary_prompt.txt',
+    summarizationSystemFile = 'prompts/summarization_system_prompt.txt',
+    previousSummaryFile = 'prompts/previous_summary_prompt.txt',
+    userPromptFile = 'prompts/user_prompt.txt'
+  ) {
+    this.askSummaryTemplate = readFileSync(askSummaryFile, 'utf-8');
+    this.summarizationSystemTemplate = readFileSync(
+      summarizationSystemFile,
+      'utf-8'
+    );
+    this.previousSummaryTemplate = readFileSync(previousSummaryFile, 'utf-8');
+    this.userPromptTemplate = readFileSync(userPromptFile, 'utf-8');
+  }
 
   private async loadPersona(): Promise<string> {
     if (!this.persona) {
@@ -23,23 +42,23 @@ export class FilePromptService implements PromptService {
   }
 
   getAskSummaryPrompt(summary: string): string {
-    return `Краткая сводка предыдущего диалога: ${summary}`;
+    return this.askSummaryTemplate.replace('{{summary}}', summary);
   }
 
   getSummarizationSystemPrompt(): string {
-    return `Создай детальный анализ диалога для дальнейшего использования в качестве системного промпта:\n\nОБЩИЙ САММАРИ ЧАТА:\n- Ключевые темы и вопросы, обсуждаемые в чате\n- Общий тон и атмосфера беседы\n- Важные решения или выводы, принятые группой\n\nНОВЫЕ ИСТИНЫ (если бот отметил что-то как новую истину):\n- Выдели и сохрани все новые истины, которые бот пометил специально\n- Запиши их в отдельный раздел для последующего использования\n\nАНАЛИЗ КАЖДОГО ПОЛЬЗОВАТЕЛЯ:\nДля каждого участника укажи:\n- Имя/ID пользователя\n- Взгляды и убеждения: какие позиции занимает, что поддерживает/критикует\n- Стиль общения: формальный/неформальный, агрессивный/дружелюбный, краткий/подробный\n- Роль в беседе: лидер, участник, наблюдатель, эксперт и т.д.\n- Ключевые высказывания и аргументы\n- Эмоциональный окрас сообщений\n\nФОРМАТ:\n- Используй маркированные списки для структурирования\n- Сохраняй краткость, но не теряй важные детали\n- Не добавляй интерпретаций, только факты и наблюдения`;
+    return this.summarizationSystemTemplate;
   }
 
   getPreviousSummaryPrompt(prev: string): string {
-    return `Вот предыдущее резюме. Сохрани только действительно важные элементы, убери повторы и незначимые детали:\n${prev}`;
+    return this.previousSummaryTemplate.replace('{{prev}}', prev);
   }
 
   getUserPrompt(text: string, replyText?: string): string {
-    let prompt = '';
-    if (replyText) {
-      prompt += `Пользователь ответил на: ${replyText}; `;
-    }
-    prompt += `Сообщение пользователя: "${text}";`;
-    return prompt;
+    const replySection = replyText
+      ? `Пользователь ответил на: ${replyText}; `
+      : '';
+    return this.userPromptTemplate
+      .replace('{{replySection}}', replySection)
+      .replace('{{text}}', text);
   }
 }
