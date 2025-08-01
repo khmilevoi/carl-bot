@@ -16,7 +16,8 @@
     "format:fix": "prettier --write .",
     "prepare": "husky install",
     "migration:up": "node -r @swc-node/register src/migrate.ts up",
-    "migration:down": "node -r @swc-node/register src/migrate.ts down"
+    "migration:down": "node -r @swc-node/register src/migrate.ts down",
+    "migration:check": "node -r @swc-node/register src/migrate.ts check"
   },
   "keywords": [],
   "author": "",

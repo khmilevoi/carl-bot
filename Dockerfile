@@ -40,6 +40,20 @@ FROM base AS runtime
 # --- copy only pruned node_modules + built app
 COPY --from=build /app /app
 
+# --- create entrypoint script
+RUN echo '#!/bin/sh\n\
+# Проверяем, существует ли база данных и таблица migrations\n\
+if [ ! -f /data/memory.db ] || ! node dist/migrate.js check 2>/dev/null; then\n\
+  echo "Выполняем миграции..."\n\
+  node dist/migrate.js up\n\
+else\n\
+  echo "Миграции уже выполнены, пропускаем"\n\
+fi\n\
+\n\
+echo "Запускаем приложение..."\n\
+exec node dist/index.js\n\
+' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
+
 # --- sqlite volume
 RUN mkdir -p /data
 VOLUME /data
@@ -48,5 +62,5 @@ ENV DATABASE_URL="file:///data/memory.db"
 # --- app listens here
 EXPOSE 3000
 
-# --- launch: миграция + сервер (оба уже JS)
-CMD ["sh", "-c", "node dist/migrate.js up && node dist/index.js"]
+# --- launch: entrypoint script
+CMD ["/app/entrypoint.sh"]
