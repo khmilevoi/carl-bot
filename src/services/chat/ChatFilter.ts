@@ -2,11 +2,17 @@ import { readFileSync } from 'fs';
 import { injectable } from 'inversify';
 import { resolve } from 'path';
 
-import logger from './logger';
+import logger from '../logging/logger';
 
 export interface ChatFilter {
   isAllowed(chatId: number): boolean;
 }
+
+import type { ServiceIdentifier } from 'inversify';
+
+export const CHAT_FILTER_ID = Symbol.for(
+  'ChatFilter'
+) as ServiceIdentifier<ChatFilter>;
 
 @injectable()
 export class JSONWhiteListChatFilter implements ChatFilter {

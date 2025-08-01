@@ -4,11 +4,11 @@ import { injectable } from 'inversify';
 import { Context, Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
 
-import { AIService } from '../services/AIService';
-import { ChatFilter } from '../services/ChatFilter';
-import { ChatMemoryManager } from '../services/ChatMemory';
-import { DialogueManager } from '../services/DialogueManager';
-import logger from '../services/logger';
+import { AIService } from '../services/ai/AIService';
+import { ChatFilter } from '../services/chat/ChatFilter';
+import { ChatMemoryManager } from '../services/chat/ChatMemory';
+import { DialogueManager } from '../services/chat/DialogueManager';
+import logger from '../services/logging/logger';
 import { MentionTrigger } from '../triggers/MentionTrigger';
 import { NameTrigger } from '../triggers/NameTrigger';
 import { ReplyTrigger } from '../triggers/ReplyTrigger';

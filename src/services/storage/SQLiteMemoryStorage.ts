@@ -2,8 +2,8 @@ import { injectable } from 'inversify';
 import { Database, open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 
-import { ChatMessage } from '../AIService';
-import logger from '../logger';
+import { ChatMessage } from '../ai/AIService';
+import logger from '../logging/logger';
 import { MemoryStorage } from './MemoryStorage.interface';
 
 @injectable()

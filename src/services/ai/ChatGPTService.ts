@@ -3,8 +3,8 @@ import { injectable } from 'inversify';
 import OpenAI from 'openai';
 import { ChatModel } from 'openai/resources/shared';
 
+import logger from '../logging/logger';
 import { AIService, ChatMessage } from './AIService';
-import logger from './logger';
 
 @injectable()
 export class ChatGPTService implements AIService {

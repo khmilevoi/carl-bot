@@ -55,8 +55,8 @@ npm run test:coverage
 
 - `src/index.ts` — точка входа приложения.
 - `src/bot/TelegramBot.ts` — логика бота и обработка сообщений.
-- `src/services/ChatGPTService.ts` — взаимодействие c OpenAI.
-- `src/services/ChatMemory.ts` — хранение истории и ее суммаризация.
+- `src/services/ai/ChatGPTService.ts` — взаимодействие c OpenAI.
+- `src/services/chat/ChatMemory.ts` — хранение истории и ее суммаризация.
 - `dist/` — собранные файлы.
 
 Репозиторий полностью базируется на npm и TypeScript.

@@ -7,7 +7,7 @@ import { join } from 'path';
 import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 
-import logger from './services/logger';
+import logger from './services/logging/logger';
 import { parseDatabaseUrl } from './utils/database';
 
 interface Migration {

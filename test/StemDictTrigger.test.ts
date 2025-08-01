@@ -3,7 +3,7 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { describe, expect, it } from 'vitest';
 
-import { DialogueManager } from '../src/services/DialogueManager';
+import { DialogueManager } from '../src/services/chat/DialogueManager';
 import { StemDictTrigger } from '../src/triggers/StemDictTrigger';
 import { TriggerContext } from '../src/triggers/Trigger';
 
