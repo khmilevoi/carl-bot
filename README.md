@@ -47,6 +47,8 @@
 ```bash
 npm exec tsc
 npm test
+npm run test:watch
+npm run test:coverage
 ```
 
 ## Структура проекта
