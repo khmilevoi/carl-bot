@@ -7,52 +7,50 @@ import { JSONWhiteListChatFilter } from './services/ChatFilter';
 import { ChatGPTService } from './services/ChatGPTService';
 import { ChatMemoryManager } from './services/ChatMemory';
 import { SQLiteMemoryStorage } from './services/storage/SQLiteMemoryStorage';
+import { parseDatabaseUrl } from './utils/database';
 
 export const container = new Container();
 
 const token = process.env.BOT_TOKEN;
 const apiKey = process.env.OPENAI_API_KEY;
-const dbFileName = process.env.DB_FILE_NAME;
+const dbFileName = parseDatabaseUrl(process.env.DATABASE_URL);
 
 if (!token || !apiKey) {
   throw new Error('BOT_TOKEN and OPENAI_API_KEY are required');
-}
-
-if (!dbFileName) {
-  throw new Error('DB_FILE_NAME is required');
 }
 
 container
   .bind(ChatGPTService)
   .toDynamicValue(() => new ChatGPTService(apiKey, 'o3', 'gpt-4o-mini'))
   .inSingletonScope();
-container.bind(SQLiteMemoryStorage).toSelf().inSingletonScope();
+
+container
+  .bind(SQLiteMemoryStorage)
+  .toDynamicValue(() => new SQLiteMemoryStorage(dbFileName))
+  .inSingletonScope();
+
 container
   .bind(ChatMemoryManager)
-  .toDynamicValue(
-    (ctx) =>
-      new ChatMemoryManager(
-        ctx.container.get(ChatGPTService),
-        ctx.container.get(SQLiteMemoryStorage),
-        5
-      )
-  )
+  .toDynamicValue(() => {
+    const ai = container.get(ChatGPTService);
+    const storage = container.get(SQLiteMemoryStorage);
+    return new ChatMemoryManager(ai, storage, 50);
+  })
   .inSingletonScope();
+
 container
   .bind(JSONWhiteListChatFilter)
   .toDynamicValue(() => new JSONWhiteListChatFilter('white_list.json'))
   .inSingletonScope();
+
 container
   .bind(TelegramBot)
-  .toDynamicValue(
-    (ctx) =>
-      new TelegramBot(
-        token,
-        ctx.container.get(ChatGPTService),
-        ctx.container.get(ChatMemoryManager),
-        ctx.container.get(JSONWhiteListChatFilter)
-      )
-  )
+  .toDynamicValue(() => {
+    const ai = container.get(ChatGPTService);
+    const memories = container.get(ChatMemoryManager);
+    const filter = container.get(JSONWhiteListChatFilter);
+    return new TelegramBot(token, ai, memories, filter);
+  })
   .inSingletonScope();
 
 export default container;
