@@ -1,50 +1,55 @@
-# syntax = docker/dockerfile:1
+# syntax=docker/dockerfile:1
 
-# Adjust NODE_VERSION as desired
+# --------------------------------------------------------
+# Build‑once, run‑anywhere Dockerfile for Fly.io / Node.js
+# --------------------------------------------------------
+# 1)  Builds TypeScript/SWC → plain JS during image build
+# 2)  Prunes dev‑dependencies ➜ tiny production image
+# 3)  Runs pre‑compiled JS, so @swc‑node/register не нужен
+# --------------------------------------------------------
+
 ARG NODE_VERSION=20.18.0
+
+########################  Base image  ########################
 FROM node:${NODE_VERSION}-slim AS base
-
 LABEL fly_launch_runtime="Node.js"
-
-# Node.js app lives here
 WORKDIR /app
+ENV NODE_ENV=production
 
-# Set production environment
-ENV NODE_ENV="production"
-
-
-# Throw-away build stage to reduce size of final image
+########################  Build stage  #######################
 FROM base AS build
 
-# Install packages needed to build node modules
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3
+# --- tooling required to compile native deps & build sources
+RUN apt-get update -qq \
+    && apt-get install --no-install-recommends -y \
+    build-essential \
+    python-is-python3 \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install node modules
-COPY package-lock.json package.json ./
-RUN npm ci --include=dev
+# --- install *all* deps (dev+prod) so that TS/SWC can compile
+COPY package.json package-lock.json ./
+RUN npm ci
 
-# Copy application code
+# --- copy sources & transpile to dist/
 COPY . .
+RUN npm run build   # предполагает, что output = ./dist
 
-# Build application
-RUN npm run build
-
-# Remove development dependencies
+# --- drop dev‑deps to shrink final layer
 RUN npm prune --omit=dev
 
+#######################  Runtime stage  ######################
+FROM base AS runtime
 
-# Final stage for app image
-FROM base
-
-# Copy built application
+# --- copy only pruned node_modules + built app
 COPY --from=build /app /app
 
-# Setup sqlite3 on a separate volume
-RUN mkdir -p /data
+# --- sqlite volume (уберите, если не нужен)
 VOLUME /data
-
-# Start the server by default, this can be overwritten at runtime
-EXPOSE 3000
 ENV DATABASE_URL="file:///data/memory.db"
-CMD ["sh", "-c", "npm run migration:up && npm run start"]
+
+# --- app listens here
+EXPOSE 3000
+
+# --- launch: миграция + сервер (оба уже JS)
+CMD ["sh", "-c", "node dist/migrate.js up && node dist/index.js"]

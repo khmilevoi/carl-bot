@@ -15,9 +15,10 @@ interface Migration {
   down: string;
 }
 
-const filename = process.env.DB_FILE_NAME as string;
+const databaseUrl = process.env.DATABASE_URL;
+const filename = databaseUrl?.replace(/^file:\/\/\//, '');
 
-assert(!!filename, 'DB_FILE_NAME is required');
+assert(!!filename, 'DATABASE_URL is required');
 
 function loadMigrations(dir = 'migrations'): Migration[] {
   logger.info({ dir }, 'Загрузка миграций из директории');
