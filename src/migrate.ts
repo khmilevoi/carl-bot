@@ -8,6 +8,7 @@ import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 
 import logger from './services/logger';
+import { parseDatabaseUrl } from './utils/database';
 
 interface Migration {
   id: string;
@@ -15,9 +16,7 @@ interface Migration {
   down: string;
 }
 
-const filename = process.env.DB_FILE_NAME as string;
-
-assert(!!filename, 'DB_FILE_NAME is required');
+const filename = parseDatabaseUrl(process.env.DATABASE_URL);
 
 function loadMigrations(dir = 'migrations'): Migration[] {
   logger.info({ dir }, 'Загрузка миграций из директории');
@@ -183,6 +182,35 @@ async function migrateDown() {
   await db.close();
 }
 
+async function checkMigrations() {
+  logger.info('Проверка статуса миграций');
+
+  const db = await getDb();
+  await ensureTable(db);
+  const applied = await appliedMigrations(db);
+  const migrations = loadMigrations();
+
+  logger.info(
+    { total: migrations.length, applied: applied.length },
+    'Статус миграций'
+  );
+
+  const pendingMigrations = migrations.filter((m) => !applied.includes(m.id));
+
+  if (pendingMigrations.length === 0) {
+    logger.info('Все миграции применены');
+    await db.close();
+    return true;
+  } else {
+    logger.info(
+      { count: pendingMigrations.length },
+      'Есть непримененные миграции'
+    );
+    await db.close();
+    return false;
+  }
+}
+
 const direction = process.argv[2];
 logger.info({ direction }, 'Запуск миграций');
 
@@ -191,6 +219,15 @@ if (direction === 'down') {
     logger.error(e, 'Миграция DOWN завершилась с ошибкой');
     process.exit(1);
   });
+} else if (direction === 'check') {
+  checkMigrations()
+    .then((allApplied) => {
+      process.exit(allApplied ? 0 : 1);
+    })
+    .catch((e) => {
+      logger.error(e, 'Проверка миграций завершилась с ошибкой');
+      process.exit(1);
+    });
 } else {
   migrateUp().catch((e) => {
     logger.error(e, 'Миграция UP завершилась с ошибкой');
