@@ -37,7 +37,7 @@ export class FilePromptService implements PromptService {
   getUserPrompt(text: string, replyText?: string): string {
     let prompt = '';
     if (replyText) {
-      prompt += `"${replyText}";`;
+      prompt += `Пользователь ответил на: ${replyText}; `;
     }
     prompt += `Сообщение пользователя: "${text}";`;
     return prompt;

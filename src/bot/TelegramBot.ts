@@ -90,19 +90,22 @@ export class TelegramBot {
     const message = ctx.message as any;
     assert(message && typeof message.text === 'string', 'Нет текста сообщения');
 
-    let replyText = '';
+    let replyText: string | undefined;
     if (message.reply_to_message) {
-      assert(
-        typeof message.reply_to_message.text === 'string' ||
-          typeof message.reply_to_message.caption === 'string',
-        'Нет текста или подписи в reply_to_message'
-      );
-      replyText = `Пользователь ответил на: ${message.reply_to_message.text}; ${message.reply_to_message.caption}`;
+      const pieces: string[] = [];
+      if (typeof message.reply_to_message.text === 'string') {
+        pieces.push(message.reply_to_message.text);
+      }
+      if (typeof message.reply_to_message.caption === 'string') {
+        pieces.push(message.reply_to_message.caption);
+      }
+      assert(pieces.length > 0, 'Нет текста или подписи в reply_to_message');
+      replyText = pieces.join('; ');
     }
 
     const context: TriggerContext = {
       text: `${message.text};`,
-      replyText,
+      replyText: replyText ?? '',
       chatId,
     };
 
