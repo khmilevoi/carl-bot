@@ -6,20 +6,15 @@ import { ChatGPTService } from './services/ChatGPTService';
 import { ChatMemoryManager } from './services/ChatMemory';
 import logger from './services/logger';
 import { SQLiteMemoryStorage } from './services/storage/SQLiteMemoryStorage';
+import { parseDatabaseUrl } from './utils/database';
 
 const token = process.env.BOT_TOKEN;
 const apiKey = process.env.OPENAI_API_KEY;
-const databaseUrl = process.env.DATABASE_URL;
-const dbFileName = databaseUrl?.replace(/^file:\/\/\//, '');
+const dbFileName = parseDatabaseUrl(process.env.DATABASE_URL);
 
 if (!token || !apiKey) {
   logger.error('BOT_TOKEN and OPENAI_API_KEY are required');
   throw new Error('BOT_TOKEN and OPENAI_API_KEY are required');
-}
-
-if (!databaseUrl) {
-  logger.error('DATABASE_URL is required');
-  throw new Error('DATABASE_URL is required');
 }
 
 const ai = new ChatGPTService(apiKey, 'o3', 'gpt-4o-mini');

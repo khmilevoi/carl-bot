@@ -8,6 +8,7 @@ import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 
 import logger from './services/logger';
+import { parseDatabaseUrl } from './utils/database';
 
 interface Migration {
   id: string;
@@ -15,10 +16,7 @@ interface Migration {
   down: string;
 }
 
-const databaseUrl = process.env.DATABASE_URL;
-const filename = databaseUrl?.replace(/^file:\/\/\//, '') as string;
-
-assert(!!filename, 'DATABASE_URL is required');
+const filename = parseDatabaseUrl(process.env.DATABASE_URL);
 
 function loadMigrations(dir = 'migrations'): Migration[] {
   logger.info({ dir }, 'Загрузка миграций из директории');
