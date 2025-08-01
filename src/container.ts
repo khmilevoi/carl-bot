@@ -11,6 +11,11 @@ import {
   JSONWhiteListChatFilter,
 } from './services/chat/ChatFilter';
 import { ChatMemoryManager } from './services/chat/ChatMemory';
+import { FilePromptService } from './services/prompts/FilePromptService';
+import {
+  PROMPT_SERVICE_ID,
+  PromptService,
+} from './services/prompts/PromptService';
 import {
   MEMORY_STORAGE_ID,
   MemoryStorage,
@@ -29,8 +34,16 @@ if (!token || !apiKey) {
 }
 
 container
+  .bind(PROMPT_SERVICE_ID)
+  .toDynamicValue(() => new FilePromptService())
+  .inSingletonScope();
+
+container
   .bind(AI_SERVICE_ID)
-  .toDynamicValue(() => new ChatGPTService(apiKey, 'o3', 'gpt-4o-mini'))
+  .toDynamicValue(() => {
+    const prompts = container.get<PromptService>(PROMPT_SERVICE_ID);
+    return new ChatGPTService(apiKey, 'o3', 'gpt-4o-mini', prompts);
+  })
   .inSingletonScope();
 
 container
@@ -58,7 +71,8 @@ container
     const ai = container.get<AIService>(AI_SERVICE_ID);
     const memories = container.get<ChatMemoryManager>(ChatMemoryManager);
     const filter = container.get<ChatFilter>(CHAT_FILTER_ID);
-    return new TelegramBot(token, ai, memories, filter);
+    const prompts = container.get<PromptService>(PROMPT_SERVICE_ID);
+    return new TelegramBot(token, ai, memories, filter, prompts);
   })
   .inSingletonScope();
 

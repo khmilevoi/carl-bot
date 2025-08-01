@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { Context, Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
 
@@ -9,6 +9,10 @@ import { ChatFilter } from '../services/chat/ChatFilter';
 import { ChatMemoryManager } from '../services/chat/ChatMemory';
 import { DialogueManager } from '../services/chat/DialogueManager';
 import logger from '../services/logging/logger';
+import {
+  PROMPT_SERVICE_ID,
+  PromptService,
+} from '../services/prompts/PromptService';
 import { MentionTrigger } from '../triggers/MentionTrigger';
 import { NameTrigger } from '../triggers/NameTrigger';
 import { ReplyTrigger } from '../triggers/ReplyTrigger';
@@ -45,7 +49,8 @@ export class TelegramBot {
     token: string,
     private ai: AIService,
     private memories: ChatMemoryManager,
-    private filter: ChatFilter
+    private filter: ChatFilter,
+    @inject(PROMPT_SERVICE_ID) private readonly prompts: PromptService
   ) {
     this.bot = new Telegraf(token);
     this.configure();
@@ -130,11 +135,10 @@ export class TelegramBot {
 
       const memory = this.memories.get(chatId);
 
-      let userPrompt = '';
-      if (context.replyText) {
-        userPrompt += `"${context.replyText}";`;
-      }
-      userPrompt += `Сообщение пользователя: "${context.text}";`;
+      const userPrompt = this.prompts.getUserPrompt(
+        context.text,
+        context.replyText || undefined
+      );
 
       await memory.addMessage('user', userPrompt, ctx.from?.username);
 
