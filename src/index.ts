@@ -9,13 +9,20 @@ import { SQLiteMemoryStorage } from './services/storage/SQLiteMemoryStorage';
 
 const token = process.env.BOT_TOKEN;
 const apiKey = process.env.OPENAI_API_KEY;
+const dbFileName = process.env.DB_FILE_NAME;
+
 if (!token || !apiKey) {
   logger.error('BOT_TOKEN and OPENAI_API_KEY are required');
   throw new Error('BOT_TOKEN and OPENAI_API_KEY are required');
 }
 
+if (!dbFileName) {
+  logger.error('DB_FILE_NAME is required');
+  throw new Error('DB_FILE_NAME is required');
+}
+
 const ai = new ChatGPTService(apiKey, 'gpt-4o', 'gpt-4o-mini');
-const storage = new SQLiteMemoryStorage();
+const storage = new SQLiteMemoryStorage(dbFileName);
 const memories = new ChatMemoryManager(ai, storage, 50);
 const filter = new JSONWhiteListChatFilter('white_list.json');
 
