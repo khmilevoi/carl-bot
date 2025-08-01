@@ -39,8 +39,8 @@ async function ensureTable(db: any) {
 }
 
 async function appliedMigrations(db: any): Promise<string[]> {
-  const rows = await db.all<{ id: string }[]>('SELECT id FROM migrations');
-  return rows.map((r) => r.id);
+  const rows = (await db.all('SELECT id FROM migrations')) as { id: string }[];
+  return rows.map((r: { id: string }) => r.id);
 }
 
 async function migrateUp() {
