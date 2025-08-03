@@ -53,7 +53,6 @@ module.exports = {
     pino: 'commonjs pino',
     'pino-pretty': 'commonjs pino-pretty',
     'reflect-metadata': 'commonjs reflect-metadata',
-    sqlite: 'commonjs sqlite',
     sqlite3: 'commonjs sqlite3',
     telegraf: 'commonjs telegraf',
   },

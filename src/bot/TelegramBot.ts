@@ -1,17 +1,21 @@
 import assert from 'node:assert';
 import os from 'node:os';
 
-import { injectable } from 'inversify';
-import { Database, open } from 'sqlite';
-import sqlite3 from 'sqlite3';
+import { inject, injectable } from 'inversify';
 import { Context, Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
+import { DataSource } from 'typeorm';
 
 import { AIService } from '@/services/ai/AIService';
 import { ChatFilter } from '@/services/chat/ChatFilter';
 import { ChatMemoryManager } from '@/services/chat/ChatMemory';
 import { DialogueManager } from '@/services/chat/DialogueManager';
 import logger from '@/services/logging/logger';
+import { DATA_SOURCE_ID } from '@/services/storage/dataSource';
+import {
+  AWAITING_EXPORT_REPOSITORY_ID,
+  AwaitingExportRepository,
+} from '@/services/storage/repositories/AwaitingExportRepository';
 import { MentionTrigger } from '@/triggers/MentionTrigger';
 import { NameTrigger } from '@/triggers/NameTrigger';
 import { ReplyTrigger } from '@/triggers/ReplyTrigger';
@@ -40,17 +44,17 @@ export class TelegramBot {
   private replyTrigger = new ReplyTrigger();
   private nameTrigger = new NameTrigger('Карл');
   private keywordTrigger = new StemDictTrigger('keywords.json');
-  private db: Promise<Database>;
-
   constructor(
     token: string,
     private ai: AIService,
     private memories: ChatMemoryManager,
-    private filter: ChatFilter
+    private filter: ChatFilter,
+    @inject(AWAITING_EXPORT_REPOSITORY_ID)
+    private awaitingRepo: AwaitingExportRepository,
+    @inject(DATA_SOURCE_ID) private db: Promise<DataSource>
   ) {
     this.bot = new Telegraf(token);
     this.configure();
-    this.db = open({ filename: 'memory.db', driver: sqlite3.Database });
   }
 
   private configure() {
@@ -208,48 +212,33 @@ export class TelegramBot {
   }
 
   private async addAwaitingExport(chatId: number) {
-    const db = await this.db;
-    await db.run(
-      'INSERT OR IGNORE INTO awaiting_export (chat_id) VALUES (?)',
-      chatId
-    );
+    await this.awaitingRepo.add(chatId);
   }
 
   private async isAwaitingExport(chatId: number) {
-    const db = await this.db;
-    const row = await db.get<{ chat_id: number }>(
-      'SELECT chat_id FROM awaiting_export WHERE chat_id = ?',
-      chatId
-    );
-    return !!row;
+    return this.awaitingRepo.exists(chatId);
   }
 
   private async removeAwaitingExport(chatId: number) {
-    const db = await this.db;
-    await db.run('DELETE FROM awaiting_export WHERE chat_id = ?', chatId);
+    await this.awaitingRepo.remove(chatId);
   }
 
   private async exportDb() {
     const db = await this.db;
-    const tables = await db.all<{ name: string }[]>(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
-    );
     const files: { name: string; buffer: Buffer }[] = [];
-    for (const { name } of tables) {
-      const columnsInfo = await db.all<{ name: string }[]>(
-        `PRAGMA table_info(${name})`
-      );
-      const columns = columnsInfo.map((c) => c.name);
-      const rows = await db.all<any[]>(`SELECT * FROM ${name}`);
+    for (const meta of db.entityMetadatas) {
+      const repo = db.getRepository(meta.target as any);
+      const rows = await repo.find();
+      const columns = meta.columns.map((c) => c.databaseName);
       const csvLines: string[] = [];
       csvLines.push(columns.join(','));
       for (const row of rows) {
         csvLines.push(
-          columns.map((c) => JSON.stringify(row[c] ?? '')).join(',')
+          columns.map((c) => JSON.stringify((row as any)[c] ?? '')).join(',')
         );
       }
       const buffer = Buffer.from(csvLines.join(os.EOL));
-      files.push({ name: `${name}.csv`, buffer });
+      files.push({ name: `${meta.tableName}.csv`, buffer });
     }
     return files;
   }
