@@ -59,7 +59,7 @@ export class ChatGPTService implements AIService {
     }
 
     messages.push(
-      ...history.map((m) =>
+      ...history.map<OpenAI.ChatCompletionMessageParam>((m) =>
         m.role === 'user'
           ? {
               role: 'user',
@@ -71,7 +71,7 @@ export class ChatGPTService implements AIService {
                 m.quoteText
               ),
             }
-          : { role: m.role, content: m.content }
+          : { role: 'assistant', content: m.content }
       )
     );
 
