@@ -1,6 +1,6 @@
 # arkadius-bot
 
-Карл — Telegram бот, написанный на TypeScript. Он использует ChatGPT 4o и отвечает в групповых чатах при упоминании или ответе на его сообщение.
+Карл — Telegram бот, написанный на TypeScript. Он использует ChatGPT 4o и отвечает в групповых чатах при упоминании или ответе на его сообщение.
 
 ## Возможности
 
@@ -29,7 +29,7 @@
    ```bash
    npm run dev
    ```
-4. Собрайте проект:
+4. Соберите проект:
    ```bash
    npm run build
    ```
@@ -47,10 +47,15 @@
 Для проверки типов и тестов можно выполнить:
 
 ```bash
-npm exec tsc
+npm run type:check
 npm test
 npm run test:watch
 npm run test:coverage
+npm run lint
+npm run lint:fix
+npm run format
+npm run format:fix
+npm run migration:check
 ```
 
 ## Структура проекта

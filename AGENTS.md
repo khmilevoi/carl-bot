@@ -8,8 +8,6 @@
 - Run the unit tests with:
   ```bash
   npm test
-  npm run test:watch
-  npm run test:coverage
   ```
 - Useful npm scripts:
   - `npm run dev` – start in development mode
@@ -18,6 +16,7 @@
   - `npm test` – run unit tests once
   - `npm run test:watch` – run tests in watch mode
   - `npm run test:coverage` – run tests with coverage
+  - `npm run type:check` – check TypeScript types without emitting files
   - `npm run lint` – check lint errors
   - `npm run lint:fix` – fix lint errors
   - `npm run format` – verify formatting
@@ -25,6 +24,7 @@
   - `npm run prepare` – set up Git hooks
   - `npm run migration:up` – apply database migrations
   - `npm run migration:down` – revert the last migration
+  - `npm run migration:check` – check migration status
 - Do not commit `node_modules` or `package-lock.json`.
 
 ## Troubleshooting
