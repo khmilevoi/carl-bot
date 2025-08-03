@@ -4,7 +4,13 @@ import { MemoryStorage } from './MemoryStorage.interface';
 export class InMemoryStorage implements MemoryStorage {
   private messages = new Map<
     number,
-    { role: 'user' | 'assistant'; content: string; username?: string }[]
+    {
+      role: 'user' | 'assistant';
+      content: string;
+      username?: string;
+      replyText?: string;
+      replyUsername?: string;
+    }[]
   >();
   private summaries = new Map<number, string>();
 
@@ -12,11 +18,23 @@ export class InMemoryStorage implements MemoryStorage {
     chatId: number,
     role: 'user' | 'assistant',
     content: string,
-    username?: string
+    username?: string,
+    replyText?: string,
+    replyUsername?: string
   ) {
     logger.debug({ chatId, role }, 'Storing message in memory');
     const list = this.messages.get(chatId) ?? [];
-    list.push({ role, content, username });
+    const entry: {
+      role: 'user' | 'assistant';
+      content: string;
+      username?: string;
+      replyText?: string;
+      replyUsername?: string;
+    } = { role, content };
+    if (username) entry.username = username;
+    if (replyText) entry.replyText = replyText;
+    if (replyUsername) entry.replyUsername = replyUsername;
+    list.push(entry);
     this.messages.set(chatId, list);
   }
 

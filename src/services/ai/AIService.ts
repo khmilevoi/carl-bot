@@ -2,6 +2,8 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   username?: string;
+  replyText?: string;
+  replyUsername?: string;
 }
 
 export interface AIService {

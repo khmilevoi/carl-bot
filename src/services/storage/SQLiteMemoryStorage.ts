@@ -25,27 +25,50 @@ export class SQLiteMemoryStorage implements MemoryStorage {
     chatId: number,
     role: 'user' | 'assistant',
     content: string,
-    username?: string
+    username?: string,
+    replyText?: string,
+    replyUsername?: string
   ) {
     logger.debug({ chatId, role }, 'Inserting message into database');
     const db = await this.getDb();
     await db.run(
-      'INSERT INTO messages (chat_id, role, content, username) VALUES (?, ?, ?, ?)',
+      'INSERT INTO messages (chat_id, role, content, username, reply_text, reply_username) VALUES (?, ?, ?, ?, ?, ?)',
       chatId,
       role,
       content,
-      username ?? null
+      username ?? null,
+      replyText ?? null,
+      replyUsername ?? null
     );
   }
 
   async getMessages(chatId: number): Promise<ChatMessage[]> {
     logger.debug({ chatId }, 'Fetching messages from database');
     const db = await this.getDb();
-    const rows = await db.all<ChatMessage[]>(
-      'SELECT role, content, username FROM messages WHERE chat_id = ? ORDER BY rowid',
+    const rows = await db.all<
+      {
+        role: 'user' | 'assistant';
+        content: string;
+        username: string | null;
+        reply_text: string | null;
+        reply_username: string | null;
+      }[]
+    >(
+      'SELECT role, content, username, reply_text, reply_username FROM messages WHERE chat_id = ? ORDER BY rowid',
       chatId
     );
-    return rows ?? [];
+    return (
+      rows?.map((r) => {
+        const entry: ChatMessage = {
+          role: r.role,
+          content: r.content,
+        };
+        if (r.username) entry.username = r.username;
+        if (r.reply_text) entry.replyText = r.reply_text;
+        if (r.reply_username) entry.replyUsername = r.reply_username;
+        return entry;
+      }) ?? []
+    );
   }
 
   async clearMessages(chatId: number) {

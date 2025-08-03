@@ -71,8 +71,7 @@ container
     const ai = container.get<AIService>(AI_SERVICE_ID);
     const memories = container.get<ChatMemoryManager>(ChatMemoryManager);
     const filter = container.get<ChatFilter>(CHAT_FILTER_ID);
-    const prompts = container.get<PromptService>(PROMPT_SERVICE_ID);
-    return new TelegramBot(token, ai, memories, filter, prompts);
+    return new TelegramBot(token, ai, memories, filter);
   })
   .inSingletonScope();
 
