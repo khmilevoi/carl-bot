@@ -43,7 +43,7 @@ container
   .bind(AI_SERVICE_ID)
   .toDynamicValue(() => {
     const prompts = container.get<PromptService>(PROMPT_SERVICE_ID);
-    return new ChatGPTService(apiKey, 'o3', 'gpt-4o-mini', prompts);
+    return new ChatGPTService(apiKey, 'o3', 'o3-mini', prompts);
   })
   .inSingletonScope();
 
