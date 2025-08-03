@@ -1,5 +1,6 @@
 export interface PromptService {
   getPersona(): Promise<string>;
+  getUserPromptSystemPrompt(): string;
   getAskSummaryPrompt(summary: string): string;
   getSummarizationSystemPrompt(): string;
   getPreviousSummaryPrompt(prev: string): string;
