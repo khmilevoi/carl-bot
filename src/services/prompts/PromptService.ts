@@ -4,9 +4,9 @@ export interface PromptService {
   getSummarizationSystemPrompt(): string;
   getPreviousSummaryPrompt(prev: string): string;
   getUserPrompt(
-    userName: string,
-    fullName: string,
     userMessage: string,
+    userName?: string,
+    fullName?: string,
     replyMessage?: string,
     quoteMessage?: string
   ): string;

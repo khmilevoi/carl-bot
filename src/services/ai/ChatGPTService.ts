@@ -64,9 +64,9 @@ export class ChatGPTService implements AIService {
           ? {
               role: 'user',
               content: this.prompts.getUserPrompt(
-                m.username ?? 'Имя неизвестно',
-                m.fullName ?? m.username ?? 'Имя неизвестно',
                 m.content,
+                m.username,
+                m.fullName,
                 m.replyText,
                 m.quoteText
               ),
@@ -105,9 +105,9 @@ export class ChatGPTService implements AIService {
       .map((m) =>
         m.role === 'user'
           ? this.prompts.getUserPrompt(
-              m.username ?? 'Имя неизвестно',
-              m.fullName ?? m.username ?? 'Имя неизвестно',
               m.content,
+              m.username,
+              m.fullName,
               m.replyText,
               m.quoteText
             )

@@ -54,34 +54,18 @@ export class FilePromptService implements PromptService {
   }
 
   getUserPrompt(
-    userName: string,
-    fullName: string,
     userMessage: string,
+    userName?: string,
+    fullName?: string,
     replyMessage?: string,
     quoteMessage?: string
   ): string {
-    let prompt = this.userPromptTemplate
-      .replace('{{userName}}', userName)
-      .replace('{{fullName}}', fullName)
-      .replace('{{userMessage}}', userMessage);
-
-    if (replyMessage) {
-      prompt = prompt.replace('{{replyMessage}}', replyMessage);
-    } else {
-      prompt = prompt.replace(
-        '\nПользователь отвечает на следующее сообщение: {{replyMessage}}',
-        ''
-      );
-    }
-
-    if (quoteMessage) {
-      prompt = prompt.replace('{{quoteMessage}}', quoteMessage);
-    } else {
-      prompt = prompt.replace(
-        '\nПользователь цитирует следующее сообщение: {{quoteMessage}}',
-        ''
-      );
-    }
+    const prompt = this.userPromptTemplate
+      .replace('{{userMessage}}', userMessage)
+      .replace('{{userName}}', userName ?? 'N/A')
+      .replace('{{fullName}}', fullName ?? 'N/A')
+      .replace('{{replyMessage}}', replyMessage ?? 'N/A')
+      .replace('{{quoteMessage}}', quoteMessage ?? 'N/A');
 
     return prompt;
   }
