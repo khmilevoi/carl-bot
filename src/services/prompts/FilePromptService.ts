@@ -12,13 +12,15 @@ export class FilePromptService implements PromptService {
   private summarizationSystemTemplate: string;
   private previousSummaryTemplate: string;
   private userPromptTemplate: string;
+  private userPromptSystemTemplate: string;
 
   constructor(
     private personaFile = 'persona.md',
     askSummaryFile = 'prompts/ask_summary_prompt.txt',
     summarizationSystemFile = 'prompts/summarization_system_prompt.txt',
     previousSummaryFile = 'prompts/previous_summary_prompt.txt',
-    userPromptFile = 'prompts/user_prompt.txt'
+    userPromptFile = 'prompts/user_prompt.txt',
+    userPromptSystemFile = 'prompts/user_prompt_system_prompt.txt'
   ) {
     this.askSummaryTemplate = readFileSync(askSummaryFile, 'utf-8');
     this.summarizationSystemTemplate = readFileSync(
@@ -27,6 +29,7 @@ export class FilePromptService implements PromptService {
     );
     this.previousSummaryTemplate = readFileSync(previousSummaryFile, 'utf-8');
     this.userPromptTemplate = readFileSync(userPromptFile, 'utf-8');
+    this.userPromptSystemTemplate = readFileSync(userPromptSystemFile, 'utf-8');
   }
 
   private async loadPersona(): Promise<string> {
@@ -39,6 +42,10 @@ export class FilePromptService implements PromptService {
 
   async getPersona(): Promise<string> {
     return this.loadPersona();
+  }
+
+  getUserPromptSystemPrompt(): string {
+    return this.userPromptSystemTemplate;
   }
 
   getAskSummaryPrompt(summary: string): string {
