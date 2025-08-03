@@ -19,15 +19,15 @@ interface Migration {
 const filename = parseDatabaseUrl(process.env.DATABASE_URL);
 
 function loadMigrations(dir = 'migrations'): Migration[] {
-  logger.info({ dir }, 'Загрузка миграций из директории');
+  logger.info({ dir }, 'Loading migrations from directory');
   const files = readdirSync(dir)
     .filter((f) => f.endsWith('.up.sql'))
     .sort();
-  logger.info({ count: files.length }, 'Найдено файлов миграций');
+  logger.info({ count: files.length }, 'Migration files found');
   return files.map((upFile) => {
     const id = upFile.replace('.up.sql', '');
     const downFile = id + '.down.sql';
-    logger.debug({ id, upFile, downFile }, 'Загрузка миграции');
+    logger.debug({ id, upFile, downFile }, 'Loading migration');
     return {
       id,
       up: readFileSync(join(dir, upFile), 'utf8'),
@@ -37,31 +37,28 @@ function loadMigrations(dir = 'migrations'): Migration[] {
 }
 
 async function getDb() {
-  logger.info({ filename }, 'Подключение к базе данных');
+  logger.info({ filename }, 'Connecting to database');
   return open({ filename, driver: sqlite3.Database });
 }
 
 async function ensureTable(db: any) {
-  logger.debug('Проверка существования таблицы migrations');
+  logger.debug('Checking for migrations table');
   await db.run(
     'CREATE TABLE IF NOT EXISTS migrations (id TEXT PRIMARY KEY, applied_at TEXT)'
   );
-  logger.debug('Таблица migrations готова');
+  logger.debug('Migrations table ready');
 }
 
 async function appliedMigrations(db: any): Promise<string[]> {
-  logger.debug('Получение списка примененных миграций');
+  logger.debug('Fetching applied migrations list');
   const rows = (await db.all('SELECT id FROM migrations')) as { id: string }[];
   const applied = rows.map((r: { id: string }) => r.id);
-  logger.info(
-    { count: applied.length, applied },
-    'Найдено примененных миграций'
-  );
+  logger.info({ count: applied.length, applied }, 'Applied migrations found');
   return applied;
 }
 
 async function clearDatabase(db: any) {
-  logger.info('Очистка базы данных');
+  logger.info('Clearing database');
 
   const tables = (await db.all(
     "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
@@ -73,38 +70,35 @@ async function clearDatabase(db: any) {
         count: tables.length,
         tables: tables.map((t: { name: string }) => t.name),
       },
-      'Найдены таблицы для удаления'
+      'Tables found for removal'
     );
 
     for (const tableInfo of tables) {
       try {
-        logger.debug({ table: tableInfo.name }, 'Удаление таблицы');
+        logger.debug({ table: tableInfo.name }, 'Dropping table');
         await db.exec(`DROP TABLE IF EXISTS "${tableInfo.name}"`);
-        logger.debug({ table: tableInfo.name }, 'Таблица удалена');
+        logger.debug({ table: tableInfo.name }, 'Table dropped');
       } catch (error) {
-        logger.warn(
-          { table: tableInfo.name, error },
-          'Не удалось удалить таблицу'
-        );
+        logger.warn({ table: tableInfo.name, error }, 'Failed to drop table');
       }
     }
 
-    logger.info('Все таблицы удалены');
+    logger.info('All tables dropped');
   } else {
-    logger.debug('Таблиц для удаления не найдено');
+    logger.debug('No tables found for removal');
   }
 }
 
 async function migrateUp() {
-  logger.info('Начало процесса применения миграций (UP)');
+  logger.info('Starting migration process (UP)');
 
   let db = await getDb();
   const table = await db.get<{ name: string }>(
     "SELECT name FROM sqlite_master WHERE type='table' AND name='migrations'"
   );
-  logger.info({ table }, 'Проверка таблицы migrations');
+  logger.info({ table }, 'Checking migrations table');
   if (!table) {
-    logger.info('Таблица migrations не найдена, очистка базы данных');
+    logger.info('Migrations table not found, clearing database');
     await db.close();
 
     db = await getDb();
@@ -112,7 +106,7 @@ async function migrateUp() {
     await db.close();
     db = await getDb();
   } else {
-    logger.debug('Таблица migrations найдена');
+    logger.debug('Migrations table found');
   }
 
   await ensureTable(db);
@@ -121,40 +115,40 @@ async function migrateUp() {
 
   logger.info(
     { total: migrations.length, applied: applied.length },
-    'Анализ миграций'
+    'Analyzing migrations'
   );
 
   const pendingMigrations = migrations.filter((m) => !applied.includes(m.id));
-  logger.info({ count: pendingMigrations.length }, 'Миграций для применения');
+  logger.info({ count: pendingMigrations.length }, 'Migrations to apply');
 
   for (const m of pendingMigrations) {
-    logger.info({ id: m.id }, 'Применение миграции');
+    logger.info({ id: m.id }, 'Applying migration');
     try {
       await db.exec(m.up);
       await db.run(
         'INSERT INTO migrations (id, applied_at) VALUES (?, datetime("now"))',
         m.id
       );
-      logger.info({ id: m.id }, 'Миграция успешно применена');
+      logger.info({ id: m.id }, 'Migration applied successfully');
     } catch (error) {
-      logger.error({ id: m.id, error }, 'Ошибка при применении миграции');
+      logger.error({ id: m.id, error }, 'Error applying migration');
       throw error;
     }
   }
 
-  logger.info('Все миграции успешно применены');
+  logger.info('All migrations applied successfully');
   await db.close();
 }
 
 async function migrateDown() {
-  logger.info('Начало процесса отката миграций (DOWN)');
+  logger.info('Starting migration rollback (DOWN)');
 
   const db = await getDb();
   await ensureTable(db);
   const applied = await appliedMigrations(db);
 
   if (applied.length === 0) {
-    logger.info('Нет миграций для отката');
+    logger.info('No migrations to rollback');
     await db.close();
     return;
   }
@@ -164,18 +158,18 @@ async function migrateDown() {
   const m = migrations.find((x) => x.id === lastId);
 
   if (!m) {
-    logger.error({ id: lastId }, 'Файл миграции не найден');
+    logger.error({ id: lastId }, 'Migration file not found');
     await db.close();
     return;
   }
 
-  logger.info({ id: m.id }, 'Откат последней миграции');
+  logger.info({ id: m.id }, 'Rolling back last migration');
   try {
     await db.exec(m.down);
     await db.run('DELETE FROM migrations WHERE id = ?', m.id);
-    logger.info({ id: m.id }, 'Миграция успешно откачена');
+    logger.info({ id: m.id }, 'Migration rolled back successfully');
   } catch (error) {
-    logger.error({ id: m.id, error }, 'Ошибка при откате миграции');
+    logger.error({ id: m.id, error }, 'Error rolling back migration');
     throw error;
   }
 
@@ -183,7 +177,7 @@ async function migrateDown() {
 }
 
 async function checkMigrations() {
-  logger.info('Проверка статуса миграций');
+  logger.info('Checking migration status');
 
   const db = await getDb();
   await ensureTable(db);
@@ -192,19 +186,19 @@ async function checkMigrations() {
 
   logger.info(
     { total: migrations.length, applied: applied.length },
-    'Статус миграций'
+    'Migration status'
   );
 
   const pendingMigrations = migrations.filter((m) => !applied.includes(m.id));
 
   if (pendingMigrations.length === 0) {
-    logger.info('Все миграции применены');
+    logger.info('All migrations applied');
     await db.close();
     return true;
   } else {
     logger.info(
       { count: pendingMigrations.length },
-      'Есть непримененные миграции'
+      'Unapplied migrations exist'
     );
     await db.close();
     return false;
@@ -212,11 +206,11 @@ async function checkMigrations() {
 }
 
 const direction = process.argv[2];
-logger.info({ direction }, 'Запуск миграций');
+logger.info({ direction }, 'Running migrations');
 
 if (direction === 'down') {
   migrateDown().catch((e) => {
-    logger.error(e, 'Миграция DOWN завершилась с ошибкой');
+    logger.error(e, 'Migration DOWN failed');
     process.exit(1);
   });
 } else if (direction === 'check') {
@@ -225,12 +219,12 @@ if (direction === 'down') {
       process.exit(allApplied ? 0 : 1);
     })
     .catch((e) => {
-      logger.error(e, 'Проверка миграций завершилась с ошибкой');
+      logger.error(e, 'Migration check failed');
       process.exit(1);
     });
 } else {
   migrateUp().catch((e) => {
-    logger.error(e, 'Миграция UP завершилась с ошибкой');
+    logger.error(e, 'Migration UP failed');
     process.exit(1);
   });
 }
