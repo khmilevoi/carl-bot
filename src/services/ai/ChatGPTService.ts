@@ -26,7 +26,7 @@ export class ChatGPTService implements AIService {
     type: string,
     messages: OpenAI.ChatCompletionMessageParam[]
   ): Promise<void> {
-    if (process.env.NODE_ENV !== 'development') {
+    if (process.env.LOG_PROMPTS !== 'true') {
       return;
     }
     const filePath = path.join(process.cwd(), 'prompts.log');

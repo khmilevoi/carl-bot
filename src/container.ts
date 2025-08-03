@@ -28,6 +28,7 @@ export const container = new Container();
 const token = process.env.BOT_TOKEN;
 const apiKey = process.env.OPENAI_API_KEY;
 const dbFileName = parseDatabaseUrl(process.env.DATABASE_URL);
+const historyLimit = Number(process.env.CHAT_HISTORY_LIMIT ?? '50');
 
 if (!token || !apiKey) {
   throw new Error('BOT_TOKEN and OPENAI_API_KEY are required');
@@ -56,7 +57,7 @@ container
   .toDynamicValue(() => {
     const ai = container.get<AIService>(AI_SERVICE_ID);
     const storage = container.get<MemoryStorage>(MEMORY_STORAGE_ID);
-    return new ChatMemoryManager(ai, storage, 50);
+    return new ChatMemoryManager(ai, storage, historyLimit);
   })
   .inSingletonScope();
 

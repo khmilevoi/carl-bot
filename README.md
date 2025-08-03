@@ -18,10 +18,12 @@
    ```bash
    npm install
    ```
-2. Создайте `.env` с токенами Telegram и OpenAI:
+2. Создайте `.env` с токенами Telegram и OpenAI и при необходимости настройте дополнительные параметры:
    ```
    BOT_TOKEN=your-telegram-token
    OPENAI_API_KEY=your-openai-key
+   LOG_PROMPTS=false            # сохранять ли промпты в prompts.log
+   CHAT_HISTORY_LIMIT=50        # сколько сообщений хранить до суммаризации
    ```
 3. Запустите в режиме разработки:
    ```bash
