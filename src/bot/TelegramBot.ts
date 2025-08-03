@@ -51,7 +51,7 @@ export class TelegramBot {
     private filter: ChatFilter,
     @inject(AWAITING_EXPORT_REPOSITORY_ID)
     private awaitingRepo: AwaitingExportRepository,
-    @inject(DATA_SOURCE_ID) private db: Promise<DataSource>
+    @inject(DATA_SOURCE_ID) private db: DataSource
   ) {
     this.bot = new Telegraf(token);
     this.configure();
@@ -224,10 +224,9 @@ export class TelegramBot {
   }
 
   private async exportDb() {
-    const db = await this.db;
     const files: { name: string; buffer: Buffer }[] = [];
-    for (const meta of db.entityMetadatas) {
-      const repo = db.getRepository(meta.target as any);
+    for (const meta of this.db.entityMetadatas) {
+      const repo = this.db.getRepository(meta.target as any);
       const rows = await repo.find();
       const columns = meta.columns.map((c) => c.databaseName);
       const csvLines: string[] = [];

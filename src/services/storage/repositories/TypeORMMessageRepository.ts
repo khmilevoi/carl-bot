@@ -8,23 +8,21 @@ import { MessageRepository } from './MessageRepository';
 
 @injectable()
 export class TypeORMMessageRepository implements MessageRepository {
-  private repo: Promise<Repository<Message>>;
+  private repo: Repository<Message>;
 
-  constructor(@inject(DATA_SOURCE_ID) dataSource: Promise<DataSource>) {
-    this.repo = dataSource.then((ds) => ds.getRepository(Message));
+  constructor(@inject(DATA_SOURCE_ID) dataSource: DataSource) {
+    this.repo = dataSource.getRepository(Message);
   }
 
   save(message: Message) {
-    return this.repo.then((r) => r.save(message));
+    return this.repo.save(message);
   }
 
   findByChatId(chatId: number) {
-    return this.repo.then((r) =>
-      r.find({ where: { chatId }, order: { id: 'ASC' } })
-    );
+    return this.repo.find({ where: { chatId }, order: { id: 'ASC' } });
   }
 
   async deleteByChatId(chatId: number) {
-    await (await this.repo).delete({ chatId });
+    await this.repo.delete({ chatId });
   }
 }

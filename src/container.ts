@@ -65,7 +65,7 @@ container
   .inSingletonScope();
 
 container
-  .bind<Promise<DataSource>>(DATA_SOURCE_ID)
+  .bind<DataSource>(DATA_SOURCE_ID)
   .toDynamicValue(() => getDataSource(dbFileName))
   .inSingletonScope();
 
@@ -88,9 +88,9 @@ container.bind(MEMORY_STORAGE_ID).to(TypeORMMemoryStorage).inSingletonScope();
 
 container
   .bind(ChatMemoryManager)
-  .toDynamicValue(() => {
+  .toDynamicValue(async () => {
     const ai = container.get<AIService>(AI_SERVICE_ID);
-    const storage = container.get<MemoryStorage>(MEMORY_STORAGE_ID);
+    const storage = await container.getAsync<MemoryStorage>(MEMORY_STORAGE_ID);
     return new ChatMemoryManager(ai, storage, historyLimit);
   })
   .inSingletonScope();
@@ -102,14 +102,15 @@ container
 
 container
   .bind(TelegramBot)
-  .toDynamicValue(() => {
+  .toDynamicValue(async () => {
     const ai = container.get<AIService>(AI_SERVICE_ID);
-    const memories = container.get<ChatMemoryManager>(ChatMemoryManager);
+    const memories =
+      await container.getAsync<ChatMemoryManager>(ChatMemoryManager);
     const filter = container.get<ChatFilter>(CHAT_FILTER_ID);
-    const awaitingRepo = container.get<AwaitingExportRepository>(
+    const awaitingRepo = await container.getAsync<AwaitingExportRepository>(
       AWAITING_EXPORT_REPOSITORY_ID
     );
-    const db = container.get<Promise<DataSource>>(DATA_SOURCE_ID);
+    const db = await container.getAsync<DataSource>(DATA_SOURCE_ID);
     return new TelegramBot(token, ai, memories, filter, awaitingRepo, db);
   })
   .inSingletonScope();

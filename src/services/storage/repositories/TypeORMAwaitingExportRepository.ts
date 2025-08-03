@@ -10,22 +10,22 @@ import { AwaitingExportRepository } from './AwaitingExportRepository';
 export class TypeORMAwaitingExportRepository
   implements AwaitingExportRepository
 {
-  private repo: Promise<Repository<AwaitingExport>>;
+  private repo: Repository<AwaitingExport>;
 
-  constructor(@inject(DATA_SOURCE_ID) dataSource: Promise<DataSource>) {
-    this.repo = dataSource.then((ds) => ds.getRepository(AwaitingExport));
+  constructor(@inject(DATA_SOURCE_ID) dataSource: DataSource) {
+    this.repo = dataSource.getRepository(AwaitingExport);
   }
 
   async add(chatId: number) {
-    await (await this.repo).save({ chatId });
+    await this.repo.save({ chatId });
   }
 
   async exists(chatId: number) {
-    const row = await (await this.repo).findOneBy({ chatId });
+    const row = await this.repo.findOneBy({ chatId });
     return !!row;
   }
 
   async remove(chatId: number) {
-    await (await this.repo).delete({ chatId });
+    await this.repo.delete({ chatId });
   }
 }

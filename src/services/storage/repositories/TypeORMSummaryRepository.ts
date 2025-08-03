@@ -8,17 +8,17 @@ import { SummaryRepository } from './SummaryRepository';
 
 @injectable()
 export class TypeORMSummaryRepository implements SummaryRepository {
-  private repo: Promise<Repository<Summary>>;
+  private repo: Repository<Summary>;
 
-  constructor(@inject(DATA_SOURCE_ID) dataSource: Promise<DataSource>) {
-    this.repo = dataSource.then((ds) => ds.getRepository(Summary));
+  constructor(@inject(DATA_SOURCE_ID) dataSource: DataSource) {
+    this.repo = dataSource.getRepository(Summary);
   }
 
   findByChatId(chatId: number) {
-    return this.repo.then((r) => r.findOneBy({ chatId }));
+    return this.repo.findOneBy({ chatId });
   }
 
   save(summary: Summary) {
-    return this.repo.then((r) => r.save(summary));
+    return this.repo.save(summary);
   }
 }
