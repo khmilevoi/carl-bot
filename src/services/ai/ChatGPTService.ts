@@ -1,6 +1,8 @@
+import { promises as fs } from 'fs';
 import { inject, injectable } from 'inversify';
 import OpenAI from 'openai';
 import { ChatModel } from 'openai/resources/shared';
+import path from 'path';
 
 import logger from '../logging/logger';
 import { PROMPT_SERVICE_ID, PromptService } from '../prompts/PromptService';
@@ -18,6 +20,26 @@ export class ChatGPTService implements AIService {
   ) {
     this.openai = new OpenAI({ apiKey });
     logger.debug('ChatGPTService initialized');
+  }
+
+  private async logPrompt(
+    type: string,
+    messages: OpenAI.ChatCompletionMessageParam[]
+  ): Promise<void> {
+    if (process.env.NODE_ENV !== 'development') {
+      return;
+    }
+    const filePath = path.join(process.cwd(), 'prompts.log');
+    const entry = `\n[${new Date().toISOString()}] ${type}\n${JSON.stringify(
+      messages,
+      null,
+      2
+    )}\n`;
+    try {
+      await fs.appendFile(filePath, entry);
+    } catch (err) {
+      logger.error({ err }, 'Failed to write prompt log');
+    }
   }
 
   public async ask(history: ChatMessage[], summary?: string): Promise<string> {
@@ -43,6 +65,7 @@ export class ChatGPTService implements AIService {
       }))
     );
 
+    void this.logPrompt('ask', messages);
     const completion = await this.openai.chat.completions.create({
       model: this.askModel,
       messages,
@@ -79,6 +102,7 @@ export class ChatGPTService implements AIService {
       role: 'user',
       content: `История диалога:\n${historyText}`,
     });
+    void this.logPrompt('summary', messages);
     const completion = await this.openai.chat.completions.create({
       model: this.summaryModel,
       messages,
