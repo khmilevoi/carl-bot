@@ -1,11 +1,11 @@
 # syntax=docker/dockerfile:1
 
 # --------------------------------------------------------
-# Build‑once, run‑anywhere Dockerfile for Fly.io / Node.js
+# Build-once, run-anywhere Dockerfile for Fly.io / Node.js
 # --------------------------------------------------------
-# 1)  Builds TypeScript/SWC → plain JS during image build
-# 2)  Prunes dev‑dependencies ➜ tiny production image
-# 3)  Runs pre‑compiled JS, so @swc‑node/register не нужен
+# 1) Builds TypeScript/SWC → plain JS during image build
+# 2) Prunes dev-dependencies ➜ tiny production image
+# 3) Runs pre-compiled JS, so @swc-node/register isn't needed
 # --------------------------------------------------------
 
 ARG NODE_VERSION=20.18.0
@@ -29,9 +29,9 @@ RUN npm ci --include=dev
 
 # --- copy sources & transpile to dist/
 COPY . .
-RUN npm run build   # предполагает, что output = ./dist
+RUN npm run build   # assumes output = ./dist
 
-# --- drop dev‑deps to shrink final layer
+# --- drop dev-deps to shrink final layer
 RUN npm prune --omit=dev
 
 #######################  Runtime stage  ######################
@@ -42,15 +42,15 @@ COPY --from=build /app /app
 
 # --- create entrypoint script
 RUN echo '#!/bin/sh\n\
-# Проверяем, существует ли база данных и таблица migrations\n\
+# Check if database and migrations table exist\n\
 if [ ! -f /data/memory.db ] || ! node dist/migrate.js check 2>/dev/null; then\n\
-  echo "Выполняем миграции..."\n\
+  echo "Running migrations..."\n\
   node dist/migrate.js up\n\
 else\n\
-  echo "Миграции уже выполнены, пропускаем"\n\
+  echo "Migrations already applied, skipping"\n\
 fi\n\
 \n\
-echo "Запускаем приложение..."\n\
+echo "Starting application..."\n\
 exec node dist/index.js\n\
 ' > /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 

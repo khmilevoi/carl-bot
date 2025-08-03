@@ -1,7 +1,5 @@
 import pino from 'pino';
 
-// Configure pino with asynchronous logging
-// Using pino.destination with sync:false ensures writes are non-blocking
 const destination = pino.destination({ sync: false });
 
 const logger = pino(

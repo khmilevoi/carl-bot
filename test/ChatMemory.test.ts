@@ -24,7 +24,6 @@ describe('ChatMemory', () => {
     await memory.addMessage('user', 'm1', 'u1');
     await memory.addMessage('assistant', 'm2', 'bot');
     await memory.addMessage('user', 'm3', 'u1');
-    // No summary yet
     expect(ai.summarize).not.toHaveBeenCalled();
 
     await memory.addMessage('assistant', 'm4', 'bot');

@@ -15,20 +15,17 @@ import { ReplyTrigger } from '../triggers/ReplyTrigger';
 import { StemDictTrigger } from '../triggers/StemDictTrigger';
 import { TriggerContext } from '../triggers/Trigger';
 
-// Хелпер-обёртка: показывает "typing…" всё время работы колбэка
 async function withTyping(ctx: Context, fn: () => Promise<void>) {
-  // запускаем индикатор сразу
   await ctx.sendChatAction('typing');
 
-  // каждые 4 с шлём ещё один, пока задача не кончится
   const timer = setInterval(() => {
     ctx.telegram.sendChatAction(ctx.chat!.id, 'typing').catch(() => {});
   }, 4000);
 
   try {
-    await fn(); // ваша долгая логика — запрос к БД, API и т.д.
+    await fn();
   } finally {
-    clearInterval(timer); // убираем таймер даже при ошибке
+    clearInterval(timer);
   }
 }
 
@@ -61,13 +58,6 @@ export class TelegramBot {
 
     this.bot.command('ping', (ctx) => ctx.reply('pong'));
 
-    // this.bot.on('message', (ctx) => {
-    //   logger.debug(
-    //     { message: ctx.message, chatId: ctx.chat?.id },
-    //     'Получено сообщение'
-    //   );
-    // });
-
     this.bot.on(message('text'), (ctx) => this.handleText(ctx));
   }
 
@@ -77,7 +67,7 @@ export class TelegramBot {
     logger.debug({ chatId }, 'Received text message');
 
     if (!this.filter.isAllowed(chatId)) {
-      logger.warn({ chatId }, 'Попытка доступа из неразрешённого чата');
+      logger.warn({ chatId }, 'Unauthorized chat access attempt');
       ctx.reply('Этот чат не находится в списке разрешённых.');
       return;
     }
