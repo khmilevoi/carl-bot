@@ -101,13 +101,16 @@ export class ChatGPTService implements AIService {
       });
     }
     const historyText = history
-      .map((m) => {
-        const name =
-          m.role === 'user'
-            ? (m.fullName ?? m.username ?? 'Пользователь')
-            : 'Ассистент';
-        return `${name}: ${m.content}`;
-      })
+      .map((m) =>
+        m.role === 'user'
+          ? this.prompts.getUserPrompt(
+              m.username ?? 'Имя неизвестно',
+              m.fullName ?? m.username ?? 'Имя неизвестно',
+              m.content,
+              m.replyText
+            )
+          : `Ассистент: ${m.content}`
+      )
       .join('\n');
     messages.push({
       role: 'user',
