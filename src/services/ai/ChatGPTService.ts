@@ -59,10 +59,7 @@ export class ChatGPTService implements AIService {
     }
 
     messages.push(
-      ...history.map((m) => ({
-        role: m.role,
-        content: `Имя пользователя: ${m.username ?? 'Имя неизвестно'}; Текст сообщения: ${m.content}`,
-      }))
+      ...history.map((m) => ({ role: m.role, content: m.content }))
     );
 
     void this.logPrompt('ask', messages);

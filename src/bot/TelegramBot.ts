@@ -138,18 +138,18 @@ export class TelegramBot {
 
       const memory = this.memories.get(chatId);
 
+      const userName =
+        ctx.from?.first_name && ctx.from?.last_name
+          ? ctx.from.first_name + ' ' + ctx.from.last_name
+          : ctx.from?.first_name || ctx.from?.username || 'Имя неизвестно';
+
       const userPrompt = this.prompts.getUserPrompt(
+        userName,
         context.text,
         context.replyText || undefined
       );
 
-      await memory.addMessage(
-        'user',
-        userPrompt,
-        ctx.from?.first_name && ctx.from?.last_name
-          ? ctx.from?.first_name + ' ' + ctx.from?.last_name
-          : undefined
-      );
+      await memory.addMessage('user', userPrompt, userName);
 
       const answer = await this.ai.ask(
         await memory.getHistory(),

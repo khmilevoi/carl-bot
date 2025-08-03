@@ -3,7 +3,11 @@ export interface PromptService {
   getAskSummaryPrompt(summary: string): string;
   getSummarizationSystemPrompt(): string;
   getPreviousSummaryPrompt(prev: string): string;
-  getUserPrompt(text: string, replyText?: string): string;
+  getUserPrompt(
+    userName: string,
+    userMessage: string,
+    replyMessage?: string
+  ): string;
 }
 
 import type { ServiceIdentifier } from 'inversify';

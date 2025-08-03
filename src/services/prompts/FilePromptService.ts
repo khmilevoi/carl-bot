@@ -53,12 +53,24 @@ export class FilePromptService implements PromptService {
     return this.previousSummaryTemplate.replace('{{prev}}', prev);
   }
 
-  getUserPrompt(text: string, replyText?: string): string {
-    const replySection = replyText
-      ? `Пользователь ответил на: ${replyText}; `
-      : '';
-    return this.userPromptTemplate
-      .replace('{{replySection}}', replySection)
-      .replace('{{text}}', text);
+  getUserPrompt(
+    userName: string,
+    userMessage: string,
+    replyMessage?: string
+  ): string {
+    let prompt = this.userPromptTemplate
+      .replace('{{userName}}', userName)
+      .replace('{{userMessage}}', userMessage);
+
+    if (replyMessage) {
+      prompt = prompt.replace('{{replyMessage}}', replyMessage);
+    } else {
+      prompt = prompt.replace(
+        '\nПользователь отвечает на следующее сообщение: {{replyMessage}}',
+        ''
+      );
+    }
+
+    return prompt;
   }
 }
