@@ -26,6 +26,7 @@
   - `npm run migration:down` – revert the last migration
   - `npm run migration:check` – check migration status
 - Do not commit `node_modules` or `package-lock.json`.
+- Follow commit message rules in `COMMIT_MESSAGE_RULES.md`.
 
 ## Troubleshooting
 
