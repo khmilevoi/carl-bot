@@ -2,7 +2,7 @@ import assert from 'node:assert';
 import os from 'node:os';
 
 import { injectable } from 'inversify';
-import { open } from 'sqlite';
+import { Database, open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 import { Context, Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
@@ -40,7 +40,7 @@ export class TelegramBot {
   private replyTrigger = new ReplyTrigger();
   private nameTrigger = new NameTrigger('Карл');
   private keywordTrigger = new StemDictTrigger('keywords.json');
-  private awaitingExport = new Set<number>();
+  private db: Promise<Database>;
 
   constructor(
     token: string,
@@ -50,6 +50,7 @@ export class TelegramBot {
   ) {
     this.bot = new Telegraf(token);
     this.configure();
+    this.db = open({ filename: 'memory.db', driver: sqlite3.Database });
   }
 
   private configure() {
@@ -62,9 +63,9 @@ export class TelegramBot {
 
     this.bot.command('ping', (ctx) => ctx.reply('pong'));
 
-    this.bot.command('dump', (ctx) => {
+    this.bot.command('dump', async (ctx) => {
       if (!ctx.chat) return;
-      this.awaitingExport.add(ctx.chat.id);
+      await this.addAwaitingExport(ctx.chat.id);
       ctx.reply('Введите ключ доступа:');
     });
 
@@ -76,8 +77,8 @@ export class TelegramBot {
     assert(!!chatId, 'This is not a chat');
     logger.debug({ chatId }, 'Received text message');
 
-    if (this.awaitingExport.has(chatId)) {
-      this.awaitingExport.delete(chatId);
+    if (await this.isAwaitingExport(chatId)) {
+      await this.removeAwaitingExport(chatId);
       const key = process.env.DB_EXPORT_KEY;
       if (!key) {
         ctx.reply('Ключ не настроен');
@@ -206,8 +207,30 @@ export class TelegramBot {
     });
   }
 
+  private async addAwaitingExport(chatId: number) {
+    const db = await this.db;
+    await db.run(
+      'INSERT OR IGNORE INTO awaiting_export (chat_id) VALUES (?)',
+      chatId
+    );
+  }
+
+  private async isAwaitingExport(chatId: number) {
+    const db = await this.db;
+    const row = await db.get<{ chat_id: number }>(
+      'SELECT chat_id FROM awaiting_export WHERE chat_id = ?',
+      chatId
+    );
+    return !!row;
+  }
+
+  private async removeAwaitingExport(chatId: number) {
+    const db = await this.db;
+    await db.run('DELETE FROM awaiting_export WHERE chat_id = ?', chatId);
+  }
+
   private async exportDb() {
-    const db = await open({ filename: 'memory.db', driver: sqlite3.Database });
+    const db = await this.db;
     const tables = await db.all<{ name: string }[]>(
       "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
     );
@@ -228,7 +251,6 @@ export class TelegramBot {
       const buffer = Buffer.from(csvLines.join(os.EOL));
       files.push({ name: `${name}.csv`, buffer });
     }
-    await db.close();
     return files;
   }
 
