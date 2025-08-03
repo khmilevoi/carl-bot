@@ -57,7 +57,8 @@ export class FilePromptService implements PromptService {
     userName: string,
     fullName: string,
     userMessage: string,
-    replyMessage?: string
+    replyMessage?: string,
+    quoteMessage?: string
   ): string {
     let prompt = this.userPromptTemplate
       .replace('{{userName}}', userName)
@@ -69,6 +70,15 @@ export class FilePromptService implements PromptService {
     } else {
       prompt = prompt.replace(
         '\nПользователь отвечает на следующее сообщение: {{replyMessage}}',
+        ''
+      );
+    }
+
+    if (quoteMessage) {
+      prompt = prompt.replace('{{quoteMessage}}', quoteMessage);
+    } else {
+      prompt = prompt.replace(
+        '\nПользователь цитирует следующее сообщение: {{quoteMessage}}',
         ''
       );
     }

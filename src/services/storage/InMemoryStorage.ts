@@ -11,6 +11,7 @@ export class InMemoryStorage implements MemoryStorage {
       fullName?: string;
       replyText?: string;
       replyUsername?: string;
+      quoteText?: string;
     }[]
   >();
   private summaries = new Map<number, string>();
@@ -22,7 +23,8 @@ export class InMemoryStorage implements MemoryStorage {
     username?: string,
     fullName?: string,
     replyText?: string,
-    replyUsername?: string
+    replyUsername?: string,
+    quoteText?: string
   ) {
     logger.debug({ chatId, role }, 'Storing message in memory');
     const list = this.messages.get(chatId) ?? [];
@@ -33,11 +35,13 @@ export class InMemoryStorage implements MemoryStorage {
       fullName?: string;
       replyText?: string;
       replyUsername?: string;
+      quoteText?: string;
     } = { role, content };
     if (username) entry.username = username;
     if (fullName) entry.fullName = fullName;
     if (replyText) entry.replyText = replyText;
     if (replyUsername) entry.replyUsername = replyUsername;
+    if (quoteText) entry.quoteText = quoteText;
     list.push(entry);
     this.messages.set(chatId, list);
   }

@@ -6,7 +6,8 @@ export interface MemoryStorage {
     username?: string,
     fullName?: string,
     replyText?: string,
-    replyUsername?: string
+    replyUsername?: string,
+    quoteText?: string
   ): Promise<void>;
   getMessages(chatId: number): Promise<
     {
@@ -16,6 +17,7 @@ export interface MemoryStorage {
       fullName?: string;
       replyText?: string;
       replyUsername?: string;
+      quoteText?: string;
     }[]
   >;
   clearMessages(chatId: number): Promise<void>;

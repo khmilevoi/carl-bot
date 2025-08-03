@@ -7,7 +7,8 @@ export interface PromptService {
     userName: string,
     fullName: string,
     userMessage: string,
-    replyMessage?: string
+    replyMessage?: string,
+    quoteMessage?: string
   ): string;
 }
 

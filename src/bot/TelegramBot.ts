@@ -87,6 +87,7 @@ export class TelegramBot {
 
     let replyText: string | undefined;
     let replyUsername: string | undefined;
+    let quoteText: string | undefined;
     if (message.reply_to_message) {
       const pieces: string[] = [];
       if (typeof message.reply_to_message.text === 'string') {
@@ -106,6 +107,10 @@ export class TelegramBot {
           replyUsername = from.first_name || from.username || undefined;
         }
       }
+    }
+
+    if (message.quote && typeof message.quote.text === 'string') {
+      quoteText = message.quote.text;
     }
 
     const context: TriggerContext = {
@@ -155,7 +160,8 @@ export class TelegramBot {
         username,
         fullName,
         replyText,
-        replyUsername
+        replyUsername,
+        quoteText
       );
 
       const answer = await this.ai.ask(

@@ -67,7 +67,8 @@ export class ChatGPTService implements AIService {
                 m.username ?? 'Имя неизвестно',
                 m.fullName ?? m.username ?? 'Имя неизвестно',
                 m.content,
-                m.replyText
+                m.replyText,
+                m.quoteText
               ),
             }
           : { role: m.role, content: m.content }
@@ -107,7 +108,8 @@ export class ChatGPTService implements AIService {
               m.username ?? 'Имя неизвестно',
               m.fullName ?? m.username ?? 'Имя неизвестно',
               m.content,
-              m.replyText
+              m.replyText,
+              m.quoteText
             )
           : `Ассистент: ${m.content}`
       )

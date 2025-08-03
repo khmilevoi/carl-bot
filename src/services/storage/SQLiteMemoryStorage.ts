@@ -28,19 +28,21 @@ export class SQLiteMemoryStorage implements MemoryStorage {
     username?: string,
     fullName?: string,
     replyText?: string,
-    replyUsername?: string
+    replyUsername?: string,
+    quoteText?: string
   ) {
     logger.debug({ chatId, role }, 'Inserting message into database');
     const db = await this.getDb();
     await db.run(
-      'INSERT INTO messages (chat_id, role, content, username, full_name, reply_text, reply_username) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO messages (chat_id, role, content, username, full_name, reply_text, reply_username, quote_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       chatId,
       role,
       content,
       username ?? null,
       fullName ?? null,
       replyText ?? null,
-      replyUsername ?? null
+      replyUsername ?? null,
+      quoteText ?? null
     );
   }
 
@@ -55,9 +57,10 @@ export class SQLiteMemoryStorage implements MemoryStorage {
         full_name: string | null;
         reply_text: string | null;
         reply_username: string | null;
+        quote_text: string | null;
       }[]
     >(
-      'SELECT role, content, username, full_name, reply_text, reply_username FROM messages WHERE chat_id = ? ORDER BY rowid',
+      'SELECT role, content, username, full_name, reply_text, reply_username, quote_text FROM messages WHERE chat_id = ? ORDER BY rowid',
       chatId
     );
     return (
@@ -70,6 +73,7 @@ export class SQLiteMemoryStorage implements MemoryStorage {
         if (r.full_name) entry.fullName = r.full_name;
         if (r.reply_text) entry.replyText = r.reply_text;
         if (r.reply_username) entry.replyUsername = r.reply_username;
+        if (r.quote_text) entry.quoteText = r.quote_text;
         return entry;
       }) ?? []
     );
