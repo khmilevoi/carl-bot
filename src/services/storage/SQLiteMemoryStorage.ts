@@ -2,9 +2,9 @@ import { injectable } from 'inversify';
 import { Database, open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 
-import { ChatMessage } from '../ai/AIService';
-import logger from '../logging/logger';
-import { MemoryStorage } from './MemoryStorage.interface';
+import { ChatMessage } from '@/services/ai/AIService';
+import logger from '@/services/logging/logger';
+import { MemoryStorage } from '@/services/storage/MemoryStorage.interface';
 
 @injectable()
 export class SQLiteMemoryStorage implements MemoryStorage {

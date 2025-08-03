@@ -1,4 +1,4 @@
-import logger from '../logging/logger';
+import logger from '@/services/logging/logger';
 
 export class DialogueManager {
   private timers = new Map<number, NodeJS.Timeout>();

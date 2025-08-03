@@ -1,8 +1,8 @@
 import { Context } from 'telegraf';
 
-import { DialogueManager } from '../services/chat/DialogueManager';
-import logger from '../services/logging/logger';
-import { Trigger, TriggerContext } from './Trigger';
+import { DialogueManager } from '@/services/chat/DialogueManager';
+import logger from '@/services/logging/logger';
+import { Trigger, TriggerContext } from '@/triggers/Trigger';
 
 export class MentionTrigger implements Trigger {
   apply(

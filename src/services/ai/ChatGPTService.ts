@@ -4,9 +4,12 @@ import OpenAI from 'openai';
 import { ChatModel } from 'openai/resources/shared';
 import path from 'path';
 
-import logger from '../logging/logger';
-import { PROMPT_SERVICE_ID, PromptService } from '../prompts/PromptService';
-import { AIService, ChatMessage } from './AIService';
+import { AIService, ChatMessage } from '@/services/ai/AIService';
+import logger from '@/services/logging/logger';
+import {
+  PROMPT_SERVICE_ID,
+  PromptService,
+} from '@/services/prompts/PromptService';
 
 @injectable()
 export class ChatGPTService implements AIService {

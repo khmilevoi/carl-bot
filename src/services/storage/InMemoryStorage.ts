@@ -1,5 +1,5 @@
-import logger from '../logging/logger';
-import { MemoryStorage } from './MemoryStorage.interface';
+import logger from '@/services/logging/logger';
+import { MemoryStorage } from '@/services/storage/MemoryStorage.interface';
 
 export class InMemoryStorage implements MemoryStorage {
   private messages = new Map<

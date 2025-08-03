@@ -1,8 +1,8 @@
 import { injectable } from 'inversify';
 
-import { AIService, ChatMessage } from '../ai/AIService';
-import logger from '../logging/logger';
-import { MemoryStorage } from '../storage/MemoryStorage.interface';
+import { AIService, ChatMessage } from '@/services/ai/AIService';
+import logger from '@/services/logging/logger';
+import { MemoryStorage } from '@/services/storage/MemoryStorage.interface';
 
 @injectable()
 export class ChatMemory {
