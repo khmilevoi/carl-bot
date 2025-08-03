@@ -143,7 +143,13 @@ export class TelegramBot {
         context.replyText || undefined
       );
 
-      await memory.addMessage('user', userPrompt, ctx.from?.username);
+      await memory.addMessage(
+        'user',
+        userPrompt,
+        ctx.from?.first_name && ctx.from?.last_name
+          ? ctx.from?.first_name + ' ' + ctx.from?.last_name
+          : undefined
+      );
 
       const answer = await this.ai.ask(
         await memory.getHistory(),
@@ -153,7 +159,9 @@ export class TelegramBot {
       await memory.addMessage('assistant', answer, ctx.me);
 
       ctx.reply(answer, {
-        reply_parameters: { message_id: (ctx.message as any).message_id },
+        reply_parameters: ctx.message?.message_id
+          ? { message_id: ctx.message?.message_id }
+          : undefined,
       });
       logger.debug({ chatId }, 'Reply sent');
     });
