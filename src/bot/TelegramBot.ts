@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { Context, Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
 
@@ -9,6 +9,10 @@ import { ChatFilter } from '../services/chat/ChatFilter';
 import { ChatMemoryManager } from '../services/chat/ChatMemory';
 import { DialogueManager } from '../services/chat/DialogueManager';
 import logger from '../services/logging/logger';
+import {
+  PROMPT_SERVICE_ID,
+  PromptService,
+} from '../services/prompts/PromptService';
 import { MentionTrigger } from '../triggers/MentionTrigger';
 import { NameTrigger } from '../triggers/NameTrigger';
 import { ReplyTrigger } from '../triggers/ReplyTrigger';
@@ -45,7 +49,8 @@ export class TelegramBot {
     token: string,
     private ai: AIService,
     private memories: ChatMemoryManager,
-    private filter: ChatFilter
+    private filter: ChatFilter,
+    @inject(PROMPT_SERVICE_ID) private readonly prompts: PromptService
   ) {
     this.bot = new Telegraf(token);
     this.configure();
@@ -85,19 +90,22 @@ export class TelegramBot {
     const message = ctx.message as any;
     assert(message && typeof message.text === 'string', 'Нет текста сообщения');
 
-    let replyText = '';
+    let replyText: string | undefined;
     if (message.reply_to_message) {
-      assert(
-        typeof message.reply_to_message.text === 'string' ||
-          typeof message.reply_to_message.caption === 'string',
-        'Нет текста или подписи в reply_to_message'
-      );
-      replyText = `Пользователь ответил на: ${message.reply_to_message.text}; ${message.reply_to_message.caption}`;
+      const pieces: string[] = [];
+      if (typeof message.reply_to_message.text === 'string') {
+        pieces.push(message.reply_to_message.text);
+      }
+      if (typeof message.reply_to_message.caption === 'string') {
+        pieces.push(message.reply_to_message.caption);
+      }
+      assert(pieces.length > 0, 'Нет текста или подписи в reply_to_message');
+      replyText = pieces.join('; ');
     }
 
     const context: TriggerContext = {
       text: `${message.text};`,
-      replyText,
+      replyText: replyText ?? '',
       chatId,
     };
 
@@ -130,11 +138,10 @@ export class TelegramBot {
 
       const memory = this.memories.get(chatId);
 
-      let userPrompt = '';
-      if (context.replyText) {
-        userPrompt += `"${context.replyText}";`;
-      }
-      userPrompt += `Сообщение пользователя: "${context.text}";`;
+      const userPrompt = this.prompts.getUserPrompt(
+        context.text,
+        context.replyText || undefined
+      );
 
       await memory.addMessage('user', userPrompt, ctx.from?.username);
 
