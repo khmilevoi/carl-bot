@@ -4,16 +4,16 @@ import { injectable } from 'inversify';
 import { Context, Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
 
-import { AIService } from '../services/ai/AIService';
-import { ChatFilter } from '../services/chat/ChatFilter';
-import { ChatMemoryManager } from '../services/chat/ChatMemory';
-import { DialogueManager } from '../services/chat/DialogueManager';
-import logger from '../services/logging/logger';
-import { MentionTrigger } from '../triggers/MentionTrigger';
-import { NameTrigger } from '../triggers/NameTrigger';
-import { ReplyTrigger } from '../triggers/ReplyTrigger';
-import { StemDictTrigger } from '../triggers/StemDictTrigger';
-import { TriggerContext } from '../triggers/Trigger';
+import { AIService } from '@/services/ai/AIService';
+import { ChatFilter } from '@/services/chat/ChatFilter';
+import { ChatMemoryManager } from '@/services/chat/ChatMemory';
+import { DialogueManager } from '@/services/chat/DialogueManager';
+import logger from '@/services/logging/logger';
+import { MentionTrigger } from '@/triggers/MentionTrigger';
+import { NameTrigger } from '@/triggers/NameTrigger';
+import { ReplyTrigger } from '@/triggers/ReplyTrigger';
+import { StemDictTrigger } from '@/triggers/StemDictTrigger';
+import { TriggerContext } from '@/triggers/Trigger';
 
 async function withTyping(ctx: Context, fn: () => Promise<void>) {
   await ctx.sendChatAction('typing');

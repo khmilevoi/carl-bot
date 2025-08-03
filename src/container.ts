@@ -2,26 +2,26 @@ import 'reflect-metadata';
 
 import { Container } from 'inversify';
 
-import { TelegramBot } from './bot/TelegramBot';
-import { AI_SERVICE_ID, AIService } from './services/ai/AIService';
-import { ChatGPTService } from './services/ai/ChatGPTService';
+import { TelegramBot } from '@/bot/TelegramBot';
+import { AI_SERVICE_ID, AIService } from '@/services/ai/AIService';
+import { ChatGPTService } from '@/services/ai/ChatGPTService';
 import {
   CHAT_FILTER_ID,
   ChatFilter,
   JSONWhiteListChatFilter,
-} from './services/chat/ChatFilter';
-import { ChatMemoryManager } from './services/chat/ChatMemory';
-import { FilePromptService } from './services/prompts/FilePromptService';
+} from '@/services/chat/ChatFilter';
+import { ChatMemoryManager } from '@/services/chat/ChatMemory';
+import { FilePromptService } from '@/services/prompts/FilePromptService';
 import {
   PROMPT_SERVICE_ID,
   PromptService,
-} from './services/prompts/PromptService';
+} from '@/services/prompts/PromptService';
 import {
   MEMORY_STORAGE_ID,
   MemoryStorage,
-} from './services/storage/MemoryStorage.interface';
-import { SQLiteMemoryStorage } from './services/storage/SQLiteMemoryStorage';
-import { parseDatabaseUrl } from './utils/database';
+} from '@/services/storage/MemoryStorage.interface';
+import { SQLiteMemoryStorage } from '@/services/storage/SQLiteMemoryStorage';
+import { parseDatabaseUrl } from '@/utils/database';
 
 export const container = new Container();
 

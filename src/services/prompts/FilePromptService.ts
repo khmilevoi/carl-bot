@@ -2,8 +2,8 @@ import { readFileSync } from 'fs';
 import { readFile } from 'fs/promises';
 import { injectable } from 'inversify';
 
-import logger from '../logging/logger';
-import { PromptService } from './PromptService';
+import logger from '@/services/logging/logger';
+import { PromptService } from '@/services/prompts/PromptService';
 
 @injectable()
 export class FilePromptService implements PromptService {

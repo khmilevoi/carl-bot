@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DialogueManager } from '../src/services/chat/DialogueManager';
+import { DialogueManager } from '@/services/chat/DialogueManager';
 
 describe('DialogueManager', () => {
   beforeEach(() => {
