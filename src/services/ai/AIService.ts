@@ -2,6 +2,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   username?: string;
+  fullName?: string;
   replyText?: string;
   replyUsername?: string;
 }

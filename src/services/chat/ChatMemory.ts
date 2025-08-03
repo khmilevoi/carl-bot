@@ -17,6 +17,7 @@ export class ChatMemory {
     role: 'user' | 'assistant',
     content: string,
     username?: string,
+    fullName?: string,
     replyText?: string,
     replyUsername?: string
   ) {
@@ -36,6 +37,7 @@ export class ChatMemory {
       role,
       content,
       username,
+      fullName,
       replyText,
       replyUsername
     );

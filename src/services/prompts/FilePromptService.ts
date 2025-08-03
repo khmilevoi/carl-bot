@@ -55,11 +55,13 @@ export class FilePromptService implements PromptService {
 
   getUserPrompt(
     userName: string,
+    fullName: string,
     userMessage: string,
     replyMessage?: string
   ): string {
     let prompt = this.userPromptTemplate
       .replace('{{userName}}', userName)
+      .replace('{{fullName}}', fullName)
       .replace('{{userMessage}}', userMessage);
 
     if (replyMessage) {

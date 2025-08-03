@@ -4,6 +4,7 @@ export interface MemoryStorage {
     role: 'user' | 'assistant',
     content: string,
     username?: string,
+    fullName?: string,
     replyText?: string,
     replyUsername?: string
   ): Promise<void>;
@@ -12,6 +13,7 @@ export interface MemoryStorage {
       role: 'user' | 'assistant';
       content: string;
       username?: string;
+      fullName?: string;
       replyText?: string;
       replyUsername?: string;
     }[]

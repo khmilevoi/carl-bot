@@ -5,6 +5,7 @@ export interface PromptService {
   getPreviousSummaryPrompt(prev: string): string;
   getUserPrompt(
     userName: string,
+    fullName: string,
     userMessage: string,
     replyMessage?: string
   ): string;

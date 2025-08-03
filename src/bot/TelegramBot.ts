@@ -143,15 +143,17 @@ export class TelegramBot {
 
       const memory = this.memories.get(chatId);
 
-      const userName =
+      const username = ctx.from?.username || 'Имя неизвестно';
+      const fullName =
         ctx.from?.first_name && ctx.from?.last_name
           ? ctx.from.first_name + ' ' + ctx.from.last_name
-          : ctx.from?.first_name || ctx.from?.username || 'Имя неизвестно';
+          : ctx.from?.first_name || ctx.from?.last_name || username;
 
       await memory.addMessage(
         'user',
         message.text,
-        userName,
+        username,
+        fullName,
         replyText,
         replyUsername
       );

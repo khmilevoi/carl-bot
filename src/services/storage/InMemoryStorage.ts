@@ -8,6 +8,7 @@ export class InMemoryStorage implements MemoryStorage {
       role: 'user' | 'assistant';
       content: string;
       username?: string;
+      fullName?: string;
       replyText?: string;
       replyUsername?: string;
     }[]
@@ -19,6 +20,7 @@ export class InMemoryStorage implements MemoryStorage {
     role: 'user' | 'assistant',
     content: string,
     username?: string,
+    fullName?: string,
     replyText?: string,
     replyUsername?: string
   ) {
@@ -28,10 +30,12 @@ export class InMemoryStorage implements MemoryStorage {
       role: 'user' | 'assistant';
       content: string;
       username?: string;
+      fullName?: string;
       replyText?: string;
       replyUsername?: string;
     } = { role, content };
     if (username) entry.username = username;
+    if (fullName) entry.fullName = fullName;
     if (replyText) entry.replyText = replyText;
     if (replyUsername) entry.replyUsername = replyUsername;
     list.push(entry);
