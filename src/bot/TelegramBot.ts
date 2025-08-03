@@ -1,6 +1,9 @@
 import assert from 'node:assert';
+import os from 'node:os';
 
 import { injectable } from 'inversify';
+import { open } from 'sqlite';
+import sqlite3 from 'sqlite3';
 import { Context, Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
 
@@ -37,6 +40,7 @@ export class TelegramBot {
   private replyTrigger = new ReplyTrigger();
   private nameTrigger = new NameTrigger('Карл');
   private keywordTrigger = new StemDictTrigger('keywords.json');
+  private awaitingExport = new Set<number>();
 
   constructor(
     token: string,
@@ -58,6 +62,12 @@ export class TelegramBot {
 
     this.bot.command('ping', (ctx) => ctx.reply('pong'));
 
+    this.bot.command('dump', (ctx) => {
+      if (!ctx.chat) return;
+      this.awaitingExport.add(ctx.chat.id);
+      ctx.reply('Введите ключ доступа:');
+    });
+
     this.bot.on(message('text'), (ctx) => this.handleText(ctx));
   }
 
@@ -65,6 +75,32 @@ export class TelegramBot {
     const chatId = ctx.chat?.id;
     assert(!!chatId, 'This is not a chat');
     logger.debug({ chatId }, 'Received text message');
+
+    if (this.awaitingExport.has(chatId)) {
+      this.awaitingExport.delete(chatId);
+      const key = process.env.DB_EXPORT_KEY;
+      if (!key) {
+        ctx.reply('Ключ не настроен');
+        return;
+      }
+      if (ctx.message && 'text' in ctx.message && ctx.message.text === key) {
+        try {
+          const files = await this.exportDb();
+          for (const file of files) {
+            await ctx.replyWithDocument({
+              source: file.buffer,
+              filename: file.name,
+            });
+          }
+        } catch (err) {
+          logger.error({ err }, 'Failed to export database');
+          ctx.reply('Не удалось выгрузить данные.');
+        }
+      } else {
+        ctx.reply('Неверный ключ');
+      }
+      return;
+    }
 
     if (!this.filter.isAllowed(chatId)) {
       logger.warn({ chatId }, 'Unauthorized chat access attempt');
@@ -168,6 +204,32 @@ export class TelegramBot {
       });
       logger.debug({ chatId }, 'Reply sent');
     });
+  }
+
+  private async exportDb() {
+    const db = await open({ filename: 'memory.db', driver: sqlite3.Database });
+    const tables = await db.all<{ name: string }[]>(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+    );
+    const files: { name: string; buffer: Buffer }[] = [];
+    for (const { name } of tables) {
+      const columnsInfo = await db.all<{ name: string }[]>(
+        `PRAGMA table_info(${name})`
+      );
+      const columns = columnsInfo.map((c) => c.name);
+      const rows = await db.all<any[]>(`SELECT * FROM ${name}`);
+      const csvLines: string[] = [];
+      csvLines.push(columns.join(','));
+      for (const row of rows) {
+        csvLines.push(
+          columns.map((c) => JSON.stringify(row[c] ?? '')).join(',')
+        );
+      }
+      const buffer = Buffer.from(csvLines.join(os.EOL));
+      files.push({ name: `${name}.csv`, buffer });
+    }
+    await db.close();
+    return files;
   }
 
   public async launch() {
