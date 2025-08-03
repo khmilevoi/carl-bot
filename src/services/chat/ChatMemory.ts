@@ -16,7 +16,11 @@ export class ChatMemory {
   public async addMessage(
     role: 'user' | 'assistant',
     content: string,
-    username?: string
+    username?: string,
+    fullName?: string,
+    replyText?: string,
+    replyUsername?: string,
+    quoteText?: string
   ) {
     const history = await this.store.getMessages(this.chatId);
     logger.debug({ chatId: this.chatId, role }, 'Adding message');
@@ -29,7 +33,16 @@ export class ChatMemory {
       await this.store.clearMessages(this.chatId);
     }
 
-    await this.store.addMessage(this.chatId, role, content, username);
+    await this.store.addMessage(
+      this.chatId,
+      role,
+      content,
+      username,
+      fullName,
+      replyText,
+      replyUsername,
+      quoteText
+    );
   }
 
   public getHistory(): Promise<ChatMessage[]> {

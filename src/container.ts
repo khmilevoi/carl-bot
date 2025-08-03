@@ -28,6 +28,7 @@ export const container = new Container();
 const token = process.env.BOT_TOKEN;
 const apiKey = process.env.OPENAI_API_KEY;
 const dbFileName = parseDatabaseUrl(process.env.DATABASE_URL);
+const historyLimit = Number(process.env.CHAT_HISTORY_LIMIT ?? '50');
 
 if (!token || !apiKey) {
   throw new Error('BOT_TOKEN and OPENAI_API_KEY are required');
@@ -42,7 +43,7 @@ container
   .bind(AI_SERVICE_ID)
   .toDynamicValue(() => {
     const prompts = container.get<PromptService>(PROMPT_SERVICE_ID);
-    return new ChatGPTService(apiKey, 'o3', 'gpt-4o-mini', prompts);
+    return new ChatGPTService(apiKey, 'o3', 'o3-mini', prompts);
   })
   .inSingletonScope();
 
@@ -56,7 +57,7 @@ container
   .toDynamicValue(() => {
     const ai = container.get<AIService>(AI_SERVICE_ID);
     const storage = container.get<MemoryStorage>(MEMORY_STORAGE_ID);
-    return new ChatMemoryManager(ai, storage, 50);
+    return new ChatMemoryManager(ai, storage, historyLimit);
   })
   .inSingletonScope();
 
@@ -71,8 +72,7 @@ container
     const ai = container.get<AIService>(AI_SERVICE_ID);
     const memories = container.get<ChatMemoryManager>(ChatMemoryManager);
     const filter = container.get<ChatFilter>(CHAT_FILTER_ID);
-    const prompts = container.get<PromptService>(PROMPT_SERVICE_ID);
-    return new TelegramBot(token, ai, memories, filter, prompts);
+    return new TelegramBot(token, ai, memories, filter);
   })
   .inSingletonScope();
 

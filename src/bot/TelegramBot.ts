@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 
-import { inject, injectable } from 'inversify';
+import { injectable } from 'inversify';
 import { Context, Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
 
@@ -9,10 +9,6 @@ import { ChatFilter } from '../services/chat/ChatFilter';
 import { ChatMemoryManager } from '../services/chat/ChatMemory';
 import { DialogueManager } from '../services/chat/DialogueManager';
 import logger from '../services/logging/logger';
-import {
-  PROMPT_SERVICE_ID,
-  PromptService,
-} from '../services/prompts/PromptService';
 import { MentionTrigger } from '../triggers/MentionTrigger';
 import { NameTrigger } from '../triggers/NameTrigger';
 import { ReplyTrigger } from '../triggers/ReplyTrigger';
@@ -49,8 +45,7 @@ export class TelegramBot {
     token: string,
     private ai: AIService,
     private memories: ChatMemoryManager,
-    private filter: ChatFilter,
-    @inject(PROMPT_SERVICE_ID) private readonly prompts: PromptService
+    private filter: ChatFilter
   ) {
     this.bot = new Telegraf(token);
     this.configure();
@@ -91,6 +86,8 @@ export class TelegramBot {
     assert(message && typeof message.text === 'string', 'Нет текста сообщения');
 
     let replyText: string | undefined;
+    let replyUsername: string | undefined;
+    let quoteText: string | undefined;
     if (message.reply_to_message) {
       const pieces: string[] = [];
       if (typeof message.reply_to_message.text === 'string') {
@@ -101,6 +98,19 @@ export class TelegramBot {
       }
       assert(pieces.length > 0, 'Нет текста или подписи в reply_to_message');
       replyText = pieces.join('; ');
+
+      const from = message.reply_to_message.from;
+      if (from) {
+        if (from.first_name && from.last_name) {
+          replyUsername = from.first_name + ' ' + from.last_name;
+        } else {
+          replyUsername = from.first_name || from.username || undefined;
+        }
+      }
+    }
+
+    if (message.quote && typeof message.quote.text === 'string') {
+      quoteText = message.quote.text;
     }
 
     const context: TriggerContext = {
@@ -138,17 +148,20 @@ export class TelegramBot {
 
       const memory = this.memories.get(chatId);
 
-      const userPrompt = this.prompts.getUserPrompt(
-        context.text,
-        context.replyText || undefined
-      );
+      const username = ctx.from?.username || 'Имя неизвестно';
+      const fullName =
+        ctx.from?.first_name && ctx.from?.last_name
+          ? ctx.from.first_name + ' ' + ctx.from.last_name
+          : ctx.from?.first_name || ctx.from?.last_name || username;
 
       await memory.addMessage(
         'user',
-        userPrompt,
-        ctx.from?.first_name && ctx.from?.last_name
-          ? ctx.from?.first_name + ' ' + ctx.from?.last_name
-          : undefined
+        message.text,
+        username,
+        fullName,
+        replyText,
+        replyUsername,
+        quoteText
       );
 
       const answer = await this.ai.ask(

@@ -3,12 +3,22 @@ export interface MemoryStorage {
     chatId: number,
     role: 'user' | 'assistant',
     content: string,
-    username?: string
+    username?: string,
+    fullName?: string,
+    replyText?: string,
+    replyUsername?: string,
+    quoteText?: string
   ): Promise<void>;
-  getMessages(
-    chatId: number
-  ): Promise<
-    { role: 'user' | 'assistant'; content: string; username?: string }[]
+  getMessages(chatId: number): Promise<
+    {
+      role: 'user' | 'assistant';
+      content: string;
+      username?: string;
+      fullName?: string;
+      replyText?: string;
+      replyUsername?: string;
+      quoteText?: string;
+    }[]
   >;
   clearMessages(chatId: number): Promise<void>;
   getSummary(chatId: number): Promise<string>;

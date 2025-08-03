@@ -26,7 +26,7 @@ export class ChatGPTService implements AIService {
     type: string,
     messages: OpenAI.ChatCompletionMessageParam[]
   ): Promise<void> {
-    if (process.env.NODE_ENV !== 'development') {
+    if (process.env.LOG_PROMPTS !== 'true') {
       return;
     }
     const filePath = path.join(process.cwd(), 'prompts.log');
@@ -59,10 +59,20 @@ export class ChatGPTService implements AIService {
     }
 
     messages.push(
-      ...history.map((m) => ({
-        role: m.role,
-        content: `Имя пользователя: ${m.username ?? 'Имя неизвестно'}; Текст сообщения: ${m.content}`,
-      }))
+      ...history.map<OpenAI.ChatCompletionMessageParam>((m) =>
+        m.role === 'user'
+          ? {
+              role: 'user',
+              content: this.prompts.getUserPrompt(
+                m.content,
+                m.username,
+                m.fullName,
+                m.replyText,
+                m.quoteText
+              ),
+            }
+          : { role: 'assistant', content: m.content }
+      )
     );
 
     void this.logPrompt('ask', messages);
@@ -92,11 +102,17 @@ export class ChatGPTService implements AIService {
       });
     }
     const historyText = history
-      .map((m) => {
-        const name =
-          m.role === 'user' ? (m.username ?? 'Пользователь') : 'Ассистент';
-        return `${name}: ${m.content}`;
-      })
+      .map((m) =>
+        m.role === 'user'
+          ? this.prompts.getUserPrompt(
+              m.content,
+              m.username,
+              m.fullName,
+              m.replyText,
+              m.quoteText
+            )
+          : `Ассистент: ${m.content}`
+      )
       .join('\n');
     messages.push({
       role: 'user',

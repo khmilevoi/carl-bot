@@ -25,27 +25,58 @@ export class SQLiteMemoryStorage implements MemoryStorage {
     chatId: number,
     role: 'user' | 'assistant',
     content: string,
-    username?: string
+    username?: string,
+    fullName?: string,
+    replyText?: string,
+    replyUsername?: string,
+    quoteText?: string
   ) {
     logger.debug({ chatId, role }, 'Inserting message into database');
     const db = await this.getDb();
     await db.run(
-      'INSERT INTO messages (chat_id, role, content, username) VALUES (?, ?, ?, ?)',
+      'INSERT INTO messages (chat_id, role, content, username, full_name, reply_text, reply_username, quote_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       chatId,
       role,
       content,
-      username ?? null
+      username ?? null,
+      fullName ?? null,
+      replyText ?? null,
+      replyUsername ?? null,
+      quoteText ?? null
     );
   }
 
   async getMessages(chatId: number): Promise<ChatMessage[]> {
     logger.debug({ chatId }, 'Fetching messages from database');
     const db = await this.getDb();
-    const rows = await db.all<ChatMessage[]>(
-      'SELECT role, content, username FROM messages WHERE chat_id = ? ORDER BY rowid',
+    const rows = await db.all<
+      {
+        role: 'user' | 'assistant';
+        content: string;
+        username: string | null;
+        full_name: string | null;
+        reply_text: string | null;
+        reply_username: string | null;
+        quote_text: string | null;
+      }[]
+    >(
+      'SELECT role, content, username, full_name, reply_text, reply_username, quote_text FROM messages WHERE chat_id = ? ORDER BY rowid',
       chatId
     );
-    return rows ?? [];
+    return (
+      rows?.map((r) => {
+        const entry: ChatMessage = {
+          role: r.role,
+          content: r.content,
+        };
+        if (r.username) entry.username = r.username;
+        if (r.full_name) entry.fullName = r.full_name;
+        if (r.reply_text) entry.replyText = r.reply_text;
+        if (r.reply_username) entry.replyUsername = r.reply_username;
+        if (r.quote_text) entry.quoteText = r.quote_text;
+        return entry;
+      }) ?? []
+    );
   }
 
   async clearMessages(chatId: number) {
