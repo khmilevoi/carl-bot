@@ -4,15 +4,24 @@ import { AI_SERVICE_ID, AIService, ChatMessage } from '../ai/AIService';
 import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
 import { logger } from '../logging/logger';
 import {
-  MEMORY_STORAGE_ID,
-  MemoryStorage,
-} from '../storage/MemoryStorage.interface';
+  MESSAGE_SERVICE_ID,
+  type MessageService,
+} from '../messages/MessageService';
+import {
+  SUMMARY_SERVICE_ID,
+  type SummaryService,
+} from '../summaries/SummaryService';
+import {
+  CHAT_RESET_SERVICE_ID,
+  type ChatResetService,
+} from './ChatResetService';
 
 @injectable()
 export class ChatMemory {
   constructor(
     private gpt: AIService,
-    private store: MemoryStorage,
+    private messages: MessageService,
+    private summaries: SummaryService,
     private chatId: number,
     private limit: number
   ) {}
@@ -31,18 +40,18 @@ export class ChatMemory {
     lastName?: string,
     chatTitle?: string
   ) {
-    const history = await this.store.getMessages(this.chatId);
+    const history = await this.messages.getMessages(this.chatId);
     logger.debug({ chatId: this.chatId, role }, 'Adding message');
 
     if (history.length > this.limit) {
       logger.debug({ chatId: this.chatId }, 'Summarizing chat history');
-      const summary = await this.store.getSummary(this.chatId);
+      const summary = await this.summaries.getSummary(this.chatId);
       const newSummary = await this.gpt.summarize(history, summary);
-      await this.store.setSummary(this.chatId, newSummary);
-      await this.store.clearMessages(this.chatId);
+      await this.summaries.setSummary(this.chatId, newSummary);
+      await this.messages.clearMessages(this.chatId);
     }
 
-    await this.store.addMessage(
+    await this.messages.addMessage(
       this.chatId,
       role,
       content,
@@ -60,11 +69,11 @@ export class ChatMemory {
   }
 
   public getHistory(): Promise<ChatMessage[]> {
-    return this.store.getMessages(this.chatId);
+    return this.messages.getMessages(this.chatId);
   }
 
   public getSummary(): Promise<string> {
-    return this.store.getSummary(this.chatId);
+    return this.summaries.getSummary(this.chatId);
   }
 }
 
@@ -74,7 +83,9 @@ export class ChatMemoryManager {
 
   constructor(
     @inject(AI_SERVICE_ID) private gpt: AIService,
-    @inject(MEMORY_STORAGE_ID) private store: MemoryStorage,
+    @inject(MESSAGE_SERVICE_ID) private messages: MessageService,
+    @inject(SUMMARY_SERVICE_ID) private summaries: SummaryService,
+    @inject(CHAT_RESET_SERVICE_ID) private resetService: ChatResetService,
     @inject(ENV_SERVICE_ID) envService: EnvService
   ) {
     this.limit = envService.env.CHAT_HISTORY_LIMIT;
@@ -82,11 +93,17 @@ export class ChatMemoryManager {
 
   public get(chatId: number): ChatMemory {
     logger.debug({ chatId }, 'Creating chat memory');
-    return new ChatMemory(this.gpt, this.store, chatId, this.limit);
+    return new ChatMemory(
+      this.gpt,
+      this.messages,
+      this.summaries,
+      chatId,
+      this.limit
+    );
   }
 
   public async reset(chatId: number) {
     logger.debug({ chatId }, 'Resetting chat memory');
-    await this.store.reset(chatId);
+    await this.resetService.reset(chatId);
   }
 }

@@ -9,24 +9,18 @@ import {
   type MessageRepository,
 } from '../../repositories/interfaces/MessageRepository';
 import {
-  SUMMARY_REPOSITORY_ID,
-  type SummaryRepository,
-} from '../../repositories/interfaces/SummaryRepository';
-import {
   USER_REPOSITORY_ID,
   type UserRepository,
 } from '../../repositories/interfaces/UserRepository';
-import { ChatMessage } from '../ai/AIService';
 import { logger } from '../logging/logger';
-import { MemoryStorage } from './MemoryStorage.interface';
+import { MessageService } from './MessageService';
 
 @injectable()
-export class SQLiteMemoryStorage implements MemoryStorage {
+export class SQLiteMessageService implements MessageService {
   constructor(
     @inject(CHAT_REPOSITORY_ID) private chatRepo: ChatRepository,
     @inject(USER_REPOSITORY_ID) private userRepo: UserRepository,
-    @inject(MESSAGE_REPOSITORY_ID) private messageRepo: MessageRepository,
-    @inject(SUMMARY_REPOSITORY_ID) private summaryRepo: SummaryRepository
+    @inject(MESSAGE_REPOSITORY_ID) private messageRepo: MessageRepository
   ) {}
 
   async addMessage(
@@ -65,7 +59,7 @@ export class SQLiteMemoryStorage implements MemoryStorage {
     });
   }
 
-  async getMessages(chatId: number): Promise<ChatMessage[]> {
+  async getMessages(chatId: number) {
     logger.debug({ chatId }, 'Fetching messages from database');
     return this.messageRepo.findByChatId(chatId);
   }
@@ -73,21 +67,5 @@ export class SQLiteMemoryStorage implements MemoryStorage {
   async clearMessages(chatId: number) {
     logger.debug({ chatId }, 'Clearing messages table');
     await this.messageRepo.clearByChatId(chatId);
-  }
-
-  async getSummary(chatId: number) {
-    logger.debug({ chatId }, 'Fetching summary');
-    return this.summaryRepo.findById(chatId);
-  }
-
-  async setSummary(chatId: number, summary: string) {
-    logger.debug({ chatId }, 'Storing summary');
-    await this.summaryRepo.upsert(chatId, summary);
-  }
-
-  async reset(chatId: number) {
-    logger.debug({ chatId }, 'Resetting chat data');
-    await this.messageRepo.clearByChatId(chatId);
-    await this.summaryRepo.clearByChatId(chatId);
   }
 }
