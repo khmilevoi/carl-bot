@@ -8,9 +8,12 @@ export interface AccessKeyEntity {
 }
 
 export interface AccessKeyRepository {
-  upsert(entry: AccessKeyEntity): Promise<void>;
-  find(chatId: number, userId: number): Promise<AccessKeyEntity | undefined>;
-  delete(chatId: number, userId: number): Promise<void>;
+  upsertKey(entry: AccessKeyEntity): Promise<void>;
+  findByChatAndUser(
+    chatId: number,
+    userId: number
+  ): Promise<AccessKeyEntity | undefined>;
+  deleteExpired(now: number): Promise<void>;
 }
 
 export const ACCESS_KEY_REPOSITORY_ID = Symbol.for(

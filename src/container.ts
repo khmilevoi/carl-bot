@@ -18,7 +18,7 @@ import { SQLiteMessageRepository } from './repositories/sqlite/SQLiteMessageRepo
 import { SQLiteSummaryRepository } from './repositories/sqlite/SQLiteSummaryRepository';
 import { SQLiteUserRepository } from './repositories/sqlite/SQLiteUserRepository';
 import { ADMIN_SERVICE_ID } from './services/admin/AdminService';
-import { SQLiteAdminService } from './services/admin/SQLiteAdminService';
+import { AdminServiceImpl } from './services/admin/AdminServiceImpl';
 import { AI_SERVICE_ID } from './services/ai/AIService';
 import { ChatGPTService } from './services/ai/ChatGPTService';
 import {
@@ -92,7 +92,7 @@ container
   .to(DefaultChatResetService)
   .inSingletonScope();
 
-container.bind(ADMIN_SERVICE_ID).to(SQLiteAdminService).inSingletonScope();
+container.bind(ADMIN_SERVICE_ID).to(AdminServiceImpl).inSingletonScope();
 
 container.bind(DB_PROVIDER_ID).to(SQLiteDbProviderImpl).inSingletonScope();
 container.bind(CHAT_REPOSITORY_ID).to(SQLiteChatRepository).inSingletonScope();

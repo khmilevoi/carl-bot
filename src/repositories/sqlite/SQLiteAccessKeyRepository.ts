@@ -14,7 +14,7 @@ export class SQLiteAccessKeyRepository implements AccessKeyRepository {
     return this.dbProvider.get();
   }
 
-  async upsert({
+  async upsertKey({
     chatId,
     userId,
     accessKey,
@@ -30,7 +30,7 @@ export class SQLiteAccessKeyRepository implements AccessKeyRepository {
     );
   }
 
-  async find(
+  async findByChatAndUser(
     chatId: number,
     userId: number
   ): Promise<AccessKeyEntity | undefined> {
@@ -55,12 +55,8 @@ export class SQLiteAccessKeyRepository implements AccessKeyRepository {
       : undefined;
   }
 
-  async delete(chatId: number, userId: number): Promise<void> {
+  async deleteExpired(now: number): Promise<void> {
     const db = await this.db();
-    await db.run(
-      'DELETE FROM access_keys WHERE chat_id = ? AND user_id = ?',
-      chatId,
-      userId
-    );
+    await db.run('DELETE FROM access_keys WHERE expires_at <= ?', now);
   }
 }
