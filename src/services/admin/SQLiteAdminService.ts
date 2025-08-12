@@ -1,65 +1,51 @@
 import { randomBytes } from 'node:crypto';
 
 import { inject, injectable } from 'inversify';
-import { Database, open } from 'sqlite';
-import sqlite3 from 'sqlite3';
+import type { Database } from 'sqlite';
 
-import { parseDatabaseUrl } from '../../utils/database';
-import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
+import { DB_PROVIDER_ID, DbProvider } from '../../repositories/DbProvider';
+import {
+  ACCESS_KEY_REPOSITORY_ID,
+  type AccessKeyRepository,
+} from '../../repositories/interfaces/AccessKeyRepository';
 import { AdminService } from './AdminService';
 
 @injectable()
 export class SQLiteAdminService implements AdminService {
-  private db: Promise<Database>;
-
-  constructor(@inject(ENV_SERVICE_ID) envService: EnvService) {
-    const filename = parseDatabaseUrl(envService.env.DATABASE_URL);
-    this.db = open({ filename, driver: sqlite3.Database });
-  }
-
-  private async getDb() {
-    return this.db;
-  }
+  constructor(
+    @inject(DB_PROVIDER_ID) private dbProvider: DbProvider,
+    @inject(ACCESS_KEY_REPOSITORY_ID)
+    private accessKeyRepo: AccessKeyRepository
+  ) {}
 
   async createAccessKey(
     chatId: number,
     userId: number,
     ttlMs = 24 * 60 * 60 * 1000
   ): Promise<Date> {
-    const db = await this.getDb();
     const key = randomBytes(16).toString('hex');
     const expiresAt = Date.now() + ttlMs;
-    await db.run(
-      'INSERT INTO access_keys (chat_id, user_id, access_key, expires_at) VALUES (?, ?, ?, ?) ON CONFLICT(chat_id, user_id) DO UPDATE SET access_key=excluded.access_key, expires_at=excluded.expires_at',
+    await this.accessKeyRepo.upsert({
       chatId,
       userId,
-      key,
-      expiresAt
-    );
+      accessKey: key,
+      expiresAt,
+    });
     return new Date(expiresAt);
   }
 
   async hasAccess(chatId: number, userId: number): Promise<boolean> {
-    const db = await this.getDb();
-    const row = await db.get<{ expires_at: number }>(
-      'SELECT expires_at FROM access_keys WHERE chat_id = ? AND user_id = ?',
-      chatId,
-      userId
-    );
-    if (!row) return false;
-    if (row.expires_at < Date.now()) {
-      await db.run(
-        'DELETE FROM access_keys WHERE chat_id = ? AND user_id = ?',
-        chatId,
-        userId
-      );
+    const entry = await this.accessKeyRepo.find(chatId, userId);
+    if (!entry) return false;
+    if (entry.expiresAt < Date.now()) {
+      await this.accessKeyRepo.delete(chatId, userId);
       return false;
     }
     return true;
   }
 
   async exportTables(): Promise<{ filename: string; buffer: Buffer }[]> {
-    const db = await this.getDb();
+    const db = await this.dbProvider.get();
     const tableRows = await db.all<{ name: string }[]>(
       "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
     );
