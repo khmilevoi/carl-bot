@@ -31,7 +31,32 @@ describe('ChatMemory', () => {
     expect(await memory.getSummary()).toBe('summary');
     const hist = await memory.getHistory();
     expect(hist).toEqual([
-      { role: 'assistant', content: 'm4', username: 'bot' },
+      { role: 'assistant', content: 'm4', username: 'bot', chatId: 1 },
+    ]);
+  });
+
+  it('stores user and message ids', async () => {
+    await memory.addMessage(
+      'user',
+      'hello',
+      'alice',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      7,
+      42
+    );
+    const hist = await memory.getHistory();
+    expect(hist).toEqual([
+      {
+        role: 'user',
+        content: 'hello',
+        username: 'alice',
+        userId: 7,
+        messageId: 42,
+        chatId: 1,
+      },
     ]);
   });
 });

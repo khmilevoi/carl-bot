@@ -6,6 +6,9 @@ export interface ChatMessage {
   replyText?: string;
   replyUsername?: string;
   quoteText?: string;
+  userId?: number;
+  messageId?: number;
+  chatId?: number;
 }
 
 export interface AIService {

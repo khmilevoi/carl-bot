@@ -62,13 +62,24 @@ describe('SQLiteMemoryStorage', () => {
       undefined,
       undefined,
       undefined,
-      1
+      1,
+      11,
+      'Alice',
+      'Smith'
     );
     await storage.addMessage(1, 'assistant', 'hello', 'bot');
     const messages = await storage.getMessages(1);
     expect(messages).toEqual([
-      { role: 'user', content: 'hi', username: 'alice' },
-      { role: 'assistant', content: 'hello', username: 'bot' },
+      {
+        role: 'user',
+        content: 'hi',
+        username: 'alice',
+        fullName: 'Alice Smith',
+        userId: 1,
+        messageId: 11,
+        chatId: 1,
+      },
+      { role: 'assistant', content: 'hello', username: 'bot', chatId: 1 },
     ]);
   });
 
