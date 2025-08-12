@@ -67,5 +67,7 @@ npm run test:coverage
 - `src/services/ai/ChatGPTService.ts` — взаимодействие c OpenAI.
 - `src/services/chat/ChatMemory.ts` — хранение истории и ее суммаризация.
 - `dist/` — собранные файлы.
+- Сервисы определяются через интерфейсы и Symbol-ключи Inversify; реализации
+  привязываются в `src/container.ts`.
 
 Репозиторий полностью базируется на npm и TypeScript.
