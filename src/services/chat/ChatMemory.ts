@@ -1,8 +1,12 @@
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 
-import { AIService, ChatMessage } from '../ai/AIService';
+import { AI_SERVICE_ID, AIService, ChatMessage } from '../ai/AIService';
+import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
 import logger from '../logging/logger';
-import { MemoryStorage } from '../storage/MemoryStorage.interface';
+import {
+  MEMORY_STORAGE_ID,
+  MemoryStorage,
+} from '../storage/MemoryStorage.interface';
 
 @injectable()
 export class ChatMemory {
@@ -10,7 +14,7 @@ export class ChatMemory {
     private gpt: AIService,
     private store: MemoryStorage,
     private chatId: number,
-    private limit = 10
+    private limit: number
   ) {}
 
   public async addMessage(
@@ -56,11 +60,15 @@ export class ChatMemory {
 
 @injectable()
 export class ChatMemoryManager {
+  private limit: number;
+
   constructor(
-    private gpt: AIService,
-    private store: MemoryStorage,
-    private limit = 10
-  ) {}
+    @inject(AI_SERVICE_ID) private gpt: AIService,
+    @inject(MEMORY_STORAGE_ID) private store: MemoryStorage,
+    @inject(ENV_SERVICE_ID) envService: EnvService
+  ) {
+    this.limit = envService.env.CHAT_HISTORY_LIMIT;
+  }
 
   public get(chatId: number): ChatMemory {
     logger.debug({ chatId }, 'Creating chat memory');

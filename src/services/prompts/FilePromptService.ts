@@ -1,13 +1,15 @@
 import { readFileSync } from 'fs';
 import { readFile } from 'fs/promises';
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 
+import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
 import logger from '../logging/logger';
 import { PromptService } from './PromptService';
 
 @injectable()
 export class FilePromptService implements PromptService {
   private persona: string | null = null;
+  private personaFile: string;
   private askSummaryTemplate: string;
   private summarizationSystemTemplate: string;
   private previousSummaryTemplate: string;
@@ -15,25 +17,22 @@ export class FilePromptService implements PromptService {
   private userPromptSystemTemplate: string;
   private priorityRulesSystemTemplate: string;
 
-  constructor(
-    private personaFile = 'prompts/persona.md',
-    askSummaryFile = 'prompts/ask_summary_prompt.md',
-    summarizationSystemFile = 'prompts/summarization_system_prompt.md',
-    previousSummaryFile = 'prompts/previous_summary_prompt.md',
-    userPromptFile = 'prompts/user_prompt.md',
-    userPromptSystemFile = 'prompts/user_prompt_system_prompt.md',
-    priorityRulesSystemFile = 'prompts/priority_rules_system_prompt.md'
-  ) {
-    this.askSummaryTemplate = readFileSync(askSummaryFile, 'utf-8');
+  constructor(@inject(ENV_SERVICE_ID) envService: EnvService) {
+    const files = envService.getPromptFiles();
+    this.personaFile = files.persona;
+    this.askSummaryTemplate = readFileSync(files.askSummary, 'utf-8');
     this.summarizationSystemTemplate = readFileSync(
-      summarizationSystemFile,
+      files.summarizationSystem,
       'utf-8'
     );
-    this.previousSummaryTemplate = readFileSync(previousSummaryFile, 'utf-8');
-    this.userPromptTemplate = readFileSync(userPromptFile, 'utf-8');
-    this.userPromptSystemTemplate = readFileSync(userPromptSystemFile, 'utf-8');
+    this.previousSummaryTemplate = readFileSync(files.previousSummary, 'utf-8');
+    this.userPromptTemplate = readFileSync(files.userPrompt, 'utf-8');
+    this.userPromptSystemTemplate = readFileSync(
+      files.userPromptSystem,
+      'utf-8'
+    );
     this.priorityRulesSystemTemplate = readFileSync(
-      priorityRulesSystemFile,
+      files.priorityRulesSystem,
       'utf-8'
     );
   }

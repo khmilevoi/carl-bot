@@ -15,7 +15,7 @@ interface MultiEntry {
 export class StemDictTrigger implements Trigger {
   private entries: MultiEntry[] = [];
 
-  constructor(filename = 'keywords.json') {
+  constructor(filename: string) {
     const dict: Record<string, string[]> = JSON.parse(
       readFileSync(filename, 'utf-8')
     );

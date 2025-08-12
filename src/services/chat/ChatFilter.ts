@@ -1,7 +1,8 @@
 import { readFileSync } from 'fs';
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { resolve } from 'path';
 
+import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
 import logger from '../logging/logger';
 
 export interface ChatFilter {
@@ -17,8 +18,10 @@ export const CHAT_FILTER_ID = Symbol.for(
 @injectable()
 export class JSONWhiteListChatFilter implements ChatFilter {
   private ids = new Set<number>();
+  private filename: string;
 
-  constructor(private filename: string) {
+  constructor(@inject(ENV_SERVICE_ID) envService: EnvService) {
+    this.filename = envService.getWhitelistFile();
     this.load();
   }
 

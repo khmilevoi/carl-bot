@@ -1,10 +1,17 @@
 import pino from 'pino';
 
+import { DefaultEnvService, TestEnvService } from '../env/EnvService';
+
 const destination = pino.destination({ sync: false });
+
+const envService =
+  process.env.NODE_ENV === 'test'
+    ? new TestEnvService()
+    : new DefaultEnvService();
 
 const logger = pino(
   {
-    level: process.env.LOG_LEVEL ?? 'debug',
+    level: envService.env.LOG_LEVEL,
     transport: { target: 'pino-pretty' },
   },
   destination

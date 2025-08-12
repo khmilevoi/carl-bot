@@ -1,8 +1,10 @@
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { Database, open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 
+import { parseDatabaseUrl } from '../../utils/database';
 import { ChatMessage } from '../ai/AIService';
+import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
 import logger from '../logging/logger';
 import { MemoryStorage } from './MemoryStorage.interface';
 
@@ -10,7 +12,8 @@ import { MemoryStorage } from './MemoryStorage.interface';
 export class SQLiteMemoryStorage implements MemoryStorage {
   private db: Promise<Database>;
 
-  constructor(filename = 'memory.db') {
+  constructor(@inject(ENV_SERVICE_ID) envService: EnvService) {
+    const filename = parseDatabaseUrl(envService.env.DATABASE_URL);
     this.db = open({ filename, driver: sqlite3.Database }).then((db) => {
       logger.debug({ filename }, 'Initializing SQLite storage');
       return db;

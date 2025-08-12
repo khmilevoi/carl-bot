@@ -3,85 +3,48 @@ import 'reflect-metadata';
 import { Container } from 'inversify';
 
 import { TelegramBot } from './bot/TelegramBot';
-import { ADMIN_SERVICE_ID, AdminService } from './services/admin/AdminService';
+import { ADMIN_SERVICE_ID } from './services/admin/AdminService';
 import { SQLiteAdminService } from './services/admin/SQLiteAdminService';
-import { AI_SERVICE_ID, AIService } from './services/ai/AIService';
+import { AI_SERVICE_ID } from './services/ai/AIService';
 import { ChatGPTService } from './services/ai/ChatGPTService';
 import {
   CHAT_FILTER_ID,
-  ChatFilter,
   JSONWhiteListChatFilter,
 } from './services/chat/ChatFilter';
 import { ChatMemoryManager } from './services/chat/ChatMemory';
+import {
+  DefaultEnvService,
+  ENV_SERVICE_ID,
+  EnvService,
+  TestEnvService,
+} from './services/env/EnvService';
 import { FilePromptService } from './services/prompts/FilePromptService';
-import {
-  PROMPT_SERVICE_ID,
-  PromptService,
-} from './services/prompts/PromptService';
-import {
-  MEMORY_STORAGE_ID,
-  MemoryStorage,
-} from './services/storage/MemoryStorage.interface';
+import { PROMPT_SERVICE_ID } from './services/prompts/PromptService';
+import { MEMORY_STORAGE_ID } from './services/storage/MemoryStorage.interface';
 import { SQLiteMemoryStorage } from './services/storage/SQLiteMemoryStorage';
-import { parseDatabaseUrl } from './utils/database';
 
 export const container = new Container();
 
-const token = process.env.BOT_TOKEN;
-const apiKey = process.env.OPENAI_API_KEY;
-const dbFileName = parseDatabaseUrl(process.env.DATABASE_URL);
-const historyLimit = Number(process.env.CHAT_HISTORY_LIMIT ?? '50');
-
-if (!token || !apiKey) {
-  throw new Error('BOT_TOKEN and OPENAI_API_KEY are required');
-}
+const EnvServiceImpl =
+  process.env.NODE_ENV === 'test' ? TestEnvService : DefaultEnvService;
 
 container
-  .bind(PROMPT_SERVICE_ID)
-  .toDynamicValue(() => new FilePromptService())
+  .bind<EnvService>(ENV_SERVICE_ID)
+  .to(EnvServiceImpl)
   .inSingletonScope();
 
-container
-  .bind(AI_SERVICE_ID)
-  .toDynamicValue(() => {
-    const prompts = container.get<PromptService>(PROMPT_SERVICE_ID);
-    return new ChatGPTService(apiKey, 'o3', 'o3-mini', prompts);
-  })
-  .inSingletonScope();
+container.bind(PROMPT_SERVICE_ID).to(FilePromptService).inSingletonScope();
 
-container
-  .bind(MEMORY_STORAGE_ID)
-  .toDynamicValue(() => new SQLiteMemoryStorage(dbFileName))
-  .inSingletonScope();
+container.bind(AI_SERVICE_ID).to(ChatGPTService).inSingletonScope();
 
-container
-  .bind(ADMIN_SERVICE_ID)
-  .toDynamicValue(() => new SQLiteAdminService(dbFileName))
-  .inSingletonScope();
+container.bind(MEMORY_STORAGE_ID).to(SQLiteMemoryStorage).inSingletonScope();
 
-container
-  .bind(ChatMemoryManager)
-  .toDynamicValue(() => {
-    const ai = container.get<AIService>(AI_SERVICE_ID);
-    const storage = container.get<MemoryStorage>(MEMORY_STORAGE_ID);
-    return new ChatMemoryManager(ai, storage, historyLimit);
-  })
-  .inSingletonScope();
+container.bind(ADMIN_SERVICE_ID).to(SQLiteAdminService).inSingletonScope();
 
-container
-  .bind(CHAT_FILTER_ID)
-  .toDynamicValue(() => new JSONWhiteListChatFilter('white_list.json'))
-  .inSingletonScope();
+container.bind(ChatMemoryManager).toSelf().inSingletonScope();
 
-container
-  .bind(TelegramBot)
-  .toDynamicValue(() => {
-    const ai = container.get<AIService>(AI_SERVICE_ID);
-    const memories = container.get<ChatMemoryManager>(ChatMemoryManager);
-    const filter = container.get<ChatFilter>(CHAT_FILTER_ID);
-    const admin = container.get<AdminService>(ADMIN_SERVICE_ID);
-    return new TelegramBot(token, ai, memories, filter, admin);
-  })
-  .inSingletonScope();
+container.bind(CHAT_FILTER_ID).to(JSONWhiteListChatFilter).inSingletonScope();
+
+container.bind(TelegramBot).toSelf().inSingletonScope();
 
 export default container;

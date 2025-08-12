@@ -1,12 +1,10 @@
-import 'dotenv/config';
-
-import assert from 'node:assert';
-
 import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 
+import container from './container';
+import { ENV_SERVICE_ID, EnvService } from './services/env/EnvService';
 import logger from './services/logging/logger';
 import { parseDatabaseUrl } from './utils/database';
 
@@ -16,9 +14,11 @@ interface Migration {
   down: string;
 }
 
-const filename = parseDatabaseUrl(process.env.DATABASE_URL);
+const envService = container.get<EnvService>(ENV_SERVICE_ID);
+const env = envService.env;
+const filename = parseDatabaseUrl(env.DATABASE_URL);
 
-function loadMigrations(dir = 'migrations'): Migration[] {
+function loadMigrations(dir = envService.getMigrationsDir()): Migration[] {
   logger.info({ dir }, 'Loading migrations from directory');
   const files = readdirSync(dir)
     .filter((f) => f.endsWith('.up.sql'))
