@@ -41,10 +41,10 @@ import {
   MESSAGE_SERVICE_ID,
   type MessageService,
 } from './services/messages/MessageService';
-import { SQLiteMessageService } from './services/messages/SQLiteMessageService';
+import { RepositoryMessageService } from './services/messages/RepositoryMessageService';
 import { FilePromptService } from './services/prompts/FilePromptService';
 import { PROMPT_SERVICE_ID } from './services/prompts/PromptService';
-import { SQLiteSummaryService as SummaryServiceImpl } from './services/summaries/SQLiteSummaryService';
+import { RepositorySummaryService } from './services/summaries/RepositorySummaryService';
 import {
   SUMMARY_SERVICE_ID,
   type SummaryService,
@@ -64,8 +64,14 @@ container.bind(PROMPT_SERVICE_ID).to(FilePromptService).inSingletonScope();
 
 container.bind(AI_SERVICE_ID).to(ChatGPTService).inSingletonScope();
 
-container.bind(MESSAGE_SERVICE_ID).to(SQLiteMessageService).inSingletonScope();
-container.bind(SUMMARY_SERVICE_ID).to(SummaryServiceImpl).inSingletonScope();
+container
+  .bind(MESSAGE_SERVICE_ID)
+  .to(RepositoryMessageService)
+  .inSingletonScope();
+container
+  .bind(SUMMARY_SERVICE_ID)
+  .to(RepositorySummaryService)
+  .inSingletonScope();
 container
   .bind(CHAT_RESET_SERVICE_ID)
   .to(DefaultChatResetService)

@@ -16,7 +16,7 @@ import { logger } from '../logging/logger';
 import { MessageService } from './MessageService';
 
 @injectable()
-export class SQLiteMessageService implements MessageService {
+export class RepositoryMessageService implements MessageService {
   constructor(
     @inject(CHAT_REPOSITORY_ID) private chatRepo: ChatRepository,
     @inject(USER_REPOSITORY_ID) private userRepo: UserRepository,

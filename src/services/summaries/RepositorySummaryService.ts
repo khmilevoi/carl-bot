@@ -8,7 +8,7 @@ import { logger } from '../logging/logger';
 import { SummaryService } from './SummaryService';
 
 @injectable()
-export class SQLiteSummaryService implements SummaryService {
+export class RepositorySummaryService implements SummaryService {
   constructor(
     @inject(SUMMARY_REPOSITORY_ID) private summaryRepo: SummaryRepository
   ) {}
