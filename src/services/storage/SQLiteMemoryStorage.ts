@@ -35,10 +35,16 @@ export class SQLiteMemoryStorage implements MemoryStorage {
     quoteText?: string,
     userId?: number,
     firstName?: string,
-    lastName?: string
+    lastName?: string,
+    chatTitle?: string
   ) {
     logger.debug({ chatId, role }, 'Inserting message into database');
     const db = await this.getDb();
+    await db.run(
+      'INSERT INTO chats (chat_id, title) VALUES (?, ?) ON CONFLICT(chat_id) DO UPDATE SET title=excluded.title',
+      chatId,
+      chatTitle ?? null
+    );
     await db.run(
       'INSERT INTO messages (chat_id, role, content, username, full_name, reply_text, reply_username, quote_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       chatId,
