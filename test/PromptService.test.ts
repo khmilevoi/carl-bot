@@ -69,14 +69,14 @@ describe('FilePromptService', () => {
     expect(readFileSpy).toHaveBeenCalledWith(personaPath, 'utf-8');
   });
 
-  it('getAskSummaryPrompt substitutes summary', () => {
-    expect(service.getAskSummaryPrompt('S')).toBe('ask S');
+  it('getAskSummaryPrompt substitutes summary', async () => {
+    expect(await service.getAskSummaryPrompt('S')).toBe('ask S');
   });
 
-  it('getUserPrompt substitutes values', () => {
-    const prompt = service.getUserPrompt('m', 'u', 'f', 'r', 'q');
+  it('getUserPrompt substitutes values', async () => {
+    const prompt = await service.getUserPrompt('m', 'u', 'f', 'r', 'q');
     expect(prompt).toBe('m|u|f|r|q');
-    const prompt2 = service.getUserPrompt('m');
+    const prompt2 = await service.getUserPrompt('m');
     expect(prompt2).toBe('m|N/A|N/A|N/A|N/A');
   });
 });

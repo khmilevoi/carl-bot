@@ -57,23 +57,26 @@ export class ChatGPTService implements AIService {
       { role: 'system', content: persona },
       {
         role: 'system',
-        content: this.prompts.getPriorityRulesSystemPrompt(),
+        content: await this.prompts.getPriorityRulesSystemPrompt(),
       },
-      { role: 'system', content: this.prompts.getUserPromptSystemPrompt() },
+      {
+        role: 'system',
+        content: await this.prompts.getUserPromptSystemPrompt(),
+      },
     ];
     if (summary) {
       messages.push({
         role: 'system',
-        content: this.prompts.getAskSummaryPrompt(summary),
+        content: await this.prompts.getAskSummaryPrompt(summary),
       });
     }
 
-    messages.push(
-      ...history.map<OpenAI.ChatCompletionMessageParam>((m) =>
+    const historyMessages = await Promise.all(
+      history.map<Promise<OpenAI.ChatCompletionMessageParam>>(async (m) =>
         m.role === 'user'
           ? {
               role: 'user',
-              content: this.prompts.getUserPrompt(
+              content: await this.prompts.getUserPrompt(
                 m.content,
                 m.username,
                 m.fullName,
@@ -84,6 +87,7 @@ export class ChatGPTService implements AIService {
           : { role: 'assistant', content: m.content }
       )
     );
+    messages.push(...historyMessages);
 
     void this.logPrompt('ask', messages);
     const completion = await this.openai.chat.completions.create({
@@ -99,7 +103,10 @@ export class ChatGPTService implements AIService {
     prev?: string
   ): Promise<string> {
     const messages: OpenAI.ChatCompletionMessageParam[] = [
-      { role: 'system', content: this.prompts.getSummarizationSystemPrompt() },
+      {
+        role: 'system',
+        content: await this.prompts.getSummarizationSystemPrompt(),
+      },
     ];
     logger.debug(
       { history: history.length, prevLength: prev?.length ?? 0 },
@@ -108,22 +115,24 @@ export class ChatGPTService implements AIService {
     if (prev) {
       messages.push({
         role: 'user',
-        content: this.prompts.getPreviousSummaryPrompt(prev),
+        content: await this.prompts.getPreviousSummaryPrompt(prev),
       });
     }
-    const historyText = history
-      .map((m) =>
-        m.role === 'user'
-          ? this.prompts.getUserPrompt(
-              m.content,
-              m.username,
-              m.fullName,
-              m.replyText,
-              m.quoteText
-            )
-          : `Ассистент: ${m.content}`
+    const historyText = (
+      await Promise.all(
+        history.map(async (m) =>
+          m.role === 'user'
+            ? await this.prompts.getUserPrompt(
+                m.content,
+                m.username,
+                m.fullName,
+                m.replyText,
+                m.quoteText
+              )
+            : `Ассистент: ${m.content}`
+        )
       )
-      .join('\n');
+    ).join('\n');
     messages.push({
       role: 'user',
       content: `История диалога:\n${historyText}`,
