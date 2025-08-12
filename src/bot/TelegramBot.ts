@@ -214,7 +214,8 @@ export class TelegramBot {
       quoteText,
       ctx.from?.id,
       ctx.from?.first_name,
-      ctx.from?.last_name
+      ctx.from?.last_name,
+      (ctx.chat as any)?.title
     );
 
     const context: TriggerContext = {
@@ -255,7 +256,19 @@ export class TelegramBot {
         await memory.getSummary()
       );
       logger.debug({ chatId }, 'Answer generated');
-      await memory.addMessage('assistant', answer, ctx.me);
+      await memory.addMessage(
+        'assistant',
+        answer,
+        ctx.me,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        (ctx.chat as any)?.title
+      );
 
       ctx.reply(answer, {
         reply_parameters: ctx.message?.message_id

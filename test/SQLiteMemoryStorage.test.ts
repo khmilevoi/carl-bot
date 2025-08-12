@@ -35,6 +35,10 @@ beforeEach(async () => {
       first_name TEXT,
       last_name TEXT
     );
+    CREATE TABLE chats (
+      chat_id INTEGER PRIMARY KEY,
+      title TEXT
+    );
     CREATE TABLE summaries (
       chat_id INTEGER PRIMARY KEY,
       summary TEXT
@@ -117,5 +121,31 @@ describe('SQLiteMemoryStorage', () => {
       first_name: 'Alicia',
       last_name: 'Johnson',
     });
+  });
+
+  it('stores chats', async () => {
+    await storage.addMessage(
+      1,
+      'user',
+      'hi',
+      'alice',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      'Test Chat'
+    );
+    const env = new TestEnvService();
+    const filename = parseDatabaseUrl(env.env.DATABASE_URL);
+    const db = await open({ filename, driver: sqlite3.Database });
+    const chat = await db.get(
+      'SELECT chat_id, title FROM chats WHERE chat_id = ?',
+      1
+    );
+    await db.close();
+    expect(chat).toEqual({ chat_id: 1, title: 'Test Chat' });
   });
 });
