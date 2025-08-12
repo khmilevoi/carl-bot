@@ -13,14 +13,16 @@ export class FilePromptService implements PromptService {
   private previousSummaryTemplate: string;
   private userPromptTemplate: string;
   private userPromptSystemTemplate: string;
+  private priorityRulesSystemTemplate: string;
 
   constructor(
-    private personaFile = 'persona.md',
-    askSummaryFile = 'prompts/ask_summary_prompt.txt',
-    summarizationSystemFile = 'prompts/summarization_system_prompt.txt',
-    previousSummaryFile = 'prompts/previous_summary_prompt.txt',
-    userPromptFile = 'prompts/user_prompt.txt',
-    userPromptSystemFile = 'prompts/user_prompt_system_prompt.txt'
+    private personaFile = 'prompts/persona.md',
+    askSummaryFile = 'prompts/ask_summary_prompt.md',
+    summarizationSystemFile = 'prompts/summarization_system_prompt.md',
+    previousSummaryFile = 'prompts/previous_summary_prompt.md',
+    userPromptFile = 'prompts/user_prompt.md',
+    userPromptSystemFile = 'prompts/user_prompt_system_prompt.md',
+    priorityRulesSystemFile = 'prompts/priority_rules_system_prompt.md'
   ) {
     this.askSummaryTemplate = readFileSync(askSummaryFile, 'utf-8');
     this.summarizationSystemTemplate = readFileSync(
@@ -30,6 +32,10 @@ export class FilePromptService implements PromptService {
     this.previousSummaryTemplate = readFileSync(previousSummaryFile, 'utf-8');
     this.userPromptTemplate = readFileSync(userPromptFile, 'utf-8');
     this.userPromptSystemTemplate = readFileSync(userPromptSystemFile, 'utf-8');
+    this.priorityRulesSystemTemplate = readFileSync(
+      priorityRulesSystemFile,
+      'utf-8'
+    );
   }
 
   private async loadPersona(): Promise<string> {
@@ -42,6 +48,10 @@ export class FilePromptService implements PromptService {
 
   async getPersona(): Promise<string> {
     return this.loadPersona();
+  }
+
+  getPriorityRulesSystemPrompt(): string {
+    return this.priorityRulesSystemTemplate;
   }
 
   getUserPromptSystemPrompt(): string {
