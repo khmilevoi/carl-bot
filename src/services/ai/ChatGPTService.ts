@@ -12,18 +12,17 @@ import { AIService, ChatMessage } from './AIService';
 @injectable()
 export class ChatGPTService implements AIService {
   private openai: OpenAI;
-  private askModel: ChatModel;
-  private summaryModel: ChatModel;
   private env: Env;
 
   constructor(
+    apiKey: string,
+    private readonly askModel: ChatModel,
+    private readonly summaryModel: ChatModel,
     @inject(ENV_SERVICE_ID) envService: EnvService,
     @inject(PROMPT_SERVICE_ID) private readonly prompts: PromptService
   ) {
     this.env = envService.env;
-    this.openai = new OpenAI({ apiKey: this.env.OPENAI_API_KEY });
-    this.askModel = 'o3';
-    this.summaryModel = 'o3-mini';
+    this.openai = new OpenAI({ apiKey });
     logger.debug('ChatGPTService initialized');
   }
 

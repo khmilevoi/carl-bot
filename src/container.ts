@@ -46,7 +46,21 @@ container
   .toDynamicValue(() => new FilePromptService())
   .inSingletonScope();
 
-container.bind(AI_SERVICE_ID).to(ChatGPTService).inSingletonScope();
+container
+  .bind(AI_SERVICE_ID)
+  .toDynamicValue(() => {
+    const envService = container.get<EnvService>(ENV_SERVICE_ID);
+    const prompts = container.get<PromptService>(PROMPT_SERVICE_ID);
+    const env = envService.env;
+    return new ChatGPTService(
+      env.OPENAI_API_KEY,
+      'o3',
+      'o3-mini',
+      envService,
+      prompts
+    );
+  })
+  .inSingletonScope();
 
 container
   .bind(MEMORY_STORAGE_ID)
