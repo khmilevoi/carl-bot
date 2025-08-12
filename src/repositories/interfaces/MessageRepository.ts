@@ -22,5 +22,3 @@ export interface MessageRepository {
 export const MESSAGE_REPOSITORY_ID = Symbol.for(
   'MessageRepository'
 ) as ServiceIdentifier<MessageRepository>;
-
-export default MessageRepository;

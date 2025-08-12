@@ -1,15 +1,14 @@
 import { inject, injectable } from 'inversify';
 
-import { DB_PROVIDER_ID, DbProvider } from '../DbProvider';
+import { DB_PROVIDER_ID, type SQLiteDbProvider } from '../DbProvider';
 import {
-  CHAT_REPOSITORY_ID,
   type ChatEntity,
   type ChatRepository,
 } from '../interfaces/ChatRepository';
 
 @injectable()
 export class SQLiteChatRepository implements ChatRepository {
-  constructor(@inject(DB_PROVIDER_ID) private dbProvider: DbProvider) {}
+  constructor(@inject(DB_PROVIDER_ID) private dbProvider: SQLiteDbProvider) {}
 
   private async db() {
     return this.dbProvider.get();
@@ -33,5 +32,3 @@ export class SQLiteChatRepository implements ChatRepository {
     return row ? { chatId: row.chat_id, title: row.title } : undefined;
   }
 }
-
-export default SQLiteChatRepository;

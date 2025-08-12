@@ -17,7 +17,7 @@ import {
   type UserRepository,
 } from '../../repositories/interfaces/UserRepository';
 import { ChatMessage } from '../ai/AIService';
-import logger from '../logging/logger';
+import { logger } from '../logging/logger';
 import { MemoryStorage } from './MemoryStorage.interface';
 
 @injectable()

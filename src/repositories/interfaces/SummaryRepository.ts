@@ -9,5 +9,3 @@ export interface SummaryRepository {
 export const SUMMARY_REPOSITORY_ID = Symbol.for(
   'SummaryRepository'
 ) as ServiceIdentifier<SummaryRepository>;
-
-export default SummaryRepository;

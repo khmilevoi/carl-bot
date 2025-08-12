@@ -29,6 +29,7 @@
 - When environment variables change, update `.env.example` accordingly.
 - When adding new services, define an interface and export an Inversify key (Symbol)
   so they can be bound in the container.
+- Do not use default exports.
 
 ## Troubleshooting
 

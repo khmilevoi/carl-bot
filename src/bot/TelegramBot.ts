@@ -10,7 +10,7 @@ import { CHAT_FILTER_ID, ChatFilter } from '../services/chat/ChatFilter';
 import { ChatMemoryManager } from '../services/chat/ChatMemory';
 import { DialogueManager } from '../services/chat/DialogueManager';
 import { Env, ENV_SERVICE_ID, EnvService } from '../services/env/EnvService';
-import logger from '../services/logging/logger';
+import { logger } from '../services/logging/logger';
 import { MentionTrigger } from '../triggers/MentionTrigger';
 import { NameTrigger } from '../triggers/NameTrigger';
 import { ReplyTrigger } from '../triggers/ReplyTrigger';

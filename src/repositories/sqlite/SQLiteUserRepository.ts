@@ -1,15 +1,14 @@
 import { inject, injectable } from 'inversify';
 
-import { DB_PROVIDER_ID, DbProvider } from '../DbProvider';
+import { DB_PROVIDER_ID, type SQLiteDbProvider } from '../DbProvider';
 import {
-  USER_REPOSITORY_ID,
   type UserEntity,
   type UserRepository,
 } from '../interfaces/UserRepository';
 
 @injectable()
 export class SQLiteUserRepository implements UserRepository {
-  constructor(@inject(DB_PROVIDER_ID) private dbProvider: DbProvider) {}
+  constructor(@inject(DB_PROVIDER_ID) private dbProvider: SQLiteDbProvider) {}
 
   private async db() {
     return this.dbProvider.get();
@@ -52,5 +51,3 @@ export class SQLiteUserRepository implements UserRepository {
       : undefined;
   }
 }
-
-export default SQLiteUserRepository;

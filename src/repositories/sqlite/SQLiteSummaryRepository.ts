@@ -1,14 +1,11 @@
 import { inject, injectable } from 'inversify';
 
-import { DB_PROVIDER_ID, DbProvider } from '../DbProvider';
-import {
-  SUMMARY_REPOSITORY_ID,
-  type SummaryRepository,
-} from '../interfaces/SummaryRepository';
+import { DB_PROVIDER_ID, type SQLiteDbProvider } from '../DbProvider';
+import { type SummaryRepository } from '../interfaces/SummaryRepository';
 
 @injectable()
 export class SQLiteSummaryRepository implements SummaryRepository {
-  constructor(@inject(DB_PROVIDER_ID) private dbProvider: DbProvider) {}
+  constructor(@inject(DB_PROVIDER_ID) private dbProvider: SQLiteDbProvider) {}
 
   private async db() {
     return this.dbProvider.get();
@@ -37,5 +34,3 @@ export class SQLiteSummaryRepository implements SummaryRepository {
     await db.run('DELETE FROM summaries WHERE chat_id = ?', chatId);
   }
 }
-
-export default SQLiteSummaryRepository;

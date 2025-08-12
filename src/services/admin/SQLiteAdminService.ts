@@ -3,7 +3,10 @@ import { randomBytes } from 'node:crypto';
 import { inject, injectable } from 'inversify';
 import type { Database } from 'sqlite';
 
-import { DB_PROVIDER_ID, DbProvider } from '../../repositories/DbProvider';
+import {
+  DB_PROVIDER_ID,
+  type SQLiteDbProvider,
+} from '../../repositories/DbProvider';
 import {
   ACCESS_KEY_REPOSITORY_ID,
   type AccessKeyRepository,
@@ -13,7 +16,7 @@ import { AdminService } from './AdminService';
 @injectable()
 export class SQLiteAdminService implements AdminService {
   constructor(
-    @inject(DB_PROVIDER_ID) private dbProvider: DbProvider,
+    @inject(DB_PROVIDER_ID) private dbProvider: SQLiteDbProvider,
     @inject(ACCESS_KEY_REPOSITORY_ID)
     private accessKeyRepo: AccessKeyRepository
   ) {}
@@ -46,11 +49,9 @@ export class SQLiteAdminService implements AdminService {
 
   async exportTables(): Promise<{ filename: string; buffer: Buffer }[]> {
     const db = await this.dbProvider.get();
-    const tableRows = await db.all<{ name: string }[]>(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
-    );
+    const tableNames = await this.dbProvider.listTables();
     const files: { filename: string; buffer: Buffer }[] = [];
-    for (const { name } of tableRows) {
+    for (const name of tableNames) {
       const buffer = await this.exportTable(db, name);
       if (buffer && buffer.length > 0) {
         files.push({ filename: `${name}.csv`, buffer });

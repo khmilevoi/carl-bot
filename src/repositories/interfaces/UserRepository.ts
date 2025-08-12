@@ -15,5 +15,3 @@ export interface UserRepository {
 export const USER_REPOSITORY_ID = Symbol.for(
   'UserRepository'
 ) as ServiceIdentifier<UserRepository>;
-
-export default UserRepository;

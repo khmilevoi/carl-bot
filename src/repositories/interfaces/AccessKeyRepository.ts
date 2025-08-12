@@ -16,5 +16,3 @@ export interface AccessKeyRepository {
 export const ACCESS_KEY_REPOSITORY_ID = Symbol.for(
   'AccessKeyRepository'
 ) as ServiceIdentifier<AccessKeyRepository>;
-
-export default AccessKeyRepository;

@@ -3,17 +3,20 @@ import 'reflect-metadata';
 import { Container } from 'inversify';
 
 import { TelegramBot } from './bot/TelegramBot';
-import { DB_PROVIDER_ID, DbProvider } from './repositories/DbProvider';
+import {
+  DB_PROVIDER_ID,
+  SQLiteDbProviderImpl,
+} from './repositories/DbProvider';
 import { ACCESS_KEY_REPOSITORY_ID } from './repositories/interfaces/AccessKeyRepository';
 import { CHAT_REPOSITORY_ID } from './repositories/interfaces/ChatRepository';
 import { MESSAGE_REPOSITORY_ID } from './repositories/interfaces/MessageRepository';
 import { SUMMARY_REPOSITORY_ID } from './repositories/interfaces/SummaryRepository';
 import { USER_REPOSITORY_ID } from './repositories/interfaces/UserRepository';
-import SQLiteAccessKeyRepository from './repositories/sqlite/SQLiteAccessKeyRepository';
-import SQLiteChatRepository from './repositories/sqlite/SQLiteChatRepository';
-import SQLiteMessageRepository from './repositories/sqlite/SQLiteMessageRepository';
-import SQLiteSummaryRepository from './repositories/sqlite/SQLiteSummaryRepository';
-import SQLiteUserRepository from './repositories/sqlite/SQLiteUserRepository';
+import { SQLiteAccessKeyRepository } from './repositories/sqlite/SQLiteAccessKeyRepository';
+import { SQLiteChatRepository } from './repositories/sqlite/SQLiteChatRepository';
+import { SQLiteMessageRepository } from './repositories/sqlite/SQLiteMessageRepository';
+import { SQLiteSummaryRepository } from './repositories/sqlite/SQLiteSummaryRepository';
+import { SQLiteUserRepository } from './repositories/sqlite/SQLiteUserRepository';
 import { ADMIN_SERVICE_ID } from './services/admin/AdminService';
 import { SQLiteAdminService } from './services/admin/SQLiteAdminService';
 import { AI_SERVICE_ID } from './services/ai/AIService';
@@ -52,7 +55,7 @@ container.bind(MEMORY_STORAGE_ID).to(SQLiteMemoryStorage).inSingletonScope();
 
 container.bind(ADMIN_SERVICE_ID).to(SQLiteAdminService).inSingletonScope();
 
-container.bind(DB_PROVIDER_ID).to(DbProvider).inSingletonScope();
+container.bind(DB_PROVIDER_ID).to(SQLiteDbProviderImpl).inSingletonScope();
 container.bind(CHAT_REPOSITORY_ID).to(SQLiteChatRepository).inSingletonScope();
 container.bind(USER_REPOSITORY_ID).to(SQLiteUserRepository).inSingletonScope();
 container
@@ -73,5 +76,3 @@ container.bind(ChatMemoryManager).toSelf().inSingletonScope();
 container.bind(CHAT_FILTER_ID).to(JSONWhiteListChatFilter).inSingletonScope();
 
 container.bind(TelegramBot).toSelf().inSingletonScope();
-
-export default container;

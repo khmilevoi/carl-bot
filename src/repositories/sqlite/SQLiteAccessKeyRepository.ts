@@ -1,15 +1,14 @@
 import { inject, injectable } from 'inversify';
 
-import { DB_PROVIDER_ID, DbProvider } from '../DbProvider';
+import { DB_PROVIDER_ID, type SQLiteDbProvider } from '../DbProvider';
 import {
-  ACCESS_KEY_REPOSITORY_ID,
   type AccessKeyEntity,
   type AccessKeyRepository,
 } from '../interfaces/AccessKeyRepository';
 
 @injectable()
 export class SQLiteAccessKeyRepository implements AccessKeyRepository {
-  constructor(@inject(DB_PROVIDER_ID) private dbProvider: DbProvider) {}
+  constructor(@inject(DB_PROVIDER_ID) private dbProvider: SQLiteDbProvider) {}
 
   private async db() {
     return this.dbProvider.get();
@@ -65,5 +64,3 @@ export class SQLiteAccessKeyRepository implements AccessKeyRepository {
     );
   }
 }
-
-export default SQLiteAccessKeyRepository;

@@ -13,5 +13,3 @@ export interface ChatRepository {
 export const CHAT_REPOSITORY_ID = Symbol.for(
   'ChatRepository'
 ) as ServiceIdentifier<ChatRepository>;
-
-export default ChatRepository;

@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 
 import { AI_SERVICE_ID, AIService, ChatMessage } from '../ai/AIService';
 import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
-import logger from '../logging/logger';
+import { logger } from '../logging/logger';
 import {
   MEMORY_STORAGE_ID,
   MemoryStorage,

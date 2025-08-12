@@ -5,12 +5,12 @@ import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import DbProvider from '../src/repositories/DbProvider';
-import SQLiteAccessKeyRepository from '../src/repositories/sqlite/SQLiteAccessKeyRepository';
-import SQLiteChatRepository from '../src/repositories/sqlite/SQLiteChatRepository';
-import SQLiteMessageRepository from '../src/repositories/sqlite/SQLiteMessageRepository';
-import SQLiteSummaryRepository from '../src/repositories/sqlite/SQLiteSummaryRepository';
-import SQLiteUserRepository from '../src/repositories/sqlite/SQLiteUserRepository';
+import { SQLiteDbProviderImpl } from '../src/repositories/DbProvider';
+import { SQLiteAccessKeyRepository } from '../src/repositories/sqlite/SQLiteAccessKeyRepository';
+import { SQLiteChatRepository } from '../src/repositories/sqlite/SQLiteChatRepository';
+import { SQLiteMessageRepository } from '../src/repositories/sqlite/SQLiteMessageRepository';
+import { SQLiteSummaryRepository } from '../src/repositories/sqlite/SQLiteSummaryRepository';
+import { SQLiteUserRepository } from '../src/repositories/sqlite/SQLiteUserRepository';
 import { TestEnvService } from '../src/services/env/EnvService';
 import { parseDatabaseUrl } from '../src/utils/database';
 
@@ -64,7 +64,7 @@ beforeEach(async () => {
       );
     `);
   await db.close();
-  const provider = new DbProvider(env);
+  const provider = new SQLiteDbProviderImpl(env);
   chatRepo = new SQLiteChatRepository(provider);
   userRepo = new SQLiteUserRepository(provider);
   messageRepo = new SQLiteMessageRepository(provider);

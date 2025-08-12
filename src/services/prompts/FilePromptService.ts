@@ -3,7 +3,7 @@ import { inject, injectable } from 'inversify';
 
 import { createLazy } from '../../utils/lazy';
 import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
-import logger from '../logging/logger';
+import { logger } from '../logging/logger';
 import { PromptService } from './PromptService';
 
 @injectable()

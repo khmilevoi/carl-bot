@@ -3,7 +3,7 @@ import { inject, injectable } from 'inversify';
 import { resolve } from 'path';
 
 import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
-import logger from '../logging/logger';
+import { logger } from '../logging/logger';
 
 export interface ChatFilter {
   isAllowed(chatId: number): boolean;

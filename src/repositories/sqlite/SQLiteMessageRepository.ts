@@ -1,16 +1,15 @@
 import { inject, injectable } from 'inversify';
 
 import type { ChatMessage } from '../../services/ai/AIService';
-import { DB_PROVIDER_ID, DbProvider } from '../DbProvider';
+import { DB_PROVIDER_ID, type SQLiteDbProvider } from '../DbProvider';
 import {
-  MESSAGE_REPOSITORY_ID,
   type MessageEntity,
   type MessageRepository,
 } from '../interfaces/MessageRepository';
 
 @injectable()
 export class SQLiteMessageRepository implements MessageRepository {
-  constructor(@inject(DB_PROVIDER_ID) private dbProvider: DbProvider) {}
+  constructor(@inject(DB_PROVIDER_ID) private dbProvider: SQLiteDbProvider) {}
 
   private async db() {
     return this.dbProvider.get();
@@ -85,5 +84,3 @@ export class SQLiteMessageRepository implements MessageRepository {
     await db.run('DELETE FROM messages WHERE chat_id = ?', chatId);
   }
 }
-
-export default SQLiteMessageRepository;

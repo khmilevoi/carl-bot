@@ -1,6 +1,6 @@
 import { TelegramBot } from './bot/TelegramBot';
-import container from './container';
-import logger from './services/logging/logger';
+import { container } from './container';
+import { logger } from './services/logging/logger';
 
 const bot = container.get<TelegramBot>(TelegramBot);
 
