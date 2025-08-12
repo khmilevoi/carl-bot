@@ -80,9 +80,9 @@ export class TelegramBot {
       const approveCmd = `/approve ${ctx.chat!.id} ${userId}`;
       const msg = [
         `Chat ${ctx.chat!.id} user ${userId} requests access. Approve with:`,
-        '```',
+        '`',
         approveCmd,
-        '```',
+        '`',
       ].join('\n');
       await ctx.telegram.sendMessage(adminChatId, msg, {
         parse_mode: 'Markdown',
