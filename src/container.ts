@@ -17,6 +17,7 @@ import {
   DefaultEnvService,
   ENV_SERVICE_ID,
   EnvService,
+  TestEnvService,
 } from './services/env/EnvService';
 import { FilePromptService } from './services/prompts/FilePromptService';
 import {
@@ -32,9 +33,12 @@ import { parseDatabaseUrl } from './utils/database';
 
 export const container = new Container();
 
+const EnvServiceImpl =
+  process.env.NODE_ENV === 'test' ? TestEnvService : DefaultEnvService;
+
 container
   .bind<EnvService>(ENV_SERVICE_ID)
-  .to(DefaultEnvService)
+  .to(EnvServiceImpl)
   .inSingletonScope();
 
 container

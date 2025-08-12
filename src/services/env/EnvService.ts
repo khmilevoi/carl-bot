@@ -54,3 +54,17 @@ export class DefaultEnvService implements EnvService {
     this.env = envSchema.parse(process.env);
   }
 }
+
+@injectable()
+export class TestEnvService implements EnvService {
+  public readonly env: Env = {
+    BOT_TOKEN: 'test',
+    OPENAI_API_KEY: 'test',
+    DATABASE_URL: 'file:///tmp/test.db',
+    CHAT_HISTORY_LIMIT: 50,
+    LOG_LEVEL: 'silent',
+    ADMIN_CHAT_ID: 0,
+    NODE_ENV: 'test',
+    LOG_PROMPTS: false,
+  };
+}
