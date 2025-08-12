@@ -37,6 +37,10 @@ import {
 } from './services/chat/ChatResponder';
 import { DefaultChatResetService } from './services/chat/DefaultChatResetService';
 import {
+  DefaultHistorySummarizer,
+  HISTORY_SUMMARIZER_ID,
+} from './services/chat/HistorySummarizer';
+import {
   DefaultTriggerPipeline,
   TRIGGER_PIPELINE_ID,
   TriggerPipeline,
@@ -86,6 +90,10 @@ container
 container
   .bind(SUMMARY_SERVICE_ID)
   .to(RepositorySummaryService)
+  .inSingletonScope();
+container
+  .bind(HISTORY_SUMMARIZER_ID)
+  .to(DefaultHistorySummarizer)
   .inSingletonScope();
 container
   .bind(CHAT_RESET_SERVICE_ID)
