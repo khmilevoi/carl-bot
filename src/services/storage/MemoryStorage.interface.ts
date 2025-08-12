@@ -7,7 +7,10 @@ export interface MemoryStorage {
     fullName?: string,
     replyText?: string,
     replyUsername?: string,
-    quoteText?: string
+    quoteText?: string,
+    userId?: number,
+    firstName?: string,
+    lastName?: string
   ): Promise<void>;
   getMessages(chatId: number): Promise<
     {

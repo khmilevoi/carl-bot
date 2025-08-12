@@ -29,6 +29,12 @@ beforeEach(async () => {
       reply_username TEXT,
       quote_text TEXT
     );
+    CREATE TABLE users (
+      id INTEGER PRIMARY KEY,
+      username TEXT,
+      first_name TEXT,
+      last_name TEXT
+    );
     CREATE TABLE summaries (
       chat_id INTEGER PRIMARY KEY,
       summary TEXT
@@ -68,5 +74,48 @@ describe('SQLiteMemoryStorage', () => {
     const messages = await storage.getMessages(1);
     expect(messages).toEqual([]);
     expect(await storage.getSummary(1)).toBe('');
+  });
+
+  it('stores and updates users', async () => {
+    await storage.addMessage(
+      1,
+      'user',
+      'hi',
+      'alice',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      42,
+      'Alice',
+      'Smith'
+    );
+    await storage.addMessage(
+      1,
+      'user',
+      'hi again',
+      'alice2',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      42,
+      'Alicia',
+      'Johnson'
+    );
+    const env = new TestEnvService();
+    const filename = parseDatabaseUrl(env.env.DATABASE_URL);
+    const db = await open({ filename, driver: sqlite3.Database });
+    const user = await db.get(
+      'SELECT id, username, first_name, last_name FROM users WHERE id = ?',
+      42
+    );
+    await db.close();
+    expect(user).toEqual({
+      id: 42,
+      username: 'alice2',
+      first_name: 'Alicia',
+      last_name: 'Johnson',
+    });
   });
 });
