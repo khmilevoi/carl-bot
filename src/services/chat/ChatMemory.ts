@@ -26,6 +26,7 @@ export class ChatMemory {
     replyUsername?: string,
     quoteText?: string,
     userId?: number,
+    messageId?: number,
     firstName?: string,
     lastName?: string,
     chatTitle?: string
@@ -51,6 +52,7 @@ export class ChatMemory {
       replyUsername,
       quoteText,
       userId,
+      messageId,
       firstName,
       lastName,
       chatTitle

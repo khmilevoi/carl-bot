@@ -26,6 +26,7 @@ export class InMemoryStorage implements MemoryStorage {
     replyUsername?: string,
     quoteText?: string,
     userId?: number,
+    messageId?: number,
     firstName?: string,
     lastName?: string,
     chatTitle?: string

@@ -34,38 +34,37 @@ export class SQLiteMemoryStorage implements MemoryStorage {
     replyUsername?: string,
     quoteText?: string,
     userId?: number,
+    messageId?: number,
     firstName?: string,
     lastName?: string,
     chatTitle?: string
   ) {
     logger.debug({ chatId, role }, 'Inserting message into database');
     const db = await this.getDb();
+    const storedUserId = userId ?? 0;
     await db.run(
       'INSERT INTO chats (chat_id, title) VALUES (?, ?) ON CONFLICT(chat_id) DO UPDATE SET title=excluded.title',
       chatId,
       chatTitle ?? null
     );
     await db.run(
-      'INSERT INTO messages (chat_id, role, content, username, full_name, reply_text, reply_username, quote_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO users (id, username, first_name, last_name) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET username=excluded.username, first_name=excluded.first_name, last_name=excluded.last_name',
+      storedUserId,
+      username ?? null,
+      firstName ?? null,
+      lastName ?? null
+    );
+    await db.run(
+      'INSERT INTO messages (chat_id, message_id, role, content, user_id, reply_text, reply_username, quote_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       chatId,
+      messageId ?? null,
       role,
       content,
-      username ?? null,
-      fullName ?? null,
+      storedUserId,
       replyText ?? null,
       replyUsername ?? null,
       quoteText ?? null
     );
-
-    if (userId !== undefined) {
-      await db.run(
-        'INSERT INTO users (id, username, first_name, last_name) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET username=excluded.username, first_name=excluded.first_name, last_name=excluded.last_name',
-        userId,
-        username ?? null,
-        firstName ?? null,
-        lastName ?? null
-      );
-    }
   }
 
   async getMessages(chatId: number): Promise<ChatMessage[]> {
@@ -76,13 +75,14 @@ export class SQLiteMemoryStorage implements MemoryStorage {
         role: 'user' | 'assistant';
         content: string;
         username: string | null;
-        full_name: string | null;
+        first_name: string | null;
+        last_name: string | null;
         reply_text: string | null;
         reply_username: string | null;
         quote_text: string | null;
       }[]
     >(
-      'SELECT role, content, username, full_name, reply_text, reply_username, quote_text FROM messages WHERE chat_id = ? ORDER BY rowid',
+      'SELECT m.role, m.content, u.username, u.first_name, u.last_name, m.reply_text, m.reply_username, m.quote_text FROM messages m LEFT JOIN users u ON m.user_id = u.id WHERE m.chat_id = ? ORDER BY m.id',
       chatId
     );
     return (
@@ -92,7 +92,8 @@ export class SQLiteMemoryStorage implements MemoryStorage {
           content: r.content,
         };
         if (r.username) entry.username = r.username;
-        if (r.full_name) entry.fullName = r.full_name;
+        const fullName = [r.first_name, r.last_name].filter(Boolean).join(' ');
+        if (fullName) entry.fullName = fullName;
         if (r.reply_text) entry.replyText = r.reply_text;
         if (r.reply_username) entry.replyUsername = r.reply_username;
         if (r.quote_text) entry.quoteText = r.quote_text;

@@ -19,38 +19,51 @@ beforeEach(async () => {
   const filename = parseDatabaseUrl(env.env.DATABASE_URL);
   const db = await open({ filename, driver: sqlite3.Database });
   await db.exec(`
-    CREATE TABLE messages (
-      chat_id INTEGER,
-      role TEXT,
-      content TEXT,
-      username TEXT,
-      full_name TEXT,
-      reply_text TEXT,
-      reply_username TEXT,
-      quote_text TEXT
-    );
-    CREATE TABLE users (
-      id INTEGER PRIMARY KEY,
-      username TEXT,
-      first_name TEXT,
-      last_name TEXT
-    );
-    CREATE TABLE chats (
-      chat_id INTEGER PRIMARY KEY,
-      title TEXT
-    );
-    CREATE TABLE summaries (
-      chat_id INTEGER PRIMARY KEY,
-      summary TEXT
-    );
-  `);
+      CREATE TABLE users (
+        id INTEGER PRIMARY KEY,
+        username TEXT,
+        first_name TEXT,
+        last_name TEXT
+      );
+      CREATE TABLE chats (
+        chat_id INTEGER PRIMARY KEY,
+        title TEXT
+      );
+      CREATE TABLE messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        chat_id INTEGER NOT NULL,
+        message_id INTEGER,
+        role TEXT,
+        content TEXT,
+        user_id INTEGER NOT NULL,
+        reply_text TEXT,
+        reply_username TEXT,
+        quote_text TEXT,
+        FOREIGN KEY(user_id) REFERENCES users(id),
+        FOREIGN KEY(chat_id) REFERENCES chats(chat_id)
+      );
+      CREATE TABLE summaries (
+        chat_id INTEGER PRIMARY KEY,
+        summary TEXT
+      );
+    `);
   await db.close();
   storage = new SQLiteMemoryStorage(env);
 });
 
 describe('SQLiteMemoryStorage', () => {
   it('adds and retrieves messages', async () => {
-    await storage.addMessage(1, 'user', 'hi', 'alice');
+    await storage.addMessage(
+      1,
+      'user',
+      'hi',
+      'alice',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      1
+    );
     await storage.addMessage(1, 'assistant', 'hello', 'bot');
     const messages = await storage.getMessages(1);
     expect(messages).toEqual([
@@ -91,6 +104,7 @@ describe('SQLiteMemoryStorage', () => {
       undefined,
       undefined,
       42,
+      undefined,
       'Alice',
       'Smith'
     );
@@ -104,6 +118,7 @@ describe('SQLiteMemoryStorage', () => {
       undefined,
       undefined,
       42,
+      undefined,
       'Alicia',
       'Johnson'
     );
@@ -129,6 +144,7 @@ describe('SQLiteMemoryStorage', () => {
       'user',
       'hi',
       'alice',
+      undefined,
       undefined,
       undefined,
       undefined,
