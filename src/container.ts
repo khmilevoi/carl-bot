@@ -30,13 +30,28 @@ import {
   CHAT_RESET_SERVICE_ID,
   type ChatResetService,
 } from './services/chat/ChatResetService';
+import {
+  CHAT_RESPONDER_ID,
+  ChatResponder,
+  DefaultChatResponder,
+} from './services/chat/ChatResponder';
 import { DefaultChatResetService } from './services/chat/DefaultChatResetService';
+import {
+  DefaultTriggerPipeline,
+  TRIGGER_PIPELINE_ID,
+  TriggerPipeline,
+} from './services/chat/TriggerPipeline';
 import {
   DefaultEnvService,
   ENV_SERVICE_ID,
   EnvService,
   TestEnvService,
 } from './services/env/EnvService';
+import {
+  DefaultMessageContextExtractor,
+  MESSAGE_CONTEXT_EXTRACTOR_ID,
+  MessageContextExtractor,
+} from './services/messages/MessageContextExtractor';
 import {
   MESSAGE_SERVICE_ID,
   type MessageService,
@@ -96,6 +111,21 @@ container
   .inSingletonScope();
 
 container.bind(ChatMemoryManager).toSelf().inSingletonScope();
+
+container
+  .bind<MessageContextExtractor>(MESSAGE_CONTEXT_EXTRACTOR_ID)
+  .to(DefaultMessageContextExtractor)
+  .inSingletonScope();
+
+container
+  .bind<TriggerPipeline>(TRIGGER_PIPELINE_ID)
+  .to(DefaultTriggerPipeline)
+  .inSingletonScope();
+
+container
+  .bind<ChatResponder>(CHAT_RESPONDER_ID)
+  .to(DefaultChatResponder)
+  .inSingletonScope();
 
 container.bind(CHAT_FILTER_ID).to(JSONWhiteListChatFilter).inSingletonScope();
 
