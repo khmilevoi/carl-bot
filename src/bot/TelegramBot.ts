@@ -5,17 +5,27 @@ import { Context, Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
 
 import { ADMIN_SERVICE_ID, AdminService } from '../services/admin/AdminService';
-import { AI_SERVICE_ID, AIService } from '../services/ai/AIService';
 import { CHAT_FILTER_ID, ChatFilter } from '../services/chat/ChatFilter';
 import { ChatMemoryManager } from '../services/chat/ChatMemory';
-import { DialogueManager } from '../services/chat/DialogueManager';
+import {
+  CHAT_RESPONDER_ID,
+  ChatResponder,
+} from '../services/chat/ChatResponder';
+import {
+  TRIGGER_PIPELINE_ID,
+  TriggerPipeline,
+} from '../services/chat/TriggerPipeline';
 import { Env, ENV_SERVICE_ID, EnvService } from '../services/env/EnvService';
 import { logger } from '../services/logging/logger';
+import {
+  MESSAGE_CONTEXT_EXTRACTOR_ID,
+  MessageContextExtractor,
+} from '../services/messages/MessageContextExtractor';
 import { MessageFactory } from '../services/messages/MessageFactory';
-import { MentionTrigger } from '../triggers/MentionTrigger';
-import { NameTrigger } from '../triggers/NameTrigger';
-import { ReplyTrigger } from '../triggers/ReplyTrigger';
-import { StemDictTrigger } from '../triggers/StemDictTrigger';
+import {
+  MESSAGE_SERVICE_ID,
+  MessageService,
+} from '../services/messages/MessageService';
 import { TriggerContext } from '../triggers/Trigger';
 
 async function withTyping(ctx: Context, fn: () => Promise<void>) {
@@ -35,25 +45,20 @@ async function withTyping(ctx: Context, fn: () => Promise<void>) {
 @injectable()
 export class TelegramBot {
   private bot: Telegraf;
-  private dialogue: DialogueManager;
-  private mentionTrigger = new MentionTrigger();
-  private replyTrigger = new ReplyTrigger();
-  private nameTrigger: NameTrigger;
-  private keywordTrigger: StemDictTrigger;
-
   private env: Env;
 
   constructor(
     @inject(ENV_SERVICE_ID) envService: EnvService,
-    @inject(AI_SERVICE_ID) private ai: AIService,
     @inject(ChatMemoryManager) private memories: ChatMemoryManager,
     @inject(CHAT_FILTER_ID) private filter: ChatFilter,
-    @inject(ADMIN_SERVICE_ID) private admin: AdminService
+    @inject(ADMIN_SERVICE_ID) private admin: AdminService,
+    @inject(MESSAGE_SERVICE_ID) private messages: MessageService,
+    @inject(MESSAGE_CONTEXT_EXTRACTOR_ID)
+    private extractor: MessageContextExtractor,
+    @inject(TRIGGER_PIPELINE_ID) private pipeline: TriggerPipeline,
+    @inject(CHAT_RESPONDER_ID) private responder: ChatResponder
   ) {
     this.env = envService.env;
-    this.dialogue = new DialogueManager(envService.getDialogueTimeoutMs());
-    this.nameTrigger = new NameTrigger(envService.getBotName());
-    this.keywordTrigger = new StemDictTrigger(envService.getKeywordsFile());
     this.bot = new Telegraf(this.env.BOT_TOKEN);
     this.configure();
   }
@@ -167,9 +172,9 @@ export class TelegramBot {
       return;
     }
 
-    const memory = this.memories.get(chatId);
-    const userMsg = MessageFactory.fromUser(ctx);
-    await memory.addMessage(userMsg);
+    const meta = this.extractor.extract(ctx);
+    const userMsg = MessageFactory.fromUser(ctx, meta);
+    await this.messages.addMessage(userMsg);
 
     const context: TriggerContext = {
       text: `${userMsg.content};`,
@@ -177,39 +182,17 @@ export class TelegramBot {
       chatId,
     };
 
-    const inDialogue = this.dialogue.isActive(chatId);
-    logger.debug({ chatId, inDialogue }, 'Checking triggers');
-
-    let matched = false;
-    matched = this.mentionTrigger.apply(ctx, context, this.dialogue) || matched;
-    matched = this.replyTrigger.apply(ctx, context, this.dialogue) || matched;
-    matched = this.nameTrigger.apply(ctx, context, this.dialogue) || matched;
-
-    if (matched && !inDialogue) {
-      this.dialogue.start(chatId);
-    } else if (!matched && inDialogue) {
-      this.dialogue.extend(chatId);
-    }
-
-    if (!matched) {
-      if (
-        !this.keywordTrigger.apply(ctx, context, this.dialogue) ||
-        inDialogue
-      ) {
-        logger.debug({ chatId }, 'No trigger matched');
-        return;
-      }
+    logger.debug({ chatId }, 'Checking triggers');
+    const shouldRespond = this.pipeline.shouldRespond(ctx, context);
+    if (!shouldRespond) {
+      logger.debug({ chatId }, 'No trigger matched');
+      return;
     }
 
     await withTyping(ctx, async () => {
       logger.debug({ chatId }, 'Generating answer');
-
-      const answer = await this.ai.ask(
-        await memory.getHistory(),
-        await memory.getSummary()
-      );
+      const answer = await this.responder.generate(ctx, chatId);
       logger.debug({ chatId }, 'Answer generated');
-      await memory.addMessage(MessageFactory.fromAssistant(ctx, answer));
 
       ctx.reply(answer, {
         reply_parameters: userMsg.messageId
