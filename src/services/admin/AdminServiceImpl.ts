@@ -14,7 +14,7 @@ import {
 import { AdminService } from './AdminService';
 
 @injectable()
-export class SQLiteAdminService implements AdminService {
+export class AdminServiceImpl implements AdminService {
   constructor(
     @inject(DB_PROVIDER_ID) private dbProvider: SQLiteDbProvider,
     @inject(ACCESS_KEY_REPOSITORY_ID)
@@ -28,7 +28,7 @@ export class SQLiteAdminService implements AdminService {
   ): Promise<Date> {
     const key = randomBytes(16).toString('hex');
     const expiresAt = Date.now() + ttlMs;
-    await this.accessKeyRepo.upsert({
+    await this.accessKeyRepo.upsertKey({
       chatId,
       userId,
       accessKey: key,
@@ -38,13 +38,9 @@ export class SQLiteAdminService implements AdminService {
   }
 
   async hasAccess(chatId: number, userId: number): Promise<boolean> {
-    const entry = await this.accessKeyRepo.find(chatId, userId);
-    if (!entry) return false;
-    if (entry.expiresAt < Date.now()) {
-      await this.accessKeyRepo.delete(chatId, userId);
-      return false;
-    }
-    return true;
+    await this.accessKeyRepo.deleteExpired(Date.now());
+    const entry = await this.accessKeyRepo.findByChatAndUser(chatId, userId);
+    return entry !== undefined;
   }
 
   async exportTables(): Promise<{ filename: string; buffer: Buffer }[]> {

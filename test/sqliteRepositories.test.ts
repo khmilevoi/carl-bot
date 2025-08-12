@@ -174,22 +174,26 @@ describe('SQLite repositories', () => {
     expect(chat).toEqual({ chatId: 1, title: 'Test Chat' });
   });
 
-  it('stores and retrieves access keys', async () => {
-    const expiresAt = Date.now() + 1000;
-    await accessKeyRepo.upsert({
+  it('stores, retrieves and expires access keys', async () => {
+    const now = Date.now();
+    const expiresAt = now + 1000;
+    await accessKeyRepo.upsertKey({
       chatId: 1,
       userId: 2,
       accessKey: 'key',
       expiresAt,
     });
-    const entry = await accessKeyRepo.find(1, 2);
+    let entry = await accessKeyRepo.findByChatAndUser(1, 2);
     expect(entry).toEqual({
       chatId: 1,
       userId: 2,
       accessKey: 'key',
       expiresAt,
     });
-    await accessKeyRepo.delete(1, 2);
-    expect(await accessKeyRepo.find(1, 2)).toBeUndefined();
+    await accessKeyRepo.deleteExpired(now);
+    entry = await accessKeyRepo.findByChatAndUser(1, 2);
+    expect(entry).toBeTruthy();
+    await accessKeyRepo.deleteExpired(expiresAt + 1);
+    expect(await accessKeyRepo.findByChatAndUser(1, 2)).toBeUndefined();
   });
 });
