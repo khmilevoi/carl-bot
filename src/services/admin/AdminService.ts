@@ -61,12 +61,17 @@ export class AdminService {
     const files: { filename: string; buffer: Buffer }[] = [];
     for (const { name } of tableRows) {
       const buffer = await this.exportTable(db, name);
-      files.push({ filename: `${name}.csv`, buffer });
+      if (buffer && buffer.length > 0) {
+        files.push({ filename: `${name}.csv`, buffer });
+      }
     }
     return files;
   }
 
-  private async exportTable(db: Database, table: string): Promise<Buffer> {
+  private async exportTable(
+    db: Database,
+    table: string
+  ): Promise<Buffer | null> {
     const chunkSize = 100;
     let offset = 0;
     let header: string | undefined;
@@ -90,7 +95,10 @@ export class AdminService {
       offset += rows.length;
       await new Promise<void>((resolve) => setImmediate(resolve));
     }
-    const csv = header ? header + '\n' + lines.join('\n') : '';
+    if (!header) {
+      return null;
+    }
+    const csv = header + '\n' + lines.join('\n');
     return Buffer.from(csv);
   }
 }

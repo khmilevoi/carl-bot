@@ -122,6 +122,10 @@ export class TelegramBot {
         return;
       }
       const files = await this.admin.exportTables();
+      if (files.length === 0) {
+        ctx.reply('Нет данных для экспорта');
+        return;
+      }
       for (const f of files) {
         await ctx.replyWithDocument({ source: f.buffer, filename: f.filename });
         await new Promise<void>((resolve) => setImmediate(resolve));
