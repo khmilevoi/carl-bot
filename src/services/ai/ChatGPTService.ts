@@ -55,6 +55,10 @@ export class ChatGPTService implements AIService {
     );
     const messages: OpenAI.ChatCompletionMessageParam[] = [
       { role: 'system', content: persona },
+      {
+        role: 'system',
+        content: this.prompts.getPriorityRulesSystemPrompt(),
+      },
       { role: 'system', content: this.prompts.getUserPromptSystemPrompt() },
     ];
     if (summary) {
