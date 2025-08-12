@@ -77,10 +77,16 @@ export class TelegramBot {
       );
       const userId = ctx.from?.id;
       assert(userId, 'No user id');
-      await ctx.telegram.sendMessage(
-        adminChatId,
-        `Chat ${ctx.chat.id} user ${userId} requests access. Approve with /approve ${ctx.chat.id} ${userId}`
-      );
+      const approveCmd = `/approve ${ctx.chat!.id} ${userId}`;
+      const msg = [
+        `Chat ${ctx.chat!.id} user ${userId} requests access. Approve with:`,
+        '```',
+        approveCmd,
+        '```',
+      ].join('\n');
+      await ctx.telegram.sendMessage(adminChatId, msg, {
+        parse_mode: 'Markdown',
+      });
       ctx.reply('Запрос отправлен администратору.');
     });
 
