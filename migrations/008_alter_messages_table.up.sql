@@ -4,30 +4,46 @@ BEGIN TRANSACTION;
 INSERT OR IGNORE INTO chats (chat_id)
 SELECT DISTINCT chat_id FROM messages;
 
--- Prepare parsed data with separated first and last names
-WITH parsed AS (
-  SELECT
-    chat_id,
-    role,
-    content,
-    username,
-    full_name,
-    reply_text,
-    reply_username,
-    quote_text,
-    CASE
-      WHEN full_name LIKE '% %' THEN substr(full_name, 1, instr(full_name, ' ') - 1)
-      ELSE full_name
-    END AS first_name,
-    CASE
-      WHEN full_name LIKE '% %' THEN substr(full_name, instr(full_name, ' ') + 1)
-      ELSE NULL
-    END AS last_name
-  FROM messages
+-- Create temporary table for parsed data
+CREATE TEMPORARY TABLE parsed_temp (
+  chat_id INTEGER,
+  role TEXT,
+  content TEXT,
+  username TEXT,
+  full_name TEXT,
+  reply_text TEXT,
+  reply_username TEXT,
+  quote_text TEXT,
+  first_name TEXT,
+  last_name TEXT
+);
+
+-- Insert parsed data with separated first and last names
+INSERT INTO parsed_temp (
+  chat_id, role, content, username, full_name, reply_text, reply_username, quote_text, first_name, last_name
 )
+SELECT
+  chat_id,
+  role,
+  content,
+  username,
+  full_name,
+  reply_text,
+  reply_username,
+  quote_text,
+  CASE
+    WHEN full_name LIKE '% %' THEN substr(full_name, 1, instr(full_name, ' ') - 1)
+    ELSE full_name
+  END AS first_name,
+  CASE
+    WHEN full_name LIKE '% %' THEN substr(full_name, instr(full_name, ' ') + 1)
+    ELSE NULL
+  END AS last_name
+FROM messages;
+
 -- Insert users extracted from messages
 INSERT INTO users (username, first_name, last_name)
-SELECT DISTINCT username, first_name, last_name FROM parsed;
+SELECT DISTINCT username, first_name, last_name FROM parsed_temp;
 
 -- Create new messages table
 CREATE TABLE messages_new (
@@ -64,7 +80,7 @@ SELECT
   p.reply_text,
   p.reply_username,
   p.quote_text
-FROM parsed p
+FROM parsed_temp p
 JOIN users u ON (
   (p.username IS NULL AND u.username IS NULL) OR u.username = p.username
 ) AND (
@@ -73,6 +89,10 @@ JOIN users u ON (
   (p.last_name IS NULL AND u.last_name IS NULL) OR u.last_name = p.last_name
 );
 
+-- Drop temporary table
+DROP TABLE parsed_temp;
+
+-- Drop old table and rename new one
 DROP TABLE messages;
 ALTER TABLE messages_new RENAME TO messages;
 
