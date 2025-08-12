@@ -1,82 +1,82 @@
-import { readFileSync } from 'fs';
 import { readFile } from 'fs/promises';
 import { inject, injectable } from 'inversify';
 
+import { createLazy } from '../../utils/lazy';
 import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
 import logger from '../logging/logger';
 import { PromptService } from './PromptService';
 
 @injectable()
 export class FilePromptService implements PromptService {
-  private persona: string | null = null;
-  private personaFile: string;
-  private askSummaryTemplate: string;
-  private summarizationSystemTemplate: string;
-  private previousSummaryTemplate: string;
-  private userPromptTemplate: string;
-  private userPromptSystemTemplate: string;
-  private priorityRulesSystemTemplate: string;
+  private readonly persona: () => Promise<string>;
+  private readonly askSummaryTemplate: () => Promise<string>;
+  private readonly summarizationSystemTemplate: () => Promise<string>;
+  private readonly previousSummaryTemplate: () => Promise<string>;
+  private readonly userPromptTemplate: () => Promise<string>;
+  private readonly userPromptSystemTemplate: () => Promise<string>;
+  private readonly priorityRulesSystemTemplate: () => Promise<string>;
 
   constructor(@inject(ENV_SERVICE_ID) envService: EnvService) {
     const files = envService.getPromptFiles();
-    this.personaFile = files.persona;
-    this.askSummaryTemplate = readFileSync(files.askSummary, 'utf-8');
-    this.summarizationSystemTemplate = readFileSync(
-      files.summarizationSystem,
-      'utf-8'
-    );
-    this.previousSummaryTemplate = readFileSync(files.previousSummary, 'utf-8');
-    this.userPromptTemplate = readFileSync(files.userPrompt, 'utf-8');
-    this.userPromptSystemTemplate = readFileSync(
-      files.userPromptSystem,
-      'utf-8'
-    );
-    this.priorityRulesSystemTemplate = readFileSync(
-      files.priorityRulesSystem,
-      'utf-8'
-    );
-  }
-
-  private async loadPersona(): Promise<string> {
-    if (!this.persona) {
+    this.persona = createLazy(async () => {
       logger.debug('Loading persona file');
-      this.persona = await readFile(this.personaFile, 'utf-8');
-    }
-    return this.persona!;
+      return readFile(files.persona, 'utf-8');
+    });
+    this.askSummaryTemplate = createLazy(() =>
+      readFile(files.askSummary, 'utf-8')
+    );
+    this.summarizationSystemTemplate = createLazy(() =>
+      readFile(files.summarizationSystem, 'utf-8')
+    );
+    this.previousSummaryTemplate = createLazy(() =>
+      readFile(files.previousSummary, 'utf-8')
+    );
+    this.userPromptTemplate = createLazy(() =>
+      readFile(files.userPrompt, 'utf-8')
+    );
+    this.userPromptSystemTemplate = createLazy(() =>
+      readFile(files.userPromptSystem, 'utf-8')
+    );
+    this.priorityRulesSystemTemplate = createLazy(() =>
+      readFile(files.priorityRulesSystem, 'utf-8')
+    );
   }
 
   async getPersona(): Promise<string> {
-    return this.loadPersona();
+    return this.persona();
   }
 
-  getPriorityRulesSystemPrompt(): string {
-    return this.priorityRulesSystemTemplate;
+  async getPriorityRulesSystemPrompt(): Promise<string> {
+    return this.priorityRulesSystemTemplate();
   }
 
-  getUserPromptSystemPrompt(): string {
-    return this.userPromptSystemTemplate;
+  async getUserPromptSystemPrompt(): Promise<string> {
+    return this.userPromptSystemTemplate();
   }
 
-  getAskSummaryPrompt(summary: string): string {
-    return this.askSummaryTemplate.replace('{{summary}}', summary);
+  async getAskSummaryPrompt(summary: string): Promise<string> {
+    const template = await this.askSummaryTemplate();
+    return template.replace('{{summary}}', summary);
   }
 
-  getSummarizationSystemPrompt(): string {
-    return this.summarizationSystemTemplate;
+  async getSummarizationSystemPrompt(): Promise<string> {
+    return this.summarizationSystemTemplate();
   }
 
-  getPreviousSummaryPrompt(prev: string): string {
-    return this.previousSummaryTemplate.replace('{{prev}}', prev);
+  async getPreviousSummaryPrompt(prev: string): Promise<string> {
+    const template = await this.previousSummaryTemplate();
+    return template.replace('{{prev}}', prev);
   }
 
-  getUserPrompt(
+  async getUserPrompt(
     userMessage: string,
     userName?: string,
     fullName?: string,
     replyMessage?: string,
     quoteMessage?: string
-  ): string {
-    const prompt = this.userPromptTemplate
+  ): Promise<string> {
+    const template = await this.userPromptTemplate();
+    const prompt = template
       .replace('{{userMessage}}', userMessage)
       .replace('{{userName}}', userName ?? 'N/A')
       .replace('{{fullName}}', fullName ?? 'N/A')

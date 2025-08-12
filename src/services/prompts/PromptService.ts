@@ -1,17 +1,17 @@
 export interface PromptService {
   getPersona(): Promise<string>;
-  getPriorityRulesSystemPrompt(): string;
-  getUserPromptSystemPrompt(): string;
-  getAskSummaryPrompt(summary: string): string;
-  getSummarizationSystemPrompt(): string;
-  getPreviousSummaryPrompt(prev: string): string;
+  getPriorityRulesSystemPrompt(): Promise<string>;
+  getUserPromptSystemPrompt(): Promise<string>;
+  getAskSummaryPrompt(summary: string): Promise<string>;
+  getSummarizationSystemPrompt(): Promise<string>;
+  getPreviousSummaryPrompt(prev: string): Promise<string>;
   getUserPrompt(
     userMessage: string,
     userName?: string,
     fullName?: string,
     replyMessage?: string,
     quoteMessage?: string
-  ): string;
+  ): Promise<string>;
 }
 
 import type { ServiceIdentifier } from 'inversify';
