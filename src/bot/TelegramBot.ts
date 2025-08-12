@@ -4,6 +4,7 @@ import { injectable } from 'inversify';
 import { Context, Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
 
+import { AdminService } from '../services/admin/AdminService';
 import { AIService } from '../services/ai/AIService';
 import { ChatFilter } from '../services/chat/ChatFilter';
 import { ChatMemoryManager } from '../services/chat/ChatMemory';
@@ -42,7 +43,8 @@ export class TelegramBot {
     token: string,
     private ai: AIService,
     private memories: ChatMemoryManager,
-    private filter: ChatFilter
+    private filter: ChatFilter,
+    private admin: AdminService
   ) {
     this.bot = new Telegraf(token);
     this.configure();
@@ -52,11 +54,100 @@ export class TelegramBot {
     this.bot.start((ctx) => ctx.reply('Привет! Я Карл.'));
 
     this.bot.command('reset', async (ctx) => {
-      await this.memories.reset(ctx.chat.id);
+      const chatId = ctx.chat?.id;
+      const userId = ctx.from?.id;
+      assert(chatId, 'This is not a chat');
+      assert(userId, 'No user id');
+      const allowed = await this.admin.hasAccess(chatId, userId);
+      if (!allowed) {
+        ctx.reply('Нет доступа или ключ просрочен');
+        return;
+      }
+      await this.memories.reset(chatId);
       ctx.reply('Контекст диалога сброшен!');
     });
 
     this.bot.command('ping', (ctx) => ctx.reply('pong'));
+
+    this.bot.command('getkey', async (ctx) => {
+      const adminChatId = Number(process.env.ADMIN_CHAT_ID);
+      assert(
+        !Number.isNaN(adminChatId),
+        'Environment variable ADMIN_CHAT_ID is not set'
+      );
+      const userId = ctx.from?.id;
+      assert(userId, 'No user id');
+      const approveCmd = `/approve ${ctx.chat!.id} ${userId}`;
+      const msg = [
+        `Chat ${ctx.chat!.id} user ${userId} requests access. Approve with:`,
+        '`',
+        approveCmd,
+        '`',
+      ].join('\n');
+      await ctx.telegram.sendMessage(adminChatId, msg, {
+        parse_mode: 'Markdown',
+      });
+      ctx.reply('Запрос отправлен администратору.');
+    });
+
+    this.bot.command('approve', async (ctx) => {
+      const adminChatId = Number(process.env.ADMIN_CHAT_ID);
+      if (ctx.chat?.id !== adminChatId) return;
+      const parts = ctx.message?.text.split(' ') ?? [];
+      const targetChat = Number(parts[1]);
+      const targetUser = Number(parts[2]);
+      if (!targetChat || !targetUser) {
+        ctx.reply('Укажите ID чата и ID пользователя');
+        return;
+      }
+      const expiresAt = await this.admin.createAccessKey(
+        targetChat,
+        targetUser
+      );
+      await ctx.telegram.sendMessage(
+        targetChat,
+        `Доступ к данным разрешен для пользователя ${targetUser} до ${expiresAt.toISOString()}. Используйте /export и /reset`
+      );
+      ctx.reply(`Одобрено для чата ${targetChat} и пользователя ${targetUser}`);
+    });
+
+    this.bot.command('export', async (ctx) => {
+      const chatId = ctx.chat?.id;
+      const userId = ctx.from?.id;
+      assert(chatId, 'This is not a chat');
+      assert(userId, 'No user id');
+      const allowed = await this.admin.hasAccess(chatId, userId);
+      if (!allowed) {
+        ctx.reply('Нет доступа или ключ просрочен');
+        return;
+      }
+      const files = await this.admin.exportTables();
+      if (files.length === 0) {
+        ctx.reply('Нет данных для экспорта');
+        return;
+      }
+      for (const f of files) {
+        await ctx.replyWithDocument({ source: f.buffer, filename: f.filename });
+        await new Promise<void>((resolve) => setImmediate(resolve));
+      }
+    });
+
+    this.bot.telegram
+      .setMyCommands([
+        { command: 'start', description: 'Приветствие' },
+        {
+          command: 'reset',
+          description: 'Сбросить память диалога (нужен доступ)',
+        },
+        { command: 'ping', description: 'Ответ pong' },
+        { command: 'getkey', description: 'Запросить доступ к данным' },
+        {
+          command: 'export',
+          description: 'Выгрузить данные в CSV (нужен доступ)',
+        },
+        { command: 'approve', description: 'Одобрить доступ к данным (админ)' },
+      ])
+      .catch((err) => logger.error({ err }, 'Failed to set bot commands'));
 
     this.bot.on(message('text'), (ctx) => this.handleText(ctx));
   }

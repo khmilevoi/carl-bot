@@ -22,10 +22,13 @@
   - `npm run lint:fix` – fix lint errors
   - `npm run format` – verify formatting
   - `npm run format:fix` – format files
-  - `npm run prepare` – set up Git hooks
-  - `npm run migration:up` – apply database migrations
-  - `npm run migration:down` – revert the last migration
+- `npm run prepare` – set up Git hooks
+- `npm run migration:up` – apply database migrations
+- `npm run migration:down` – revert the last migration
 - Do not commit `node_modules` or `package-lock.json`.
+- When environment variables change, update `.env.example` accordingly.
+- When adding new services, define an interface and export an Inversify key (Symbol)
+  so they can be bound in the container.
 
 ## Troubleshooting
 
