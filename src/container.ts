@@ -27,15 +27,28 @@ import {
 } from './services/chat/ChatFilter';
 import { ChatMemoryManager } from './services/chat/ChatMemory';
 import {
+  CHAT_RESET_SERVICE_ID,
+  type ChatResetService,
+} from './services/chat/ChatResetService';
+import { DefaultChatResetService } from './services/chat/DefaultChatResetService';
+import {
   DefaultEnvService,
   ENV_SERVICE_ID,
   EnvService,
   TestEnvService,
 } from './services/env/EnvService';
+import {
+  MESSAGE_SERVICE_ID,
+  type MessageService,
+} from './services/messages/MessageService';
+import { RepositoryMessageService } from './services/messages/RepositoryMessageService';
 import { FilePromptService } from './services/prompts/FilePromptService';
 import { PROMPT_SERVICE_ID } from './services/prompts/PromptService';
-import { MEMORY_STORAGE_ID } from './services/storage/MemoryStorage.interface';
-import { SQLiteMemoryStorage } from './services/storage/SQLiteMemoryStorage';
+import { RepositorySummaryService } from './services/summaries/RepositorySummaryService';
+import {
+  SUMMARY_SERVICE_ID,
+  type SummaryService,
+} from './services/summaries/SummaryService';
 
 export const container = new Container();
 
@@ -51,7 +64,18 @@ container.bind(PROMPT_SERVICE_ID).to(FilePromptService).inSingletonScope();
 
 container.bind(AI_SERVICE_ID).to(ChatGPTService).inSingletonScope();
 
-container.bind(MEMORY_STORAGE_ID).to(SQLiteMemoryStorage).inSingletonScope();
+container
+  .bind(MESSAGE_SERVICE_ID)
+  .to(RepositoryMessageService)
+  .inSingletonScope();
+container
+  .bind(SUMMARY_SERVICE_ID)
+  .to(RepositorySummaryService)
+  .inSingletonScope();
+container
+  .bind(CHAT_RESET_SERVICE_ID)
+  .to(DefaultChatResetService)
+  .inSingletonScope();
 
 container.bind(ADMIN_SERVICE_ID).to(SQLiteAdminService).inSingletonScope();
 
