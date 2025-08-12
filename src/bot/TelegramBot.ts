@@ -34,11 +34,11 @@ async function withTyping(ctx: Context, fn: () => Promise<void>) {
 @injectable()
 export class TelegramBot {
   private bot: Telegraf;
-  private dialogue = new DialogueManager(60 * 1000);
+  private dialogue: DialogueManager;
   private mentionTrigger = new MentionTrigger();
   private replyTrigger = new ReplyTrigger();
-  private nameTrigger = new NameTrigger('Карл');
-  private keywordTrigger = new StemDictTrigger('keywords.json');
+  private nameTrigger: NameTrigger;
+  private keywordTrigger: StemDictTrigger;
 
   private env: Env;
 
@@ -50,6 +50,9 @@ export class TelegramBot {
     @inject(ADMIN_SERVICE_ID) private admin: AdminService
   ) {
     this.env = envService.env;
+    this.dialogue = new DialogueManager(envService.getDialogueTimeoutMs());
+    this.nameTrigger = new NameTrigger(envService.getBotName());
+    this.keywordTrigger = new StemDictTrigger(envService.getKeywordsFile());
     this.bot = new Telegraf(this.env.BOT_TOKEN);
     this.configure();
   }

@@ -41,8 +41,20 @@ export type Env = z.infer<typeof envSchema>;
 
 export interface EnvService {
   readonly env: Env;
-  getAskModel(): ChatModel;
-  getSummaryModel(): ChatModel;
+  getModels(): { ask: ChatModel; summary: ChatModel };
+  getWhitelistFile(): string;
+  getKeywordsFile(): string;
+  getPromptFiles(): {
+    persona: string;
+    askSummary: string;
+    summarizationSystem: string;
+    previousSummary: string;
+    userPrompt: string;
+    userPromptSystem: string;
+  };
+  getBotName(): string;
+  getDialogueTimeoutMs(): number;
+  getMigrationsDir(): string;
 }
 
 export const ENV_SERVICE_ID = Symbol.for(
@@ -57,12 +69,39 @@ export class DefaultEnvService implements EnvService {
     this.env = envSchema.parse(process.env);
   }
 
-  getAskModel(): ChatModel {
-    return 'o3';
+  getModels() {
+    return { ask: 'o3' as ChatModel, summary: 'o3-mini' as ChatModel };
   }
 
-  getSummaryModel(): ChatModel {
-    return 'o3-mini';
+  getWhitelistFile(): string {
+    return 'white_list.json';
+  }
+
+  getKeywordsFile(): string {
+    return 'keywords.json';
+  }
+
+  getPromptFiles() {
+    return {
+      persona: 'persona.md',
+      askSummary: 'prompts/ask_summary_prompt.txt',
+      summarizationSystem: 'prompts/summarization_system_prompt.txt',
+      previousSummary: 'prompts/previous_summary_prompt.txt',
+      userPrompt: 'prompts/user_prompt.txt',
+      userPromptSystem: 'prompts/user_prompt_system_prompt.txt',
+    };
+  }
+
+  getBotName(): string {
+    return 'Карл';
+  }
+
+  getDialogueTimeoutMs(): number {
+    return 60 * 1000;
+  }
+
+  getMigrationsDir(): string {
+    return 'migrations';
   }
 }
 
@@ -79,11 +118,38 @@ export class TestEnvService implements EnvService {
     LOG_PROMPTS: false,
   };
 
-  getAskModel(): ChatModel {
-    return 'o3';
+  getModels() {
+    return { ask: 'o3' as ChatModel, summary: 'o3-mini' as ChatModel };
   }
 
-  getSummaryModel(): ChatModel {
-    return 'o3-mini';
+  getWhitelistFile(): string {
+    return 'white_list.json';
+  }
+
+  getKeywordsFile(): string {
+    return 'keywords.json';
+  }
+
+  getPromptFiles() {
+    return {
+      persona: 'persona.md',
+      askSummary: 'prompts/ask_summary_prompt.txt',
+      summarizationSystem: 'prompts/summarization_system_prompt.txt',
+      previousSummary: 'prompts/previous_summary_prompt.txt',
+      userPrompt: 'prompts/user_prompt.txt',
+      userPromptSystem: 'prompts/user_prompt_system_prompt.txt',
+    };
+  }
+
+  getBotName(): string {
+    return 'Карл';
+  }
+
+  getDialogueTimeoutMs(): number {
+    return 60 * 1000;
+  }
+
+  getMigrationsDir(): string {
+    return 'migrations';
   }
 }

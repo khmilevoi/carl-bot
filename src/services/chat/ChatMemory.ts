@@ -14,7 +14,7 @@ export class ChatMemory {
     private gpt: AIService,
     private store: MemoryStorage,
     private chatId: number,
-    private limit = 10
+    private limit: number
   ) {}
 
   public async addMessage(

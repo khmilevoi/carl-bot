@@ -21,8 +21,9 @@ export class ChatGPTService implements AIService {
   ) {
     const env = this.envService.env;
     this.openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
-    this.askModel = this.envService.getAskModel();
-    this.summaryModel = this.envService.getSummaryModel();
+    const models = this.envService.getModels();
+    this.askModel = models.ask;
+    this.summaryModel = models.summary;
     logger.debug('ChatGPTService initialized');
   }
 

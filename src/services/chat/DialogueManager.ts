@@ -3,7 +3,7 @@ import logger from '../logging/logger';
 export class DialogueManager {
   private timers = new Map<number, NodeJS.Timeout>();
 
-  constructor(private timeoutMs = 5 * 60 * 1000) {}
+  constructor(private timeoutMs: number) {}
 
   private setTimer(chatId: number) {
     const existing = this.timers.get(chatId);

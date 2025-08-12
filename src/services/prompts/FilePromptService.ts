@@ -1,35 +1,35 @@
 import { readFileSync } from 'fs';
 import { readFile } from 'fs/promises';
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 
+import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
 import logger from '../logging/logger';
 import { PromptService } from './PromptService';
 
 @injectable()
 export class FilePromptService implements PromptService {
   private persona: string | null = null;
+  private personaFile: string;
   private askSummaryTemplate: string;
   private summarizationSystemTemplate: string;
   private previousSummaryTemplate: string;
   private userPromptTemplate: string;
   private userPromptSystemTemplate: string;
 
-  constructor(
-    private personaFile = 'persona.md',
-    askSummaryFile = 'prompts/ask_summary_prompt.txt',
-    summarizationSystemFile = 'prompts/summarization_system_prompt.txt',
-    previousSummaryFile = 'prompts/previous_summary_prompt.txt',
-    userPromptFile = 'prompts/user_prompt.txt',
-    userPromptSystemFile = 'prompts/user_prompt_system_prompt.txt'
-  ) {
-    this.askSummaryTemplate = readFileSync(askSummaryFile, 'utf-8');
+  constructor(@inject(ENV_SERVICE_ID) envService: EnvService) {
+    const files = envService.getPromptFiles();
+    this.personaFile = files.persona;
+    this.askSummaryTemplate = readFileSync(files.askSummary, 'utf-8');
     this.summarizationSystemTemplate = readFileSync(
-      summarizationSystemFile,
+      files.summarizationSystem,
       'utf-8'
     );
-    this.previousSummaryTemplate = readFileSync(previousSummaryFile, 'utf-8');
-    this.userPromptTemplate = readFileSync(userPromptFile, 'utf-8');
-    this.userPromptSystemTemplate = readFileSync(userPromptSystemFile, 'utf-8');
+    this.previousSummaryTemplate = readFileSync(files.previousSummary, 'utf-8');
+    this.userPromptTemplate = readFileSync(files.userPrompt, 'utf-8');
+    this.userPromptSystemTemplate = readFileSync(
+      files.userPromptSystem,
+      'utf-8'
+    );
   }
 
   private async loadPersona(): Promise<string> {

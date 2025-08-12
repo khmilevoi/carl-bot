@@ -16,10 +16,11 @@ interface Migration {
   down: string;
 }
 
-const env = container.get<EnvService>(ENV_SERVICE_ID).env;
+const envService = container.get<EnvService>(ENV_SERVICE_ID);
+const env = envService.env;
 const filename = parseDatabaseUrl(env.DATABASE_URL);
 
-function loadMigrations(dir = 'migrations'): Migration[] {
+function loadMigrations(dir: string): Migration[] {
   logger.info({ dir }, 'Loading migrations from directory');
   const files = readdirSync(dir)
     .filter((f) => f.endsWith('.up.sql'))
@@ -112,7 +113,7 @@ async function migrateUp() {
 
   await ensureTable(db);
   const applied = await appliedMigrations(db);
-  const migrations = loadMigrations();
+  const migrations = loadMigrations(envService.getMigrationsDir());
 
   logger.info(
     { total: migrations.length, applied: applied.length },
@@ -154,7 +155,7 @@ async function migrateDown() {
     return;
   }
 
-  const migrations = loadMigrations();
+  const migrations = loadMigrations(envService.getMigrationsDir());
   const lastId = applied[applied.length - 1];
   const m = migrations.find((x) => x.id === lastId);
 
@@ -183,7 +184,7 @@ async function checkMigrations() {
   const db = await getDb();
   await ensureTable(db);
   const applied = await appliedMigrations(db);
-  const migrations = loadMigrations();
+  const migrations = loadMigrations(envService.getMigrationsDir());
 
   logger.info(
     { total: migrations.length, applied: applied.length },
