@@ -3,6 +3,7 @@ import 'reflect-metadata';
 import { Container } from 'inversify';
 
 import { TelegramBot } from './bot/TelegramBot';
+import { AdminService } from './services/admin/AdminService';
 import { AI_SERVICE_ID, AIService } from './services/ai/AIService';
 import { ChatGPTService } from './services/ai/ChatGPTService';
 import {
@@ -53,6 +54,11 @@ container
   .inSingletonScope();
 
 container
+  .bind(AdminService)
+  .toDynamicValue(() => new AdminService(dbFileName))
+  .inSingletonScope();
+
+container
   .bind(ChatMemoryManager)
   .toDynamicValue(() => {
     const ai = container.get<AIService>(AI_SERVICE_ID);
@@ -72,7 +78,8 @@ container
     const ai = container.get<AIService>(AI_SERVICE_ID);
     const memories = container.get<ChatMemoryManager>(ChatMemoryManager);
     const filter = container.get<ChatFilter>(CHAT_FILTER_ID);
-    return new TelegramBot(token, ai, memories, filter);
+    const admin = container.get<AdminService>(AdminService);
+    return new TelegramBot(token, ai, memories, filter, admin);
   })
   .inSingletonScope();
 

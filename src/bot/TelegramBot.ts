@@ -4,6 +4,7 @@ import { injectable } from 'inversify';
 import { Context, Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
 
+import { AdminService } from '../services/admin/AdminService';
 import { AIService } from '../services/ai/AIService';
 import { ChatFilter } from '../services/chat/ChatFilter';
 import { ChatMemoryManager } from '../services/chat/ChatMemory';
@@ -42,7 +43,8 @@ export class TelegramBot {
     token: string,
     private ai: AIService,
     private memories: ChatMemoryManager,
-    private filter: ChatFilter
+    private filter: ChatFilter,
+    private admin: AdminService
   ) {
     this.bot = new Telegraf(token);
     this.configure();
@@ -57,6 +59,57 @@ export class TelegramBot {
     });
 
     this.bot.command('ping', (ctx) => ctx.reply('pong'));
+
+    this.bot.command('getkey', async (ctx) => {
+      const adminChatId = Number(process.env.ADMIN_CHAT_ID);
+      assert(
+        !Number.isNaN(adminChatId),
+        'Environment variable ADMIN_CHAT_ID is not set'
+      );
+      await ctx.telegram.sendMessage(
+        adminChatId,
+        `Chat ${ctx.chat.id} requests access. Approve with /approve ${ctx.chat.id}`
+      );
+      ctx.reply('Запрос отправлен администратору.');
+    });
+
+    this.bot.command('approve', async (ctx) => {
+      const adminChatId = Number(process.env.ADMIN_CHAT_ID);
+      if (ctx.chat?.id !== adminChatId) return;
+      const parts = ctx.message?.text.split(' ') ?? [];
+      const target = Number(parts[1]);
+      if (!target) {
+        ctx.reply('Укажите ID чата');
+        return;
+      }
+      const key = await this.admin.createAccessKey(target);
+      await ctx.telegram.sendMessage(
+        target,
+        `Доступ к данным разрешен. Ключ: ${key}`
+      );
+      ctx.reply(`Одобрено для чата ${target}`);
+    });
+
+    this.bot.command('export', async (ctx) => {
+      const chatId = ctx.chat?.id;
+      assert(chatId, 'This is not a chat');
+      const parts = ctx.message?.text.split(' ') ?? [];
+      const key = parts[1];
+      if (!key) {
+        ctx.reply('Укажите ключ доступа');
+        return;
+      }
+      const allowed = await this.admin.validateAccess(chatId, key);
+      if (!allowed) {
+        ctx.reply('Нет доступа');
+        return;
+      }
+      const files = await this.admin.exportTables();
+      for (const f of files) {
+        await ctx.replyWithDocument({ source: f.buffer, filename: f.filename });
+        await new Promise<void>((resolve) => setImmediate(resolve));
+      }
+    });
 
     this.bot.on(message('text'), (ctx) => this.handleText(ctx));
   }
