@@ -1,14 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AIService, ChatMessage } from '../src/services/ai/AIService';
+import { ChatMessage } from '../src/services/ai/AIService';
 import { ChatMemory } from '../src/services/chat/ChatMemory';
+import { HistorySummarizer } from '../src/services/chat/HistorySummarizer';
 import { MessageService } from '../src/services/messages/MessageService';
 import { StoredMessage } from '../src/services/messages/StoredMessage';
-import { SummaryService } from '../src/services/summaries/SummaryService';
 
-class FakeAI implements AIService {
-  ask = vi.fn(async () => 'ok');
-  summarize = vi.fn(async (_h: ChatMessage[]) => 'summary');
+class FakeHistorySummarizer implements HistorySummarizer {
+  summarizeIfNeeded = vi.fn(async () => {});
 }
 
 class FakeMessageService implements MessageService {
@@ -33,7 +32,8 @@ class FakeMessageService implements MessageService {
   }
 
   async getMessages(chatId: number) {
-    return this.data.get(chatId) ?? [];
+    const list = this.data.get(chatId) ?? [];
+    return list.map((m) => ({ ...m }));
   }
 
   async clearMessages(chatId: number) {
@@ -41,67 +41,48 @@ class FakeMessageService implements MessageService {
   }
 }
 
-class FakeSummaryService implements SummaryService {
-  private data = new Map<number, string>();
-
-  async getSummary(chatId: number) {
-    return this.data.get(chatId) ?? '';
-  }
-
-  async setSummary(chatId: number, summary: string) {
-    this.data.set(chatId, summary);
-  }
-
-  async clearSummary(chatId: number) {
-    this.data.delete(chatId);
-  }
-}
-
 describe('ChatMemory', () => {
-  let ai: FakeAI;
+  let summarizer: FakeHistorySummarizer;
   let messages: FakeMessageService;
-  let summaries: FakeSummaryService;
   let memory: ChatMemory;
 
   beforeEach(() => {
-    ai = new FakeAI();
+    summarizer = new FakeHistorySummarizer();
     messages = new FakeMessageService();
-    summaries = new FakeSummaryService();
-    memory = new ChatMemory(ai, messages, summaries, 1, 2);
+    memory = new ChatMemory(messages, summarizer, 1, 2);
   });
 
-  it('summarizes when history exceeds limit', async () => {
-    await memory.addMessage({
+  it('passes history to summarizer before saving message', async () => {
+    await messages.addMessage({
       chatId: 1,
       role: 'user',
-      content: 'm1',
+      content: 'old',
       username: 'u1',
     });
-    await memory.addMessage({
-      chatId: 1,
-      role: 'assistant',
-      content: 'm2',
-      username: 'bot',
-    });
-    await memory.addMessage({
-      chatId: 1,
-      role: 'user',
-      content: 'm3',
-      username: 'u1',
-    });
-    expect(ai.summarize).not.toHaveBeenCalled();
 
     await memory.addMessage({
       chatId: 1,
       role: 'assistant',
-      content: 'm4',
+      content: 'new',
       username: 'bot',
     });
-    expect(ai.summarize).toHaveBeenCalledOnce();
-    expect(await memory.getSummary()).toBe('summary');
+
+    expect(summarizer.summarizeIfNeeded).toHaveBeenCalledWith(
+      1,
+      [
+        {
+          role: 'user',
+          content: 'old',
+          username: 'u1',
+          chatId: 1,
+        },
+      ],
+      2
+    );
     const hist = await memory.getHistory();
     expect(hist).toEqual([
-      { role: 'assistant', content: 'm4', username: 'bot', chatId: 1 },
+      { role: 'user', content: 'old', username: 'u1', chatId: 1 },
+      { role: 'assistant', content: 'new', username: 'bot', chatId: 1 },
     ]);
   });
 
