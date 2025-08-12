@@ -9,11 +9,10 @@ import { parseDatabaseUrl } from '../utils/database';
 
 export interface DbProvider<T = unknown> {
   get(): Promise<T>;
-}
-
-export interface SQLiteDbProvider extends DbProvider<Database> {
   listTables(): Promise<string[]>;
 }
+
+export type SQLiteDbProvider = DbProvider<Database>;
 
 @injectable()
 export class SQLiteDbProviderImpl implements SQLiteDbProvider {
@@ -37,6 +36,6 @@ export class SQLiteDbProviderImpl implements SQLiteDbProvider {
   }
 }
 
-export const DB_PROVIDER_ID = Symbol.for(
-  'DbProvider'
-) as ServiceIdentifier<SQLiteDbProvider>;
+export const DB_PROVIDER_ID = Symbol.for('DbProvider') as ServiceIdentifier<
+  DbProvider<Database>
+>;
