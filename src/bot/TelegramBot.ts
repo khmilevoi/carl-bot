@@ -105,6 +105,17 @@ export class TelegramBot {
       }
     });
 
+    this.bot.telegram
+      .setMyCommands([
+        { command: 'start', description: 'Приветствие' },
+        { command: 'reset', description: 'Сбросить память диалога' },
+        { command: 'ping', description: 'Ответ pong' },
+        { command: 'getkey', description: 'Запросить доступ к данным' },
+        { command: 'export', description: 'Выгрузить данные в CSV' },
+        { command: 'approve', description: 'Одобрить доступ к данным (админ)' },
+      ])
+      .catch((err) => logger.error({ err }, 'Failed to set bot commands'));
+
     this.bot.on(message('text'), (ctx) => this.handleText(ctx));
   }
 
