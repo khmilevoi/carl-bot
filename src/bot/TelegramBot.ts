@@ -54,7 +54,16 @@ export class TelegramBot {
     this.bot.start((ctx) => ctx.reply('Привет! Я Карл.'));
 
     this.bot.command('reset', async (ctx) => {
-      await this.memories.reset(ctx.chat.id);
+      const chatId = ctx.chat?.id;
+      const userId = ctx.from?.id;
+      assert(chatId, 'This is not a chat');
+      assert(userId, 'No user id');
+      const allowed = await this.admin.hasAccess(chatId, userId);
+      if (!allowed) {
+        ctx.reply('Нет доступа или ключ просрочен');
+        return;
+      }
+      await this.memories.reset(chatId);
       ctx.reply('Контекст диалога сброшен!');
     });
 
@@ -66,9 +75,11 @@ export class TelegramBot {
         !Number.isNaN(adminChatId),
         'Environment variable ADMIN_CHAT_ID is not set'
       );
+      const userId = ctx.from?.id;
+      assert(userId, 'No user id');
       await ctx.telegram.sendMessage(
         adminChatId,
-        `Chat ${ctx.chat.id} requests access. Approve with /approve ${ctx.chat.id}`
+        `Chat ${ctx.chat.id} user ${userId} requests access. Approve with /approve ${ctx.chat.id} ${userId}`
       );
       ctx.reply('Запрос отправлен администратору.');
     });
@@ -77,23 +88,29 @@ export class TelegramBot {
       const adminChatId = Number(process.env.ADMIN_CHAT_ID);
       if (ctx.chat?.id !== adminChatId) return;
       const parts = ctx.message?.text.split(' ') ?? [];
-      const target = Number(parts[1]);
-      if (!target) {
-        ctx.reply('Укажите ID чата');
+      const targetChat = Number(parts[1]);
+      const targetUser = Number(parts[2]);
+      if (!targetChat || !targetUser) {
+        ctx.reply('Укажите ID чата и ID пользователя');
         return;
       }
-      const expiresAt = await this.admin.createAccessKey(target);
-      await ctx.telegram.sendMessage(
-        target,
-        `Доступ к данным разрешен до ${expiresAt.toISOString()}. Используйте /export`
+      const expiresAt = await this.admin.createAccessKey(
+        targetChat,
+        targetUser
       );
-      ctx.reply(`Одобрено для чата ${target}`);
+      await ctx.telegram.sendMessage(
+        targetChat,
+        `Доступ к данным разрешен для пользователя ${targetUser} до ${expiresAt.toISOString()}. Используйте /export и /reset`
+      );
+      ctx.reply(`Одобрено для чата ${targetChat} и пользователя ${targetUser}`);
     });
 
     this.bot.command('export', async (ctx) => {
       const chatId = ctx.chat?.id;
+      const userId = ctx.from?.id;
       assert(chatId, 'This is not a chat');
-      const allowed = await this.admin.hasAccess(chatId);
+      assert(userId, 'No user id');
+      const allowed = await this.admin.hasAccess(chatId, userId);
       if (!allowed) {
         ctx.reply('Нет доступа или ключ просрочен');
         return;
@@ -108,10 +125,16 @@ export class TelegramBot {
     this.bot.telegram
       .setMyCommands([
         { command: 'start', description: 'Приветствие' },
-        { command: 'reset', description: 'Сбросить память диалога' },
+        {
+          command: 'reset',
+          description: 'Сбросить память диалога (нужен доступ)',
+        },
         { command: 'ping', description: 'Ответ pong' },
         { command: 'getkey', description: 'Запросить доступ к данным' },
-        { command: 'export', description: 'Выгрузить данные в CSV' },
+        {
+          command: 'export',
+          description: 'Выгрузить данные в CSV (нужен доступ)',
+        },
         { command: 'approve', description: 'Одобрить доступ к данным (админ)' },
       ])
       .catch((err) => logger.error({ err }, 'Failed to set bot commands'));
