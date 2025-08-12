@@ -1,11 +1,9 @@
 import { inject, injectable } from 'inversify';
 
 import type { ChatMessage } from '../../services/ai/AIService';
+import type { StoredMessage } from '../../services/messages/StoredMessage';
 import { DB_PROVIDER_ID, type SQLiteDbProvider } from '../DbProvider';
-import {
-  type MessageEntity,
-  type MessageRepository,
-} from '../interfaces/MessageRepository';
+import { type MessageRepository } from '../interfaces/MessageRepository';
 
 @injectable()
 export class SQLiteMessageRepository implements MessageRepository {
@@ -24,7 +22,7 @@ export class SQLiteMessageRepository implements MessageRepository {
     replyText,
     replyUsername,
     quoteText,
-  }: MessageEntity): Promise<void> {
+  }: StoredMessage): Promise<void> {
     const db = await this.db();
     await db.run(
       'INSERT INTO messages (chat_id, message_id, role, content, user_id, reply_text, reply_username, quote_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
@@ -32,7 +30,7 @@ export class SQLiteMessageRepository implements MessageRepository {
       messageId ?? null,
       role,
       content,
-      userId,
+      userId ?? 0,
       replyText ?? null,
       replyUsername ?? null,
       quoteText ?? null

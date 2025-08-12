@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AIService, ChatMessage } from '../src/services/ai/AIService';
 import { ChatMemory } from '../src/services/chat/ChatMemory';
 import { MessageService } from '../src/services/messages/MessageService';
+import { StoredMessage } from '../src/services/messages/StoredMessage';
 import { SummaryService } from '../src/services/summaries/SummaryService';
 
 class FakeAI implements AIService {
@@ -13,32 +14,22 @@ class FakeAI implements AIService {
 class FakeMessageService implements MessageService {
   private data = new Map<number, ChatMessage[]>();
 
-  async addMessage(
-    chatId: number,
-    role: 'user' | 'assistant',
-    content: string,
-    username?: string,
-    fullName?: string,
-    replyText?: string,
-    replyUsername?: string,
-    quoteText?: string,
-    userId?: number,
-    messageId?: number,
-    firstName?: string,
-    lastName?: string,
-    chatTitle?: string
-  ) {
-    const list = this.data.get(chatId) ?? [];
-    const entry: ChatMessage = { role, content, chatId };
-    if (username) entry.username = username;
-    if (fullName) entry.fullName = fullName;
-    if (replyText) entry.replyText = replyText;
-    if (replyUsername) entry.replyUsername = replyUsername;
-    if (quoteText) entry.quoteText = quoteText;
-    if (userId !== undefined) entry.userId = userId;
-    if (messageId !== undefined) entry.messageId = messageId;
+  async addMessage(message: StoredMessage) {
+    const list = this.data.get(message.chatId) ?? [];
+    const entry: ChatMessage = {
+      role: message.role,
+      content: message.content,
+      chatId: message.chatId,
+    };
+    if (message.username) entry.username = message.username;
+    if (message.fullName) entry.fullName = message.fullName;
+    if (message.replyText) entry.replyText = message.replyText;
+    if (message.replyUsername) entry.replyUsername = message.replyUsername;
+    if (message.quoteText) entry.quoteText = message.quoteText;
+    if (message.userId !== undefined) entry.userId = message.userId;
+    if (message.messageId !== undefined) entry.messageId = message.messageId;
     list.push(entry);
-    this.data.set(chatId, list);
+    this.data.set(message.chatId, list);
   }
 
   async getMessages(chatId: number) {
@@ -80,12 +71,32 @@ describe('ChatMemory', () => {
   });
 
   it('summarizes when history exceeds limit', async () => {
-    await memory.addMessage('user', 'm1', 'u1');
-    await memory.addMessage('assistant', 'm2', 'bot');
-    await memory.addMessage('user', 'm3', 'u1');
+    await memory.addMessage({
+      chatId: 1,
+      role: 'user',
+      content: 'm1',
+      username: 'u1',
+    });
+    await memory.addMessage({
+      chatId: 1,
+      role: 'assistant',
+      content: 'm2',
+      username: 'bot',
+    });
+    await memory.addMessage({
+      chatId: 1,
+      role: 'user',
+      content: 'm3',
+      username: 'u1',
+    });
     expect(ai.summarize).not.toHaveBeenCalled();
 
-    await memory.addMessage('assistant', 'm4', 'bot');
+    await memory.addMessage({
+      chatId: 1,
+      role: 'assistant',
+      content: 'm4',
+      username: 'bot',
+    });
     expect(ai.summarize).toHaveBeenCalledOnce();
     expect(await memory.getSummary()).toBe('summary');
     const hist = await memory.getHistory();
@@ -95,17 +106,14 @@ describe('ChatMemory', () => {
   });
 
   it('stores user and message ids', async () => {
-    await memory.addMessage(
-      'user',
-      'hello',
-      'alice',
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      7,
-      42
-    );
+    await memory.addMessage({
+      chatId: 1,
+      role: 'user',
+      content: 'hello',
+      username: 'alice',
+      userId: 7,
+      messageId: 42,
+    });
     const hist = await memory.getHistory();
     expect(hist).toEqual([
       {

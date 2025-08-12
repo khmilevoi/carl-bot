@@ -11,6 +11,7 @@ import { ChatMemoryManager } from '../services/chat/ChatMemory';
 import { DialogueManager } from '../services/chat/DialogueManager';
 import { Env, ENV_SERVICE_ID, EnvService } from '../services/env/EnvService';
 import { logger } from '../services/logging/logger';
+import { MessageFactory } from '../services/messages/MessageFactory';
 import { MentionTrigger } from '../triggers/MentionTrigger';
 import { NameTrigger } from '../triggers/NameTrigger';
 import { ReplyTrigger } from '../triggers/ReplyTrigger';
@@ -166,62 +167,13 @@ export class TelegramBot {
       return;
     }
 
-    const message = ctx.message as any;
-    assert(message && typeof message.text === 'string', 'Нет текста сообщения');
-
-    let replyText: string | undefined;
-    let replyUsername: string | undefined;
-    let quoteText: string | undefined;
-    if (message.reply_to_message) {
-      const pieces: string[] = [];
-      if (typeof message.reply_to_message.text === 'string') {
-        pieces.push(message.reply_to_message.text);
-      }
-      if (typeof message.reply_to_message.caption === 'string') {
-        pieces.push(message.reply_to_message.caption);
-      }
-      assert(pieces.length > 0, 'Нет текста или подписи в reply_to_message');
-      replyText = pieces.join('; ');
-
-      const from = message.reply_to_message.from;
-      if (from) {
-        if (from.first_name && from.last_name) {
-          replyUsername = from.first_name + ' ' + from.last_name;
-        } else {
-          replyUsername = from.first_name || from.username || undefined;
-        }
-      }
-    }
-
-    if (message.quote && typeof message.quote.text === 'string') {
-      quoteText = message.quote.text;
-    }
     const memory = this.memories.get(chatId);
-
-    const username = ctx.from?.username || 'Имя неизвестно';
-    const fullName =
-      ctx.from?.first_name && ctx.from?.last_name
-        ? ctx.from.first_name + ' ' + ctx.from.last_name
-        : ctx.from?.first_name || ctx.from?.last_name || username;
-
-    await memory.addMessage(
-      'user',
-      message.text,
-      username,
-      fullName,
-      replyText,
-      replyUsername,
-      quoteText,
-      ctx.from?.id,
-      ctx.message?.message_id,
-      ctx.from?.first_name,
-      ctx.from?.last_name,
-      (ctx.chat as any)?.title
-    );
+    const userMsg = MessageFactory.fromUser(ctx);
+    await memory.addMessage(userMsg);
 
     const context: TriggerContext = {
-      text: `${message.text};`,
-      replyText: replyText ?? '',
+      text: `${userMsg.content};`,
+      replyText: userMsg.replyText ?? '',
       chatId,
     };
 
@@ -257,24 +209,11 @@ export class TelegramBot {
         await memory.getSummary()
       );
       logger.debug({ chatId }, 'Answer generated');
-      await memory.addMessage(
-        'assistant',
-        answer,
-        ctx.me,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        (ctx.chat as any)?.title
-      );
+      await memory.addMessage(MessageFactory.fromAssistant(ctx, answer));
 
       ctx.reply(answer, {
-        reply_parameters: ctx.message?.message_id
-          ? { message_id: ctx.message?.message_id }
+        reply_parameters: userMsg.messageId
+          ? { message_id: userMsg.messageId }
           : undefined,
       });
       logger.debug({ chatId }, 'Reply sent');
