@@ -213,6 +213,7 @@ export class TelegramBot {
       replyUsername,
       quoteText,
       ctx.from?.id,
+      ctx.message?.message_id,
       ctx.from?.first_name,
       ctx.from?.last_name,
       (ctx.chat as any)?.title
@@ -260,6 +261,7 @@ export class TelegramBot {
         'assistant',
         answer,
         ctx.me,
+        undefined,
         undefined,
         undefined,
         undefined,
