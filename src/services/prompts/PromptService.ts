@@ -1,5 +1,6 @@
 export interface PromptService {
   getPersona(): Promise<string>;
+  getPriorityRulesSystemPrompt(): string;
   getUserPromptSystemPrompt(): string;
   getAskSummaryPrompt(summary: string): string;
   getSummarizationSystemPrompt(): string;

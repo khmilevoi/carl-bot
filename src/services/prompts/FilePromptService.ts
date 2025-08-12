@@ -15,6 +15,7 @@ export class FilePromptService implements PromptService {
   private previousSummaryTemplate: string;
   private userPromptTemplate: string;
   private userPromptSystemTemplate: string;
+  private priorityRulesSystemTemplate: string;
 
   constructor(@inject(ENV_SERVICE_ID) envService: EnvService) {
     const files = envService.getPromptFiles();
@@ -30,6 +31,10 @@ export class FilePromptService implements PromptService {
       files.userPromptSystem,
       'utf-8'
     );
+    this.priorityRulesSystemTemplate = readFileSync(
+      files.priorityRulesSystem,
+      'utf-8'
+    );
   }
 
   private async loadPersona(): Promise<string> {
@@ -42,6 +47,10 @@ export class FilePromptService implements PromptService {
 
   async getPersona(): Promise<string> {
     return this.loadPersona();
+  }
+
+  getPriorityRulesSystemPrompt(): string {
+    return this.priorityRulesSystemTemplate;
   }
 
   getUserPromptSystemPrompt(): string {

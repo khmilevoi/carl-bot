@@ -1,5 +1,3 @@
-import assert from 'node:assert';
-
 import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { open } from 'sqlite';
@@ -20,7 +18,7 @@ const envService = container.get<EnvService>(ENV_SERVICE_ID);
 const env = envService.env;
 const filename = parseDatabaseUrl(env.DATABASE_URL);
 
-function loadMigrations(dir: string): Migration[] {
+function loadMigrations(dir = envService.getMigrationsDir()): Migration[] {
   logger.info({ dir }, 'Loading migrations from directory');
   const files = readdirSync(dir)
     .filter((f) => f.endsWith('.up.sql'))
@@ -56,6 +54,23 @@ async function appliedMigrations(db: any): Promise<string[]> {
   const rows = (await db.all('SELECT id FROM migrations')) as { id: string }[];
   const applied = rows.map((r: { id: string }) => r.id);
   logger.info({ count: applied.length, applied }, 'Applied migrations found');
+  return applied;
+}
+
+async function cleanupUnknownMigrations(
+  db: any,
+  migrations: Migration[],
+  applied: string[]
+): Promise<string[]> {
+  const knownIds = new Set(migrations.map((m) => m.id));
+  const unknown = applied.filter((id) => !knownIds.has(id));
+  if (unknown.length > 0) {
+    logger.warn({ ids: unknown }, 'Removing unknown migrations from table');
+    for (const id of unknown) {
+      await db.run('DELETE FROM migrations WHERE id = ?', id);
+    }
+    applied = applied.filter((id) => !unknown.includes(id));
+  }
   return applied;
 }
 
@@ -112,8 +127,9 @@ async function migrateUp() {
   }
 
   await ensureTable(db);
-  const applied = await appliedMigrations(db);
-  const migrations = loadMigrations(envService.getMigrationsDir());
+  const migrations = loadMigrations();
+  let applied = await appliedMigrations(db);
+  applied = await cleanupUnknownMigrations(db, migrations, applied);
 
   logger.info(
     { total: migrations.length, applied: applied.length },
@@ -155,7 +171,7 @@ async function migrateDown() {
     return;
   }
 
-  const migrations = loadMigrations(envService.getMigrationsDir());
+  const migrations = loadMigrations();
   const lastId = applied[applied.length - 1];
   const m = migrations.find((x) => x.id === lastId);
 
@@ -183,8 +199,9 @@ async function checkMigrations() {
 
   const db = await getDb();
   await ensureTable(db);
-  const applied = await appliedMigrations(db);
-  const migrations = loadMigrations(envService.getMigrationsDir());
+  const migrations = loadMigrations();
+  let applied = await appliedMigrations(db);
+  applied = await cleanupUnknownMigrations(db, migrations, applied);
 
   logger.info(
     { total: migrations.length, applied: applied.length },
@@ -207,26 +224,30 @@ async function checkMigrations() {
   }
 }
 
-const direction = process.argv[2];
-logger.info({ direction }, 'Running migrations');
+if (require.main === module) {
+  const direction = process.argv[2];
+  logger.info({ direction }, 'Running migrations');
 
-if (direction === 'down') {
-  migrateDown().catch((e) => {
-    logger.error(e, 'Migration DOWN failed');
-    process.exit(1);
-  });
-} else if (direction === 'check') {
-  checkMigrations()
-    .then((allApplied) => {
-      process.exit(allApplied ? 0 : 1);
-    })
-    .catch((e) => {
-      logger.error(e, 'Migration check failed');
+  if (direction === 'down') {
+    migrateDown().catch((e) => {
+      logger.error(e, 'Migration DOWN failed');
       process.exit(1);
     });
-} else {
-  migrateUp().catch((e) => {
-    logger.error(e, 'Migration UP failed');
-    process.exit(1);
-  });
+  } else if (direction === 'check') {
+    checkMigrations()
+      .then((allApplied) => {
+        process.exit(allApplied ? 0 : 1);
+      })
+      .catch((e) => {
+        logger.error(e, 'Migration check failed');
+        process.exit(1);
+      });
+  } else {
+    migrateUp().catch((e) => {
+      logger.error(e, 'Migration UP failed');
+      process.exit(1);
+    });
+  }
 }
+
+export { checkMigrations, migrateDown, migrateUp };
