@@ -196,6 +196,23 @@ export class TelegramBot {
     if (message.quote && typeof message.quote.text === 'string') {
       quoteText = message.quote.text;
     }
+    const memory = this.memories.get(chatId);
+
+    const username = ctx.from?.username || 'Имя неизвестно';
+    const fullName =
+      ctx.from?.first_name && ctx.from?.last_name
+        ? ctx.from.first_name + ' ' + ctx.from.last_name
+        : ctx.from?.first_name || ctx.from?.last_name || username;
+
+    await memory.addMessage(
+      'user',
+      message.text,
+      username,
+      fullName,
+      replyText,
+      replyUsername,
+      quoteText
+    );
 
     const context: TriggerContext = {
       text: `${message.text};`,
@@ -229,24 +246,6 @@ export class TelegramBot {
 
     await withTyping(ctx, async () => {
       logger.debug({ chatId }, 'Generating answer');
-
-      const memory = this.memories.get(chatId);
-
-      const username = ctx.from?.username || 'Имя неизвестно';
-      const fullName =
-        ctx.from?.first_name && ctx.from?.last_name
-          ? ctx.from.first_name + ' ' + ctx.from.last_name
-          : ctx.from?.first_name || ctx.from?.last_name || username;
-
-      await memory.addMessage(
-        'user',
-        message.text,
-        username,
-        fullName,
-        replyText,
-        replyUsername,
-        quoteText
-      );
 
       const answer = await this.ai.ask(
         await memory.getHistory(),
