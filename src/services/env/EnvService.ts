@@ -1,0 +1,56 @@
+import 'dotenv/config';
+
+import type { ServiceIdentifier } from 'inversify';
+import { z } from 'zod';
+
+const envSchema = z
+  .object({
+    BOT_TOKEN: z.string().min(1),
+    OPENAI_API_KEY: z.string().min(1),
+    DATABASE_URL: z.string().min(1),
+    CHAT_HISTORY_LIMIT: z.coerce.number().int().positive().default(50),
+    LOG_LEVEL: z.string().default('debug'),
+    ADMIN_CHAT_ID: z.coerce.number(),
+    NODE_ENV: z.string().default('development'),
+    DOMAIN: z.string().optional(),
+    PORT: z.coerce.number().optional(),
+    LOG_PROMPTS: z.coerce.boolean().default(false),
+  })
+  .superRefine((data, ctx) => {
+    if (data.NODE_ENV === 'production') {
+      if (!data.DOMAIN) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['DOMAIN'],
+          message: 'DOMAIN is required in production',
+        });
+      }
+      if (data.PORT === undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['PORT'],
+          message: 'PORT is required in production',
+        });
+      }
+    }
+  });
+
+export type Env = z.infer<typeof envSchema>;
+
+export interface EnvService {
+  readonly env: Env;
+}
+
+export const ENV_SERVICE_ID = Symbol.for(
+  'EnvService'
+) as ServiceIdentifier<EnvService>;
+
+export class DefaultEnvService implements EnvService {
+  public readonly env: Env;
+
+  constructor() {
+    this.env = envSchema.parse(process.env);
+  }
+}
+
+export const envService = new DefaultEnvService();

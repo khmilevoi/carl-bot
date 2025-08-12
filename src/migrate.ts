@@ -1,5 +1,3 @@
-import 'dotenv/config';
-
 import assert from 'node:assert';
 
 import { readdirSync, readFileSync } from 'fs';
@@ -7,6 +5,7 @@ import { join } from 'path';
 import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 
+import { envService } from './services/env/EnvService';
 import logger from './services/logging/logger';
 import { parseDatabaseUrl } from './utils/database';
 
@@ -16,7 +15,7 @@ interface Migration {
   down: string;
 }
 
-const filename = parseDatabaseUrl(process.env.DATABASE_URL);
+const filename = parseDatabaseUrl(envService.env.DATABASE_URL);
 
 function loadMigrations(dir = 'migrations'): Migration[] {
   logger.info({ dir }, 'Loading migrations from directory');

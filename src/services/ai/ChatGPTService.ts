@@ -4,6 +4,7 @@ import OpenAI from 'openai';
 import { ChatModel } from 'openai/resources/shared';
 import path from 'path';
 
+import { envService } from '../env/EnvService';
 import logger from '../logging/logger';
 import { PROMPT_SERVICE_ID, PromptService } from '../prompts/PromptService';
 import { AIService, ChatMessage } from './AIService';
@@ -26,7 +27,7 @@ export class ChatGPTService implements AIService {
     type: string,
     messages: OpenAI.ChatCompletionMessageParam[]
   ): Promise<void> {
-    if (process.env.LOG_PROMPTS !== 'true') {
+    if (!envService.env.LOG_PROMPTS) {
       return;
     }
     const filePath = path.join(process.cwd(), 'prompts.log');

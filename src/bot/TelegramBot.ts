@@ -9,12 +9,15 @@ import { AIService } from '../services/ai/AIService';
 import { ChatFilter } from '../services/chat/ChatFilter';
 import { ChatMemoryManager } from '../services/chat/ChatMemory';
 import { DialogueManager } from '../services/chat/DialogueManager';
+import { envService } from '../services/env/EnvService';
 import logger from '../services/logging/logger';
 import { MentionTrigger } from '../triggers/MentionTrigger';
 import { NameTrigger } from '../triggers/NameTrigger';
 import { ReplyTrigger } from '../triggers/ReplyTrigger';
 import { StemDictTrigger } from '../triggers/StemDictTrigger';
 import { TriggerContext } from '../triggers/Trigger';
+
+const env = envService.env;
 
 async function withTyping(ctx: Context, fn: () => Promise<void>) {
   await ctx.sendChatAction('typing');
@@ -70,11 +73,7 @@ export class TelegramBot {
     this.bot.command('ping', (ctx) => ctx.reply('pong'));
 
     this.bot.command('getkey', async (ctx) => {
-      const adminChatId = Number(process.env.ADMIN_CHAT_ID);
-      assert(
-        !Number.isNaN(adminChatId),
-        'Environment variable ADMIN_CHAT_ID is not set'
-      );
+      const adminChatId = env.ADMIN_CHAT_ID;
       const userId = ctx.from?.id;
       assert(userId, 'No user id');
       const approveCmd = `/approve ${ctx.chat!.id} ${userId}`;
@@ -91,7 +90,7 @@ export class TelegramBot {
     });
 
     this.bot.command('approve', async (ctx) => {
-      const adminChatId = Number(process.env.ADMIN_CHAT_ID);
+      const adminChatId = env.ADMIN_CHAT_ID;
       if (ctx.chat?.id !== adminChatId) return;
       const parts = ctx.message?.text.split(' ') ?? [];
       const targetChat = Number(parts[1]);
@@ -263,13 +262,11 @@ export class TelegramBot {
 
   public async launch() {
     logger.info('Launching bot');
-    if (process.env.NODE_ENV === 'production') {
-      assert(process.env.DOMAIN, 'Environment variable DOMAIN is not set');
-      assert(process.env.PORT, 'Environment variable PORT is not set');
+    if (env.NODE_ENV === 'production') {
       await this.bot.launch({
         webhook: {
-          domain: process.env.DOMAIN,
-          port: Number(process.env.PORT),
+          domain: env.DOMAIN!,
+          port: env.PORT!,
         },
       });
     } else {

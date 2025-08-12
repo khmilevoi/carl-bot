@@ -1,5 +1,3 @@
-import 'dotenv/config';
-
 import { TelegramBot } from './bot/TelegramBot';
 import container from './container';
 import logger from './services/logging/logger';
