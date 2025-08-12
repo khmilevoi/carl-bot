@@ -4,7 +4,7 @@ import OpenAI from 'openai';
 import { ChatModel } from 'openai/resources/shared';
 import path from 'path';
 
-import { Env, ENV_SERVICE_ID, EnvService } from '../env/EnvService';
+import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
 import logger from '../logging/logger';
 import { PROMPT_SERVICE_ID, PromptService } from '../prompts/PromptService';
 import { AIService, ChatMessage } from './AIService';
@@ -12,17 +12,17 @@ import { AIService, ChatMessage } from './AIService';
 @injectable()
 export class ChatGPTService implements AIService {
   private openai: OpenAI;
-  private env: Env;
+  private readonly askModel: ChatModel;
+  private readonly summaryModel: ChatModel;
 
   constructor(
-    apiKey: string,
-    private readonly askModel: ChatModel,
-    private readonly summaryModel: ChatModel,
-    @inject(ENV_SERVICE_ID) envService: EnvService,
+    @inject(ENV_SERVICE_ID) private readonly envService: EnvService,
     @inject(PROMPT_SERVICE_ID) private readonly prompts: PromptService
   ) {
-    this.env = envService.env;
-    this.openai = new OpenAI({ apiKey });
+    const env = this.envService.env;
+    this.openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+    this.askModel = this.envService.getAskModel();
+    this.summaryModel = this.envService.getSummaryModel();
     logger.debug('ChatGPTService initialized');
   }
 
@@ -30,7 +30,7 @@ export class ChatGPTService implements AIService {
     type: string,
     messages: OpenAI.ChatCompletionMessageParam[]
   ): Promise<void> {
-    if (!this.env.LOG_PROMPTS) {
+    if (!this.envService.env.LOG_PROMPTS) {
       return;
     }
     const filePath = path.join(process.cwd(), 'prompts.log');

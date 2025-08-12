@@ -1,16 +1,19 @@
 import { randomBytes } from 'node:crypto';
 
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { Database, open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 
+import { parseDatabaseUrl } from '../../utils/database';
+import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
 import { AdminService } from './AdminService';
 
 @injectable()
 export class SQLiteAdminService implements AdminService {
   private db: Promise<Database>;
 
-  constructor(filename = 'memory.db') {
+  constructor(@inject(ENV_SERVICE_ID) envService: EnvService) {
+    const filename = parseDatabaseUrl(envService.env.DATABASE_URL);
     this.db = open({ filename, driver: sqlite3.Database });
   }
 

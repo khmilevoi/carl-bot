@@ -2,6 +2,7 @@ import 'dotenv/config';
 
 import type { ServiceIdentifier } from 'inversify';
 import { injectable } from 'inversify';
+import { ChatModel } from 'openai/resources/shared';
 import { z } from 'zod';
 
 const envSchema = z
@@ -40,6 +41,8 @@ export type Env = z.infer<typeof envSchema>;
 
 export interface EnvService {
   readonly env: Env;
+  getAskModel(): ChatModel;
+  getSummaryModel(): ChatModel;
 }
 
 export const ENV_SERVICE_ID = Symbol.for(
@@ -52,6 +55,14 @@ export class DefaultEnvService implements EnvService {
 
   constructor() {
     this.env = envSchema.parse(process.env);
+  }
+
+  getAskModel(): ChatModel {
+    return 'o3';
+  }
+
+  getSummaryModel(): ChatModel {
+    return 'o3-mini';
   }
 }
 
@@ -67,4 +78,12 @@ export class TestEnvService implements EnvService {
     NODE_ENV: 'test',
     LOG_PROMPTS: false,
   };
+
+  getAskModel(): ChatModel {
+    return 'o3';
+  }
+
+  getSummaryModel(): ChatModel {
+    return 'o3-mini';
+  }
 }

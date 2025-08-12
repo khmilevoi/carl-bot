@@ -18,7 +18,7 @@ export const CHAT_FILTER_ID = Symbol.for(
 export class JSONWhiteListChatFilter implements ChatFilter {
   private ids = new Set<number>();
 
-  constructor(private filename: string) {
+  constructor(private filename = 'white_list.json') {
     this.load();
   }
 
