@@ -1,6 +1,7 @@
 import 'dotenv/config';
 
 import type { ServiceIdentifier } from 'inversify';
+import { injectable } from 'inversify';
 import { z } from 'zod';
 
 const envSchema = z
@@ -45,6 +46,7 @@ export const ENV_SERVICE_ID = Symbol.for(
   'EnvService'
 ) as ServiceIdentifier<EnvService>;
 
+@injectable()
 export class DefaultEnvService implements EnvService {
   public readonly env: Env;
 
@@ -52,5 +54,3 @@ export class DefaultEnvService implements EnvService {
     this.env = envSchema.parse(process.env);
   }
 }
-
-export const envService = new DefaultEnvService();

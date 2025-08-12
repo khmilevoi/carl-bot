@@ -1,23 +1,21 @@
 import assert from 'node:assert';
 
-import { injectable } from 'inversify';
+import { inject, injectable } from 'inversify';
 import { Context, Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
 
-import { AdminService } from '../services/admin/AdminService';
-import { AIService } from '../services/ai/AIService';
-import { ChatFilter } from '../services/chat/ChatFilter';
+import { ADMIN_SERVICE_ID, AdminService } from '../services/admin/AdminService';
+import { AI_SERVICE_ID, AIService } from '../services/ai/AIService';
+import { CHAT_FILTER_ID, ChatFilter } from '../services/chat/ChatFilter';
 import { ChatMemoryManager } from '../services/chat/ChatMemory';
 import { DialogueManager } from '../services/chat/DialogueManager';
-import { envService } from '../services/env/EnvService';
+import { Env, ENV_SERVICE_ID, EnvService } from '../services/env/EnvService';
 import logger from '../services/logging/logger';
 import { MentionTrigger } from '../triggers/MentionTrigger';
 import { NameTrigger } from '../triggers/NameTrigger';
 import { ReplyTrigger } from '../triggers/ReplyTrigger';
 import { StemDictTrigger } from '../triggers/StemDictTrigger';
 import { TriggerContext } from '../triggers/Trigger';
-
-const env = envService.env;
 
 async function withTyping(ctx: Context, fn: () => Promise<void>) {
   await ctx.sendChatAction('typing');
@@ -42,14 +40,17 @@ export class TelegramBot {
   private nameTrigger = new NameTrigger('Карл');
   private keywordTrigger = new StemDictTrigger('keywords.json');
 
+  private env: Env;
+
   constructor(
-    token: string,
-    private ai: AIService,
-    private memories: ChatMemoryManager,
-    private filter: ChatFilter,
-    private admin: AdminService
+    @inject(ENV_SERVICE_ID) envService: EnvService,
+    @inject(AI_SERVICE_ID) private ai: AIService,
+    @inject(ChatMemoryManager) private memories: ChatMemoryManager,
+    @inject(CHAT_FILTER_ID) private filter: ChatFilter,
+    @inject(ADMIN_SERVICE_ID) private admin: AdminService
   ) {
-    this.bot = new Telegraf(token);
+    this.env = envService.env;
+    this.bot = new Telegraf(this.env.BOT_TOKEN);
     this.configure();
   }
 
@@ -73,7 +74,7 @@ export class TelegramBot {
     this.bot.command('ping', (ctx) => ctx.reply('pong'));
 
     this.bot.command('getkey', async (ctx) => {
-      const adminChatId = env.ADMIN_CHAT_ID;
+      const adminChatId = this.env.ADMIN_CHAT_ID;
       const userId = ctx.from?.id;
       assert(userId, 'No user id');
       const approveCmd = `/approve ${ctx.chat!.id} ${userId}`;
@@ -90,7 +91,7 @@ export class TelegramBot {
     });
 
     this.bot.command('approve', async (ctx) => {
-      const adminChatId = env.ADMIN_CHAT_ID;
+      const adminChatId = this.env.ADMIN_CHAT_ID;
       if (ctx.chat?.id !== adminChatId) return;
       const parts = ctx.message?.text.split(' ') ?? [];
       const targetChat = Number(parts[1]);
@@ -262,11 +263,11 @@ export class TelegramBot {
 
   public async launch() {
     logger.info('Launching bot');
-    if (env.NODE_ENV === 'production') {
+    if (this.env.NODE_ENV === 'production') {
       await this.bot.launch({
         webhook: {
-          domain: env.DOMAIN!,
-          port: env.PORT!,
+          domain: this.env.DOMAIN!,
+          port: this.env.PORT!,
         },
       });
     } else {

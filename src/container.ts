@@ -13,7 +13,11 @@ import {
   JSONWhiteListChatFilter,
 } from './services/chat/ChatFilter';
 import { ChatMemoryManager } from './services/chat/ChatMemory';
-import { ENV_SERVICE_ID, envService } from './services/env/EnvService';
+import {
+  DefaultEnvService,
+  ENV_SERVICE_ID,
+  EnvService,
+} from './services/env/EnvService';
 import { FilePromptService } from './services/prompts/FilePromptService';
 import {
   PROMPT_SERVICE_ID,
@@ -28,34 +32,34 @@ import { parseDatabaseUrl } from './utils/database';
 
 export const container = new Container();
 
-container.bind(ENV_SERVICE_ID).toConstantValue(envService);
-
-const { BOT_TOKEN, OPENAI_API_KEY, DATABASE_URL, CHAT_HISTORY_LIMIT } =
-  envService.env;
-const dbFileName = parseDatabaseUrl(DATABASE_URL);
-const historyLimit = CHAT_HISTORY_LIMIT;
+container
+  .bind<EnvService>(ENV_SERVICE_ID)
+  .to(DefaultEnvService)
+  .inSingletonScope();
 
 container
   .bind(PROMPT_SERVICE_ID)
   .toDynamicValue(() => new FilePromptService())
   .inSingletonScope();
 
+container.bind(AI_SERVICE_ID).to(ChatGPTService).inSingletonScope();
+
 container
-  .bind(AI_SERVICE_ID)
+  .bind(MEMORY_STORAGE_ID)
   .toDynamicValue(() => {
-    const prompts = container.get<PromptService>(PROMPT_SERVICE_ID);
-    return new ChatGPTService(OPENAI_API_KEY, 'o3', 'o3-mini', prompts);
+    const env = container.get<EnvService>(ENV_SERVICE_ID).env;
+    const dbFileName = parseDatabaseUrl(env.DATABASE_URL);
+    return new SQLiteMemoryStorage(dbFileName);
   })
   .inSingletonScope();
 
 container
-  .bind(MEMORY_STORAGE_ID)
-  .toDynamicValue(() => new SQLiteMemoryStorage(dbFileName))
-  .inSingletonScope();
-
-container
   .bind(ADMIN_SERVICE_ID)
-  .toDynamicValue(() => new SQLiteAdminService(dbFileName))
+  .toDynamicValue(() => {
+    const env = container.get<EnvService>(ENV_SERVICE_ID).env;
+    const dbFileName = parseDatabaseUrl(env.DATABASE_URL);
+    return new SQLiteAdminService(dbFileName);
+  })
   .inSingletonScope();
 
 container
@@ -63,7 +67,8 @@ container
   .toDynamicValue(() => {
     const ai = container.get<AIService>(AI_SERVICE_ID);
     const storage = container.get<MemoryStorage>(MEMORY_STORAGE_ID);
-    return new ChatMemoryManager(ai, storage, historyLimit);
+    const env = container.get<EnvService>(ENV_SERVICE_ID).env;
+    return new ChatMemoryManager(ai, storage, env.CHAT_HISTORY_LIMIT);
   })
   .inSingletonScope();
 
@@ -72,15 +77,6 @@ container
   .toDynamicValue(() => new JSONWhiteListChatFilter('white_list.json'))
   .inSingletonScope();
 
-container
-  .bind(TelegramBot)
-  .toDynamicValue(() => {
-    const ai = container.get<AIService>(AI_SERVICE_ID);
-    const memories = container.get<ChatMemoryManager>(ChatMemoryManager);
-    const filter = container.get<ChatFilter>(CHAT_FILTER_ID);
-    const admin = container.get<AdminService>(ADMIN_SERVICE_ID);
-    return new TelegramBot(BOT_TOKEN, ai, memories, filter, admin);
-  })
-  .inSingletonScope();
+container.bind(TelegramBot).toSelf().inSingletonScope();
 
 export default container;
