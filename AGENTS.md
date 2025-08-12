@@ -29,6 +29,11 @@
 - When environment variables change, update `.env.example` accordingly.
 - When adding new services, define an interface and export an Inversify key (Symbol)
   so they can be bound in the container.
+- Do not use default exports.
+- Database access goes through the `DbProvider` interface which exposes `get()` and
+  `listTables()`. Only modules that directly work with SQLite should depend on the
+  `SQLiteDbProvider` implementation; business logic must use repository interfaces
+  and remain database‑agnostic.
 
 ## Troubleshooting
 

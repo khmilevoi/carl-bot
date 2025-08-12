@@ -9,12 +9,10 @@ const envService =
     ? new TestEnvService()
     : new DefaultEnvService();
 
-const logger = pino(
+export const logger = pino(
   {
     level: envService.env.LOG_LEVEL,
     transport: { target: 'pino-pretty' },
   },
   destination
 );
-
-export default logger;

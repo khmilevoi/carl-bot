@@ -3,9 +3,9 @@ import { join } from 'path';
 import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 
-import container from './container';
+import { container } from './container';
 import { ENV_SERVICE_ID, EnvService } from './services/env/EnvService';
-import logger from './services/logging/logger';
+import { logger } from './services/logging/logger';
 import { parseDatabaseUrl } from './utils/database';
 
 interface Migration {

@@ -5,7 +5,7 @@ import { ChatModel } from 'openai/resources/shared';
 import path from 'path';
 
 import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
-import logger from '../logging/logger';
+import { logger } from '../logging/logger';
 import { PROMPT_SERVICE_ID, PromptService } from '../prompts/PromptService';
 import { AIService, ChatMessage } from './AIService';
 

@@ -1,28 +1,33 @@
 import { inject, injectable } from 'inversify';
-import { Database, open } from 'sqlite';
-import sqlite3 from 'sqlite3';
 
-import { parseDatabaseUrl } from '../../utils/database';
+import {
+  CHAT_REPOSITORY_ID,
+  type ChatRepository,
+} from '../../repositories/interfaces/ChatRepository';
+import {
+  MESSAGE_REPOSITORY_ID,
+  type MessageRepository,
+} from '../../repositories/interfaces/MessageRepository';
+import {
+  SUMMARY_REPOSITORY_ID,
+  type SummaryRepository,
+} from '../../repositories/interfaces/SummaryRepository';
+import {
+  USER_REPOSITORY_ID,
+  type UserRepository,
+} from '../../repositories/interfaces/UserRepository';
 import { ChatMessage } from '../ai/AIService';
-import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
-import logger from '../logging/logger';
+import { logger } from '../logging/logger';
 import { MemoryStorage } from './MemoryStorage.interface';
 
 @injectable()
 export class SQLiteMemoryStorage implements MemoryStorage {
-  private db: Promise<Database>;
-
-  constructor(@inject(ENV_SERVICE_ID) envService: EnvService) {
-    const filename = parseDatabaseUrl(envService.env.DATABASE_URL);
-    this.db = open({ filename, driver: sqlite3.Database }).then((db) => {
-      logger.debug({ filename }, 'Initializing SQLite storage');
-      return db;
-    });
-  }
-
-  private async getDb() {
-    return this.db;
-  }
+  constructor(
+    @inject(CHAT_REPOSITORY_ID) private chatRepo: ChatRepository,
+    @inject(USER_REPOSITORY_ID) private userRepo: UserRepository,
+    @inject(MESSAGE_REPOSITORY_ID) private messageRepo: MessageRepository,
+    @inject(SUMMARY_REPOSITORY_ID) private summaryRepo: SummaryRepository
+  ) {}
 
   async addMessage(
     chatId: number,
@@ -40,103 +45,49 @@ export class SQLiteMemoryStorage implements MemoryStorage {
     chatTitle?: string
   ) {
     logger.debug({ chatId, role }, 'Inserting message into database');
-    const db = await this.getDb();
     const storedUserId = userId ?? 0;
-    await db.run(
-      'INSERT INTO chats (chat_id, title) VALUES (?, ?) ON CONFLICT(chat_id) DO UPDATE SET title=excluded.title',
+    await this.chatRepo.upsert({ chatId, title: chatTitle ?? null });
+    await this.userRepo.upsert({
+      id: storedUserId,
+      username: username ?? null,
+      firstName: firstName ?? null,
+      lastName: lastName ?? null,
+    });
+    await this.messageRepo.insert({
       chatId,
-      chatTitle ?? null
-    );
-    await db.run(
-      'INSERT INTO users (id, username, first_name, last_name) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET username=excluded.username, first_name=excluded.first_name, last_name=excluded.last_name',
-      storedUserId,
-      username ?? null,
-      firstName ?? null,
-      lastName ?? null
-    );
-    await db.run(
-      'INSERT INTO messages (chat_id, message_id, role, content, user_id, reply_text, reply_username, quote_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      chatId,
-      messageId ?? null,
+      messageId: messageId ?? null,
       role,
       content,
-      storedUserId,
-      replyText ?? null,
-      replyUsername ?? null,
-      quoteText ?? null
-    );
+      userId: storedUserId,
+      replyText: replyText ?? null,
+      replyUsername: replyUsername ?? null,
+      quoteText: quoteText ?? null,
+    });
   }
 
   async getMessages(chatId: number): Promise<ChatMessage[]> {
     logger.debug({ chatId }, 'Fetching messages from database');
-    const db = await this.getDb();
-    const rows = await db.all<
-      {
-        role: 'user' | 'assistant';
-        content: string;
-        username: string | null;
-        first_name: string | null;
-        last_name: string | null;
-        reply_text: string | null;
-        reply_username: string | null;
-        quote_text: string | null;
-        user_id: number | null;
-        chat_id: number | null;
-        message_id: number | null;
-      }[]
-    >(
-      'SELECT m.role, m.content, u.username, u.first_name, u.last_name, m.reply_text, m.reply_username, m.quote_text, m.user_id, c.chat_id, m.message_id FROM messages m LEFT JOIN users u ON m.user_id = u.id LEFT JOIN chats c ON m.chat_id = c.chat_id WHERE m.chat_id = ? ORDER BY m.id',
-      chatId
-    );
-    return (
-      rows?.map((r) => {
-        const entry: ChatMessage = {
-          role: r.role,
-          content: r.content,
-          chatId: r.chat_id ?? undefined,
-        };
-        if (r.username) entry.username = r.username;
-        const fullName = [r.first_name, r.last_name].filter(Boolean).join(' ');
-        if (fullName) entry.fullName = fullName;
-        if (r.reply_text) entry.replyText = r.reply_text;
-        if (r.reply_username) entry.replyUsername = r.reply_username;
-        if (r.quote_text) entry.quoteText = r.quote_text;
-        if (r.user_id) entry.userId = r.user_id;
-        if (r.message_id) entry.messageId = r.message_id;
-        return entry;
-      }) ?? []
-    );
+    return this.messageRepo.findByChatId(chatId);
   }
 
   async clearMessages(chatId: number) {
     logger.debug({ chatId }, 'Clearing messages table');
-    const db = await this.getDb();
-    await db.run('DELETE FROM messages WHERE chat_id = ?', chatId);
+    await this.messageRepo.clearByChatId(chatId);
   }
 
   async getSummary(chatId: number) {
     logger.debug({ chatId }, 'Fetching summary');
-    const db = await this.getDb();
-    const row = await db.get<{ summary: string }>(
-      'SELECT summary FROM summaries WHERE chat_id = ?',
-      chatId
-    );
-    return row?.summary ?? '';
+    return this.summaryRepo.findById(chatId);
   }
 
   async setSummary(chatId: number, summary: string) {
     logger.debug({ chatId }, 'Storing summary');
-    const db = await this.getDb();
-    await db.run(
-      'INSERT INTO summaries (chat_id, summary) VALUES (?, ?) ON CONFLICT(chat_id) DO UPDATE SET summary=excluded.summary',
-      chatId,
-      summary
-    );
+    await this.summaryRepo.upsert(chatId, summary);
   }
 
   async reset(chatId: number) {
     logger.debug({ chatId }, 'Resetting chat data');
-    await this.clearMessages(chatId);
-    await this.setSummary(chatId, '');
+    await this.messageRepo.clearByChatId(chatId);
+    await this.summaryRepo.clearByChatId(chatId);
   }
 }

@@ -1,5 +1,5 @@
 import { ChatMessage } from '../ai/AIService';
-import logger from '../logging/logger';
+import { logger } from '../logging/logger';
 import { MemoryStorage } from './MemoryStorage.interface';
 
 export class InMemoryStorage implements MemoryStorage {
