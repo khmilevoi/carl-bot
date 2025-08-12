@@ -1,11 +1,50 @@
-import { existsSync, readdirSync, unlinkSync } from 'fs';
-import path from 'path';
-import { open } from 'sqlite';
-import sqlite3 from 'sqlite3';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { readdirSync } from 'fs';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const dbPath = path.resolve('migration-test.db');
 let migrateUp: () => Promise<void>;
+
+class MockDb {
+  migrations: string[] = [];
+  hasMigrationsTable = false;
+
+  async get(query: string) {
+    if (query.includes('sqlite_master') && query.includes('migrations')) {
+      return this.hasMigrationsTable ? { name: 'migrations' } : undefined;
+    }
+    return undefined;
+  }
+
+  async run(query: string, id?: string) {
+    if (query.startsWith('CREATE TABLE')) {
+      this.hasMigrationsTable = true;
+    } else if (query.startsWith('INSERT INTO migrations')) {
+      if (id) this.migrations.push(id);
+      this.hasMigrationsTable = true;
+    } else if (query.startsWith('DELETE FROM migrations')) {
+      if (id)
+        this.migrations = this.migrations.filter((existing) => existing !== id);
+    }
+  }
+
+  async all(query: string) {
+    if (query === 'SELECT id FROM migrations') {
+      return this.migrations.map((id) => ({ id }));
+    }
+    return [];
+  }
+
+  async exec(_query: string) {}
+  async close() {}
+}
+
+vi.mock('sqlite', () => ({
+  open: vi.fn(async () => mockDb),
+}));
+vi.mock('sqlite3', () => ({
+  default: { Database: class {} },
+}));
+
+let mockDb: MockDb;
 
 async function loadMigrateModule() {
   const mod = await import('../src/migrate');
@@ -14,36 +53,21 @@ async function loadMigrateModule() {
 
 describe('migrateUp', () => {
   beforeEach(async () => {
-    process.env.DATABASE_URL = `file://./${path.basename(dbPath)}`;
-    if (existsSync(dbPath)) {
-      unlinkSync(dbPath);
-    }
+    vi.resetModules();
+    mockDb = new MockDb();
+    process.env.DATABASE_URL = 'file://test.db';
     await loadMigrateModule();
     await migrateUp();
-    const db = await open({ filename: dbPath, driver: sqlite3.Database });
-    await db.run(
-      'INSERT INTO migrations (id, applied_at) VALUES (?, datetime("now"))',
-      '999_fake'
-    );
-    await db.close();
-  });
-
-  afterEach(() => {
-    if (existsSync(dbPath)) {
-      unlinkSync(dbPath);
-    }
+    mockDb.migrations.push('999_fake');
   });
 
   it('removes unknown migrations before applying new ones', async () => {
     await migrateUp();
-    const db = await open({ filename: dbPath, driver: sqlite3.Database });
-    const rows = await db.all('SELECT id FROM migrations');
-    const ids = rows.map((r: { id: string }) => r.id);
+    const ids = mockDb.migrations;
     expect(ids).not.toContain('999_fake');
     const migrationFiles = readdirSync('migrations').filter((f) =>
       f.endsWith('.up.sql')
     );
     expect(ids.length).toBe(migrationFiles.length);
-    await db.close();
   });
 });
