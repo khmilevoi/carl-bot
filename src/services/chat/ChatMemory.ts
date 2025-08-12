@@ -7,6 +7,7 @@ import {
   MESSAGE_SERVICE_ID,
   type MessageService,
 } from '../messages/MessageService';
+import { StoredMessage } from '../messages/StoredMessage';
 import {
   SUMMARY_SERVICE_ID,
   type SummaryService,
@@ -26,22 +27,9 @@ export class ChatMemory {
     private limit: number
   ) {}
 
-  public async addMessage(
-    role: 'user' | 'assistant',
-    content: string,
-    username?: string,
-    fullName?: string,
-    replyText?: string,
-    replyUsername?: string,
-    quoteText?: string,
-    userId?: number,
-    messageId?: number,
-    firstName?: string,
-    lastName?: string,
-    chatTitle?: string
-  ) {
+  public async addMessage(message: StoredMessage) {
     const history = await this.messages.getMessages(this.chatId);
-    logger.debug({ chatId: this.chatId, role }, 'Adding message');
+    logger.debug({ chatId: this.chatId, role: message.role }, 'Adding message');
 
     if (history.length > this.limit) {
       logger.debug({ chatId: this.chatId }, 'Summarizing chat history');
@@ -51,21 +39,7 @@ export class ChatMemory {
       await this.messages.clearMessages(this.chatId);
     }
 
-    await this.messages.addMessage(
-      this.chatId,
-      role,
-      content,
-      username,
-      fullName,
-      replyText,
-      replyUsername,
-      quoteText,
-      userId,
-      messageId,
-      firstName,
-      lastName,
-      chatTitle
-    );
+    await this.messages.addMessage({ ...message, chatId: this.chatId });
   }
 
   public getHistory(): Promise<ChatMessage[]> {

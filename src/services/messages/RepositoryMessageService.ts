@@ -14,6 +14,7 @@ import {
 } from '../../repositories/interfaces/UserRepository';
 import { logger } from '../logging/logger';
 import { MessageService } from './MessageService';
+import { StoredMessage } from './StoredMessage';
 
 @injectable()
 export class RepositoryMessageService implements MessageService {
@@ -23,39 +24,25 @@ export class RepositoryMessageService implements MessageService {
     @inject(MESSAGE_REPOSITORY_ID) private messageRepo: MessageRepository
   ) {}
 
-  async addMessage(
-    chatId: number,
-    role: 'user' | 'assistant',
-    content: string,
-    username?: string,
-    fullName?: string,
-    replyText?: string,
-    replyUsername?: string,
-    quoteText?: string,
-    userId?: number,
-    messageId?: number,
-    firstName?: string,
-    lastName?: string,
-    chatTitle?: string
-  ) {
-    logger.debug({ chatId, role }, 'Inserting message into database');
-    const storedUserId = userId ?? 0;
-    await this.chatRepo.upsert({ chatId, title: chatTitle ?? null });
+  async addMessage(message: StoredMessage) {
+    logger.debug(
+      { chatId: message.chatId, role: message.role },
+      'Inserting message into database'
+    );
+    const storedUserId = message.userId ?? 0;
+    await this.chatRepo.upsert({
+      chatId: message.chatId,
+      title: message.chatTitle ?? null,
+    });
     await this.userRepo.upsert({
       id: storedUserId,
-      username: username ?? null,
-      firstName: firstName ?? null,
-      lastName: lastName ?? null,
+      username: message.username ?? null,
+      firstName: message.firstName ?? null,
+      lastName: message.lastName ?? null,
     });
     await this.messageRepo.insert({
-      chatId,
-      messageId: messageId ?? null,
-      role,
-      content,
+      ...message,
       userId: storedUserId,
-      replyText: replyText ?? null,
-      replyUsername: replyUsername ?? null,
-      quoteText: quoteText ?? null,
     });
   }
 
