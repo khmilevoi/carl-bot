@@ -82,10 +82,10 @@ export class TelegramBot {
         ctx.reply('Укажите ID чата');
         return;
       }
-      const key = await this.admin.createAccessKey(target);
+      const expiresAt = await this.admin.createAccessKey(target);
       await ctx.telegram.sendMessage(
         target,
-        `Доступ к данным разрешен. Ключ: ${key}`
+        `Доступ к данным разрешен до ${expiresAt.toISOString()}. Используйте /export`
       );
       ctx.reply(`Одобрено для чата ${target}`);
     });
@@ -93,15 +93,9 @@ export class TelegramBot {
     this.bot.command('export', async (ctx) => {
       const chatId = ctx.chat?.id;
       assert(chatId, 'This is not a chat');
-      const parts = ctx.message?.text.split(' ') ?? [];
-      const key = parts[1];
-      if (!key) {
-        ctx.reply('Укажите ключ доступа');
-        return;
-      }
-      const allowed = await this.admin.validateAccess(chatId, key);
+      const allowed = await this.admin.hasAccess(chatId);
       if (!allowed) {
-        ctx.reply('Нет доступа');
+        ctx.reply('Нет доступа или ключ просрочен');
         return;
       }
       const files = await this.admin.exportTables();

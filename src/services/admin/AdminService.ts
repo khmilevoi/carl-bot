@@ -16,33 +16,34 @@ export class AdminService {
     return this.db;
   }
 
-  async createAccessKey(chatId: number): Promise<string> {
+  async createAccessKey(
+    chatId: number,
+    ttlMs = 24 * 60 * 60 * 1000
+  ): Promise<Date> {
     const db = await this.getDb();
     const key = randomBytes(16).toString('hex');
+    const expiresAt = Date.now() + ttlMs;
     await db.run(
-      'INSERT INTO access_keys (chat_id, access_key) VALUES (?, ?) ON CONFLICT(chat_id) DO UPDATE SET access_key=excluded.access_key',
+      'INSERT INTO access_keys (chat_id, access_key, expires_at) VALUES (?, ?, ?) ON CONFLICT(chat_id) DO UPDATE SET access_key=excluded.access_key, expires_at=excluded.expires_at',
       chatId,
-      key
+      key,
+      expiresAt
     );
-    return key;
-  }
-
-  async validateAccess(chatId: number, key: string): Promise<boolean> {
-    const db = await this.getDb();
-    const row = await db.get<{ access_key: string }>(
-      'SELECT access_key FROM access_keys WHERE chat_id = ?',
-      chatId
-    );
-    return row?.access_key === key;
+    return new Date(expiresAt);
   }
 
   async hasAccess(chatId: number): Promise<boolean> {
     const db = await this.getDb();
-    const row = await db.get<{ access_key: string }>(
-      'SELECT access_key FROM access_keys WHERE chat_id = ?',
+    const row = await db.get<{ expires_at: number }>(
+      'SELECT expires_at FROM access_keys WHERE chat_id = ?',
       chatId
     );
-    return !!row;
+    if (!row) return false;
+    if (row.expires_at < Date.now()) {
+      await db.run('DELETE FROM access_keys WHERE chat_id = ?', chatId);
+      return false;
+    }
+    return true;
   }
 
   async exportTables(): Promise<{ filename: string; buffer: Buffer }[]> {

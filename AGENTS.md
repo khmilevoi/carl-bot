@@ -22,10 +22,11 @@
   - `npm run lint:fix` – fix lint errors
   - `npm run format` – verify formatting
   - `npm run format:fix` – format files
-  - `npm run prepare` – set up Git hooks
-  - `npm run migration:up` – apply database migrations
-  - `npm run migration:down` – revert the last migration
+- `npm run prepare` – set up Git hooks
+- `npm run migration:up` – apply database migrations
+- `npm run migration:down` – revert the last migration
 - Do not commit `node_modules` or `package-lock.json`.
+- When environment variables change, update `.env.example` accordingly.
 
 ## Troubleshooting
 
