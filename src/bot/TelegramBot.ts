@@ -211,7 +211,10 @@ export class TelegramBot {
       fullName,
       replyText,
       replyUsername,
-      quoteText
+      quoteText,
+      ctx.from?.id,
+      ctx.from?.first_name,
+      ctx.from?.last_name
     );
 
     const context: TriggerContext = {

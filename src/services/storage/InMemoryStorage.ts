@@ -24,7 +24,10 @@ export class InMemoryStorage implements MemoryStorage {
     fullName?: string,
     replyText?: string,
     replyUsername?: string,
-    quoteText?: string
+    quoteText?: string,
+    userId?: number,
+    firstName?: string,
+    lastName?: string
   ) {
     logger.debug({ chatId, role }, 'Storing message in memory');
     const list = this.messages.get(chatId) ?? [];

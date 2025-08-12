@@ -24,7 +24,10 @@ export class ChatMemory {
     fullName?: string,
     replyText?: string,
     replyUsername?: string,
-    quoteText?: string
+    quoteText?: string,
+    userId?: number,
+    firstName?: string,
+    lastName?: string
   ) {
     const history = await this.store.getMessages(this.chatId);
     logger.debug({ chatId: this.chatId, role }, 'Adding message');
@@ -45,7 +48,10 @@ export class ChatMemory {
       fullName,
       replyText,
       replyUsername,
-      quoteText
+      quoteText,
+      userId,
+      firstName,
+      lastName
     );
   }
 

@@ -32,7 +32,10 @@ export class SQLiteMemoryStorage implements MemoryStorage {
     fullName?: string,
     replyText?: string,
     replyUsername?: string,
-    quoteText?: string
+    quoteText?: string,
+    userId?: number,
+    firstName?: string,
+    lastName?: string
   ) {
     logger.debug({ chatId, role }, 'Inserting message into database');
     const db = await this.getDb();
@@ -47,6 +50,16 @@ export class SQLiteMemoryStorage implements MemoryStorage {
       replyUsername ?? null,
       quoteText ?? null
     );
+
+    if (userId !== undefined) {
+      await db.run(
+        'INSERT INTO users (id, username, first_name, last_name) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET username=excluded.username, first_name=excluded.first_name, last_name=excluded.last_name',
+        userId,
+        username ?? null,
+        firstName ?? null,
+        lastName ?? null
+      );
+    }
   }
 
   async getMessages(chatId: number): Promise<ChatMessage[]> {
