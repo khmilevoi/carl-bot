@@ -14,7 +14,7 @@ export class InterestTrigger implements Trigger {
     _dialogue: DialogueManager
   ): Promise<boolean> {
     const result = await this.checker.check(chatId);
-    if (result?.interested) {
+    if (result) {
       logger.debug({ chatId }, 'Interest trigger matched');
       return true;
     }

@@ -10,9 +10,7 @@ import {
 } from '../summaries/SummaryService';
 
 export interface InterestChecker {
-  check(
-    chatId: number
-  ): Promise<{ interested: boolean; messageId: string | null } | null>;
+  check(chatId: number): Promise<{ messageId: string; why: string } | null>;
 }
 
 export const INTEREST_CHECKER_ID = Symbol.for(
@@ -34,7 +32,7 @@ export class DefaultInterestChecker implements InterestChecker {
 
   async check(
     chatId: number
-  ): Promise<{ interested: boolean; messageId: string | null } | null> {
+  ): Promise<{ messageId: string; why: string } | null> {
     const count = await this.messages.getCount(chatId);
     if (count % this.interval !== 0) {
       return null;
@@ -46,9 +44,7 @@ export class DefaultInterestChecker implements InterestChecker {
     );
     const summary = (await this.summaries.getSummary(chatId)) || '';
     const result = await this.ai.checkInterest(history, summary);
-    if (!result) {
-      return { interested: false, messageId: null };
-    }
-    return { interested: true, messageId: result.messageId };
+
+    return result;
   }
 }

@@ -112,7 +112,6 @@ export class ChatGPTService implements AIService {
     const messages: OpenAI.ChatCompletionMessageParam[] = [
       { role: 'system', content: persona },
       { role: 'system', content: checkPrompt },
-      { role: 'system', content: summary },
     ];
     const historyMessages = await Promise.all(
       history.map<Promise<OpenAI.ChatCompletionMessageParam>>(async (m) =>
@@ -132,7 +131,6 @@ export class ChatGPTService implements AIService {
       )
     );
     messages.push(...historyMessages);
-    void this.logPrompt('interest', messages);
     logger.debug(
       { messages: history.length },
       'Sending interest check request'
