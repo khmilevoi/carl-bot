@@ -5,7 +5,10 @@ import { Context, Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
 
 import { ADMIN_SERVICE_ID, AdminService } from '../services/admin/AdminService';
-import { CHAT_FILTER_ID, ChatFilter } from '../services/chat/ChatFilter';
+import {
+  CHAT_APPROVAL_SERVICE_ID,
+  ChatApprovalService,
+} from '../services/chat/ChatApprovalService';
 import { ChatMemoryManager } from '../services/chat/ChatMemory';
 import {
   CHAT_RESPONDER_ID,
@@ -46,8 +49,9 @@ export class TelegramBot {
   constructor(
     @inject(ENV_SERVICE_ID) envService: EnvService,
     @inject(ChatMemoryManager) private memories: ChatMemoryManager,
-    @inject(CHAT_FILTER_ID) private filter: ChatFilter,
     @inject(ADMIN_SERVICE_ID) private admin: AdminService,
+    @inject(CHAT_APPROVAL_SERVICE_ID)
+    private approvalService: ChatApprovalService,
     @inject(MESSAGE_CONTEXT_EXTRACTOR_ID)
     private extractor: MessageContextExtractor,
     @inject(TRIGGER_PIPELINE_ID) private pipeline: TriggerPipeline,
@@ -153,6 +157,30 @@ export class TelegramBot {
       ])
       .catch((err) => logger.error({ err }, 'Failed to set bot commands'));
 
+    this.bot.on('my_chat_member', async (ctx) => {
+      const chatId = ctx.chat?.id;
+      assert(chatId, 'This is not a chat');
+      const status = await this.approvalService.getStatus(chatId);
+      if (status !== 'approved') {
+        await ctx.reply('Этот чат не находится в списке разрешённых.', {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: 'Запросить доступ', callback_data: 'chat_request' }],
+            ],
+          },
+        });
+      }
+    });
+
+    this.bot.action('chat_request', async (ctx) => {
+      const chatId = ctx.chat?.id;
+      assert(chatId, 'This is not a chat');
+      const title = 'title' in ctx.chat! ? (ctx.chat as any).title : undefined;
+      await this.approvalService.request(chatId, title);
+      await ctx.answerCbQuery();
+      await ctx.reply('Запрос отправлен');
+    });
+
     this.bot.on(message('text'), (ctx) => this.handleText(ctx));
   }
 
@@ -161,10 +189,16 @@ export class TelegramBot {
     assert(!!chatId, 'This is not a chat');
     logger.debug({ chatId }, 'Received text message');
 
-    const allowed = await this.filter.isAllowed(chatId);
-    if (!allowed) {
-      logger.warn({ chatId }, 'Unauthorized chat access attempt');
-      ctx.reply('Этот чат не находится в списке разрешённых.');
+    const status = await this.approvalService.getStatus(chatId);
+    if (status !== 'approved') {
+      logger.warn({ chatId, status }, 'Unauthorized chat access attempt');
+      await ctx.reply('Этот чат не находится в списке разрешённых.', {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: 'Запросить доступ', callback_data: 'chat_request' }],
+          ],
+        },
+      });
       return;
     }
 
