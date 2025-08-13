@@ -12,6 +12,7 @@ export class FilePromptService implements PromptService {
   private readonly askSummaryTemplate: () => Promise<string>;
   private readonly summarizationSystemTemplate: () => Promise<string>;
   private readonly previousSummaryTemplate: () => Promise<string>;
+  private readonly checkInterestTemplate: () => Promise<string>;
   private readonly userPromptTemplate: () => Promise<string>;
   private readonly userPromptSystemTemplate: () => Promise<string>;
   private readonly priorityRulesSystemTemplate: () => Promise<string>;
@@ -30,6 +31,9 @@ export class FilePromptService implements PromptService {
     );
     this.previousSummaryTemplate = createLazy(() =>
       readFile(files.previousSummary, 'utf-8')
+    );
+    this.checkInterestTemplate = createLazy(() =>
+      readFile(files.checkInterest, 'utf-8')
     );
     this.userPromptTemplate = createLazy(() =>
       readFile(files.userPrompt, 'utf-8')
@@ -66,6 +70,10 @@ export class FilePromptService implements PromptService {
   async getPreviousSummaryPrompt(prev: string): Promise<string> {
     const template = await this.previousSummaryTemplate();
     return template.replace('{{prev}}', prev);
+  }
+
+  async getInterestCheckPrompt(): Promise<string> {
+    return this.checkInterestTemplate();
   }
 
   async getUserPrompt(
