@@ -5,11 +5,11 @@ import { logger } from '../services/logging/logger';
 import { Trigger, TriggerContext } from './Trigger';
 
 export class MentionTrigger implements Trigger {
-  apply(
+  async apply(
     ctx: Context,
     context: TriggerContext,
     _dialogue: DialogueManager
-  ): boolean {
+  ): Promise<boolean> {
     const text = (ctx.message as any)?.text ?? '';
     if (text.includes(`@${ctx.me}`)) {
       context.text = text.replace(`@${(ctx as any).me}`, '').trim();

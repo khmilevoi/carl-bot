@@ -8,16 +8,16 @@
 - Run the unit tests with:
   ```bash
   npm test
-  npm run test:watch
   npm run test:coverage
   ```
+  Do **not** run `npm run test:watch`.
 - Useful npm scripts:
   - `npm run dev` – start in development mode
   - `npm run build` – compile TypeScript
   - `npm start` – run the built bot
   - `npm test` – run unit tests once
-  - `npm run test:watch` – run tests in watch mode
   - `npm run test:coverage` – run tests with coverage
+  - `npm run test:watch` – run tests in watch mode (not required)
   - `npm run lint` – check lint errors
   - `npm run lint:fix` – fix lint errors
   - `npm run format` – verify formatting
@@ -42,7 +42,7 @@
 - You might see `npm warn Unknown env config "http-proxy"` during npm commands.
   If this happens, remove or unset the `http-proxy` npm config with
   `npm config delete http-proxy`.
-- `npm test` runs tests once. Use `npm run test:watch` for watch mode.
+- `npm test` runs tests once. `npm run test:watch` runs tests in watch mode, but is not required.
 - If migrations fail because the existing database lacks the `migrations`
   table, the migration script will remove `memory.db` and recreate it
   automatically.

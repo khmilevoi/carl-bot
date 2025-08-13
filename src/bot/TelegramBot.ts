@@ -193,7 +193,7 @@ export class TelegramBot {
     };
 
     logger.debug({ chatId }, 'Checking triggers');
-    const shouldRespond = this.pipeline.shouldRespond(ctx, context);
+    const shouldRespond = await this.pipeline.shouldRespond(ctx, context);
     if (!shouldRespond) {
       logger.debug({ chatId }, 'No trigger matched');
       return;
