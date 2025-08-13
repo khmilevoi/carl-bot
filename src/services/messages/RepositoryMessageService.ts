@@ -51,6 +51,16 @@ export class RepositoryMessageService implements MessageService {
     return this.messageRepo.findByChatId(chatId);
   }
 
+  async getCount(chatId: number) {
+    logger.debug({ chatId }, 'Counting messages in database');
+    return this.messageRepo.countByChatId(chatId);
+  }
+
+  async getLastMessages(chatId: number, limit: number) {
+    logger.debug({ chatId, limit }, 'Fetching last messages from database');
+    return this.messageRepo.findLastByChatId(chatId, limit);
+  }
+
   async clearMessages(chatId: number) {
     logger.debug({ chatId }, 'Clearing messages table');
     await this.messageRepo.clearByChatId(chatId);

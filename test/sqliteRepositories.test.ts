@@ -110,6 +110,29 @@ describe('SQLite repositories', () => {
     ]);
   });
 
+  it('counts and retrieves last messages', async () => {
+    await chatRepo.upsert({ chatId: 1 });
+    await userRepo.upsert({ id: 1, username: 'alice' });
+    await messageRepo.insert({
+      chatId: 1,
+      role: 'user',
+      content: 'hi',
+      userId: 1,
+    });
+    await userRepo.upsert({ id: 0, username: 'bot' });
+    await messageRepo.insert({
+      chatId: 1,
+      role: 'assistant',
+      content: 'hello',
+      userId: 0,
+    });
+    expect(await messageRepo.countByChatId(1)).toBe(2);
+    const last = await messageRepo.findLastByChatId(1, 1);
+    expect(last).toEqual([
+      { role: 'assistant', content: 'hello', username: 'bot', chatId: 1 },
+    ]);
+  });
+
   it('clears messages', async () => {
     await chatRepo.upsert({ chatId: 1 });
     await userRepo.upsert({ id: 1, username: 'alice' });
