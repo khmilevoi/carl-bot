@@ -18,7 +18,7 @@ export class InterestTrigger implements Trigger {
       logger.debug({ chatId }, 'Interest trigger matched');
       return {
         replyToMessageId: result.messageId ? Number(result.messageId) : null,
-        reason: result.why,
+        reason: { message: result.message, why: result.why },
       };
     }
     return null;

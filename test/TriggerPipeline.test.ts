@@ -28,7 +28,8 @@ describe('TriggerPipeline', () => {
   });
 
   it('responds only when interest trigger returns result without mentions or replies', async () => {
-    let result: { messageId: string; why: string } | null = null;
+    let result: { messageId: string; message: string; why: string } | null =
+      null;
     const interestChecker: InterestChecker = {
       async check() {
         return result;
@@ -48,7 +49,7 @@ describe('TriggerPipeline', () => {
     let res = await pipeline.shouldRespond(ctx, context);
     expect(res).toBeNull();
 
-    result = { messageId: '1', why: 'because' };
+    result = { messageId: '1', message: 'hi', why: 'because' };
     res = await pipeline.shouldRespond(ctx, context);
     expect(res).not.toBeNull();
   });

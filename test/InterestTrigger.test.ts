@@ -9,10 +9,18 @@ class MockInterestChecker implements InterestChecker {
   private count = 0;
   constructor(
     private readonly n: number,
-    private readonly result: { messageId: string; why: string } | null
+    private readonly result: {
+      messageId: string;
+      message: string;
+      why: string;
+    } | null
   ) {}
 
-  async check(): Promise<{ messageId: string; why: string } | null> {
+  async check(): Promise<{
+    messageId: string;
+    message: string;
+    why: string;
+  } | null> {
     this.count += 1;
     if (this.count < this.n) {
       return null;
@@ -27,7 +35,11 @@ describe('InterestTrigger', () => {
 
   it('returns null when message count is below threshold', async () => {
     const trigger = new InterestTrigger(
-      new MockInterestChecker(3, { messageId: '1', why: 'because' })
+      new MockInterestChecker(3, {
+        messageId: '1',
+        message: 'hi',
+        why: 'because',
+      })
     );
     const res = await trigger.apply({} as any, baseCtx, dialogue);
     expect(res).toBeNull();
@@ -35,13 +47,18 @@ describe('InterestTrigger', () => {
 
   it('returns result when threshold met and interested', async () => {
     const trigger = new InterestTrigger(
-      new MockInterestChecker(2, { messageId: '1', why: 'because' })
+      new MockInterestChecker(2, {
+        messageId: '1',
+        message: 'hi',
+        why: 'because',
+      })
     );
     await trigger.apply({} as any, baseCtx, dialogue);
     const res = await trigger.apply({} as any, baseCtx, dialogue);
     expect(res).not.toBeNull();
     expect(res?.replyToMessageId).toBe(1);
-    expect(res?.reason).toBe('because');
+    expect(res?.reason?.why).toBe('because');
+    expect(res?.reason?.message).toBe('hi');
   });
 
   it('returns null when checker reports not interested', async () => {

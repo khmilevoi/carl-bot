@@ -11,11 +11,13 @@ export interface ChatMessage {
   chatId?: number;
 }
 
+import { TriggerReason } from '../../triggers/Trigger';
+
 export interface AIService {
   ask(
     history: ChatMessage[],
     summary?: string,
-    triggerReason?: string
+    triggerReason?: TriggerReason
   ): Promise<string>;
   summarize(history: ChatMessage[], prev?: string): Promise<string>;
   checkInterest(

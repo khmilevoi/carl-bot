@@ -8,9 +8,14 @@ export interface TriggerContext {
   chatId: number;
 }
 
+export interface TriggerReason {
+  message: string | null;
+  why: string | null;
+}
+
 export interface TriggerResult {
   replyToMessageId: number | null;
-  reason: string | null;
+  reason: TriggerReason | null;
 }
 
 export interface Trigger {

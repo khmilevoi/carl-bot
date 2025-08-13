@@ -4,6 +4,7 @@ import OpenAI from 'openai';
 import { ChatModel } from 'openai/resources/shared';
 import path from 'path';
 
+import { TriggerReason } from '../../triggers/Trigger';
 import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
 import { logger } from '../logging/logger';
 import { PROMPT_SERVICE_ID, PromptService } from '../prompts/PromptService';
@@ -53,7 +54,7 @@ export class ChatGPTService implements AIService {
   public async ask(
     history: ChatMessage[],
     summary?: string,
-    triggerReason?: string
+    triggerReason?: TriggerReason
   ): Promise<string> {
     const persona = await this.prompts.getPersona();
     logger.debug(
@@ -77,10 +78,16 @@ export class ChatGPTService implements AIService {
         content: await this.prompts.getAskSummaryPrompt(summary),
       });
     }
-    if (triggerReason) {
+    if (triggerReason?.why) {
       messages.push({
         role: 'system',
-        content: `Trigger reason: ${triggerReason}`,
+        content: `Trigger reason: ${triggerReason.why}`,
+      });
+    }
+    if (triggerReason?.message) {
+      messages.push({
+        role: 'system',
+        content: `Trigger message: ${triggerReason.message}`,
       });
     }
 
