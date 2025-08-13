@@ -181,6 +181,30 @@ export class TelegramBot {
       await ctx.reply('Запрос отправлен');
     });
 
+    this.bot.action(/^chat_approve:(\d+)$/, async (ctx) => {
+      const adminChatId = this.env.ADMIN_CHAT_ID;
+      if (ctx.chat?.id !== adminChatId) {
+        await ctx.answerCbQuery();
+        return;
+      }
+      const chatId = Number(ctx.match[1]);
+      await this.approvalService.approve(chatId);
+      await ctx.answerCbQuery('Чат одобрен');
+      await ctx.telegram.sendMessage(chatId, 'Доступ разрешён');
+    });
+
+    this.bot.action(/^chat_ban:(\d+)$/, async (ctx) => {
+      const adminChatId = this.env.ADMIN_CHAT_ID;
+      if (ctx.chat?.id !== adminChatId) {
+        await ctx.answerCbQuery();
+        return;
+      }
+      const chatId = Number(ctx.match[1]);
+      await this.approvalService.ban(chatId);
+      await ctx.answerCbQuery('Чат забанен');
+      await ctx.telegram.sendMessage(chatId, 'Доступ запрещён');
+    });
+
     this.bot.on(message('text'), (ctx) => this.handleText(ctx));
   }
 
