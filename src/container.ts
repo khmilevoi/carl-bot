@@ -24,6 +24,10 @@ import { AdminServiceImpl } from './services/admin/AdminServiceImpl';
 import { AI_SERVICE_ID } from './services/ai/AIService';
 import { ChatGPTService } from './services/ai/ChatGPTService';
 import {
+  CHAT_APPROVAL_SERVICE_ID,
+  DefaultChatApprovalService,
+} from './services/chat/ChatApprovalService';
+import {
   CHAT_FILTER_ID,
   JSONWhiteListChatFilter,
 } from './services/chat/ChatFilter';
@@ -104,6 +108,10 @@ container
 container
   .bind(CHAT_RESET_SERVICE_ID)
   .to(DefaultChatResetService)
+  .inSingletonScope();
+container
+  .bind(CHAT_APPROVAL_SERVICE_ID)
+  .to(DefaultChatApprovalService)
   .inSingletonScope();
 
 container
