@@ -5,6 +5,7 @@ export interface PromptService {
   getAskSummaryPrompt(summary: string): Promise<string>;
   getSummarizationSystemPrompt(): Promise<string>;
   getPreviousSummaryPrompt(prev: string): Promise<string>;
+  getInterestCheckPrompt(): Promise<string>;
   getUserPrompt(
     userMessage: string,
     userName?: string,

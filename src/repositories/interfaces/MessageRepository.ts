@@ -6,6 +6,8 @@ import type { StoredMessage } from '../../services/messages/StoredMessage';
 export interface MessageRepository {
   insert(message: StoredMessage): Promise<void>;
   findByChatId(chatId: number): Promise<ChatMessage[]>;
+  countByChatId(chatId: number): Promise<number>;
+  findLastByChatId(chatId: number, limit: number): Promise<ChatMessage[]>;
   clearByChatId(chatId: number): Promise<void>;
 }
 

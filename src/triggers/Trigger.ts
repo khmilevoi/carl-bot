@@ -13,5 +13,5 @@ export interface Trigger {
     ctx: Context,
     context: TriggerContext,
     dialogue: DialogueManager
-  ): boolean;
+  ): Promise<boolean>;
 }

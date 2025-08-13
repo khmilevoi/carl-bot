@@ -2,16 +2,20 @@ import type { ServiceIdentifier } from 'inversify';
 import { inject, injectable } from 'inversify';
 import { Context } from 'telegraf';
 
+import { InterestTrigger } from '../../triggers/InterestTrigger';
 import { MentionTrigger } from '../../triggers/MentionTrigger';
 import { NameTrigger } from '../../triggers/NameTrigger';
 import { ReplyTrigger } from '../../triggers/ReplyTrigger';
-import { StemDictTrigger } from '../../triggers/StemDictTrigger';
 import { TriggerContext } from '../../triggers/Trigger';
 import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
+import {
+  INTEREST_CHECKER_ID,
+  InterestChecker,
+} from '../interest/InterestChecker';
 import { DialogueManager } from './DialogueManager';
 
 export interface TriggerPipeline {
-  shouldRespond(ctx: Context, context: TriggerContext): boolean;
+  shouldRespond(ctx: Context, context: TriggerContext): Promise<boolean>;
 }
 
 export const TRIGGER_PIPELINE_ID = Symbol.for(
@@ -24,21 +28,31 @@ export class DefaultTriggerPipeline implements TriggerPipeline {
   private mentionTrigger = new MentionTrigger();
   private replyTrigger = new ReplyTrigger();
   private nameTrigger: NameTrigger;
-  private keywordTrigger: StemDictTrigger;
+  private interestTrigger: InterestTrigger;
 
-  constructor(@inject(ENV_SERVICE_ID) envService: EnvService) {
+  constructor(
+    @inject(ENV_SERVICE_ID) envService: EnvService,
+    @inject(INTEREST_CHECKER_ID) interestChecker: InterestChecker
+  ) {
     this.dialogue = new DialogueManager(envService.getDialogueTimeoutMs());
     this.nameTrigger = new NameTrigger(envService.getBotName());
-    this.keywordTrigger = new StemDictTrigger(envService.getKeywordsFile());
+    this.interestTrigger = new InterestTrigger(interestChecker);
   }
 
-  shouldRespond(ctx: Context, context: TriggerContext): boolean {
+  async shouldRespond(ctx: Context, context: TriggerContext): Promise<boolean> {
     const chatId = context.chatId;
     const inDialogue = this.dialogue.isActive(chatId);
     let matched = false;
-    matched = this.mentionTrigger.apply(ctx, context, this.dialogue) || matched;
-    matched = this.replyTrigger.apply(ctx, context, this.dialogue) || matched;
-    matched = this.nameTrigger.apply(ctx, context, this.dialogue) || matched;
+    matched =
+      (await this.mentionTrigger.apply(ctx, context, this.dialogue)) || matched;
+    matched =
+      (await this.replyTrigger.apply(ctx, context, this.dialogue)) || matched;
+    matched =
+      (await this.nameTrigger.apply(ctx, context, this.dialogue)) || matched;
+
+    if (!matched) {
+      matched = await this.interestTrigger.apply(ctx, context, this.dialogue);
+    }
 
     if (matched && !inDialogue) {
       this.dialogue.start(chatId);
@@ -46,15 +60,6 @@ export class DefaultTriggerPipeline implements TriggerPipeline {
       this.dialogue.extend(chatId);
     }
 
-    if (!matched) {
-      if (
-        !this.keywordTrigger.apply(ctx, context, this.dialogue) ||
-        inDialogue
-      ) {
-        return false;
-      }
-    }
-
-    return true;
+    return matched;
   }
 }

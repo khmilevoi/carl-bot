@@ -14,6 +14,10 @@ export interface ChatMessage {
 export interface AIService {
   ask(history: ChatMessage[], summary?: string): Promise<string>;
   summarize(history: ChatMessage[], prev?: string): Promise<string>;
+  checkInterest(
+    history: ChatMessage[],
+    summary: string
+  ): Promise<{ messageId: string; why: string } | null>;
 }
 
 import type { ServiceIdentifier } from 'inversify';

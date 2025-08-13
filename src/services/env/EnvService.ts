@@ -14,26 +14,25 @@ const envSchema = z
     LOG_LEVEL: z.string().default('debug'),
     ADMIN_CHAT_ID: z.coerce.number(),
     NODE_ENV: z.string().default('development'),
-    DOMAIN: z.string().optional(),
-    PORT: z.coerce.number().optional(),
     LOG_PROMPTS: z.coerce.boolean().default(false),
+    INTEREST_MESSAGE_INTERVAL: z.coerce.number().int().positive(),
   })
-  .superRefine((data, ctx) => {
-    if (data.NODE_ENV === 'production') {
-      if (!data.DOMAIN) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['DOMAIN'],
-          message: 'DOMAIN is required in production',
-        });
-      }
-      if (data.PORT === undefined) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          path: ['PORT'],
-          message: 'PORT is required in production',
-        });
-      }
+  .superRefine((env, ctx) => {
+    if (env.INTEREST_MESSAGE_INTERVAL >= env.CHAT_HISTORY_LIMIT) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          'INTEREST_MESSAGE_INTERVAL must be less than CHAT_HISTORY_LIMIT',
+        path: ['INTEREST_MESSAGE_INTERVAL'],
+      });
+    }
+    if (env.CHAT_HISTORY_LIMIT % env.INTEREST_MESSAGE_INTERVAL !== 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          'CHAT_HISTORY_LIMIT must be divisible by INTEREST_MESSAGE_INTERVAL',
+        path: ['INTEREST_MESSAGE_INTERVAL'],
+      });
     }
   });
 
@@ -43,12 +42,12 @@ export interface EnvService {
   readonly env: Env;
   getModels(): { ask: ChatModel; summary: ChatModel };
   getWhitelistFile(): string;
-  getKeywordsFile(): string;
   getPromptFiles(): {
     persona: string;
     askSummary: string;
     summarizationSystem: string;
     previousSummary: string;
+    checkInterest: string;
     userPrompt: string;
     userPromptSystem: string;
     priorityRulesSystem: string;
@@ -78,16 +77,13 @@ export class DefaultEnvService implements EnvService {
     return 'white_list.json';
   }
 
-  getKeywordsFile(): string {
-    return 'keywords.json';
-  }
-
   getPromptFiles() {
     return {
       persona: 'prompts/persona.md',
       askSummary: 'prompts/ask_summary_prompt.md',
       summarizationSystem: 'prompts/summarization_system_prompt.md',
       previousSummary: 'prompts/previous_summary_prompt.md',
+      checkInterest: 'prompts/check_interest_prompt.md',
       userPrompt: 'prompts/user_prompt.md',
       userPromptSystem: 'prompts/user_prompt_system_prompt.md',
       priorityRulesSystem: 'prompts/priority_rules_system_prompt.md',
@@ -121,8 +117,7 @@ export class TestEnvService implements EnvService {
       ADMIN_CHAT_ID: process.env.ADMIN_CHAT_ID ?? '0',
       NODE_ENV: 'test',
       LOG_PROMPTS: process.env.LOG_PROMPTS ?? 'false',
-      DOMAIN: process.env.DOMAIN,
-      PORT: process.env.PORT,
+      INTEREST_MESSAGE_INTERVAL: process.env.INTEREST_MESSAGE_INTERVAL ?? '25',
     });
   }
 
@@ -134,16 +129,13 @@ export class TestEnvService implements EnvService {
     return 'white_list.json';
   }
 
-  getKeywordsFile(): string {
-    return 'keywords.json';
-  }
-
   getPromptFiles() {
     return {
       persona: 'prompts/persona.md',
       askSummary: 'prompts/ask_summary_prompt.md',
       summarizationSystem: 'prompts/summarization_system_prompt.md',
       previousSummary: 'prompts/previous_summary_prompt.md',
+      checkInterest: 'prompts/check_interest_prompt.md',
       userPrompt: 'prompts/user_prompt.md',
       userPromptSystem: 'prompts/user_prompt_system_prompt.md',
       priorityRulesSystem: 'prompts/priority_rules_system_prompt.md',
