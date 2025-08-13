@@ -48,6 +48,7 @@ export interface EnvService {
     askSummary: string;
     summarizationSystem: string;
     previousSummary: string;
+    checkInterest: string;
     userPrompt: string;
     userPromptSystem: string;
     priorityRulesSystem: string;
@@ -87,6 +88,7 @@ export class DefaultEnvService implements EnvService {
       askSummary: 'prompts/ask_summary_prompt.md',
       summarizationSystem: 'prompts/summarization_system_prompt.md',
       previousSummary: 'prompts/previous_summary_prompt.md',
+      checkInterest: 'prompts/check_interest_prompt.md',
       userPrompt: 'prompts/user_prompt.md',
       userPromptSystem: 'prompts/user_prompt_system_prompt.md',
       priorityRulesSystem: 'prompts/priority_rules_system_prompt.md',
@@ -142,6 +144,7 @@ export class TestEnvService implements EnvService {
       askSummary: 'prompts/ask_summary_prompt.md',
       summarizationSystem: 'prompts/summarization_system_prompt.md',
       previousSummary: 'prompts/previous_summary_prompt.md',
+      checkInterest: 'prompts/check_interest_prompt.md',
       userPrompt: 'prompts/user_prompt.md',
       userPromptSystem: 'prompts/user_prompt_system_prompt.md',
       priorityRulesSystem: 'prompts/priority_rules_system_prompt.md',
