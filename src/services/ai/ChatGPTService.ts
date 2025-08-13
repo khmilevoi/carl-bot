@@ -98,6 +98,56 @@ export class ChatGPTService implements AIService {
     return completion.choices[0]?.message?.content ?? '';
   }
 
+  public async checkInterest(
+    history: ChatMessage[],
+    summary: string
+  ): Promise<{ messageId: string; why: string } | null> {
+    const persona = await this.prompts.getPersona();
+    const checkPrompt = await this.prompts.getInterestCheckPrompt();
+    const messages: OpenAI.ChatCompletionMessageParam[] = [
+      { role: 'system', content: persona },
+      { role: 'system', content: checkPrompt },
+      { role: 'system', content: summary },
+    ];
+    const historyMessages = await Promise.all(
+      history.map<Promise<OpenAI.ChatCompletionMessageParam>>(async (m) =>
+        m.role === 'user'
+          ? {
+              role: 'user',
+              content: await this.prompts.getUserPrompt(
+                m.content,
+                m.username,
+                m.fullName,
+                m.replyText,
+                m.quoteText
+              ),
+            }
+          : { role: 'assistant', content: m.content }
+      )
+    );
+    messages.push(...historyMessages);
+    void this.logPrompt('interest', messages);
+    logger.debug(
+      { messages: history.length },
+      'Sending interest check request'
+    );
+    const completion = await this.openai.chat.completions.create({
+      model: this.askModel,
+      messages,
+    });
+    logger.debug('Received interest check response');
+    const content = completion.choices[0]?.message?.content ?? '';
+    try {
+      return JSON.parse(content) as {
+        messageId: string;
+        why: string;
+      } | null;
+    } catch (err) {
+      logger.error({ err, content }, 'Failed to parse interest response');
+      return null;
+    }
+  }
+
   public async summarize(
     history: ChatMessage[],
     prev?: string
