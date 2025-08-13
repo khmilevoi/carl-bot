@@ -52,6 +52,10 @@ import {
   TestEnvService,
 } from './services/env/EnvService';
 import {
+  DefaultInterestChecker,
+  INTEREST_CHECKER_ID,
+} from './services/interest/InterestChecker';
+import {
   DefaultMessageContextExtractor,
   MESSAGE_CONTEXT_EXTRACTOR_ID,
   MessageContextExtractor,
@@ -98,6 +102,11 @@ container
 container
   .bind(CHAT_RESET_SERVICE_ID)
   .to(DefaultChatResetService)
+  .inSingletonScope();
+
+container
+  .bind(INTEREST_CHECKER_ID)
+  .to(DefaultInterestChecker)
   .inSingletonScope();
 
 container.bind(ADMIN_SERVICE_ID).to(AdminServiceImpl).inSingletonScope();
