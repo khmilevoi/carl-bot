@@ -18,10 +18,6 @@ class MockChatMemoryManager {
   reset = vi.fn();
 }
 
-class AllowAllFilter {
-  isAllowed = vi.fn(() => true);
-}
-
 class DummyAdmin {}
 
 class DummyExtractor {
@@ -40,6 +36,14 @@ class DummyResponder {
   );
 }
 
+class DummyApprovalService {
+  request = vi.fn(async () => {});
+  approve = vi.fn(async () => {});
+  ban = vi.fn(async () => {});
+  unban = vi.fn(async () => {});
+  getStatus = vi.fn(async () => 'approved');
+}
+
 describe('TelegramBot', () => {
   it('stores user messages via ChatMemoryManager', async () => {
     const memories = new MockChatMemoryManager();
@@ -49,8 +53,8 @@ describe('TelegramBot', () => {
     const bot = new TelegramBot(
       new MockEnvService() as any,
       memories as any,
-      new AllowAllFilter() as any,
       new DummyAdmin() as any,
+      new DummyApprovalService() as any,
       new DummyExtractor() as any,
       new DummyPipeline() as any,
       new DummyResponder() as any
