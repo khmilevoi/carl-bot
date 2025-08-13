@@ -27,10 +27,6 @@ import {
   CHAT_APPROVAL_SERVICE_ID,
   DefaultChatApprovalService,
 } from './services/chat/ChatApprovalService';
-import {
-  CHAT_FILTER_ID,
-  ChatApprovalChatFilter,
-} from './services/chat/ChatFilter';
 import { ChatMemoryManager } from './services/chat/ChatMemory';
 import {
   CHAT_RESET_SERVICE_ID,
@@ -157,7 +153,5 @@ container
   .bind<ChatResponder>(CHAT_RESPONDER_ID)
   .to(DefaultChatResponder)
   .inSingletonScope();
-
-container.bind(CHAT_FILTER_ID).to(ChatApprovalChatFilter).inSingletonScope();
 
 container.bind(TelegramBot).toSelf().inSingletonScope();

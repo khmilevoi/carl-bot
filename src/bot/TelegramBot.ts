@@ -190,8 +190,13 @@ export class TelegramBot {
     this.bot.on('my_chat_member', async (ctx) => {
       const chatId = ctx.chat?.id;
       assert(chatId, 'This is not a chat');
+      logger.info({ chatId }, 'Bot added to chat');
       const status = await this.approvalService.getStatus(chatId);
       if (status !== 'approved') {
+        logger.info(
+          { chatId, status },
+          'Chat not approved, showing request access button'
+        );
         await ctx.reply('Этот чат не находится в списке разрешённых.', {
           reply_markup: {
             inline_keyboard: [
@@ -199,6 +204,8 @@ export class TelegramBot {
             ],
           },
         });
+      } else {
+        logger.info({ chatId, status }, 'Chat already approved');
       }
     });
 
@@ -206,33 +213,48 @@ export class TelegramBot {
       const chatId = ctx.chat?.id;
       assert(chatId, 'This is not a chat');
       const title = 'title' in ctx.chat! ? (ctx.chat as any).title : undefined;
-      await this.approvalService.request(chatId, title);
+      logger.info({ chatId, title }, 'Chat access request received');
+      await this.sendChatApprovalRequest(chatId, title);
+
       await ctx.answerCbQuery();
       await ctx.reply('Запрос отправлен');
+      logger.info({ chatId }, 'Chat access request sent to admin');
     });
 
-    this.bot.action(/^chat_approve:(\d+)$/, async (ctx) => {
+    this.bot.action(/^chat_approve:(\S+)$/, async (ctx) => {
       const adminChatId = this.env.ADMIN_CHAT_ID;
       if (ctx.chat?.id !== adminChatId) {
+        logger.warn(
+          { adminChatId, requestChatId: ctx.chat?.id },
+          'Unauthorized chat approval attempt'
+        );
         await ctx.answerCbQuery();
         return;
       }
       const chatId = Number(ctx.match[1]);
+      logger.info({ chatId, adminChatId }, 'Approving chat access');
       await this.approvalService.approve(chatId);
       await ctx.answerCbQuery('Чат одобрен');
       await ctx.telegram.sendMessage(chatId, 'Доступ разрешён');
+      logger.info({ chatId }, 'Chat access approved successfully');
     });
 
-    this.bot.action(/^chat_ban:(\d+)$/, async (ctx) => {
+    this.bot.action(/^chat_ban:(\S+)$/, async (ctx) => {
       const adminChatId = this.env.ADMIN_CHAT_ID;
       if (ctx.chat?.id !== adminChatId) {
+        logger.warn(
+          { adminChatId, requestChatId: ctx.chat?.id },
+          'Unauthorized chat ban attempt'
+        );
         await ctx.answerCbQuery();
         return;
       }
       const chatId = Number(ctx.match[1]);
+      logger.info({ chatId, adminChatId }, 'Banning chat access');
       await this.approvalService.ban(chatId);
       await ctx.answerCbQuery('Чат забанен');
       await ctx.telegram.sendMessage(chatId, 'Доступ запрещён');
+      logger.info({ chatId }, 'Chat access banned successfully');
     });
 
     this.bot.on(message('text'), (ctx) => this.handleText(ctx));
@@ -246,7 +268,8 @@ export class TelegramBot {
     const status = await this.approvalService.getStatus(chatId);
     if (status === 'pending') {
       const title = 'title' in ctx.chat! ? (ctx.chat as any).title : undefined;
-      await this.approvalService.request(chatId, title);
+      await this.sendChatApprovalRequest(chatId, title);
+
       return;
     }
 
@@ -303,5 +326,28 @@ export class TelegramBot {
   public stop(reason: string) {
     logger.info({ reason }, 'Stopping bot');
     this.bot.stop(reason);
+  }
+
+  public async sendChatApprovalRequest(
+    chatId: number,
+    title?: string
+  ): Promise<void> {
+    await this.approvalService.pending(chatId);
+
+    const name = title ? `${title} (${chatId})` : `Chat ${chatId}`;
+    await this.bot.telegram.sendMessage(
+      this.env.ADMIN_CHAT_ID,
+      `${name} запросил доступ`,
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: 'Разрешить', callback_data: `chat_approve:${chatId}` },
+              { text: 'Забанить', callback_data: `chat_ban:${chatId}` },
+            ],
+          ],
+        },
+      }
+    );
   }
 }
