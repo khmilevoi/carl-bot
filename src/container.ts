@@ -8,11 +8,13 @@ import {
   SQLiteDbProviderImpl,
 } from './repositories/DbProvider';
 import { ACCESS_KEY_REPOSITORY_ID } from './repositories/interfaces/AccessKeyRepository';
+import { CHAT_ACCESS_REPOSITORY_ID } from './repositories/interfaces/ChatAccessRepository';
 import { CHAT_REPOSITORY_ID } from './repositories/interfaces/ChatRepository';
 import { MESSAGE_REPOSITORY_ID } from './repositories/interfaces/MessageRepository';
 import { SUMMARY_REPOSITORY_ID } from './repositories/interfaces/SummaryRepository';
 import { USER_REPOSITORY_ID } from './repositories/interfaces/UserRepository';
 import { SQLiteAccessKeyRepository } from './repositories/sqlite/SQLiteAccessKeyRepository';
+import { SQLiteChatAccessRepository } from './repositories/sqlite/SQLiteChatAccessRepository';
 import { SQLiteChatRepository } from './repositories/sqlite/SQLiteChatRepository';
 import { SQLiteMessageRepository } from './repositories/sqlite/SQLiteMessageRepository';
 import { SQLiteSummaryRepository } from './repositories/sqlite/SQLiteSummaryRepository';
@@ -125,6 +127,10 @@ container
 container
   .bind(ACCESS_KEY_REPOSITORY_ID)
   .to(SQLiteAccessKeyRepository)
+  .inSingletonScope();
+container
+  .bind(CHAT_ACCESS_REPOSITORY_ID)
+  .to(SQLiteChatAccessRepository)
   .inSingletonScope();
 
 container.bind(ChatMemoryManager).toSelf().inSingletonScope();
