@@ -2,6 +2,7 @@ import type { ServiceIdentifier } from 'inversify';
 import { inject, injectable } from 'inversify';
 import { Context } from 'telegraf';
 
+import { TriggerReason } from '../../triggers/Trigger';
 import { AI_SERVICE_ID, AIService } from '../ai/AIService';
 import { MessageFactory } from '../messages/MessageFactory';
 import {
@@ -11,7 +12,11 @@ import {
 import { ChatMemoryManager } from './ChatMemory';
 
 export interface ChatResponder {
-  generate(ctx: Context, chatId: number): Promise<string>;
+  generate(
+    ctx: Context,
+    chatId: number,
+    triggerReason?: TriggerReason
+  ): Promise<string>;
 }
 
 export const CHAT_RESPONDER_ID = Symbol.for(
@@ -26,11 +31,15 @@ export class DefaultChatResponder implements ChatResponder {
     @inject(SUMMARY_SERVICE_ID) private summaries: SummaryService
   ) {}
 
-  async generate(ctx: Context, chatId: number): Promise<string> {
+  async generate(
+    ctx: Context,
+    chatId: number,
+    triggerReason?: TriggerReason
+  ): Promise<string> {
     const memory = this.memories.get(chatId);
     const history = await memory.getHistory();
     const summary = await this.summaries.getSummary(chatId);
-    const answer = await this.ai.ask(history, summary);
+    const answer = await this.ai.ask(history, summary, triggerReason);
     await memory.addMessage(MessageFactory.fromAssistant(ctx, answer));
     return answer;
   }

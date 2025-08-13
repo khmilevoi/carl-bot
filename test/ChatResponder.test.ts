@@ -7,13 +7,16 @@ import {
   DefaultChatResponder,
 } from '../src/services/chat/ChatResponder';
 import { SummaryService } from '../src/services/summaries/SummaryService';
+import { TriggerReason } from '../src/triggers/Trigger';
 
 class MockAIService {
   history: ChatMessage[] | undefined;
   summary: string | undefined;
-  async ask(h: ChatMessage[], s?: string): Promise<string> {
+  reason: TriggerReason | undefined;
+  async ask(h: ChatMessage[], s?: string, r?: TriggerReason): Promise<string> {
     this.history = h;
     this.summary = s;
+    this.reason = r;
     return 'answer';
   }
   async summarize(): Promise<string> {
@@ -63,9 +66,13 @@ describe('ChatResponder', () => {
     await memories.get(1).addMessage({ role: 'user', content: 'hi' });
     const ctx: any = { me: 'bot', chat: { id: 1 } };
 
-    const answer = await responder.generate(ctx, 1);
+    const answer = await responder.generate(ctx, 1, {
+      why: 'why',
+      message: 'hi',
+    });
     expect(answer).toBe('answer');
     expect(ai.history).toHaveLength(1);
+    expect(ai.reason).toEqual({ why: 'why', message: 'hi' });
     expect(memories.memory.messages).toHaveLength(2);
     expect(memories.memory.messages[1].role).toBe('assistant');
     expect(memories.memory.messages[1].content).toBe('answer');

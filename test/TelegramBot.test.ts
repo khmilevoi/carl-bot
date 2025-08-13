@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { TelegramBot } from '../src/bot/TelegramBot';
+import { TriggerReason } from '../src/triggers/Trigger';
 
 class MockEnvService {
   env = { BOT_TOKEN: 'token' } as any;
@@ -30,11 +31,13 @@ class DummyExtractor {
 }
 
 class DummyPipeline {
-  shouldRespond = vi.fn(async () => false);
+  shouldRespond = vi.fn(async () => null);
 }
 
 class DummyResponder {
-  generate = vi.fn(async () => '');
+  generate = vi.fn(
+    async (_ctx?: any, _id?: number, _reason?: TriggerReason) => ''
+  );
 }
 
 describe('TelegramBot', () => {

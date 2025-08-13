@@ -9,18 +9,23 @@ class MockInterestChecker implements InterestChecker {
   private count = 0;
   constructor(
     private readonly n: number,
-    private readonly interested: boolean
+    private readonly result: {
+      messageId: string;
+      message: string;
+      why: string;
+    } | null
   ) {}
 
   async check(): Promise<{
-    interested: boolean;
-    messageId: string | null;
+    messageId: string;
+    message: string;
+    why: string;
   } | null> {
     this.count += 1;
     if (this.count < this.n) {
       return null;
     }
-    return { interested: this.interested, messageId: null };
+    return this.result;
   }
 }
 
@@ -28,23 +33,38 @@ describe('InterestTrigger', () => {
   const dialogue = new DialogueManager(1000);
   const baseCtx: TriggerContext = { text: '', replyText: '', chatId: 1 };
 
-  it('returns false when message count is below threshold', async () => {
-    const trigger = new InterestTrigger(new MockInterestChecker(3, true));
+  it('returns null when message count is below threshold', async () => {
+    const trigger = new InterestTrigger(
+      new MockInterestChecker(3, {
+        messageId: '1',
+        message: 'hi',
+        why: 'because',
+      })
+    );
     const res = await trigger.apply({} as any, baseCtx, dialogue);
-    expect(res).toBe(false);
+    expect(res).toBeNull();
   });
 
-  it('returns true when threshold met and interested', async () => {
-    const trigger = new InterestTrigger(new MockInterestChecker(2, true));
+  it('returns result when threshold met and interested', async () => {
+    const trigger = new InterestTrigger(
+      new MockInterestChecker(2, {
+        messageId: '1',
+        message: 'hi',
+        why: 'because',
+      })
+    );
     await trigger.apply({} as any, baseCtx, dialogue);
     const res = await trigger.apply({} as any, baseCtx, dialogue);
-    expect(res).toBe(true);
+    expect(res).not.toBeNull();
+    expect(res?.replyToMessageId).toBe(1);
+    expect(res?.reason?.why).toBe('because');
+    expect(res?.reason?.message).toBe('hi');
   });
 
-  it('returns false when checker reports not interested', async () => {
-    const trigger = new InterestTrigger(new MockInterestChecker(2, false));
+  it('returns null when checker reports not interested', async () => {
+    const trigger = new InterestTrigger(new MockInterestChecker(2, null));
     await trigger.apply({} as any, baseCtx, dialogue);
     const res = await trigger.apply({} as any, baseCtx, dialogue);
-    expect(res).toBe(false);
+    expect(res).toBeNull();
   });
 });
