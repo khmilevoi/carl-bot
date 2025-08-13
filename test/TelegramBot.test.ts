@@ -30,11 +30,11 @@ class DummyExtractor {
 }
 
 class DummyPipeline {
-  shouldRespond = vi.fn(async () => false);
+  shouldRespond = vi.fn(async () => null);
 }
 
 class DummyResponder {
-  generate = vi.fn(async () => '');
+  generate = vi.fn(async (_ctx?: any, _id?: number, _reason?: string) => '');
 }
 
 describe('TelegramBot', () => {
