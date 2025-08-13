@@ -42,7 +42,6 @@ export interface EnvService {
   readonly env: Env;
   getModels(): { ask: ChatModel; summary: ChatModel };
   getWhitelistFile(): string;
-  getKeywordsFile(): string;
   getPromptFiles(): {
     persona: string;
     askSummary: string;
@@ -76,10 +75,6 @@ export class DefaultEnvService implements EnvService {
 
   getWhitelistFile(): string {
     return 'white_list.json';
-  }
-
-  getKeywordsFile(): string {
-    return 'keywords.json';
   }
 
   getPromptFiles() {
@@ -132,10 +127,6 @@ export class TestEnvService implements EnvService {
 
   getWhitelistFile(): string {
     return 'white_list.json';
-  }
-
-  getKeywordsFile(): string {
-    return 'keywords.json';
   }
 
   getPromptFiles() {

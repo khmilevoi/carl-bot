@@ -5,11 +5,11 @@ import { logger } from '../services/logging/logger';
 import { Trigger, TriggerContext } from './Trigger';
 
 export class ReplyTrigger implements Trigger {
-  apply(
+  async apply(
     ctx: Context,
     context: TriggerContext,
     _dialogue: DialogueManager
-  ): boolean {
+  ): Promise<boolean> {
     const reply = (ctx.message as any)?.reply_to_message;
 
     if (reply?.from?.username === ctx.me) {

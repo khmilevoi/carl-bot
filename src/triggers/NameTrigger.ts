@@ -9,11 +9,11 @@ export class NameTrigger implements Trigger {
   constructor(name: string) {
     this.pattern = new RegExp(`^${name}[,:\\s]`, 'i');
   }
-  apply(
+  async apply(
     ctx: Context,
     context: TriggerContext,
     _dialogue: DialogueManager
-  ): boolean {
+  ): Promise<boolean> {
     const text = context.text;
     if (this.pattern.test(text)) {
       context.text = text.replace(this.pattern, '').trim();
