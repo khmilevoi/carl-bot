@@ -119,6 +119,34 @@ export class TelegramBot {
       ctx.reply(`Одобрено для чата ${targetChat} и пользователя ${targetUser}`);
     });
 
+    this.bot.command('ban_chat', async (ctx) => {
+      const adminChatId = this.env.ADMIN_CHAT_ID;
+      if (ctx.chat?.id !== adminChatId) return;
+      const parts = ctx.message?.text.split(' ') ?? [];
+      const targetChat = Number(parts[1]);
+      if (!targetChat) {
+        ctx.reply('Укажите ID чата');
+        return;
+      }
+      await this.approvalService.ban(targetChat);
+      await ctx.reply(`Чат ${targetChat} забанен`);
+      await ctx.telegram.sendMessage(targetChat, 'Доступ запрещён');
+    });
+
+    this.bot.command('unban_chat', async (ctx) => {
+      const adminChatId = this.env.ADMIN_CHAT_ID;
+      if (ctx.chat?.id !== adminChatId) return;
+      const parts = ctx.message?.text.split(' ') ?? [];
+      const targetChat = Number(parts[1]);
+      if (!targetChat) {
+        ctx.reply('Укажите ID чата');
+        return;
+      }
+      await this.approvalService.unban(targetChat);
+      await ctx.reply(`Чат ${targetChat} разбанен`);
+      await ctx.telegram.sendMessage(targetChat, 'Доступ разрешён');
+    });
+
     this.bot.command('export', async (ctx) => {
       const chatId = ctx.chat?.id;
       const userId = ctx.from?.id;
@@ -154,6 +182,8 @@ export class TelegramBot {
           description: 'Выгрузить данные в CSV (нужен доступ)',
         },
         { command: 'approve', description: 'Одобрить доступ к данным (админ)' },
+        { command: 'ban_chat', description: 'Забанить чат (админ)' },
+        { command: 'unban_chat', description: 'Разбанить чат (админ)' },
       ])
       .catch((err) => logger.error({ err }, 'Failed to set bot commands'));
 
