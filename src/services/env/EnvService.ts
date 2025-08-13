@@ -41,7 +41,6 @@ export type Env = z.infer<typeof envSchema>;
 export interface EnvService {
   readonly env: Env;
   getModels(): { ask: ChatModel; summary: ChatModel; interest: ChatModel };
-  getWhitelistFile(): string;
   getPromptFiles(): {
     persona: string;
     askSummary: string;
@@ -75,10 +74,6 @@ export class DefaultEnvService implements EnvService {
       summary: 'o3-mini' as ChatModel,
       interest: 'o3-mini' as ChatModel,
     };
-  }
-
-  getWhitelistFile(): string {
-    return 'white_list.json';
   }
 
   getPromptFiles() {
@@ -131,10 +126,6 @@ export class TestEnvService implements EnvService {
       summary: 'o3-mini' as ChatModel,
       interest: 'o3-mini' as ChatModel,
     };
-  }
-
-  getWhitelistFile(): string {
-    return 'white_list.json';
   }
 
   getPromptFiles() {

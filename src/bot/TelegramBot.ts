@@ -161,7 +161,8 @@ export class TelegramBot {
     assert(!!chatId, 'This is not a chat');
     logger.debug({ chatId }, 'Received text message');
 
-    if (!this.filter.isAllowed(chatId)) {
+    const allowed = await this.filter.isAllowed(chatId);
+    if (!allowed) {
       logger.warn({ chatId }, 'Unauthorized chat access attempt');
       ctx.reply('Этот чат не находится в списке разрешённых.');
       return;
