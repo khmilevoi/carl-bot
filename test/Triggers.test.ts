@@ -9,25 +9,27 @@ import { TriggerContext } from '../src/triggers/Trigger';
 describe('MentionTrigger', () => {
   const trigger = new MentionTrigger();
 
-  it('removes bot mention and returns true', async () => {
+  it('removes bot mention and returns result', async () => {
     const ctx: TriggerContext = { text: '', replyText: '', chatId: 1 };
     const telegrafCtx: any = {
       message: { text: 'hello @bot' },
       me: 'bot',
     };
     const res = await trigger.apply(telegrafCtx, ctx, new DialogueManager());
-    expect(res).toBe(true);
+    expect(res).not.toBeNull();
+    expect(res?.replyToMessageId).toBeNull();
+    expect(res?.reason).toBeNull();
     expect(ctx.text).toBe('hello');
   });
 
-  it('returns false without mention', async () => {
+  it('returns null without mention', async () => {
     const ctx: TriggerContext = { text: '', replyText: '', chatId: 1 };
     const telegrafCtx: any = {
       message: { text: 'hello there' },
       me: 'bot',
     };
     const res = await trigger.apply(telegrafCtx, ctx, new DialogueManager());
-    expect(res).toBe(false);
+    expect(res).toBeNull();
     expect(ctx.text).toBe('');
   });
 });
@@ -42,18 +44,18 @@ describe('NameTrigger', () => {
       chatId: 1,
     };
     const res = await trigger.apply({} as any, ctx, new DialogueManager());
-    expect(res).toBe(true);
+    expect(res).not.toBeNull();
     expect(ctx.text).toBe('how are you?');
   });
 
-  it('returns false when name missing', async () => {
+  it('returns null when name missing', async () => {
     const ctx: TriggerContext = {
       text: 'Hello Arkadius',
       replyText: '',
       chatId: 1,
     };
     const res = await trigger.apply({} as any, ctx, new DialogueManager());
-    expect(res).toBe(false);
+    expect(res).toBeNull();
     expect(ctx.text).toBe('Hello Arkadius');
   });
 });
@@ -68,13 +70,13 @@ describe('ReplyTrigger', () => {
       message: { reply_to_message: { from: { username: 'bot' } } },
     };
     const res = await trigger.apply(telegrafCtx, ctx, new DialogueManager());
-    expect(res).toBe(true);
+    expect(res).not.toBeNull();
   });
 
-  it('returns false when not replying to bot', async () => {
+  it('returns null when not replying to bot', async () => {
     const ctx: TriggerContext = { text: '', replyText: '', chatId: 1 };
     const telegrafCtx: any = { me: 'bot', message: {} };
     const res = await trigger.apply(telegrafCtx, ctx, new DialogueManager());
-    expect(res).toBe(false);
+    expect(res).toBeNull();
   });
 });

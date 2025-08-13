@@ -178,21 +178,24 @@ export class TelegramBot {
     };
 
     logger.debug({ chatId }, 'Checking triggers');
-    const shouldRespond = await this.pipeline.shouldRespond(ctx, context);
-    if (!shouldRespond) {
+    const triggerResult = await this.pipeline.shouldRespond(ctx, context);
+    if (!triggerResult) {
       logger.debug({ chatId }, 'No trigger matched');
       return;
     }
 
     await withTyping(ctx, async () => {
       logger.debug({ chatId }, 'Generating answer');
-      const answer = await this.responder.generate(ctx, chatId);
+      const answer = await this.responder.generate(
+        ctx,
+        chatId,
+        triggerResult.reason ?? undefined
+      );
       logger.debug({ chatId }, 'Answer generated');
 
+      const replyId = triggerResult.replyToMessageId ?? userMsg.messageId;
       ctx.reply(answer, {
-        reply_parameters: userMsg.messageId
-          ? { message_id: userMsg.messageId }
-          : undefined,
+        reply_parameters: replyId ? { message_id: replyId } : undefined,
       });
       logger.debug({ chatId }, 'Reply sent');
     });

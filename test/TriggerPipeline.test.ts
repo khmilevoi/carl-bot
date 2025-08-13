@@ -11,7 +11,7 @@ import { TriggerContext } from '../src/triggers/Trigger';
 describe('TriggerPipeline', () => {
   const env = new TestEnvService();
 
-  it('returns true when mention trigger matches', async () => {
+  it('returns result when mention trigger matches', async () => {
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(env, {
       async check() {
         return null;
@@ -24,11 +24,11 @@ describe('TriggerPipeline', () => {
       chatId: 1,
     };
     const res = await pipeline.shouldRespond(ctx, context);
-    expect(res).toBe(true);
+    expect(res).not.toBeNull();
   });
 
-  it('responds only when interest trigger returns true without mentions or replies', async () => {
-    let result: { interested: boolean; messageId: string | null } | null = null;
+  it('responds only when interest trigger returns result without mentions or replies', async () => {
+    let result: { messageId: string; why: string } | null = null;
     const interestChecker: InterestChecker = {
       async check() {
         return result;
@@ -46,14 +46,10 @@ describe('TriggerPipeline', () => {
     };
 
     let res = await pipeline.shouldRespond(ctx, context);
-    expect(res).toBe(false);
+    expect(res).toBeNull();
 
-    result = { interested: false, messageId: null };
+    result = { messageId: '1', why: 'because' };
     res = await pipeline.shouldRespond(ctx, context);
-    expect(res).toBe(false);
-
-    result = { interested: true, messageId: '1' };
-    res = await pipeline.shouldRespond(ctx, context);
-    expect(res).toBe(true);
+    expect(res).not.toBeNull();
   });
 });

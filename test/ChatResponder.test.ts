@@ -11,9 +11,11 @@ import { SummaryService } from '../src/services/summaries/SummaryService';
 class MockAIService {
   history: ChatMessage[] | undefined;
   summary: string | undefined;
-  async ask(h: ChatMessage[], s?: string): Promise<string> {
+  reason: string | undefined;
+  async ask(h: ChatMessage[], s?: string, r?: string): Promise<string> {
     this.history = h;
     this.summary = s;
+    this.reason = r;
     return 'answer';
   }
   async summarize(): Promise<string> {
@@ -63,9 +65,10 @@ describe('ChatResponder', () => {
     await memories.get(1).addMessage({ role: 'user', content: 'hi' });
     const ctx: any = { me: 'bot', chat: { id: 1 } };
 
-    const answer = await responder.generate(ctx, 1);
+    const answer = await responder.generate(ctx, 1, 'why');
     expect(answer).toBe('answer');
     expect(ai.history).toHaveLength(1);
+    expect(ai.reason).toBe('why');
     expect(memories.memory.messages).toHaveLength(2);
     expect(memories.memory.messages[1].role).toBe('assistant');
     expect(memories.memory.messages[1].content).toBe('answer');

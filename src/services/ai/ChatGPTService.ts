@@ -50,7 +50,11 @@ export class ChatGPTService implements AIService {
     }
   }
 
-  public async ask(history: ChatMessage[], summary?: string): Promise<string> {
+  public async ask(
+    history: ChatMessage[],
+    summary?: string,
+    triggerReason?: string
+  ): Promise<string> {
     const persona = await this.prompts.getPersona();
     logger.debug(
       { messages: history.length, summary: !!summary },
@@ -71,6 +75,12 @@ export class ChatGPTService implements AIService {
       messages.push({
         role: 'system',
         content: await this.prompts.getAskSummaryPrompt(summary),
+      });
+    }
+    if (triggerReason) {
+      messages.push({
+        role: 'system',
+        content: `Trigger reason: ${triggerReason}`,
       });
     }
 

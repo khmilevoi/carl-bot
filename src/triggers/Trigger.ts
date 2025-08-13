@@ -8,10 +8,15 @@ export interface TriggerContext {
   chatId: number;
 }
 
+export interface TriggerResult {
+  replyToMessageId: number | null;
+  reason: string | null;
+}
+
 export interface Trigger {
   apply(
     ctx: Context,
     context: TriggerContext,
     dialogue: DialogueManager
-  ): Promise<boolean>;
+  ): Promise<TriggerResult | null>;
 }
