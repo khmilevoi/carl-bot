@@ -205,16 +205,12 @@ export class TelegramBot {
 
   public async launch() {
     logger.info('Launching bot');
-    if (this.env.NODE_ENV === 'production') {
-      await this.bot.launch({
-        webhook: {
-          domain: this.env.DOMAIN!,
-          port: this.env.PORT!,
-        },
-      });
-    } else {
-      await this.bot.launch();
-    }
+    await this.bot.telegram
+      .deleteWebhook()
+      .catch((err) =>
+        logger.warn({ err }, 'Failed to delete existing webhook')
+      );
+    await this.bot.launch();
     logger.info('Bot launched');
   }
 
