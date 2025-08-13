@@ -64,7 +64,7 @@ describe('ChatMemory', () => {
     memory = new ChatMemory(messages, summarizer, 1, 2);
   });
 
-  it('passes history to summarizer before saving message', async () => {
+  it('passes history to summarizer after saving message', async () => {
     await messages.addMessage({
       chatId: 1,
       role: 'user',
@@ -86,6 +86,12 @@ describe('ChatMemory', () => {
           role: 'user',
           content: 'old',
           username: 'u1',
+          chatId: 1,
+        },
+        {
+          role: 'assistant',
+          content: 'new',
+          username: 'bot',
           chatId: 1,
         },
       ],

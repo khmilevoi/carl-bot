@@ -8,6 +8,7 @@ export interface PromptService {
   getInterestCheckPrompt(): Promise<string>;
   getUserPrompt(
     userMessage: string,
+    messageId?: string,
     userName?: string,
     fullName?: string,
     replyMessage?: string,

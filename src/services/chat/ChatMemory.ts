@@ -24,10 +24,19 @@ export class ChatMemory {
   ) {}
 
   public async addMessage(message: StoredMessage) {
-    const history = await this.messages.getMessages(this.chatId);
-    logger.debug({ chatId: this.chatId, role: message.role }, 'Adding message');
-    await this.summarizer.summarizeIfNeeded(this.chatId, history, this.limit);
+    logger.debug(
+      { chatId: this.chatId, role: message.role, limit: this.limit },
+      'Adding message'
+    );
     await this.messages.addMessage({ ...message, chatId: this.chatId });
+
+    // Проверяем лимит после добавления сообщения
+    const history = await this.messages.getMessages(this.chatId);
+    logger.debug(
+      { chatId: this.chatId, historyLength: history.length, limit: this.limit },
+      'Checking history limit after adding message'
+    );
+    await this.summarizer.summarizeIfNeeded(this.chatId, history, this.limit);
   }
 
   public getHistory(): Promise<ChatMessage[]> {

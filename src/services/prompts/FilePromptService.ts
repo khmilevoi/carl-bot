@@ -78,6 +78,7 @@ export class FilePromptService implements PromptService {
 
   async getUserPrompt(
     userMessage: string,
+    messageId?: string,
     userName?: string,
     fullName?: string,
     replyMessage?: string,
@@ -85,6 +86,7 @@ export class FilePromptService implements PromptService {
   ): Promise<string> {
     const template = await this.userPromptTemplate();
     const prompt = template
+      .replace('{{messageId}}', messageId ?? 'N/A')
       .replace('{{userMessage}}', userMessage)
       .replace('{{userName}}', userName ?? 'N/A')
       .replace('{{fullName}}', fullName ?? 'N/A')

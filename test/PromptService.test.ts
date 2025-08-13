@@ -45,7 +45,7 @@ describe('FilePromptService', () => {
     writeFileSync(checkInterestPath, 'check');
     writeFileSync(
       join(dir, 'user_prompt.md'),
-      '{{userMessage}}|{{userName}}|{{fullName}}|{{replyMessage}}|{{quoteMessage}}'
+      '{{messageId}}|{{userMessage}}|{{userName}}|{{fullName}}|{{replyMessage}}|{{quoteMessage}}'
     );
     writeFileSync(join(dir, 'user_prompt_system_prompt.md'), '');
     writeFileSync(join(dir, 'priority_rules_system_prompt.md'), '');
@@ -85,9 +85,9 @@ describe('FilePromptService', () => {
   });
 
   it('getUserPrompt substitutes values', async () => {
-    const prompt = await service.getUserPrompt('m', 'u', 'f', 'r', 'q');
-    expect(prompt).toBe('m|u|f|r|q');
+    const prompt = await service.getUserPrompt('m', 'id', 'u', 'f', 'r', 'q');
+    expect(prompt).toBe('id|m|u|f|r|q');
     const prompt2 = await service.getUserPrompt('m');
-    expect(prompt2).toBe('m|N/A|N/A|N/A|N/A');
+    expect(prompt2).toBe('N/A|m|N/A|N/A|N/A|N/A');
   });
 });

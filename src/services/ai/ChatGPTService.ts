@@ -14,6 +14,7 @@ export class ChatGPTService implements AIService {
   private openai: OpenAI;
   private readonly askModel: ChatModel;
   private readonly summaryModel: ChatModel;
+  private readonly interestModel: ChatModel;
 
   constructor(
     @inject(ENV_SERVICE_ID) private readonly envService: EnvService,
@@ -24,22 +25,24 @@ export class ChatGPTService implements AIService {
     const models = this.envService.getModels();
     this.askModel = models.ask;
     this.summaryModel = models.summary;
+    this.interestModel = models.interest;
     logger.debug('ChatGPTService initialized');
   }
 
   private async logPrompt(
     type: string,
-    messages: OpenAI.ChatCompletionMessageParam[]
+    messages: OpenAI.ChatCompletionMessageParam[],
+    response?: string
   ): Promise<void> {
     if (!this.envService.env.LOG_PROMPTS) {
       return;
     }
     const filePath = path.join(process.cwd(), 'prompts.log');
-    const entry = `\n[${new Date().toISOString()}] ${type}\n${JSON.stringify(
+    const entry = `\n[${new Date().toISOString()}] ${type}\nPROMPT:\n${JSON.stringify(
       messages,
       null,
       2
-    )}\n`;
+    )}\n${response ? `RESPONSE:\n${response}\n` : ''}---\n`;
     try {
       await fs.appendFile(filePath, entry);
     } catch (err) {
@@ -78,6 +81,7 @@ export class ChatGPTService implements AIService {
               role: 'user',
               content: await this.prompts.getUserPrompt(
                 m.content,
+                m.messageId?.toString(),
                 m.username,
                 m.fullName,
                 m.replyText,
@@ -89,13 +93,14 @@ export class ChatGPTService implements AIService {
     );
     messages.push(...historyMessages);
 
-    void this.logPrompt('ask', messages);
     const completion = await this.openai.chat.completions.create({
       model: this.askModel,
       messages,
     });
     logger.debug('Received chat completion response');
-    return completion.choices[0]?.message?.content ?? '';
+    const response = completion.choices[0]?.message?.content ?? '';
+    void this.logPrompt('ask', messages, response);
+    return response;
   }
 
   public async checkInterest(
@@ -116,6 +121,7 @@ export class ChatGPTService implements AIService {
               role: 'user',
               content: await this.prompts.getUserPrompt(
                 m.content,
+                m.messageId?.toString(),
                 m.username,
                 m.fullName,
                 m.replyText,
@@ -132,11 +138,12 @@ export class ChatGPTService implements AIService {
       'Sending interest check request'
     );
     const completion = await this.openai.chat.completions.create({
-      model: this.askModel,
+      model: this.interestModel,
       messages,
     });
     logger.debug('Received interest check response');
     const content = completion.choices[0]?.message?.content ?? '';
+    void this.logPrompt('interest', messages, content);
     try {
       return JSON.parse(content) as {
         messageId: string;
@@ -174,6 +181,7 @@ export class ChatGPTService implements AIService {
           m.role === 'user'
             ? await this.prompts.getUserPrompt(
                 m.content,
+                m.messageId?.toString(),
                 m.username,
                 m.fullName,
                 m.replyText,
@@ -193,6 +201,8 @@ export class ChatGPTService implements AIService {
       messages,
     });
     logger.debug('Received summary response');
-    return completion.choices[0]?.message?.content ?? prev ?? '';
+    const response = completion.choices[0]?.message?.content ?? prev ?? '';
+    void this.logPrompt('summary', messages, response);
+    return response;
   }
 }
