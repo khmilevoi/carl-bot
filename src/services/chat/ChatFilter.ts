@@ -1,47 +1,34 @@
-import { readFileSync } from 'fs';
+import type { ServiceIdentifier } from 'inversify';
 import { inject, injectable } from 'inversify';
-import { resolve } from 'path';
 
-import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
 import { logger } from '../logging/logger';
+import {
+  CHAT_APPROVAL_SERVICE_ID,
+  type ChatApprovalService,
+} from './ChatApprovalService';
 
 export interface ChatFilter {
-  isAllowed(chatId: number): boolean;
+  isAllowed(chatId: number): Promise<boolean>;
 }
-
-import type { ServiceIdentifier } from 'inversify';
 
 export const CHAT_FILTER_ID = Symbol.for(
   'ChatFilter'
 ) as ServiceIdentifier<ChatFilter>;
 
 @injectable()
-export class JSONWhiteListChatFilter implements ChatFilter {
-  private ids = new Set<number>();
-  private filename: string;
+export class ChatApprovalChatFilter implements ChatFilter {
+  constructor(
+    @inject(CHAT_APPROVAL_SERVICE_ID)
+    private approvalService: ChatApprovalService
+  ) {}
 
-  constructor(@inject(ENV_SERVICE_ID) envService: EnvService) {
-    this.filename = envService.getWhitelistFile();
-    this.load();
-  }
-
-  private load() {
-    try {
-      const path = resolve(process.cwd(), this.filename);
-      const data = JSON.parse(readFileSync(path, 'utf-8')) as number[];
-      if (Array.isArray(data)) {
-        this.ids = new Set(data.map((id) => Number(id)));
-        logger.debug({ count: this.ids.size }, 'Loaded chat whitelist');
-      }
-    } catch {
-      this.ids.clear();
-      logger.warn('Failed to load chat whitelist');
+  async isAllowed(chatId: number): Promise<boolean> {
+    const status = await this.approvalService.getStatus(chatId);
+    const allowed = status === 'approved';
+    logger.debug({ chatId, allowed, status }, 'Checking chat access');
+    if (!allowed && status === 'pending') {
+      await this.approvalService.request(chatId);
     }
-  }
-
-  isAllowed(chatId: number): boolean {
-    const allowed = this.ids.has(chatId);
-    logger.debug({ chatId, allowed }, 'Checking chat access');
     return allowed;
   }
 }

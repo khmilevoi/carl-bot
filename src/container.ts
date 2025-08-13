@@ -29,7 +29,7 @@ import {
 } from './services/chat/ChatApprovalService';
 import {
   CHAT_FILTER_ID,
-  JSONWhiteListChatFilter,
+  ChatApprovalChatFilter,
 } from './services/chat/ChatFilter';
 import { ChatMemoryManager } from './services/chat/ChatMemory';
 import {
@@ -158,6 +158,6 @@ container
   .to(DefaultChatResponder)
   .inSingletonScope();
 
-container.bind(CHAT_FILTER_ID).to(JSONWhiteListChatFilter).inSingletonScope();
+container.bind(CHAT_FILTER_ID).to(ChatApprovalChatFilter).inSingletonScope();
 
 container.bind(TelegramBot).toSelf().inSingletonScope();

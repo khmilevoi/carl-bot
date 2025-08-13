@@ -1,24 +1,28 @@
-import { writeFileSync } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
 import { describe, expect, it, vi } from 'vitest';
 
-import { JSONWhiteListChatFilter } from '../src/services/chat/ChatFilter';
-import { TestEnvService } from '../src/services/env/EnvService';
+import type { ChatApprovalService } from '../src/services/chat/ChatApprovalService';
+import {
+  ChatApprovalChatFilter,
+  type ChatFilter,
+} from '../src/services/chat/ChatFilter';
 
-describe('JSONWhiteListChatFilter', () => {
-  it('allows only whitelisted chat IDs', () => {
-    const allowedIds = [100, 200];
-    const file = join(tmpdir(), `whitelist-${Date.now()}.json`);
-    writeFileSync(file, JSON.stringify(allowedIds), 'utf-8');
+describe('ChatApprovalChatFilter', () => {
+  it('allows only approved chat IDs', async () => {
+    const service: ChatApprovalService = {
+      request: vi.fn().mockResolvedValue(undefined),
+      approve: vi.fn(),
+      ban: vi.fn(),
+      unban: vi.fn(),
+      getStatus: vi.fn(async (id: number) =>
+        id === 100 ? 'approved' : 'pending'
+      ),
+    };
 
-    const env = new TestEnvService();
-    vi.spyOn(env, 'getWhitelistFile').mockReturnValue(file);
+    const filter: ChatFilter = new ChatApprovalChatFilter(service);
 
-    const filter = new JSONWhiteListChatFilter(env);
-
-    expect(filter.isAllowed(100)).toBe(true);
-    expect(filter.isAllowed(200)).toBe(true);
-    expect(filter.isAllowed(300)).toBe(false);
+    expect(await filter.isAllowed(100)).toBe(true);
+    expect(await filter.isAllowed(200)).toBe(false);
+    expect(service.request).toHaveBeenCalledWith(200);
+    expect(service.request).not.toHaveBeenCalledWith(100);
   });
 });
