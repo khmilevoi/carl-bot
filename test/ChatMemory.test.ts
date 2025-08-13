@@ -36,6 +36,18 @@ class FakeMessageService implements MessageService {
     return list.map((m) => ({ ...m }));
   }
 
+  async getCount(chatId: number) {
+    return (this.data.get(chatId) ?? []).length;
+  }
+
+  async getLastMessages(chatId: number, limit: number) {
+    const list = this.data.get(chatId) ?? [];
+    return list
+      .slice(-limit)
+      .reverse()
+      .map((m) => ({ ...m }));
+  }
+
   async clearMessages(chatId: number) {
     this.data.set(chatId, []);
   }

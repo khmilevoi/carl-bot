@@ -26,8 +26,14 @@ class MockMessageService implements MessageService {
   async addMessage(msg: any): Promise<void> {
     this.messages.push(msg);
   }
-  async getMessages(): Promise<ChatMessage[]> {
+  async getMessages(_chatId: number): Promise<ChatMessage[]> {
     return [...this.messages];
+  }
+  async getCount(): Promise<number> {
+    return this.messages.length;
+  }
+  async getLastMessages(_: number, limit: number): Promise<ChatMessage[]> {
+    return [...this.messages].slice(-limit).reverse();
   }
   async clearMessages(): Promise<void> {
     this.messages = [];
