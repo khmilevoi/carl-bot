@@ -22,10 +22,6 @@ import {
   MessageContextExtractor,
 } from '../services/messages/MessageContextExtractor';
 import { MessageFactory } from '../services/messages/MessageFactory';
-import {
-  MESSAGE_SERVICE_ID,
-  MessageService,
-} from '../services/messages/MessageService';
 import { TriggerContext } from '../triggers/Trigger';
 
 async function withTyping(ctx: Context, fn: () => Promise<void>) {
@@ -52,7 +48,6 @@ export class TelegramBot {
     @inject(ChatMemoryManager) private memories: ChatMemoryManager,
     @inject(CHAT_FILTER_ID) private filter: ChatFilter,
     @inject(ADMIN_SERVICE_ID) private admin: AdminService,
-    @inject(MESSAGE_SERVICE_ID) private messages: MessageService,
     @inject(MESSAGE_CONTEXT_EXTRACTOR_ID)
     private extractor: MessageContextExtractor,
     @inject(TRIGGER_PIPELINE_ID) private pipeline: TriggerPipeline,
@@ -174,7 +169,7 @@ export class TelegramBot {
 
     const meta = this.extractor.extract(ctx);
     const userMsg = MessageFactory.fromUser(ctx, meta);
-    await this.messages.addMessage(userMsg);
+    await this.memories.get(chatId).addMessage(userMsg);
 
     const context: TriggerContext = {
       text: `${userMsg.content};`,
