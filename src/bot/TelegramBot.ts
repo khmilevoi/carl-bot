@@ -16,10 +16,6 @@ import {
   TriggerPipeline,
 } from '../services/chat/TriggerPipeline';
 import { Env, ENV_SERVICE_ID, EnvService } from '../services/env/EnvService';
-import {
-  INTEREST_CHECKER_ID,
-  InterestChecker,
-} from '../services/interest/InterestChecker';
 import { logger } from '../services/logging/logger';
 import {
   MESSAGE_CONTEXT_EXTRACTOR_ID,
@@ -60,8 +56,7 @@ export class TelegramBot {
     @inject(MESSAGE_CONTEXT_EXTRACTOR_ID)
     private extractor: MessageContextExtractor,
     @inject(TRIGGER_PIPELINE_ID) private pipeline: TriggerPipeline,
-    @inject(CHAT_RESPONDER_ID) private responder: ChatResponder,
-    @inject(INTEREST_CHECKER_ID) private interestChecker: InterestChecker
+    @inject(CHAT_RESPONDER_ID) private responder: ChatResponder
   ) {
     this.env = envService.env;
     this.bot = new Telegraf(this.env.BOT_TOKEN);
@@ -180,11 +175,6 @@ export class TelegramBot {
     const meta = this.extractor.extract(ctx);
     const userMsg = MessageFactory.fromUser(ctx, meta);
     await this.messages.addMessage(userMsg);
-
-    const interest = await this.interestChecker.check(chatId);
-    if (interest) {
-      logger.info({ chatId, interest }, 'Interest check result');
-    }
 
     const context: TriggerContext = {
       text: `${userMsg.content};`,
