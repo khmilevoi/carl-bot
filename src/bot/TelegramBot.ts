@@ -244,15 +244,14 @@ export class TelegramBot {
     logger.debug({ chatId }, 'Received text message');
 
     const status = await this.approvalService.getStatus(chatId);
-    if (status !== 'approved') {
-      logger.warn({ chatId, status }, 'Unauthorized chat access attempt');
-      await ctx.reply('Этот чат не находится в списке разрешённых.', {
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: 'Запросить доступ', callback_data: 'chat_request' }],
-          ],
-        },
-      });
+    if (status === 'pending') {
+      const title = 'title' in ctx.chat! ? (ctx.chat as any).title : undefined;
+      await this.approvalService.request(chatId, title);
+      return;
+    }
+
+    if (status === 'banned') {
+      logger.warn({ chatId }, 'Message from banned chat ignored');
       return;
     }
 
