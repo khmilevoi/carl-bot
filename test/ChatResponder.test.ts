@@ -19,6 +19,9 @@ class MockAIService {
   async summarize(): Promise<string> {
     return '';
   }
+  async checkInterest(): Promise<{ messageId: string; why: string } | null> {
+    return null;
+  }
 }
 
 class MockMessageService implements MessageService {
