@@ -1,11 +1,14 @@
 export interface PromptService {
   getPersona(): Promise<string>;
   getPriorityRulesSystemPrompt(): Promise<string>;
-  getUserPromptSystemPrompt(): Promise<string>;
+  getUserPromptSystemPrompt(
+    attitudes?: { username: string; attitude?: string | null }[]
+  ): Promise<string>;
   getAskSummaryPrompt(summary: string): Promise<string>;
   getSummarizationSystemPrompt(): Promise<string>;
   getPreviousSummaryPrompt(prev: string): Promise<string>;
   getInterestCheckPrompt(): Promise<string>;
+  getAssessUsersPrompt(): Promise<string>;
   getUserPrompt(
     userMessage: string,
     messageId?: string,

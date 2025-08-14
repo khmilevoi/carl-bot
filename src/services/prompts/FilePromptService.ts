@@ -15,6 +15,7 @@ export class FilePromptService implements PromptService {
   private readonly checkInterestTemplate: () => Promise<string>;
   private readonly userPromptTemplate: () => Promise<string>;
   private readonly userPromptSystemTemplate: () => Promise<string>;
+  private readonly assessUsersTemplate: () => Promise<string>;
   private readonly priorityRulesSystemTemplate: () => Promise<string>;
 
   constructor(@inject(ENV_SERVICE_ID) envService: EnvService) {
@@ -44,6 +45,9 @@ export class FilePromptService implements PromptService {
     this.priorityRulesSystemTemplate = createLazy(() =>
       readFile(files.priorityRulesSystem, 'utf-8')
     );
+    this.assessUsersTemplate = createLazy(() =>
+      readFile(files.assessUsers, 'utf-8')
+    );
   }
 
   async getPersona(): Promise<string> {
@@ -54,8 +58,14 @@ export class FilePromptService implements PromptService {
     return this.priorityRulesSystemTemplate();
   }
 
-  async getUserPromptSystemPrompt(): Promise<string> {
-    return this.userPromptSystemTemplate();
+  async getUserPromptSystemPrompt(
+    attitudes: { username: string; attitude?: string | null }[] = []
+  ): Promise<string> {
+    const template = await this.userPromptSystemTemplate();
+    const attitudeText = attitudes.length
+      ? attitudes.map((a) => `@${a.username} — ${a.attitude ?? ''}`).join('; ')
+      : '';
+    return template.replace('{{attitudes}}', attitudeText);
   }
 
   async getAskSummaryPrompt(summary: string): Promise<string> {
@@ -74,6 +84,10 @@ export class FilePromptService implements PromptService {
 
   async getInterestCheckPrompt(): Promise<string> {
     return this.checkInterestTemplate();
+  }
+
+  async getAssessUsersPrompt(): Promise<string> {
+    return this.assessUsersTemplate();
   }
 
   async getUserPrompt(

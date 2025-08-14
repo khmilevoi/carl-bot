@@ -21,6 +21,7 @@ class TempEnvService extends TestEnvService {
       userPrompt: join(this.dir, 'user_prompt.md'),
       userPromptSystem: join(this.dir, 'user_prompt_system_prompt.md'),
       priorityRulesSystem: join(this.dir, 'priority_rules_system_prompt.md'),
+      assessUsers: join(this.dir, 'assess_users_prompt.md'),
     };
   }
 }
@@ -30,6 +31,7 @@ describe('FilePromptService', () => {
   let readFileSpy: ReturnType<typeof vi.fn>;
   let personaPath: string;
   let checkInterestPath: string;
+  let assessUsersPath: string;
 
   beforeEach(async () => {
     vi.restoreAllMocks();
@@ -47,8 +49,13 @@ describe('FilePromptService', () => {
       join(dir, 'user_prompt.md'),
       '{{messageId}}|{{userMessage}}|{{userName}}|{{fullName}}|{{replyMessage}}|{{quoteMessage}}'
     );
-    writeFileSync(join(dir, 'user_prompt_system_prompt.md'), '');
+    writeFileSync(
+      join(dir, 'user_prompt_system_prompt.md'),
+      'Attitudes: {{attitudes}}'
+    );
     writeFileSync(join(dir, 'priority_rules_system_prompt.md'), '');
+    assessUsersPath = join(dir, 'assess_users_prompt.md');
+    writeFileSync(assessUsersPath, 'assess');
 
     const actual =
       await vi.importActual<typeof import('fs/promises')>('fs/promises');
@@ -80,6 +87,13 @@ describe('FilePromptService', () => {
     expect(readFileSpy).toHaveBeenCalledWith(checkInterestPath, 'utf-8');
   });
 
+  it('getAssessUsersPrompt reads file only once', async () => {
+    expect(await service.getAssessUsersPrompt()).toBe('assess');
+    expect(await service.getAssessUsersPrompt()).toBe('assess');
+    expect(readFileSpy).toHaveBeenCalledTimes(1);
+    expect(readFileSpy).toHaveBeenCalledWith(assessUsersPath, 'utf-8');
+  });
+
   it('getAskSummaryPrompt substitutes summary', async () => {
     expect(await service.getAskSummaryPrompt('S')).toBe('ask S');
   });
@@ -89,5 +103,15 @@ describe('FilePromptService', () => {
     expect(prompt).toBe('id|m|u|f|r|q');
     const prompt2 = await service.getUserPrompt('m');
     expect(prompt2).toBe('N/A|m|N/A|N/A|N/A|N/A');
+  });
+
+  it('getUserPromptSystemPrompt substitutes attitudes', async () => {
+    const prompt = await service.getUserPromptSystemPrompt([
+      { username: 'user1', attitude: 'good' },
+      { username: 'user2', attitude: null },
+    ]);
+    expect(prompt).toBe('Attitudes: @user1 — good; @user2 — ');
+    const prompt2 = await service.getUserPromptSystemPrompt();
+    expect(prompt2).toBe('Attitudes: ');
   });
 });

@@ -70,7 +70,7 @@ export class ChatGPTService implements AIService {
       },
       {
         role: 'system',
-        content: await this.prompts.getUserPromptSystemPrompt(),
+        content: await this.prompts.getUserPromptSystemPrompt(attitudes),
       },
     ];
     if (summary) {
@@ -92,12 +92,7 @@ export class ChatGPTService implements AIService {
       });
     }
 
-    if (attitudes.length > 0) {
-      const attitudeText = attitudes
-        .map((a) => `@${a.username} — ${a.attitude ?? ''}`)
-        .join('; ');
-      messages.push({ role: 'system', content: `Attitude: ${attitudeText}` });
-    }
+    // attitudes are injected via user prompt system template
 
     const historyMessages = await Promise.all(
       history.map<Promise<OpenAI.ChatCompletionMessageParam>>(async (m) =>
@@ -183,8 +178,7 @@ export class ChatGPTService implements AIService {
     prevAttitudes: { username: string; attitude: string }[] = []
   ): Promise<{ username: string; attitude: string }[]> {
     const persona = await this.prompts.getPersona();
-    const systemPrompt =
-      'Проанализируй пользователей в диалоге и определи отношение бота к каждому. Верни JSON массив объектов {"username": "имя", "attitude": "отношение"}. Без пояснений.';
+    const systemPrompt = await this.prompts.getAssessUsersPrompt();
     const reqMessages: OpenAI.ChatCompletionMessageParam[] = [
       { role: 'system', content: persona },
       { role: 'system', content: systemPrompt },
