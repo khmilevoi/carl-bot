@@ -11,6 +11,7 @@ export default defineConfig({
         'dist/**',
         '**/index.ts',
         'src/migrate.ts',
+        'src/container.ts',
         'src/repositories/**',
         'src/services/env/**',
         '**/*.interface.ts',
