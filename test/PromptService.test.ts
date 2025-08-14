@@ -34,6 +34,10 @@ describe('FilePromptService', () => {
   let checkInterestPath: string;
   let assessUsersPath: string;
   let userPromptSystemPath: string;
+  let summarizationPath: string;
+  let previousSummaryPath: string;
+  let priorityRulesPath: string;
+  let replyTriggerPath: string;
 
   beforeEach(async () => {
     vi.restoreAllMocks();
@@ -43,8 +47,10 @@ describe('FilePromptService', () => {
     personaPath = join(dir, 'persona.md');
     writeFileSync(personaPath, 'persona');
     writeFileSync(join(dir, 'ask_summary_prompt.md'), 'ask {{summary}}');
-    writeFileSync(join(dir, 'summarization_system_prompt.md'), '');
-    writeFileSync(join(dir, 'previous_summary_prompt.md'), '');
+    summarizationPath = join(dir, 'summarization_system_prompt.md');
+    writeFileSync(summarizationPath, 'summarize');
+    previousSummaryPath = join(dir, 'previous_summary_prompt.md');
+    writeFileSync(previousSummaryPath, 'prev {{prev}}');
     checkInterestPath = join(dir, 'check_interest_prompt.md');
     writeFileSync(checkInterestPath, 'check');
     writeFileSync(
@@ -53,12 +59,14 @@ describe('FilePromptService', () => {
     );
     userPromptSystemPath = join(dir, 'user_prompt_system_prompt.md');
     writeFileSync(userPromptSystemPath, 'system');
-    writeFileSync(join(dir, 'priority_rules_system_prompt.md'), '');
+    priorityRulesPath = join(dir, 'priority_rules_system_prompt.md');
+    writeFileSync(priorityRulesPath, 'rules');
     assessUsersPath = join(dir, 'assess_users_prompt.md');
     writeFileSync(assessUsersPath, 'assess');
+    replyTriggerPath = join(dir, 'reply_trigger_prompt.md');
     writeFileSync(
-      join(dir, 'reply_trigger_prompt.md'),
-      'trigger {{why}} {{message}}'
+      replyTriggerPath,
+      'trigger {{triggerReason}} {{triggerMessage}}'
     );
 
     const actual =
@@ -121,6 +129,38 @@ describe('FilePromptService', () => {
     expect(await service.getUserPromptSystemPrompt()).toBe('system');
     expect(await service.getUserPromptSystemPrompt()).toBe('system');
     expect(readFileSpy).toHaveBeenCalledWith(userPromptSystemPath, 'utf-8');
+    expect(readFileSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('getSummarizationSystemPrompt reads file only once', async () => {
+    expect(await service.getSummarizationSystemPrompt()).toBe('summarize');
+    expect(await service.getSummarizationSystemPrompt()).toBe('summarize');
+    expect(readFileSpy).toHaveBeenCalledWith(summarizationPath, 'utf-8');
+    expect(readFileSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('getPriorityRulesSystemPrompt reads file only once', async () => {
+    expect(await service.getPriorityRulesSystemPrompt()).toBe('rules');
+    expect(await service.getPriorityRulesSystemPrompt()).toBe('rules');
+    expect(readFileSpy).toHaveBeenCalledWith(priorityRulesPath, 'utf-8');
+    expect(readFileSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('getPreviousSummaryPrompt substitutes prev', async () => {
+    expect(await service.getPreviousSummaryPrompt('A')).toBe('prev A');
+    expect(await service.getPreviousSummaryPrompt('B')).toBe('prev B');
+    expect(readFileSpy).toHaveBeenCalledWith(previousSummaryPath, 'utf-8');
+    expect(readFileSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('getTriggerPrompt substitutes values', async () => {
+    expect(await service.getTriggerPrompt('why', 'msg')).toBe(
+      'trigger why msg'
+    );
+    expect(await service.getTriggerPrompt('why', 'msg')).toBe(
+      'trigger why msg'
+    );
+    expect(readFileSpy).toHaveBeenCalledWith(replyTriggerPath, 'utf-8');
     expect(readFileSpy).toHaveBeenCalledTimes(1);
   });
 });

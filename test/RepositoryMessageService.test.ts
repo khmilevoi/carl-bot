@@ -40,4 +40,30 @@ describe('RepositoryMessageService', () => {
 
     expect(chatUserRepo.link).toHaveBeenCalledWith(123, 456);
   });
+
+  it('fetches messages, counts, retrieves last and clears', async () => {
+    const messageRepo: MessageRepository = {
+      findByChatId: vi.fn().mockResolvedValue([]),
+      countByChatId: vi.fn().mockResolvedValue(0),
+      findLastByChatId: vi.fn().mockResolvedValue([]),
+      clearByChatId: vi.fn(),
+    } as unknown as MessageRepository;
+
+    const service = new RepositoryMessageService(
+      {} as unknown as ChatRepository,
+      {} as unknown as UserRepository,
+      messageRepo,
+      {} as unknown as ChatUserRepository
+    );
+
+    await service.getMessages(1);
+    await service.getCount(2);
+    await service.getLastMessages(3, 4);
+    await service.clearMessages(5);
+
+    expect(messageRepo.findByChatId).toHaveBeenCalledWith(1);
+    expect(messageRepo.countByChatId).toHaveBeenCalledWith(2);
+    expect(messageRepo.findLastByChatId).toHaveBeenCalledWith(3, 4);
+    expect(messageRepo.clearByChatId).toHaveBeenCalledWith(5);
+  });
 });
