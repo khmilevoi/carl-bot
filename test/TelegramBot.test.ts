@@ -101,7 +101,7 @@ describe('TelegramBot', () => {
     );
   });
 
-  it('shows admin menu with chats', async () => {
+  it('shows admin chats menu', async () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
       .spyOn(
@@ -129,8 +129,8 @@ describe('TelegramBot', () => {
     const ctx = { reply: vi.fn() } as unknown as Context;
 
     await (
-      bot as unknown as { showAdminMenu: (ctx: Context) => Promise<void> }
-    ).showAdminMenu(ctx);
+      bot as unknown as { showAdminChatsMenu: (ctx: Context) => Promise<void> }
+    ).showAdminChatsMenu(ctx);
 
     expect(approvalService.listAll).toHaveBeenCalled();
     expect(ctx.reply).toHaveBeenCalledWith('Выберите чат для управления:', {

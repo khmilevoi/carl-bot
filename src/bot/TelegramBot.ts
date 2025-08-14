@@ -127,49 +127,11 @@ export class TelegramBot {
     });
 
     // Обработчик для кнопки загрузки данных
-    this.bot.action('export_data', async (ctx) => {
-      const chatId = ctx.chat?.id;
-      const userId = ctx.from?.id;
-      assert(chatId, 'This is not a chat');
-      assert(userId, 'No user id');
+    this.bot.action('export_data', (ctx) => this.handleExportData(ctx));
+    this.bot.action('admin_export_data', (ctx) => this.handleExportData(ctx));
 
-      if (chatId !== this.env.ADMIN_CHAT_ID) {
-        const allowed = await this.admin.hasAccess(chatId, userId);
-        if (!allowed) {
-          await ctx.answerCbQuery('Нет доступа или ключ просрочен');
-          return;
-        }
-      }
-
-      await ctx.answerCbQuery('Начинаю загрузку данных...');
-
-      try {
-        const files =
-          chatId === this.env.ADMIN_CHAT_ID
-            ? await this.admin.exportTables()
-            : await this.admin.exportChatData(chatId);
-        if (files.length === 0) {
-          await ctx.reply('Нет данных для экспорта');
-          return;
-        }
-
-        await ctx.reply(
-          `Найдено ${files.length} таблиц для экспорта. Начинаю загрузку...`
-        );
-
-        for (const f of files) {
-          await ctx.replyWithDocument({
-            source: f.buffer,
-            filename: f.filename,
-          });
-          await new Promise<void>((resolve) => setImmediate(resolve));
-        }
-
-        await ctx.reply('✅ Загрузка данных завершена!');
-      } catch (error) {
-        logger.error({ error, chatId }, 'Failed to export data');
-        await ctx.reply('❌ Ошибка при загрузке данных. Попробуйте позже.');
-      }
+    this.bot.action('admin_chats', async (ctx) => {
+      await this.showAdminChatsMenu(ctx);
     });
 
     // Обработчик для кнопки сброса памяти
@@ -307,7 +269,7 @@ export class TelegramBot {
     assert(chatId, 'This is not a chat');
 
     if (chatId === this.env.ADMIN_CHAT_ID) {
-      await this.showAdminMenu(ctx);
+      await this.showAdminMainMenu(ctx);
       return;
     }
 
@@ -351,7 +313,18 @@ export class TelegramBot {
     });
   }
 
-  private async showAdminMenu(ctx: Context) {
+  private async showAdminMainMenu(ctx: Context) {
+    await ctx.reply('Выберите действие:', {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '📊 Загрузить данные', callback_data: 'admin_export_data' }],
+          [{ text: '💬 Чаты', callback_data: 'admin_chats' }],
+        ],
+      },
+    });
+  }
+
+  private async showAdminChatsMenu(ctx: Context) {
     const chats = await this.approvalService.listAll();
     if (chats.length === 0) {
       await ctx.reply('Нет чатов для управления');
@@ -368,6 +341,51 @@ export class TelegramBot {
     await ctx.reply('Выберите чат для управления:', {
       reply_markup: { inline_keyboard: keyboard },
     });
+  }
+
+  private async handleExportData(ctx: Context) {
+    const chatId = ctx.chat?.id;
+    const userId = ctx.from?.id;
+    assert(chatId, 'This is not a chat');
+    assert(userId, 'No user id');
+
+    if (chatId !== this.env.ADMIN_CHAT_ID) {
+      const allowed = await this.admin.hasAccess(chatId, userId);
+      if (!allowed) {
+        await ctx.answerCbQuery('Нет доступа или ключ просрочен');
+        return;
+      }
+    }
+
+    await ctx.answerCbQuery('Начинаю загрузку данных...');
+
+    try {
+      const files =
+        chatId === this.env.ADMIN_CHAT_ID
+          ? await this.admin.exportTables()
+          : await this.admin.exportChatData(chatId);
+      if (files.length === 0) {
+        await ctx.reply('Нет данных для экспорта');
+        return;
+      }
+
+      await ctx.reply(
+        `Найдено ${files.length} таблиц для экспорта. Начинаю загрузку...`
+      );
+
+      for (const f of files) {
+        await ctx.replyWithDocument({
+          source: f.buffer,
+          filename: f.filename,
+        });
+        await new Promise<void>((resolve) => setImmediate(resolve));
+      }
+
+      await ctx.reply('✅ Загрузка данных завершена!');
+    } catch (error) {
+      logger.error({ error, chatId }, 'Failed to export data');
+      await ctx.reply('❌ Ошибка при загрузке данных. Попробуйте позже.');
+    }
   }
 
   private async handleText(ctx: Context) {
