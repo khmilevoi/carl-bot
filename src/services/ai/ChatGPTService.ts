@@ -78,16 +78,13 @@ export class ChatGPTService implements AIService {
         content: await this.prompts.getAskSummaryPrompt(summary),
       });
     }
-    if (triggerReason?.why) {
+    if (triggerReason) {
       messages.push({
         role: 'system',
-        content: `Trigger reason: ${triggerReason.why}`,
-      });
-    }
-    if (triggerReason?.message) {
-      messages.push({
-        role: 'system',
-        content: `Trigger message: ${triggerReason.message}`,
+        content: await this.prompts.getTriggerPrompt(
+          triggerReason.why ?? undefined,
+          triggerReason.message ?? undefined
+        ),
       });
     }
 

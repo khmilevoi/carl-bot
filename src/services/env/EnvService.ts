@@ -51,6 +51,7 @@ export interface EnvService {
     userPromptSystem: string;
     priorityRulesSystem: string;
     assessUsers: string;
+    replyTrigger: string;
   };
   getBotName(): string;
   getDialogueTimeoutMs(): number;
@@ -88,6 +89,7 @@ export class DefaultEnvService implements EnvService {
       userPromptSystem: 'prompts/user_prompt_system_prompt.md',
       priorityRulesSystem: 'prompts/priority_rules_system_prompt.md',
       assessUsers: 'prompts/assess_users_prompt.md',
+      replyTrigger: 'prompts/reply_trigger_prompt.md',
     };
   }
 
@@ -141,6 +143,7 @@ export class TestEnvService implements EnvService {
       userPromptSystem: 'prompts/user_prompt_system_prompt.md',
       priorityRulesSystem: 'prompts/priority_rules_system_prompt.md',
       assessUsers: 'prompts/assess_users_prompt.md',
+      replyTrigger: 'prompts/reply_trigger_prompt.md',
     };
   }
 

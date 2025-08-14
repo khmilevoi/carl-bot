@@ -12,6 +12,7 @@ describe('ChatGPTService', () => {
   let openaiCreate: ReturnType<typeof vi.fn<[], unknown>>;
   let prompts: Record<string, unknown>;
   let env: TestEnvService;
+  let triggerPrompt: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
     vi.resetModules();
@@ -19,6 +20,12 @@ describe('ChatGPTService', () => {
     openaiCreate = vi.fn<[], unknown>();
     const openaiMock = { chat: { completions: { create: openaiCreate } } };
     vi.doMock('openai', () => ({ default: vi.fn(() => openaiMock) }));
+
+    triggerPrompt = vi
+      .fn()
+      .mockImplementation(
+        async (w?: string, m?: string) => `trigger:${w}:${m}`
+      );
 
     prompts = {
       getPersona: vi.fn().mockResolvedValue('persona'),
@@ -36,6 +43,7 @@ describe('ChatGPTService', () => {
       getPreviousSummaryPrompt: vi
         .fn()
         .mockImplementation(async (p: string) => `prev:${p}`),
+      getTriggerPrompt: triggerPrompt,
     };
 
     env = new TestEnvService();
@@ -76,12 +84,12 @@ describe('ChatGPTService', () => {
         { role: 'system', content: 'priority' },
         { role: 'system', content: 'userSystem' },
         { role: 'system', content: 'ask:sum' },
-        { role: 'system', content: 'Trigger reason: why' },
-        { role: 'system', content: 'Trigger message: msg' },
+        { role: 'system', content: 'trigger:why:msg' },
         { role: 'user', content: 'user:hi' },
         { role: 'assistant', content: 'yo' },
       ],
     });
+    expect(triggerPrompt).toHaveBeenCalledWith('why', 'msg');
   });
 
   it('checkInterest parses JSON response and handles errors', async () => {
