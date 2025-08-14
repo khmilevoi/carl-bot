@@ -10,12 +10,14 @@ import {
 import { ACCESS_KEY_REPOSITORY_ID } from './repositories/interfaces/AccessKeyRepository';
 import { CHAT_ACCESS_REPOSITORY_ID } from './repositories/interfaces/ChatAccessRepository';
 import { CHAT_REPOSITORY_ID } from './repositories/interfaces/ChatRepository';
+import { CHAT_USER_REPOSITORY_ID } from './repositories/interfaces/ChatUserRepository';
 import { MESSAGE_REPOSITORY_ID } from './repositories/interfaces/MessageRepository';
 import { SUMMARY_REPOSITORY_ID } from './repositories/interfaces/SummaryRepository';
 import { USER_REPOSITORY_ID } from './repositories/interfaces/UserRepository';
 import { SQLiteAccessKeyRepository } from './repositories/sqlite/SQLiteAccessKeyRepository';
 import { SQLiteChatAccessRepository } from './repositories/sqlite/SQLiteChatAccessRepository';
 import { SQLiteChatRepository } from './repositories/sqlite/SQLiteChatRepository';
+import { SQLiteChatUserRepository } from './repositories/sqlite/SQLiteChatUserRepository';
 import { SQLiteMessageRepository } from './repositories/sqlite/SQLiteMessageRepository';
 import { SQLiteSummaryRepository } from './repositories/sqlite/SQLiteSummaryRepository';
 import { SQLiteUserRepository } from './repositories/sqlite/SQLiteUserRepository';
@@ -119,6 +121,10 @@ container.bind(ADMIN_SERVICE_ID).to(AdminServiceImpl).inSingletonScope();
 
 container.bind(DB_PROVIDER_ID).to(SQLiteDbProviderImpl).inSingletonScope();
 container.bind(CHAT_REPOSITORY_ID).to(SQLiteChatRepository).inSingletonScope();
+container
+  .bind(CHAT_USER_REPOSITORY_ID)
+  .to(SQLiteChatUserRepository)
+  .inSingletonScope();
 container.bind(USER_REPOSITORY_ID).to(SQLiteUserRepository).inSingletonScope();
 container
   .bind(MESSAGE_REPOSITORY_ID)

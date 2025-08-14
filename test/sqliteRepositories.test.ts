@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { SQLiteDbProviderImpl } from '../src/repositories/DbProvider';
 import { SQLiteAccessKeyRepository } from '../src/repositories/sqlite/SQLiteAccessKeyRepository';
 import { SQLiteChatRepository } from '../src/repositories/sqlite/SQLiteChatRepository';
+import { SQLiteChatUserRepository } from '../src/repositories/sqlite/SQLiteChatUserRepository';
 import { SQLiteMessageRepository } from '../src/repositories/sqlite/SQLiteMessageRepository';
 import { SQLiteSummaryRepository } from '../src/repositories/sqlite/SQLiteSummaryRepository';
 import { SQLiteUserRepository } from '../src/repositories/sqlite/SQLiteUserRepository';
@@ -19,6 +20,7 @@ let userRepo: SQLiteUserRepository;
 let messageRepo: SQLiteMessageRepository;
 let summaryRepo: SQLiteSummaryRepository;
 let accessKeyRepo: SQLiteAccessKeyRepository;
+let chatUserRepo: SQLiteChatUserRepository;
 
 beforeEach(async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'sqlite-'));
@@ -32,7 +34,8 @@ beforeEach(async () => {
         id INTEGER PRIMARY KEY,
         username TEXT,
         first_name TEXT,
-        last_name TEXT
+        last_name TEXT,
+        attitude TEXT
       );
       CREATE TABLE chats (
         chat_id INTEGER PRIMARY KEY,
@@ -62,6 +65,13 @@ beforeEach(async () => {
         expires_at INTEGER,
         PRIMARY KEY(chat_id, user_id)
       );
+      CREATE TABLE chat_users (
+        chat_id INTEGER NOT NULL,
+        user_id INTEGER NOT NULL,
+        PRIMARY KEY (chat_id, user_id),
+        FOREIGN KEY(chat_id) REFERENCES chats(chat_id),
+        FOREIGN KEY(user_id) REFERENCES users(id)
+      );
     `);
   await db.close();
   const provider = new SQLiteDbProviderImpl(env);
@@ -70,6 +80,7 @@ beforeEach(async () => {
   messageRepo = new SQLiteMessageRepository(provider);
   summaryRepo = new SQLiteSummaryRepository(provider);
   accessKeyRepo = new SQLiteAccessKeyRepository(provider);
+  chatUserRepo = new SQLiteChatUserRepository(provider);
 });
 
 describe('SQLite repositories', () => {
@@ -175,19 +186,23 @@ describe('SQLite repositories', () => {
       username: 'alice',
       firstName: 'Alice',
       lastName: 'Smith',
+      attitude: 'neutral',
     });
     await userRepo.upsert({
       id: 42,
       username: 'alice2',
       firstName: 'Alicia',
       lastName: 'Johnson',
+      attitude: 'hostile',
     });
+    await userRepo.setAttitude(42, 'friendly');
     const user = await userRepo.findById(42);
     expect(user).toEqual({
       id: 42,
       username: 'alice2',
       firstName: 'Alicia',
       lastName: 'Johnson',
+      attitude: 'friendly',
     });
   });
 
@@ -195,6 +210,15 @@ describe('SQLite repositories', () => {
     await chatRepo.upsert({ chatId: 1, title: 'Test Chat' });
     const chat = await chatRepo.findById(1);
     expect(chat).toEqual({ chatId: 1, title: 'Test Chat' });
+  });
+
+  it('links users to chats and lists them', async () => {
+    await chatRepo.upsert({ chatId: 1 });
+    await userRepo.upsert({ id: 2, username: 'bob' });
+    await userRepo.upsert({ id: 3, username: 'carol' });
+    await chatUserRepo.link(1, 2);
+    await chatUserRepo.link(1, 3);
+    expect(await chatUserRepo.listByChat(1)).toEqual([2, 3]);
   });
 
   it('stores, retrieves and expires access keys', async () => {

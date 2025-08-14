@@ -19,14 +19,16 @@ export class SQLiteUserRepository implements UserRepository {
     username,
     firstName,
     lastName,
+    attitude,
   }: UserEntity): Promise<void> {
     const db = await this.db();
     await db.run(
-      'INSERT INTO users (id, username, first_name, last_name) VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET username=excluded.username, first_name=excluded.first_name, last_name=excluded.last_name',
+      'INSERT INTO users (id, username, first_name, last_name, attitude) VALUES (?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET username=excluded.username, first_name=excluded.first_name, last_name=excluded.last_name, attitude=excluded.attitude',
       id,
       username ?? null,
       firstName ?? null,
-      lastName ?? null
+      lastName ?? null,
+      attitude ?? null
     );
   }
 
@@ -37,8 +39,9 @@ export class SQLiteUserRepository implements UserRepository {
       username: string | null;
       first_name: string | null;
       last_name: string | null;
+      attitude: string | null;
     }>(
-      'SELECT id, username, first_name, last_name FROM users WHERE id = ?',
+      'SELECT id, username, first_name, last_name, attitude FROM users WHERE id = ?',
       id
     );
     return row
@@ -47,7 +50,17 @@ export class SQLiteUserRepository implements UserRepository {
           username: row.username,
           firstName: row.first_name,
           lastName: row.last_name,
+          attitude: row.attitude,
         }
       : undefined;
+  }
+
+  async setAttitude(userId: number, attitude: string): Promise<void> {
+    const db = await this.db();
+    await db.run(
+      'UPDATE users SET attitude = ? WHERE id = ?',
+      attitude,
+      userId
+    );
   }
 }
