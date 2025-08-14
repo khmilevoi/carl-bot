@@ -139,7 +139,10 @@ export class TelegramBot {
       await ctx.answerCbQuery('Начинаю загрузку данных...');
 
       try {
-        const files = await this.admin.exportTables();
+        const files =
+          chatId === this.env.ADMIN_CHAT_ID
+            ? await this.admin.exportTables()
+            : await this.admin.exportChatData(chatId);
         if (files.length === 0) {
           await ctx.reply('Нет данных для экспорта');
           return;
