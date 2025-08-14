@@ -86,4 +86,18 @@ describe('DefaultInterestChecker', () => {
     const res = await checker.check(chatId);
     expect(res).toBeNull();
   });
+
+  it('uses empty message when ID not found', async () => {
+    const history: ChatMessage[] = [
+      { role: 'user', content: 'msg1', messageId: 1 },
+    ];
+    const { checker } = createChecker({
+      count: 2,
+      history,
+      summary: '',
+      aiResult: { messageId: '42', why: 'w' },
+    });
+    const res = await checker.check(chatId);
+    expect(res).toEqual({ messageId: '42', message: '', why: 'w' });
+  });
 });

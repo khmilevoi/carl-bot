@@ -199,6 +199,38 @@ describe('ChatGPTService', () => {
     });
   });
 
+  it('ask without optional params and summarize without prev', async () => {
+    openaiCreate.mockResolvedValueOnce({
+      choices: [{ message: { content: 'resp' } }],
+    });
+    const resAsk = await service.ask([]);
+    expect(resAsk).toBe('resp');
+    expect(openaiCreate).toHaveBeenCalledWith({
+      model: env.getModels().ask,
+      messages: [
+        { role: 'system', content: 'persona' },
+        { role: 'system', content: 'priority' },
+        { role: 'system', content: 'userSystem' },
+      ],
+    });
+
+    openaiCreate.mockResolvedValueOnce({
+      choices: [{ message: { content: 'sum' } }],
+    });
+    const resSum = await service.summarize([]);
+    expect(resSum).toBe('sum');
+    expect(openaiCreate).toHaveBeenCalledWith({
+      model: env.getModels().summary,
+      messages: [
+        { role: 'system', content: 'sumSystem' },
+        {
+          role: 'user',
+          content: 'История диалога:\n',
+        },
+      ],
+    });
+  });
+
   it('logPrompt writes only when LOG_PROMPTS=true', async () => {
     openaiCreate.mockResolvedValue({
       choices: [{ message: { content: 'r' } }],

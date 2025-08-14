@@ -42,6 +42,18 @@ describe('MentionTrigger', () => {
     expect(res).toBeNull();
     expect(ctx.text).toBe('');
   });
+
+  it('handles non-string fields gracefully', async () => {
+    const ctx: TriggerContext = { text: '', replyText: '', chatId: 1 };
+    const telegrafCtx = { message: {}, me: undefined } as unknown as Context;
+    const res = await trigger.apply(
+      telegrafCtx,
+      ctx,
+      new DefaultDialogueManager(new TestEnvService())
+    );
+    expect(res).toBeNull();
+    expect(ctx.text).toBe('');
+  });
 });
 
 describe('NameTrigger', () => {

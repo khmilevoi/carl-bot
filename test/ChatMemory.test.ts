@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatMessage } from '../src/services/ai/AIService.interface';
-import { ChatMemory } from '../src/services/chat/ChatMemory';
+import { ChatMemory, ChatMemoryManager } from '../src/services/chat/ChatMemory';
+import { ChatResetService } from '../src/services/chat/ChatResetService.interface';
 import { HistorySummarizer } from '../src/services/chat/HistorySummarizer';
+import { EnvService } from '../src/services/env/EnvService';
 import { MessageService } from '../src/services/messages/MessageService.interface';
 import { StoredMessage } from '../src/services/messages/StoredMessage.interface';
 
@@ -126,5 +128,49 @@ describe('ChatMemory', () => {
         chatId: 1,
       },
     ]);
+  });
+
+  it('assesses users when summarizer returns true', async () => {
+    summarizer.summarize.mockResolvedValue(true);
+    await memory.addMessage({
+      chatId: 1,
+      role: 'user',
+      content: 'msg',
+    });
+    expect(summarizer.assessUsers).toHaveBeenCalledWith(1, [
+      { role: 'user', content: 'msg', chatId: 1 },
+    ]);
+  });
+});
+
+describe('ChatMemoryManager', () => {
+  class DummyResetService implements ChatResetService {
+    reset = vi.fn(async () => {});
+  }
+  class DummyEnvService implements EnvService {
+    env = { CHAT_HISTORY_LIMIT: 2 } as EnvService['env'];
+  }
+
+  it('creates ChatMemory with limit from env', () => {
+    const manager = new ChatMemoryManager(
+      new FakeMessageService(),
+      new FakeHistorySummarizer(),
+      new DummyResetService(),
+      new DummyEnvService()
+    );
+    const mem = manager.get(5);
+    expect(mem).toBeInstanceOf(ChatMemory);
+  });
+
+  it('resets memory using ChatResetService', async () => {
+    const reset = new DummyResetService();
+    const manager = new ChatMemoryManager(
+      new FakeMessageService(),
+      new FakeHistorySummarizer(),
+      reset,
+      new DummyEnvService()
+    );
+    await manager.reset(7);
+    expect(reset.reset).toHaveBeenCalledWith(7);
   });
 });
