@@ -59,7 +59,7 @@ export class DefaultTriggerPipeline implements TriggerPipeline {
     if (!result) {
       result = await this.nameTrigger.apply(ctx, context, this.dialogue);
     }
-    if (!result) {
+    if (!result && !inDialogue) {
       result = await this.interestTrigger.apply(ctx, context, this.dialogue);
     }
 

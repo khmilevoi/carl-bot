@@ -11,8 +11,12 @@ export class InterestTrigger implements Trigger {
   async apply(
     _ctx: Context,
     { chatId }: TriggerContext,
-    _dialogue: DialogueManager
+    dialogue: DialogueManager
   ): Promise<TriggerResult | null> {
+    if (dialogue.isActive(chatId)) {
+      return null;
+    }
+
     const result = await this.checker.check(chatId);
     if (result) {
       logger.debug({ chatId }, 'Interest trigger matched');
