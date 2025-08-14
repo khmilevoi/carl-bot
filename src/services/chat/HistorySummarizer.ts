@@ -95,12 +95,18 @@ export class DefaultHistorySummarizer implements HistorySummarizer {
       if (
         m.userId !== undefined &&
         m.role === 'user' &&
-        m.username &&
+        m.username !== undefined &&
+        m.username !== '' &&
         !seen.has(m.userId)
       ) {
         seen.add(m.userId);
         const user = await this.users.findById(m.userId);
-        if (user?.attitude) {
+        if (
+          user !== undefined &&
+          user.attitude !== undefined &&
+          user.attitude !== null &&
+          user.attitude !== ''
+        ) {
           prevAttitudes.push({ username: m.username, attitude: user.attitude });
         }
       }

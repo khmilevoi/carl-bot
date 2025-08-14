@@ -102,7 +102,10 @@ export class TelegramBot {
   ): Promise<void> {
     await this.approvalService.pending(chatId);
 
-    const name = title ? `${title} (${chatId})` : `Chat ${chatId}`;
+    const name =
+      title !== undefined && title !== ''
+        ? `${title} (${chatId})`
+        : `Chat ${chatId}`;
     await this.bot.telegram.sendMessage(
       this.env.ADMIN_CHAT_ID,
       `${name} запросил доступ`,
@@ -129,7 +132,7 @@ export class TelegramBot {
 
     this.bot.on('my_chat_member', async (ctx) => {
       const chatId = ctx.chat?.id;
-      assert(chatId, 'This is not a chat');
+      assert(chatId !== undefined, 'This is not a chat');
       logger.info({ chatId }, 'Bot added to chat');
       const status = await this.approvalService.getStatus(chatId);
       if (status !== 'approved') {
@@ -249,7 +252,7 @@ export class TelegramBot {
 
   private async showMenu(ctx: Context) {
     const chatId = ctx.chat?.id;
-    assert(chatId, 'This is not a chat');
+    assert(chatId !== undefined, 'This is not a chat');
 
     if (chatId === this.env.ADMIN_CHAT_ID) {
       await this.router.show(ctx, 'admin_menu');
@@ -267,7 +270,7 @@ export class TelegramBot {
     }
 
     const userId = ctx.from?.id;
-    if (!userId) return;
+    if (userId === undefined) return;
     const allowed = await this.admin.hasAccess(chatId, userId);
     if (!allowed) {
       await this.router.show(ctx, 'no_access');
@@ -304,7 +307,7 @@ export class TelegramBot {
 
   private async handleChatRequest(ctx: Context) {
     const chatId = ctx.chat?.id;
-    assert(chatId, 'This is not a chat');
+    assert(chatId !== undefined, 'This is not a chat');
     const title = 'title' in ctx.chat! ? ctx.chat.title : undefined;
     logger.info({ chatId, title }, 'Chat access request received');
     await this.sendChatApprovalRequest(chatId, title);
@@ -315,13 +318,14 @@ export class TelegramBot {
   private async handleRequestAccess(ctx: Context) {
     const chatId = ctx.chat?.id;
     const userId = ctx.from?.id;
-    assert(chatId, 'This is not a chat');
-    assert(userId, 'No user id');
+    assert(chatId !== undefined, 'This is not a chat');
+    assert(userId !== undefined, 'No user id');
     const firstName = ctx.from?.first_name;
     const lastName = ctx.from?.last_name;
     const username = ctx.from?.username;
     const fullName = [firstName, lastName].filter(Boolean).join(' ');
-    const usernamePart = username ? ` @${username}` : '';
+    const usernamePart =
+      username !== undefined && username !== '' ? ` @${username}` : '';
     const approveData = `user_approve:${chatId}:${userId}`;
     const msg = `Chat ${chatId} user ${userId} (${fullName}${usernamePart}) requests data access.`;
     await ctx.telegram.sendMessage(this.env.ADMIN_CHAT_ID, msg, {
@@ -340,8 +344,8 @@ export class TelegramBot {
   private async handleExportData(ctx: Context) {
     const chatId = ctx.chat?.id;
     const userId = ctx.from?.id;
-    assert(chatId, 'This is not a chat');
-    assert(userId, 'No user id');
+    assert(chatId !== undefined, 'This is not a chat');
+    assert(userId !== undefined, 'No user id');
 
     if (chatId !== this.env.ADMIN_CHAT_ID) {
       const allowed = await this.admin.hasAccess(chatId, userId);
@@ -385,8 +389,8 @@ export class TelegramBot {
   private async handleResetMemory(ctx: Context) {
     const chatId = ctx.chat?.id;
     const userId = ctx.from?.id;
-    assert(chatId, 'This is not a chat');
-    assert(userId, 'No user id');
+    assert(chatId !== undefined, 'This is not a chat');
+    assert(userId !== undefined, 'No user id');
 
     if (chatId !== this.env.ADMIN_CHAT_ID) {
       const allowed = await this.admin.hasAccess(chatId, userId);
@@ -409,7 +413,7 @@ export class TelegramBot {
 
   private async handleText(ctx: Context) {
     const chatId = ctx.chat?.id;
-    assert(!!chatId, 'This is not a chat');
+    assert(chatId !== undefined, 'This is not a chat');
     if (chatId === this.env.ADMIN_CHAT_ID) {
       logger.debug({ chatId }, 'Ignoring admin chat message');
       return;
@@ -442,7 +446,7 @@ export class TelegramBot {
 
     logger.debug({ chatId }, 'Checking triggers');
     const triggerResult = await this.pipeline.shouldRespond(ctx, context);
-    if (!triggerResult) {
+    if (triggerResult == null) {
       logger.debug({ chatId }, 'No trigger matched');
       return;
     }
@@ -458,7 +462,8 @@ export class TelegramBot {
 
       const replyId = triggerResult.replyToMessageId ?? userMsg.messageId;
       ctx.reply(answer, {
-        reply_parameters: replyId ? { message_id: replyId } : undefined,
+        reply_parameters:
+          replyId !== undefined ? { message_id: replyId } : undefined,
       });
       logger.debug({ chatId }, 'Reply sent');
     });

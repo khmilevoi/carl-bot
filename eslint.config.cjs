@@ -9,6 +9,12 @@ module.exports = [
   js.configs.recommended,
   ...tseslint.configs['flat/recommended'],
   {
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: __dirname,
+      },
+    },
     plugins: {
       'simple-import-sort': simpleImportSort,
       'unused-imports': unusedImports,
@@ -37,6 +43,7 @@ module.exports = [
           argsIgnorePattern: '^_',
         },
       ],
+      '@typescript-eslint/strict-boolean-expressions': 'error',
       '@typescript-eslint/member-ordering': [
         'error',
         {
@@ -82,6 +89,12 @@ module.exports = [
   },
   prettier,
   {
-    ignores: ['dist/**', 'node_modules/**', 'eslint.config.cjs'],
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'eslint.config.cjs',
+      'test/**',
+      'vitest.config.ts',
+    ],
   },
 ];

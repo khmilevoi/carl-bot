@@ -24,15 +24,15 @@ export class WindowRouter {
 
   async show(ctx: Context, id: string, skipStack = false): Promise<void> {
     const window = this.windows.find((w) => w.id === id);
-    if (!window) {
+    if (window === undefined) {
       return;
     }
 
     const chatId = ctx.chat?.id;
-    assert(chatId, 'This is not a chat');
+    assert(chatId !== undefined, 'This is not a chat');
 
     const current = this.currentWindow.get(chatId);
-    if (!skipStack && current && current !== id) {
+    if (!skipStack && current !== undefined && current !== id) {
       this.getStack(chatId).push(current);
     }
     this.currentWindow.set(chatId, id);
@@ -55,16 +55,16 @@ export class WindowRouter {
       for (const button of window.buttons) {
         this.bot.action(button.callback, async (ctx) => {
           const chatId = ctx.chat?.id;
-          assert(chatId, 'This is not a chat');
+          assert(chatId !== undefined, 'This is not a chat');
           await ctx.deleteMessage().catch(() => {});
 
-          if (button.target) {
+          if (button.target !== undefined) {
             await this.show(ctx, button.target);
           }
 
-          if (button.action) {
+          if (button.action !== undefined) {
             const action = this.actions[button.action];
-            if (action) {
+            if (typeof action === 'function') {
               await action(ctx);
             }
           }
@@ -76,12 +76,12 @@ export class WindowRouter {
 
     this.bot.action('back', async (ctx) => {
       const chatId = ctx.chat?.id;
-      assert(chatId, 'This is not a chat');
+      assert(chatId !== undefined, 'This is not a chat');
       await ctx.deleteMessage().catch(() => {});
 
       const stack = this.getStack(chatId);
       const prev = stack.pop();
-      if (prev) {
+      if (prev !== undefined) {
         await this.show(ctx, prev, true);
       } else {
         this.currentWindow.delete(chatId);
@@ -93,7 +93,7 @@ export class WindowRouter {
 
   private getStack(chatId: number): StackItem[] {
     let stack = this.stacks.get(chatId);
-    if (!stack) {
+    if (stack === undefined) {
       stack = [];
       this.stacks.set(chatId, stack);
     }

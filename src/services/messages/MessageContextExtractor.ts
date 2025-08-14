@@ -33,7 +33,7 @@ export class DefaultMessageContextExtractor implements MessageContextExtractor {
     let replyUsername: string | undefined;
     let quoteText: string | undefined;
 
-    if (message?.reply_to_message) {
+    if (message?.reply_to_message !== undefined) {
       const pieces: string[] = [];
       const reply = message.reply_to_message as Record<string, unknown>;
       if (typeof reply.text === 'string') {
@@ -49,24 +49,28 @@ export class DefaultMessageContextExtractor implements MessageContextExtractor {
       const from = message.reply_to_message.from as
         | { first_name?: string; last_name?: string; username?: string }
         | undefined;
-      if (from) {
-        if (from.first_name && from.last_name) {
-          replyUsername = from.first_name + ' ' + from.last_name;
+      if (from !== undefined) {
+        if (from.first_name !== undefined && from.last_name !== undefined) {
+          replyUsername = `${from.first_name} ${from.last_name}`;
         } else {
-          replyUsername = from.first_name || from.username || undefined;
+          replyUsername = from.first_name ?? from.username;
         }
       }
     }
-
-    if (message?.quote && typeof message.quote.text === 'string') {
+    if (
+      message?.quote !== undefined &&
+      typeof message.quote.text === 'string'
+    ) {
       quoteText = message.quote.text;
     }
 
-    const username = ctx.from?.username || 'Имя неизвестно';
+    const username = ctx.from?.username ?? 'Имя неизвестно';
+    const firstName = ctx.from?.first_name;
+    const lastName = ctx.from?.last_name;
     const fullName =
-      ctx.from?.first_name && ctx.from?.last_name
-        ? ctx.from.first_name + ' ' + ctx.from.last_name
-        : ctx.from?.first_name || ctx.from?.last_name || username;
+      firstName !== undefined && lastName !== undefined
+        ? `${firstName} ${lastName}`
+        : (firstName ?? lastName ?? username);
 
     return { replyText, replyUsername, quoteText, username, fullName };
   }

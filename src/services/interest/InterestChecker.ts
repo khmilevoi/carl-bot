@@ -51,14 +51,14 @@ export class DefaultInterestChecker implements InterestChecker {
       chatId,
       this.interval
     );
-    const summary = (await this.summaries.getSummary(chatId)) || '';
+    const summary = (await this.summaries.getSummary(chatId)) ?? '';
     const result = await this.ai.checkInterest(history, summary);
-    if (!result) {
+    if (result == null) {
       return null;
     }
     const msg =
       history.find((m) => m.messageId?.toString() === result.messageId)
-        ?.content || '';
+        ?.content ?? '';
     return { ...result, message: msg };
   }
 }

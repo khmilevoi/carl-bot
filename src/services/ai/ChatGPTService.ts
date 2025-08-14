@@ -41,7 +41,7 @@ export class ChatGPTService implements AIService {
     const persona = await this.prompts.getPersona();
 
     logger.debug(
-      { messages: history.length, summary: !!summary },
+      { messages: history.length, summary: Boolean(summary) },
       'Sending chat completion request'
     );
 
@@ -57,13 +57,13 @@ export class ChatGPTService implements AIService {
       },
     ];
 
-    if (summary) {
+    if (summary !== undefined && summary !== '') {
       messages.push({
         role: 'system',
         content: await this.prompts.getAskSummaryPrompt(summary),
       });
     }
-    if (triggerReason) {
+    if (triggerReason !== undefined) {
       messages.push({
         role: 'system',
         content: await this.prompts.getTriggerPrompt(
@@ -224,7 +224,7 @@ export class ChatGPTService implements AIService {
       { history: history.length, prevLength: prev?.length ?? 0 },
       'Sending summarization request'
     );
-    if (prev) {
+    if (prev !== undefined && prev !== '') {
       messages.push({
         role: 'user',
         content: await this.prompts.getPreviousSummaryPrompt(prev),
@@ -265,7 +265,7 @@ export class ChatGPTService implements AIService {
     messages: OpenAI.ChatCompletionMessageParam[],
     response?: string
   ): Promise<void> {
-    if (!this.envService.env.LOG_PROMPTS) {
+    if (this.envService.env.LOG_PROMPTS !== true) {
       return;
     }
     const filePath = path.join(process.cwd(), 'prompts.log');
@@ -273,7 +273,11 @@ export class ChatGPTService implements AIService {
       messages,
       null,
       2
-    )}\n${response ? `RESPONSE:\n${response}\n` : ''}---\n`;
+    )}\n${
+      response !== undefined && response !== ''
+        ? `RESPONSE:\n${response}\n`
+        : ''
+    }---\n`;
     try {
       await fs.appendFile(filePath, entry);
     } catch (err) {

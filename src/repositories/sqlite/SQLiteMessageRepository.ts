@@ -60,15 +60,23 @@ export class SQLiteMessageRepository implements MessageRepository {
           content: r.content,
           chatId: r.chat_id ?? undefined,
         };
-        if (r.username) entry.username = r.username;
-        const fullName = [r.first_name, r.last_name].filter(Boolean).join(' ');
-        if (fullName) entry.fullName = fullName;
-        if (r.reply_text) entry.replyText = r.reply_text;
-        if (r.reply_username) entry.replyUsername = r.reply_username;
-        if (r.quote_text) entry.quoteText = r.quote_text;
-        if (r.user_id) entry.userId = r.user_id;
-        if (r.message_id) entry.messageId = r.message_id;
-        if (r.attitude) entry.attitude = r.attitude;
+        if (r.username !== null && r.username !== '')
+          entry.username = r.username;
+        const fullName = [r.first_name, r.last_name]
+          .filter((n): n is string => n !== null && n !== '')
+          .join(' ');
+        if (fullName !== '') entry.fullName = fullName;
+        if (r.reply_text !== null && r.reply_text !== '')
+          entry.replyText = r.reply_text;
+        if (r.reply_username !== null && r.reply_username !== '')
+          entry.replyUsername = r.reply_username;
+        if (r.quote_text !== null && r.quote_text !== '')
+          entry.quoteText = r.quote_text;
+        if (r.user_id !== null && r.user_id !== 0) entry.userId = r.user_id;
+        if (r.message_id !== null && r.message_id !== 0)
+          entry.messageId = r.message_id;
+        if (r.attitude !== null && r.attitude !== '')
+          entry.attitude = r.attitude;
         return entry;
       }) ?? []
     );
@@ -115,15 +123,23 @@ export class SQLiteMessageRepository implements MessageRepository {
           content: r.content,
           chatId: r.chat_id ?? undefined,
         };
-        if (r.username) entry.username = r.username;
-        const fullName = [r.first_name, r.last_name].filter(Boolean).join(' ');
-        if (fullName) entry.fullName = fullName;
-        if (r.reply_text) entry.replyText = r.reply_text;
-        if (r.reply_username) entry.replyUsername = r.reply_username;
-        if (r.quote_text) entry.quoteText = r.quote_text;
-        if (r.user_id) entry.userId = r.user_id;
-        if (r.message_id) entry.messageId = r.message_id;
-        if (r.attitude) entry.attitude = r.attitude;
+        if (r.username !== null && r.username !== '')
+          entry.username = r.username;
+        const fullName = [r.first_name, r.last_name]
+          .filter((n): n is string => n !== null && n !== '')
+          .join(' ');
+        if (fullName !== '') entry.fullName = fullName;
+        if (r.reply_text !== null && r.reply_text !== '')
+          entry.replyText = r.reply_text;
+        if (r.reply_username !== null && r.reply_username !== '')
+          entry.replyUsername = r.reply_username;
+        if (r.quote_text !== null && r.quote_text !== '')
+          entry.quoteText = r.quote_text;
+        if (r.user_id !== null && r.user_id !== 0) entry.userId = r.user_id;
+        if (r.message_id !== null && r.message_id !== 0)
+          entry.messageId = r.message_id;
+        if (r.attitude !== null && r.attitude !== '')
+          entry.attitude = r.attitude;
         return entry;
       }) ?? []
     );

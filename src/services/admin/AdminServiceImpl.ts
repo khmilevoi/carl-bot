@@ -151,7 +151,7 @@ export class AdminServiceImpl implements AdminService {
         offset
       );
       if (rows.length === 0) break;
-      if (!header) {
+      if (header === undefined) {
         header = Object.keys(rows[0]).join(',');
       }
       for (const row of rows) {
@@ -163,7 +163,7 @@ export class AdminServiceImpl implements AdminService {
       offset += rows.length;
       await new Promise<void>((resolve) => setImmediate(resolve));
     }
-    if (!header) {
+    if (header === undefined) {
       return null;
     }
     const csv = header + '\n' + lines.join('\n');
