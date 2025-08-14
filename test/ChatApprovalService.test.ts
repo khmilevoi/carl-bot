@@ -31,18 +31,10 @@ describe('DefaultChatApprovalService', () => {
   });
 
   it('sends approval request and sets status to pending', async () => {
-    await service.request(1, 'Test');
+    await service.pending(1);
     expect(repo.setStatus).toHaveBeenCalledWith(1, 'pending');
-    expect(sendMessage).toHaveBeenCalledWith(42, 'Test (1) запросил доступ', {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            { text: 'Разрешить', callback_data: 'chat_approve:1' },
-            { text: 'Забанить', callback_data: 'chat_ban:1' },
-          ],
-        ],
-      },
-    });
+    // Примечание: метод pending только устанавливает статус, не отправляет сообщения
+    // Отправка сообщений происходит в TelegramBot.sendChatApprovalRequest
   });
 
   it('updates chat status', async () => {

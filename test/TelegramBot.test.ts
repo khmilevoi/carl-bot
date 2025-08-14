@@ -18,7 +18,11 @@ class MockChatMemoryManager {
   reset = vi.fn();
 }
 
-class DummyAdmin {}
+class DummyAdmin {
+  hasAccess = vi.fn(async () => true);
+  exportTables = vi.fn(async () => []);
+  createAccessKey = vi.fn(async () => new Date());
+}
 
 class DummyExtractor {
   extract() {
@@ -50,11 +54,18 @@ describe('TelegramBot', () => {
     const configureSpy = vi
       .spyOn(TelegramBot.prototype as any, 'configure')
       .mockImplementation(() => {});
+
+    // Мокаем approvalService.getStatus чтобы возвращать 'approved' и не показывать кнопки
+    const mockApprovalService = {
+      ...new DummyApprovalService(),
+      getStatus: vi.fn(async () => 'approved'),
+    };
+
     const bot = new TelegramBot(
       new MockEnvService() as any,
       memories as any,
       new DummyAdmin() as any,
-      new DummyApprovalService() as any,
+      mockApprovalService as any,
       new DummyExtractor() as any,
       new DummyPipeline() as any,
       new DummyResponder() as any
@@ -65,6 +76,8 @@ describe('TelegramBot', () => {
       chat: { id: 1 },
       from: { id: 2 },
       message: { text: 'hi', message_id: 3 },
+      reply: vi.fn(),
+      answerCbQuery: vi.fn(),
     };
 
     await (bot as any).handleText(ctx);

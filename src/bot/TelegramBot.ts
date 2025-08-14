@@ -168,6 +168,44 @@ export class TelegramBot {
       }
     });
 
+    // Добавляем команду для запроса загрузки данных через кнопки
+    this.bot.command('request_export', async (ctx) => {
+      const chatId = ctx.chat?.id;
+      const userId = ctx.from?.id;
+      assert(chatId, 'This is not a chat');
+      assert(userId, 'No user id');
+
+      // Проверяем, есть ли уже доступ
+      const allowed = await this.admin.hasAccess(chatId, userId);
+      if (allowed) {
+        // Если доступ есть, сразу показываем кнопку для экспорта
+        await ctx.reply('У вас есть доступ к данным. Выберите действие:', {
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: '📊 Загрузить данные', callback_data: 'export_data' }],
+            ],
+          },
+        });
+      } else {
+        // Если доступа нет, показываем кнопку для запроса доступа
+        await ctx.reply(
+          'Для загрузки данных нужен доступ. Выберите действие:',
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  {
+                    text: '🔑 Запросить доступ',
+                    callback_data: 'chat_request',
+                  },
+                ],
+              ],
+            },
+          }
+        );
+      }
+    });
+
     this.bot.telegram
       .setMyCommands([
         { command: 'start', description: 'Приветствие' },
@@ -180,6 +218,10 @@ export class TelegramBot {
         {
           command: 'export',
           description: 'Выгрузить данные в CSV (нужен доступ)',
+        },
+        {
+          command: 'request_export',
+          description: 'Запросить загрузку данных через кнопки',
         },
         { command: 'approve', description: 'Одобрить доступ к данным (админ)' },
         { command: 'ban_chat', description: 'Забанить чат (админ)' },
@@ -206,6 +248,18 @@ export class TelegramBot {
         });
       } else {
         logger.info({ chatId, status }, 'Chat already approved');
+        // Показываем кнопки для работы с данными, если чат уже одобрен
+        await ctx.reply(
+          'Добро пожаловать! У вас есть доступ к данным. Выберите действие:',
+          {
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: '📊 Загрузить данные', callback_data: 'export_data' }],
+                [{ text: '🔄 Сбросить память', callback_data: 'reset_memory' }],
+              ],
+            },
+          }
+        );
       }
     });
 
@@ -219,6 +273,71 @@ export class TelegramBot {
       await ctx.answerCbQuery();
       await ctx.reply('Запрос отправлен');
       logger.info({ chatId }, 'Chat access request sent to admin');
+    });
+
+    // Обработчик для кнопки загрузки данных
+    this.bot.action('export_data', async (ctx) => {
+      const chatId = ctx.chat?.id;
+      const userId = ctx.from?.id;
+      assert(chatId, 'This is not a chat');
+      assert(userId, 'No user id');
+
+      const allowed = await this.admin.hasAccess(chatId, userId);
+      if (!allowed) {
+        await ctx.answerCbQuery('Нет доступа или ключ просрочен');
+        return;
+      }
+
+      await ctx.answerCbQuery('Начинаю загрузку данных...');
+
+      try {
+        const files = await this.admin.exportTables();
+        if (files.length === 0) {
+          await ctx.reply('Нет данных для экспорта');
+          return;
+        }
+
+        await ctx.reply(
+          `Найдено ${files.length} таблиц для экспорта. Начинаю загрузку...`
+        );
+
+        for (const f of files) {
+          await ctx.replyWithDocument({
+            source: f.buffer,
+            filename: f.filename,
+          });
+          await new Promise<void>((resolve) => setImmediate(resolve));
+        }
+
+        await ctx.reply('✅ Загрузка данных завершена!');
+      } catch (error) {
+        logger.error({ error, chatId }, 'Failed to export data');
+        await ctx.reply('❌ Ошибка при загрузке данных. Попробуйте позже.');
+      }
+    });
+
+    // Обработчик для кнопки сброса памяти
+    this.bot.action('reset_memory', async (ctx) => {
+      const chatId = ctx.chat?.id;
+      const userId = ctx.from?.id;
+      assert(chatId, 'This is not a chat');
+      assert(userId, 'No user id');
+
+      const allowed = await this.admin.hasAccess(chatId, userId);
+      if (!allowed) {
+        await ctx.answerCbQuery('Нет доступа или ключ просрочен');
+        return;
+      }
+
+      await ctx.answerCbQuery('Сбрасываю память диалога...');
+
+      try {
+        await this.memories.reset(chatId);
+        await ctx.reply('✅ Контекст диалога сброшен!');
+      } catch (error) {
+        logger.error({ error, chatId }, 'Failed to reset memory');
+        await ctx.reply('❌ Ошибка при сбросе памяти. Попробуйте позже.');
+      }
     });
 
     this.bot.action(/^chat_approve:(\S+)$/, async (ctx) => {
@@ -276,6 +395,25 @@ export class TelegramBot {
     if (status === 'banned') {
       logger.warn({ chatId }, 'Message from banned chat ignored');
       return;
+    }
+
+    // Если чат одобрен, проверяем доступ пользователя и показываем кнопки
+    if (status === 'approved') {
+      const userId = ctx.from?.id;
+      if (userId) {
+        const hasAccess = await this.admin.hasAccess(chatId, userId);
+        if (hasAccess) {
+          // Показываем кнопки для работы с данными
+          await ctx.reply('Выберите действие:', {
+            reply_markup: {
+              inline_keyboard: [
+                [{ text: '📊 Загрузить данные', callback_data: 'export_data' }],
+                [{ text: '🔄 Сбросить память', callback_data: 'reset_memory' }],
+              ],
+            },
+          });
+        }
+      }
     }
 
     const meta = this.extractor.extract(ctx);
