@@ -22,13 +22,16 @@ function setupRouter() {
     windows,
     {} as Record<string, (ctx: Context) => Promise<void> | void>
   );
-  const goHandler = actionSpy.mock.calls.find(
+  const goCall = actionSpy.mock.calls.find(
     ([pattern]) => pattern === 'to_second'
-  )![1];
-  const backHandler = actionSpy.mock.calls.find(
-    ([pattern]) => pattern === 'back'
-  )![1];
+  );
+  const backCall = actionSpy.mock.calls.find(([pattern]) => pattern === 'back');
   actionSpy.mockRestore();
+  if (!goCall || !backCall) {
+    throw new Error('Handlers not registered');
+  }
+  const goHandler = goCall[1];
+  const backHandler = backCall[1];
   return { router, goHandler, backHandler };
 }
 
