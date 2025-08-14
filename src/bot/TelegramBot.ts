@@ -63,170 +63,11 @@ export class TelegramBot {
   }
 
   private configure() {
-    this.bot.start((ctx) => ctx.reply('Привет! Я Карл.'));
-
-    this.bot.command('reset', async (ctx) => {
-      const chatId = ctx.chat?.id;
-      const userId = ctx.from?.id;
-      assert(chatId, 'This is not a chat');
-      assert(userId, 'No user id');
-      const allowed = await this.admin.hasAccess(chatId, userId);
-      if (!allowed) {
-        ctx.reply('Нет доступа или ключ просрочен');
-        return;
-      }
-      await this.memories.reset(chatId);
-      ctx.reply('Контекст диалога сброшен!');
-    });
-
-    this.bot.command('ping', (ctx) => ctx.reply('pong'));
-
-    this.bot.command('getkey', async (ctx) => {
-      const adminChatId = this.env.ADMIN_CHAT_ID;
-      const userId = ctx.from?.id;
-      assert(userId, 'No user id');
-      const approveCmd = `/approve ${ctx.chat!.id} ${userId}`;
-      const msg = [
-        `Chat ${ctx.chat!.id} user ${userId} requests access. Approve with:`,
-        '`',
-        approveCmd,
-        '`',
-      ].join('\n');
-      await ctx.telegram.sendMessage(adminChatId, msg, {
-        parse_mode: 'Markdown',
-      });
-      ctx.reply('Запрос отправлен администратору.');
-    });
-
-    this.bot.command('approve', async (ctx) => {
-      const adminChatId = this.env.ADMIN_CHAT_ID;
-      if (ctx.chat?.id !== adminChatId) return;
-      const parts = ctx.message?.text.split(' ') ?? [];
-      const targetChat = Number(parts[1]);
-      const targetUser = Number(parts[2]);
-      if (!targetChat || !targetUser) {
-        ctx.reply('Укажите ID чата и ID пользователя');
-        return;
-      }
-      const expiresAt = await this.admin.createAccessKey(
-        targetChat,
-        targetUser
-      );
-      await ctx.telegram.sendMessage(
-        targetChat,
-        `Доступ к данным разрешен для пользователя ${targetUser} до ${expiresAt.toISOString()}. Используйте /export и /reset`
-      );
-      ctx.reply(`Одобрено для чата ${targetChat} и пользователя ${targetUser}`);
-    });
-
-    this.bot.command('ban_chat', async (ctx) => {
-      const adminChatId = this.env.ADMIN_CHAT_ID;
-      if (ctx.chat?.id !== adminChatId) return;
-      const parts = ctx.message?.text.split(' ') ?? [];
-      const targetChat = Number(parts[1]);
-      if (!targetChat) {
-        ctx.reply('Укажите ID чата');
-        return;
-      }
-      await this.approvalService.ban(targetChat);
-      await ctx.reply(`Чат ${targetChat} забанен`);
-      await ctx.telegram.sendMessage(targetChat, 'Доступ запрещён');
-    });
-
-    this.bot.command('unban_chat', async (ctx) => {
-      const adminChatId = this.env.ADMIN_CHAT_ID;
-      if (ctx.chat?.id !== adminChatId) return;
-      const parts = ctx.message?.text.split(' ') ?? [];
-      const targetChat = Number(parts[1]);
-      if (!targetChat) {
-        ctx.reply('Укажите ID чата');
-        return;
-      }
-      await this.approvalService.unban(targetChat);
-      await ctx.reply(`Чат ${targetChat} разбанен`);
-      await ctx.telegram.sendMessage(targetChat, 'Доступ разрешён');
-    });
-
-    this.bot.command('export', async (ctx) => {
-      const chatId = ctx.chat?.id;
-      const userId = ctx.from?.id;
-      assert(chatId, 'This is not a chat');
-      assert(userId, 'No user id');
-      const allowed = await this.admin.hasAccess(chatId, userId);
-      if (!allowed) {
-        ctx.reply('Нет доступа или ключ просрочен');
-        return;
-      }
-      const files = await this.admin.exportTables();
-      if (files.length === 0) {
-        ctx.reply('Нет данных для экспорта');
-        return;
-      }
-      for (const f of files) {
-        await ctx.replyWithDocument({ source: f.buffer, filename: f.filename });
-        await new Promise<void>((resolve) => setImmediate(resolve));
-      }
-    });
-
-    // Добавляем команду для запроса загрузки данных через кнопки
-    this.bot.command('request_export', async (ctx) => {
-      const chatId = ctx.chat?.id;
-      const userId = ctx.from?.id;
-      assert(chatId, 'This is not a chat');
-      assert(userId, 'No user id');
-
-      // Проверяем, есть ли уже доступ
-      const allowed = await this.admin.hasAccess(chatId, userId);
-      if (allowed) {
-        // Если доступ есть, сразу показываем кнопку для экспорта
-        await ctx.reply('У вас есть доступ к данным. Выберите действие:', {
-          reply_markup: {
-            inline_keyboard: [
-              [{ text: '📊 Загрузить данные', callback_data: 'export_data' }],
-            ],
-          },
-        });
-      } else {
-        // Если доступа нет, показываем кнопку для запроса доступа
-        await ctx.reply(
-          'Для загрузки данных нужен доступ. Выберите действие:',
-          {
-            reply_markup: {
-              inline_keyboard: [
-                [
-                  {
-                    text: '🔑 Запросить доступ',
-                    callback_data: 'chat_request',
-                  },
-                ],
-              ],
-            },
-          }
-        );
-      }
-    });
+    this.bot.start((ctx) => this.showMenu(ctx));
+    this.bot.command('menu', (ctx) => this.showMenu(ctx));
 
     this.bot.telegram
-      .setMyCommands([
-        { command: 'start', description: 'Приветствие' },
-        {
-          command: 'reset',
-          description: 'Сбросить память диалога (нужен доступ)',
-        },
-        { command: 'ping', description: 'Ответ pong' },
-        { command: 'getkey', description: 'Запросить доступ к данным' },
-        {
-          command: 'export',
-          description: 'Выгрузить данные в CSV (нужен доступ)',
-        },
-        {
-          command: 'request_export',
-          description: 'Запросить загрузку данных через кнопки',
-        },
-        { command: 'approve', description: 'Одобрить доступ к данным (админ)' },
-        { command: 'ban_chat', description: 'Забанить чат (админ)' },
-        { command: 'unban_chat', description: 'Разбанить чат (админ)' },
-      ])
+      .setMyCommands([{ command: 'menu', description: 'Показать меню' }])
       .catch((err) => logger.error({ err }, 'Failed to set bot commands'));
 
     this.bot.on('my_chat_member', async (ctx) => {
@@ -246,20 +87,6 @@ export class TelegramBot {
             ],
           },
         });
-      } else {
-        logger.info({ chatId, status }, 'Chat already approved');
-        // Показываем кнопки для работы с данными, если чат уже одобрен
-        await ctx.reply(
-          'Добро пожаловать! У вас есть доступ к данным. Выберите действие:',
-          {
-            reply_markup: {
-              inline_keyboard: [
-                [{ text: '📊 Загрузить данные', callback_data: 'export_data' }],
-                [{ text: '🔄 Сбросить память', callback_data: 'reset_memory' }],
-              ],
-            },
-          }
-        );
       }
     });
 
@@ -273,6 +100,27 @@ export class TelegramBot {
       await ctx.answerCbQuery();
       await ctx.reply('Запрос отправлен');
       logger.info({ chatId }, 'Chat access request sent to admin');
+    });
+
+    this.bot.action('request_access', async (ctx) => {
+      const chatId = ctx.chat?.id;
+      const userId = ctx.from?.id;
+      assert(chatId, 'This is not a chat');
+      assert(userId, 'No user id');
+      const approveData = `user_approve:${chatId}:${userId}`;
+      const msg = `Chat ${chatId} user ${userId} requests data access.`;
+      await ctx.telegram.sendMessage(this.env.ADMIN_CHAT_ID, msg, {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: 'Одобрить', callback_data: approveData },
+              { text: 'Забанить чат', callback_data: `chat_ban:${chatId}` },
+            ],
+          ],
+        },
+      });
+      await ctx.answerCbQuery();
+      await ctx.reply('Запрос отправлен администратору.');
     });
 
     // Обработчик для кнопки загрузки данных
@@ -373,10 +221,91 @@ export class TelegramBot {
       await this.approvalService.ban(chatId);
       await ctx.answerCbQuery('Чат забанен');
       await ctx.telegram.sendMessage(chatId, 'Доступ запрещён');
+      await ctx.reply(`Чат ${chatId} забанен`, {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: 'Разбанить', callback_data: `chat_unban:${chatId}` }],
+          ],
+        },
+      });
       logger.info({ chatId }, 'Chat access banned successfully');
     });
 
+    this.bot.action(/^chat_unban:(\S+)$/, async (ctx) => {
+      const adminChatId = this.env.ADMIN_CHAT_ID;
+      if (ctx.chat?.id !== adminChatId) {
+        await ctx.answerCbQuery();
+        return;
+      }
+      const chatId = Number(ctx.match[1]);
+      await this.approvalService.unban(chatId);
+      await ctx.answerCbQuery('Чат разбанен');
+      await ctx.reply(`Чат ${chatId} разбанен`);
+      await ctx.telegram.sendMessage(chatId, 'Доступ разрешён');
+    });
+
+    this.bot.action(/^user_approve:(\S+):(\S+)$/, async (ctx) => {
+      const adminChatId = this.env.ADMIN_CHAT_ID;
+      if (ctx.chat?.id !== adminChatId) {
+        await ctx.answerCbQuery();
+        return;
+      }
+      const chatId = Number(ctx.match[1]);
+      const userId = Number(ctx.match[2]);
+      const expiresAt = await this.admin.createAccessKey(chatId, userId);
+      await ctx.answerCbQuery('Доступ одобрен');
+      await ctx.reply(`Одобрено для чата ${chatId} и пользователя ${userId}`);
+      await ctx.telegram.sendMessage(
+        chatId,
+        `Доступ к данным разрешен для пользователя ${userId} до ${expiresAt.toISOString()}. Используйте меню для экспорта и сброса`
+      );
+    });
+
     this.bot.on(message('text'), (ctx) => this.handleText(ctx));
+  }
+
+  private async showMenu(ctx: Context) {
+    const chatId = ctx.chat?.id;
+    assert(chatId, 'This is not a chat');
+
+    const status = await this.approvalService.getStatus(chatId);
+    if (status === 'banned') {
+      await ctx.reply('Доступ к боту запрещён.');
+      return;
+    }
+    if (status !== 'approved') {
+      await ctx.reply('Этот чат не находится в списке разрешённых.', {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: 'Запросить доступ', callback_data: 'chat_request' }],
+          ],
+        },
+      });
+      return;
+    }
+
+    const userId = ctx.from?.id;
+    if (!userId) return;
+    const allowed = await this.admin.hasAccess(chatId, userId);
+    if (!allowed) {
+      await ctx.reply('Для работы с данными нужен доступ.', {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: '🔑 Запросить доступ', callback_data: 'request_access' }],
+          ],
+        },
+      });
+      return;
+    }
+
+    await ctx.reply('Выберите действие:', {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '📊 Загрузить данные', callback_data: 'export_data' }],
+          [{ text: '🔄 Сбросить память', callback_data: 'reset_memory' }],
+        ],
+      },
+    });
   }
 
   private async handleText(ctx: Context) {
@@ -395,25 +324,6 @@ export class TelegramBot {
     if (status === 'banned') {
       logger.warn({ chatId }, 'Message from banned chat ignored');
       return;
-    }
-
-    // Если чат одобрен, проверяем доступ пользователя и показываем кнопки
-    if (status === 'approved') {
-      const userId = ctx.from?.id;
-      if (userId) {
-        const hasAccess = await this.admin.hasAccess(chatId, userId);
-        if (hasAccess) {
-          // Показываем кнопки для работы с данными
-          await ctx.reply('Выберите действие:', {
-            reply_markup: {
-              inline_keyboard: [
-                [{ text: '📊 Загрузить данные', callback_data: 'export_data' }],
-                [{ text: '🔄 Сбросить память', callback_data: 'reset_memory' }],
-              ],
-            },
-          });
-        }
-      }
     }
 
     const meta = this.extractor.extract(ctx);
