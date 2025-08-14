@@ -94,8 +94,9 @@ describe('HistorySummarizer', () => {
       { role: 'assistant', content: 'response 1' },
     ];
 
-    await summarizer.summarizeIfNeeded(1, history, 3);
+    const summarized = await summarizer.summarize(1, history, 3);
 
+    expect(summarized).toBe(false);
     expect(ai.summarize).not.toHaveBeenCalled();
     expect(ai.assessUsers).not.toHaveBeenCalled();
     expect(messages.messages).toHaveLength(0);
@@ -111,17 +112,15 @@ describe('HistorySummarizer', () => {
       { role: 'user', content: 'message 3', username: 'user1', userId: 1 },
     ];
 
-    await summarizer.summarizeIfNeeded(1, history, 3);
+    const summarized = await summarizer.summarize(1, history, 3);
+    expect(summarized).toBe(true);
+    await summarizer.assessUsers(1, history);
 
     expect(ai.summarize).toHaveBeenCalledWith(history, '');
     expect(ai.assessUsers).toHaveBeenCalledWith(history, [
       { username: 'user1', attitude: 'neutral' },
       { username: 'user2', attitude: 'hostile' },
     ]);
-    expect(
-      ai.summarize.mock.invocationCallOrder[0] <
-        ai.assessUsers.mock.invocationCallOrder[0]
-    ).toBe(true);
     expect(summaries.summary).toBe('new summary');
     expect(users.updates).toEqual([{ userId: 1, attitude: 'positive' }]);
     expect(messages.messages).toHaveLength(0);
@@ -136,7 +135,7 @@ describe('HistorySummarizer', () => {
       { role: 'user', content: 'message 2' },
     ];
 
-    await summarizer.summarizeIfNeeded(1, history, 2);
+    await summarizer.summarize(1, history, 2);
 
     expect(ai.summarize).toHaveBeenCalledWith(history, 'existing summary');
   });

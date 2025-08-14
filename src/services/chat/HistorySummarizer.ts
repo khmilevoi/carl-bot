@@ -14,11 +14,12 @@ import {
 } from '../summaries/SummaryService';
 
 export interface HistorySummarizer {
-  summarizeIfNeeded(
+  summarize(
     chatId: number,
     history: ChatMessage[],
     limit: number
-  ): Promise<void>;
+  ): Promise<boolean>;
+  assessUsers(chatId: number, history: ChatMessage[]): Promise<void>;
 }
 
 export const HISTORY_SUMMARIZER_ID = Symbol.for(
@@ -34,11 +35,11 @@ export class DefaultHistorySummarizer implements HistorySummarizer {
     @inject(USER_REPOSITORY_ID) private users: UserRepository
   ) {}
 
-  async summarizeIfNeeded(
+  async summarize(
     chatId: number,
     history: ChatMessage[],
     limit: number
-  ): Promise<void> {
+  ): Promise<boolean> {
     logger.debug(
       { chatId, historyLength: history.length, limit },
       'Checking if summarization is needed'
@@ -49,7 +50,7 @@ export class DefaultHistorySummarizer implements HistorySummarizer {
         { chatId, historyLength: history.length, limit },
         'No summarization needed'
       );
-      return;
+      return false;
     }
 
     logger.debug(
@@ -68,6 +69,19 @@ export class DefaultHistorySummarizer implements HistorySummarizer {
       'Generated new summary'
     );
 
+    await this.summaries.setSummary(chatId, newSummary);
+    logger.debug({ chatId }, 'Stored new summary');
+
+    await this.messages.clearMessages(chatId);
+    logger.debug({ chatId }, 'Cleared messages after summarization');
+    return true;
+  }
+
+  async assessUsers(chatId: number, history: ChatMessage[]): Promise<void> {
+    logger.debug(
+      { chatId, historyLength: history.length },
+      'Assessing user attitudes'
+    );
     const prevAttitudes: { username: string; attitude: string }[] = [];
     const seen = new Set<number>();
     for (const m of history) {
@@ -86,9 +100,6 @@ export class DefaultHistorySummarizer implements HistorySummarizer {
       'Assessed user attitudes'
     );
 
-    await this.summaries.setSummary(chatId, newSummary);
-    logger.debug({ chatId }, 'Stored new summary');
-
     for (const { username, attitude } of assessments) {
       const userMsg = history.find(
         (m) => m.username === username && m.userId !== undefined
@@ -97,8 +108,5 @@ export class DefaultHistorySummarizer implements HistorySummarizer {
         await this.users.setAttitude(userMsg.userId, attitude);
       }
     }
-
-    await this.messages.clearMessages(chatId);
-    logger.debug({ chatId }, 'Cleared messages after summarization');
   }
 }

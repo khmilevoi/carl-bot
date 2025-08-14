@@ -104,4 +104,30 @@ describe('ChatResponder', () => {
     expect(memories.memory.messages[1].role).toBe('assistant');
     expect(memories.memory.messages[1].content).toBe('answer');
   });
+
+  it('passes null attitude when user has none', async () => {
+    const ai = new MockAIService();
+    const memories = new MockChatMemoryManager();
+    const summaries = new MockSummaryService();
+    const chatUsers = new MockChatUserRepository();
+    const users = new (class extends MockUserRepository {
+      async findById(id: number): Promise<any> {
+        return { id, username: 'user1', attitude: null };
+      }
+    })();
+    const responder: ChatResponder = new DefaultChatResponder(
+      ai as any,
+      memories as any,
+      summaries,
+      chatUsers as any,
+      users as any
+    );
+
+    await memories.get(1).addMessage({ role: 'user', content: 'hi' });
+    const ctx: any = { me: 'bot', chat: { id: 1 } };
+
+    await responder.generate(ctx, 1);
+
+    expect(ai.attitudes).toEqual([{ username: 'user1', attitude: null }]);
+  });
 });
