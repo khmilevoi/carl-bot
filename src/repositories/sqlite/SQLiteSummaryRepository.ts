@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 
 import { DB_PROVIDER_ID, type SQLiteDbProvider } from '../DbProvider';
-import { type SummaryRepository } from '../interfaces/SummaryRepository';
+import { type SummaryRepository } from '../interfaces/SummaryRepository.interface';
 
 @injectable()
 export class SQLiteSummaryRepository implements SummaryRepository {

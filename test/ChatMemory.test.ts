@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ChatMessage } from '../src/services/ai/AIService';
+import { ChatMessage } from '../src/services/ai/AIService.interface';
 import { ChatMemory } from '../src/services/chat/ChatMemory';
 import { HistorySummarizer } from '../src/services/chat/HistorySummarizer';
-import { MessageService } from '../src/services/messages/MessageService';
-import { StoredMessage } from '../src/services/messages/StoredMessage';
+import { MessageService } from '../src/services/messages/MessageService.interface';
+import { StoredMessage } from '../src/services/messages/StoredMessage.interface';
 
 class FakeHistorySummarizer implements HistorySummarizer {
   summarize = vi.fn(async () => false);

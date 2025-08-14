@@ -12,7 +12,7 @@ export interface ChatMessage {
   attitude?: string | null;
 }
 
-import { TriggerReason } from '../../triggers/Trigger';
+import { TriggerReason } from '../../triggers/Trigger.interface';
 
 export interface AIService {
   ask(

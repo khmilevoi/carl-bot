@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { DialogueManager } from '../src/services/chat/DialogueManager';
 import { InterestChecker } from '../src/services/interest/InterestChecker';
 import { InterestTrigger } from '../src/triggers/InterestTrigger';
-import { TriggerContext } from '../src/triggers/Trigger';
+import { TriggerContext } from '../src/triggers/Trigger.interface';
 
 class MockInterestChecker implements InterestChecker {
   private count = 0;

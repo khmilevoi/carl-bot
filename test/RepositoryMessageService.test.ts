@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { type ChatRepository } from '../src/repositories/interfaces/ChatRepository';
-import { type ChatUserRepository } from '../src/repositories/interfaces/ChatUserRepository';
-import { type MessageRepository } from '../src/repositories/interfaces/MessageRepository';
-import { type UserRepository } from '../src/repositories/interfaces/UserRepository';
+import { type ChatRepository } from '../src/repositories/interfaces/ChatRepository.interface';
+import { type ChatUserRepository } from '../src/repositories/interfaces/ChatUserRepository.interface';
+import { type MessageRepository } from '../src/repositories/interfaces/MessageRepository.interface';
+import { type UserRepository } from '../src/repositories/interfaces/UserRepository.interface';
 import { RepositoryMessageService } from '../src/services/messages/RepositoryMessageService';
-import { type StoredMessage } from '../src/services/messages/StoredMessage';
+import { type StoredMessage } from '../src/services/messages/StoredMessage.interface';
 
 describe('RepositoryMessageService', () => {
   it('links chat and user when adding a message', async () => {

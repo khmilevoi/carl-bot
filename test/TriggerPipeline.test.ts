@@ -7,7 +7,7 @@ import {
 } from '../src/services/chat/TriggerPipeline';
 import { TestEnvService } from '../src/services/env/EnvService';
 import { InterestChecker } from '../src/services/interest/InterestChecker';
-import { TriggerContext } from '../src/triggers/Trigger';
+import { TriggerContext } from '../src/triggers/Trigger.interface';
 
 describe('TriggerPipeline', () => {
   const env = new TestEnvService();
