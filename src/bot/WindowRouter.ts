@@ -8,10 +8,11 @@ interface ActionHandlers {
   [key: string]: (ctx: Context) => Promise<void> | void;
 }
 
-type StackItem = [string, number];
+type StackItem = string;
 
 export class WindowRouter {
   private stacks = new Map<number, StackItem[]>();
+  private currentWindow = new Map<number, string>();
 
   constructor(
     private readonly bot: Telegraf<Context>,
@@ -26,12 +27,10 @@ export class WindowRouter {
       for (const button of window.buttons) {
         this.bot.action(button.callback, async (ctx) => {
           const chatId = ctx.chat?.id;
-          const messageId = ctx.callbackQuery?.message?.message_id;
           assert(chatId, 'This is not a chat');
           await ctx.deleteMessage().catch(() => {});
 
-          if (button.target && messageId) {
-            this.getStack(chatId).push([window.id, messageId]);
+          if (button.target) {
             await this.show(ctx, button.target);
           }
 
@@ -55,7 +54,9 @@ export class WindowRouter {
       const stack = this.getStack(chatId);
       const prev = stack.pop();
       if (prev) {
-        await this.show(ctx, prev[0]);
+        await this.show(ctx, prev, true);
+      } else {
+        this.currentWindow.delete(chatId);
       }
 
       await ctx.answerCbQuery().catch(() => {});
@@ -71,7 +72,7 @@ export class WindowRouter {
     return stack;
   }
 
-  async show(ctx: Context, id: string): Promise<void> {
+  async show(ctx: Context, id: string, skipStack = false): Promise<void> {
     const window = this.windows.find((w) => w.id === id);
     if (!window) {
       return;
@@ -79,6 +80,12 @@ export class WindowRouter {
 
     const chatId = ctx.chat?.id;
     assert(chatId, 'This is not a chat');
+
+    const current = this.currentWindow.get(chatId);
+    if (!skipStack && current && current !== id) {
+      this.getStack(chatId).push(current);
+    }
+    this.currentWindow.set(chatId, id);
 
     const keyboard = window.buttons.map((b) => [
       { text: b.text, callback_data: b.callback },
