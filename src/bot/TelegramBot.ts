@@ -36,7 +36,7 @@ import { TriggerContext } from '../triggers/Trigger.interface';
 import { windows } from './windowConfig';
 import { WindowRouter } from './WindowRouter';
 
-async function withTyping(ctx: Context, fn: () => Promise<void>) {
+export async function withTyping(ctx: Context, fn: () => Promise<void>) {
   await ctx.sendChatAction('typing');
 
   const timer = setInterval(() => {
