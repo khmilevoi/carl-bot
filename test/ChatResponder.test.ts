@@ -31,6 +31,18 @@ class MockAIService implements AIService {
   }
 }
 
+class ThrowingAIService implements AIService {
+  async ask(): Promise<string> {
+    throw new Error('ask failed');
+  }
+  async summarize(): Promise<string> {
+    return '';
+  }
+  async checkInterest(): Promise<{ messageId: string; why: string } | null> {
+    return null;
+  }
+}
+
 class MockChatMemory {
   messages: ChatMessage[] = [];
   async addMessage(msg: ChatMessage): Promise<void> {
@@ -80,5 +92,41 @@ describe('ChatResponder', () => {
     expect(memories.memory.messages).toHaveLength(2);
     expect(memories.memory.messages[1].role).toBe('assistant');
     expect(memories.memory.messages[1].content).toBe('answer');
+  });
+
+  it('propagates errors from AI service and does not store message', async () => {
+    const ai = new ThrowingAIService();
+    const memories = new MockChatMemoryManager();
+    const summaries = new MockSummaryService();
+    const responder: ChatResponder = new DefaultChatResponder(
+      ai,
+      memories,
+      summaries
+    );
+
+    await memories.get(1).addMessage({ role: 'user', content: 'hi' });
+    const ctx = { me: 'bot', chat: { id: 1 } } as unknown as Context;
+
+    await expect(responder.generate(ctx, 1)).rejects.toThrow('ask failed');
+    expect(memories.memory.messages).toHaveLength(1);
+  });
+
+  it('works without history or summary', async () => {
+    const ai = new MockAIService();
+    const memories = new MockChatMemoryManager();
+    const summaries = new MockSummaryService();
+    const responder: ChatResponder = new DefaultChatResponder(
+      ai,
+      memories,
+      summaries
+    );
+    const ctx = { me: 'bot', chat: { id: 1 } } as unknown as Context;
+
+    const answer = await responder.generate(ctx, 1);
+    expect(answer).toBe('answer');
+    expect(ai.history).toEqual([]);
+    expect(ai.summary).toBe('');
+    expect(memories.memory.messages).toHaveLength(1);
+    expect(memories.memory.messages[0].role).toBe('assistant');
   });
 });
