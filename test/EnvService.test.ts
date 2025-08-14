@@ -87,6 +87,7 @@ describe('EnvService', () => {
       userPromptSystem: 'prompts/user_prompt_system_prompt.md',
       priorityRulesSystem: 'prompts/priority_rules_system_prompt.md',
       assessUsers: 'prompts/assess_users_prompt.md',
+      replyTrigger: 'prompts/reply_trigger_prompt.md',
     });
   });
 
