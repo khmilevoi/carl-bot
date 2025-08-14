@@ -559,6 +559,234 @@ describe('TelegramBot', () => {
     );
   });
 
+  it('shows admin menu for admin chat', async () => {
+    const memories = new MockChatMemoryManager();
+    const configureSpy = vi
+      .spyOn(
+        TelegramBot.prototype as unknown as Record<string, unknown>,
+        'configure'
+      )
+      .mockImplementation(() => {});
+    const approvalService = new DummyApprovalService();
+    const admin = new DummyAdmin();
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      admin as unknown as AdminService,
+      approvalService as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatRepository() as unknown as ChatRepository
+    );
+    configureSpy.mockRestore();
+    const botWithRouter = bot as unknown as {
+      router: { show: ReturnType<typeof vi.fn> };
+      showMenu: (ctx: Context) => Promise<void>;
+    };
+    botWithRouter.router = { show: vi.fn() };
+    const ctx = { chat: { id: 1 } } as unknown as Context;
+    await botWithRouter.showMenu(ctx);
+    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'admin_menu');
+  });
+
+  it('shows banned and pending states in menu', async () => {
+    const memories = new MockChatMemoryManager();
+    const configureSpy = vi
+      .spyOn(
+        TelegramBot.prototype as unknown as Record<string, unknown>,
+        'configure'
+      )
+      .mockImplementation(() => {});
+    const approvalService = new DummyApprovalService();
+    const admin = new DummyAdmin();
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      admin as unknown as AdminService,
+      approvalService as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatRepository() as unknown as ChatRepository
+    );
+    configureSpy.mockRestore();
+    const botWithRouter = bot as unknown as {
+      router: { show: ReturnType<typeof vi.fn> };
+      showMenu: (ctx: Context) => Promise<void>;
+    };
+    botWithRouter.router = { show: vi.fn() };
+    approvalService.getStatus.mockResolvedValueOnce('banned');
+    const bannedCtx = { chat: { id: 2 }, reply: vi.fn() } as unknown as Context;
+    await botWithRouter.showMenu(bannedCtx);
+    expect(bannedCtx.reply).toHaveBeenCalledWith('Доступ к боту запрещён.');
+    approvalService.getStatus.mockResolvedValueOnce('pending');
+    const pendingCtx = { chat: { id: 3 } } as unknown as Context;
+    await botWithRouter.showMenu(pendingCtx);
+    expect(botWithRouter.router.show).toHaveBeenLastCalledWith(
+      pendingCtx,
+      'chat_not_approved'
+    );
+  });
+
+  it('shows no access when user lacks permission', async () => {
+    const memories = new MockChatMemoryManager();
+    const configureSpy = vi
+      .spyOn(
+        TelegramBot.prototype as unknown as Record<string, unknown>,
+        'configure'
+      )
+      .mockImplementation(() => {});
+    const approvalService = new DummyApprovalService();
+    const admin = new DummyAdmin();
+    admin.hasAccess.mockResolvedValue(false);
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      admin as unknown as AdminService,
+      approvalService as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatRepository() as unknown as ChatRepository
+    );
+    configureSpy.mockRestore();
+    const botWithRouter = bot as unknown as {
+      router: { show: ReturnType<typeof vi.fn> };
+      showMenu: (ctx: Context) => Promise<void>;
+    };
+    botWithRouter.router = { show: vi.fn() };
+    const ctx = { chat: { id: 2 }, from: { id: 5 } } as unknown as Context;
+    await botWithRouter.showMenu(ctx);
+    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'no_access');
+  });
+
+  it('handles pending and banned chats in text handler', async () => {
+    const memories = new MockChatMemoryManager();
+    const configureSpy = vi
+      .spyOn(
+        TelegramBot.prototype as unknown as Record<string, unknown>,
+        'configure'
+      )
+      .mockImplementation(() => {});
+    const approvalService = new DummyApprovalService();
+    const admin = new DummyAdmin();
+    approvalService.getStatus.mockResolvedValueOnce('pending');
+    approvalService.getStatus.mockResolvedValueOnce('banned');
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      admin as unknown as AdminService,
+      approvalService as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatRepository() as unknown as ChatRepository
+    );
+    configureSpy.mockRestore();
+    const sendRequest = vi
+      .spyOn(
+        bot as unknown as {
+          sendChatApprovalRequest: (
+            chatId: number,
+            title?: string
+          ) => Promise<void>;
+        },
+        'sendChatApprovalRequest'
+      )
+      .mockResolvedValue();
+    const ctxPending = {
+      chat: { id: 2 },
+      from: { id: 1 },
+      message: { text: 'hi', message_id: 1 },
+    } as unknown as Context;
+    await (
+      bot as unknown as { handleText: (ctx: Context) => Promise<void> }
+    ).handleText(ctxPending);
+    expect(sendRequest).toHaveBeenCalledWith(2, undefined);
+    const ctxBanned = {
+      chat: { id: 3 },
+      from: { id: 1 },
+      message: { text: 'hi', message_id: 1 },
+    } as unknown as Context;
+    await (
+      bot as unknown as { handleText: (ctx: Context) => Promise<void> }
+    ).handleText(ctxBanned);
+    expect(memories.memory.addMessage).not.toHaveBeenCalled();
+  });
+
+  it('denies export when access is missing', async () => {
+    const memories = new MockChatMemoryManager();
+    const configureSpy = vi
+      .spyOn(
+        TelegramBot.prototype as unknown as Record<string, unknown>,
+        'configure'
+      )
+      .mockImplementation(() => {});
+    const admin = new DummyAdmin();
+    admin.hasAccess.mockResolvedValue(false);
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      admin as unknown as AdminService,
+      new DummyApprovalService() as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatRepository() as unknown as ChatRepository
+    );
+    configureSpy.mockRestore();
+    const ctx = {
+      chat: { id: 2 },
+      from: { id: 3 },
+      answerCbQuery: vi.fn(),
+    } as unknown as Context;
+    await (
+      bot as unknown as { handleExportData: (ctx: Context) => Promise<void> }
+    ).handleExportData(ctx);
+    expect(ctx.answerCbQuery).toHaveBeenCalledWith(
+      'Нет доступа или ключ просрочен'
+    );
+  });
+
+  it('launches and stops the bot', async () => {
+    const memories = new MockChatMemoryManager();
+    const configureSpy = vi
+      .spyOn(
+        TelegramBot.prototype as unknown as Record<string, unknown>,
+        'configure'
+      )
+      .mockImplementation(() => {});
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      new DummyApprovalService() as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatRepository() as unknown as ChatRepository
+    );
+    configureSpy.mockRestore();
+    const deleteWebhook = vi
+      .spyOn(
+        (bot as unknown as { bot: Telegraf }).bot.telegram,
+        'deleteWebhook'
+      )
+      .mockResolvedValue(undefined as never);
+    const launch = vi
+      .spyOn((bot as unknown as { bot: Telegraf }).bot, 'launch')
+      .mockResolvedValue(undefined as never);
+    await bot.launch();
+    expect(deleteWebhook).toHaveBeenCalled();
+    expect(launch).toHaveBeenCalled();
+    const stop = vi
+      .spyOn((bot as unknown as { bot: Telegraf }).bot, 'stop')
+      .mockImplementation(() => {});
+    bot.stop('test');
+    expect(stop).toHaveBeenCalledWith('test');
+  });
+
   it('withTyping sends actions until finished', async () => {
     vi.useFakeTimers();
 
