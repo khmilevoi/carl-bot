@@ -11,7 +11,10 @@ import {
 } from '../src/services/chat/TriggerPipeline';
 import { TestEnvService } from '../src/services/env/EnvService';
 import { InterestChecker } from '../src/services/interest/InterestChecker';
-import { TriggerContext } from '../src/triggers/Trigger.interface';
+import {
+  type Trigger,
+  TriggerContext,
+} from '../src/triggers/Trigger.interface';
 
 describe('TriggerPipeline', () => {
   const env = new TestEnvService();
@@ -94,6 +97,59 @@ describe('TriggerPipeline', () => {
     result = { messageId: '1', message: 'hi', why: 'because' };
     res = await pipeline.shouldRespond(ctx, context);
     expect(res).not.toBeNull();
+  });
+
+  it('uses interest trigger when mention and reply triggers return null', async () => {
+    const interestChecker: InterestChecker = {
+      check: vi
+        .fn()
+        .mockResolvedValue({ messageId: '1', message: 'hi', why: 'because' }),
+    };
+    const dialogue: DialogueManager = new DefaultDialogueManager(env);
+    const pipeline = new DefaultTriggerPipeline(
+      env,
+      interestChecker,
+      dialogue
+    ) as DefaultTriggerPipeline & {
+      mentionTrigger: Trigger;
+      replyTrigger: Trigger;
+    };
+    pipeline.mentionTrigger = { apply: vi.fn().mockResolvedValue(null) };
+    pipeline.replyTrigger = { apply: vi.fn().mockResolvedValue(null) };
+    const ctx = {
+      message: { text: 'hi @bot', reply_to_message: { message_id: 2 } },
+      me: 'bot',
+    } as unknown as Context;
+    const context: TriggerContext = {
+      text: 'hi @bot',
+      replyText: 'original',
+      chatId: 1,
+    };
+    const res = await (pipeline as TriggerPipeline).shouldRespond(ctx, context);
+    expect(res).not.toBeNull();
+    expect(interestChecker.check).toHaveBeenCalled();
+  });
+
+  it('propagates error when interest checker fails', async () => {
+    const interestChecker: InterestChecker = {
+      check: vi.fn().mockRejectedValue(new Error('fail')),
+    };
+    const dialogue: DialogueManager = new DefaultDialogueManager(env);
+    const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
+      env,
+      interestChecker,
+      dialogue
+    );
+    const ctx = {
+      message: { text: 'hello there' },
+      me: 'bot',
+    } as unknown as Context;
+    const context: TriggerContext = {
+      text: 'hello there',
+      replyText: '',
+      chatId: 1,
+    };
+    await expect(pipeline.shouldRespond(ctx, context)).rejects.toThrow('fail');
   });
 
   it('skips interest trigger when dialogue is active', async () => {
