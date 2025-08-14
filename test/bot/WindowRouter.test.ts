@@ -17,7 +17,7 @@ const windows: WindowDefinition[] = [
 function setupRouter() {
   const bot = new Telegraf<Context>('token');
   const actionSpy = vi.spyOn(bot, 'action');
-  new WindowRouter(
+  const router = new WindowRouter(
     bot,
     windows,
     {} as Record<string, (ctx: Context) => Promise<void> | void>
@@ -29,12 +29,17 @@ function setupRouter() {
     ([pattern]) => pattern === 'back'
   )![1];
   actionSpy.mockRestore();
-  return { goHandler, backHandler };
+  return { router, goHandler, backHandler };
 }
 
 describe('WindowRouter', () => {
   it('transitions between windows and back', async () => {
-    const { goHandler, backHandler } = setupRouter();
+    const { router, goHandler, backHandler } = setupRouter();
+    await router.show(
+      { chat: { id: 1 }, reply: vi.fn() } as unknown as Context,
+      'first'
+    );
+
     const ctx = {
       chat: { id: 1 },
       callbackQuery: { message: { message_id: 10 } },
@@ -66,7 +71,12 @@ describe('WindowRouter', () => {
   });
 
   it('adds back button when history exists', async () => {
-    const { goHandler } = setupRouter();
+    const { router, goHandler } = setupRouter();
+    await router.show(
+      { chat: { id: 1 }, reply: vi.fn() } as unknown as Context,
+      'first'
+    );
+
     const ctx = {
       chat: { id: 1 },
       callbackQuery: { message: { message_id: 11 } },
@@ -85,7 +95,12 @@ describe('WindowRouter', () => {
   });
 
   it('deletes messages on navigation and back', async () => {
-    const { goHandler, backHandler } = setupRouter();
+    const { router, goHandler, backHandler } = setupRouter();
+    await router.show(
+      { chat: { id: 1 }, reply: vi.fn() } as unknown as Context,
+      'first'
+    );
+
     const ctx = {
       chat: { id: 1 },
       callbackQuery: { message: { message_id: 12 } },
@@ -106,5 +121,22 @@ describe('WindowRouter', () => {
 
     await backHandler(ctxBack);
     expect(ctxBack.deleteMessage).toHaveBeenCalled();
+  });
+
+  it('adds back button when show is called directly', async () => {
+    const { router } = setupRouter();
+    const ctx = {
+      chat: { id: 1 },
+      reply: vi.fn(),
+    } as unknown as Context;
+
+    await router.show(ctx, 'first');
+    await router.show(ctx, 'second');
+
+    expect(ctx.reply).toHaveBeenNthCalledWith(2, 'Second window', {
+      reply_markup: {
+        inline_keyboard: [[{ text: '⬅️ Назад', callback_data: 'back' }]],
+      },
+    });
   });
 });
