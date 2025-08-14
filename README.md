@@ -110,3 +110,8 @@ interface WindowDefinition {
 - `summaries` — краткие пересказы чатов.
 
 Репозиторий полностью базируется на npm и TypeScript.
+
+## Прогресс тестирования
+
+- Добавлены тесты для `RepositoryMessageService`, `FilePromptService` и `MessageContextExtractor`,
+  что повысило их покрытие до более чем 90%.
