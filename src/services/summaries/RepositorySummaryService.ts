@@ -3,9 +3,9 @@ import { inject, injectable } from 'inversify';
 import {
   SUMMARY_REPOSITORY_ID,
   type SummaryRepository,
-} from '../../repositories/interfaces/SummaryRepository';
+} from '../../repositories/interfaces/SummaryRepository.interface';
 import { logger } from '../logging/logger';
-import { SummaryService } from './SummaryService';
+import { SummaryService } from './SummaryService.interface';
 
 @injectable()
 export class RepositorySummaryService implements SummaryService {

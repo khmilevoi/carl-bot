@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { AIService, ChatMessage } from '../src/services/ai/AIService';
+import { AIService, ChatMessage } from '../src/services/ai/AIService.interface';
 import { EnvService } from '../src/services/env/EnvService';
 import { DefaultInterestChecker } from '../src/services/interest/InterestChecker';
-import { MessageService } from '../src/services/messages/MessageService';
-import { SummaryService } from '../src/services/summaries/SummaryService';
+import { MessageService } from '../src/services/messages/MessageService.interface';
+import { SummaryService } from '../src/services/summaries/SummaryService.interface';
 
 const interval = 2;
 const chatId = 1;

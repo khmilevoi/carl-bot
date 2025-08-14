@@ -1,4 +1,4 @@
-import { ChatMessage } from '../ai/AIService';
+import type { ChatMessage } from '../ai/AIService.interface';
 
 export interface StoredMessage extends ChatMessage {
   chatId: number;

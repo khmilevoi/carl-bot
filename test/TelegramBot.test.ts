@@ -3,7 +3,7 @@ import { Telegraf } from 'telegraf';
 import { describe, expect, it, vi } from 'vitest';
 
 import { TelegramBot } from '../src/bot/TelegramBot';
-import type { AdminService } from '../src/services/admin/AdminService';
+import type { AdminService } from '../src/services/admin/AdminService.interface';
 import type { ChatApprovalService } from '../src/services/chat/ChatApprovalService';
 import type { ChatMemoryManager } from '../src/services/chat/ChatMemory';
 import type { ChatResponder } from '../src/services/chat/ChatResponder';

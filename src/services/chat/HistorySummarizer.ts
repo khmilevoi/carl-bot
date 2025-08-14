@@ -4,14 +4,21 @@ import { inject, injectable } from 'inversify';
 import {
   USER_REPOSITORY_ID,
   UserRepository,
-} from '../../repositories/interfaces/UserRepository';
-import { AI_SERVICE_ID, AIService, ChatMessage } from '../ai/AIService';
+} from '../../repositories/interfaces/UserRepository.interface';
+import {
+  AI_SERVICE_ID,
+  AIService,
+  ChatMessage,
+} from '../ai/AIService.interface';
 import { logger } from '../logging/logger';
-import { MESSAGE_SERVICE_ID, MessageService } from '../messages/MessageService';
+import {
+  MESSAGE_SERVICE_ID,
+  MessageService,
+} from '../messages/MessageService.interface';
 import {
   SUMMARY_SERVICE_ID,
   SummaryService,
-} from '../summaries/SummaryService';
+} from '../summaries/SummaryService.interface';
 
 export interface HistorySummarizer {
   summarize(
@@ -85,7 +92,12 @@ export class DefaultHistorySummarizer implements HistorySummarizer {
     const prevAttitudes: { username: string; attitude: string }[] = [];
     const seen = new Set<number>();
     for (const m of history) {
-      if (m.userId !== undefined && m.username && !seen.has(m.userId)) {
+      if (
+        m.userId !== undefined &&
+        m.role === 'user' &&
+        m.username &&
+        !seen.has(m.userId)
+      ) {
         seen.add(m.userId);
         const user = await this.users.findById(m.userId);
         if (user?.attitude) {

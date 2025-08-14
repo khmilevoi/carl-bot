@@ -1,17 +1,17 @@
 import { inject, injectable } from 'inversify';
 
-import { ChatMessage } from '../ai/AIService';
+import { ChatMessage } from '../ai/AIService.interface';
 import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
 import { logger } from '../logging/logger';
 import {
   MESSAGE_SERVICE_ID,
   type MessageService,
-} from '../messages/MessageService';
-import { StoredMessage } from '../messages/StoredMessage';
+} from '../messages/MessageService.interface';
+import { StoredMessage } from '../messages/StoredMessage.interface';
 import {
   CHAT_RESET_SERVICE_ID,
   type ChatResetService,
-} from './ChatResetService';
+} from './ChatResetService.interface';
 import { HISTORY_SUMMARIZER_ID, HistorySummarizer } from './HistorySummarizer';
 
 @injectable()

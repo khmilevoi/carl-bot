@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import { Context } from 'telegraf';
 
 import { MessageContext } from './MessageContextExtractor';
-import { StoredMessage } from './StoredMessage';
+import { StoredMessage } from './StoredMessage.interface';
 
 export class MessageFactory {
   static fromUser(ctx: Context, meta: MessageContext): StoredMessage {

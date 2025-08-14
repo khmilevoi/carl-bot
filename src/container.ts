@@ -7,13 +7,13 @@ import {
   DB_PROVIDER_ID,
   SQLiteDbProviderImpl,
 } from './repositories/DbProvider';
-import { ACCESS_KEY_REPOSITORY_ID } from './repositories/interfaces/AccessKeyRepository';
-import { CHAT_ACCESS_REPOSITORY_ID } from './repositories/interfaces/ChatAccessRepository';
-import { CHAT_REPOSITORY_ID } from './repositories/interfaces/ChatRepository';
-import { CHAT_USER_REPOSITORY_ID } from './repositories/interfaces/ChatUserRepository';
-import { MESSAGE_REPOSITORY_ID } from './repositories/interfaces/MessageRepository';
-import { SUMMARY_REPOSITORY_ID } from './repositories/interfaces/SummaryRepository';
-import { USER_REPOSITORY_ID } from './repositories/interfaces/UserRepository';
+import { ACCESS_KEY_REPOSITORY_ID } from './repositories/interfaces/AccessKeyRepository.interface';
+import { CHAT_ACCESS_REPOSITORY_ID } from './repositories/interfaces/ChatAccessRepository.interface';
+import { CHAT_REPOSITORY_ID } from './repositories/interfaces/ChatRepository.interface';
+import { CHAT_USER_REPOSITORY_ID } from './repositories/interfaces/ChatUserRepository.interface';
+import { MESSAGE_REPOSITORY_ID } from './repositories/interfaces/MessageRepository.interface';
+import { SUMMARY_REPOSITORY_ID } from './repositories/interfaces/SummaryRepository.interface';
+import { USER_REPOSITORY_ID } from './repositories/interfaces/UserRepository.interface';
 import { SQLiteAccessKeyRepository } from './repositories/sqlite/SQLiteAccessKeyRepository';
 import { SQLiteChatAccessRepository } from './repositories/sqlite/SQLiteChatAccessRepository';
 import { SQLiteChatRepository } from './repositories/sqlite/SQLiteChatRepository';
@@ -21,16 +21,16 @@ import { SQLiteChatUserRepository } from './repositories/sqlite/SQLiteChatUserRe
 import { SQLiteMessageRepository } from './repositories/sqlite/SQLiteMessageRepository';
 import { SQLiteSummaryRepository } from './repositories/sqlite/SQLiteSummaryRepository';
 import { SQLiteUserRepository } from './repositories/sqlite/SQLiteUserRepository';
-import { ADMIN_SERVICE_ID } from './services/admin/AdminService';
+import { ADMIN_SERVICE_ID } from './services/admin/AdminService.interface';
 import { AdminServiceImpl } from './services/admin/AdminServiceImpl';
-import { AI_SERVICE_ID } from './services/ai/AIService';
+import { AI_SERVICE_ID } from './services/ai/AIService.interface';
 import { ChatGPTService } from './services/ai/ChatGPTService';
 import {
   CHAT_APPROVAL_SERVICE_ID,
   DefaultChatApprovalService,
 } from './services/chat/ChatApprovalService';
 import { ChatMemoryManager } from './services/chat/ChatMemory';
-import { CHAT_RESET_SERVICE_ID } from './services/chat/ChatResetService';
+import { CHAT_RESET_SERVICE_ID } from './services/chat/ChatResetService.interface';
 import {
   CHAT_RESPONDER_ID,
   ChatResponder,
@@ -61,12 +61,12 @@ import {
   MESSAGE_CONTEXT_EXTRACTOR_ID,
   MessageContextExtractor,
 } from './services/messages/MessageContextExtractor';
-import { MESSAGE_SERVICE_ID } from './services/messages/MessageService';
+import { MESSAGE_SERVICE_ID } from './services/messages/MessageService.interface';
 import { RepositoryMessageService } from './services/messages/RepositoryMessageService';
 import { FilePromptService } from './services/prompts/FilePromptService';
-import { PROMPT_SERVICE_ID } from './services/prompts/PromptService';
+import { PROMPT_SERVICE_ID } from './services/prompts/PromptService.interface';
 import { RepositorySummaryService } from './services/summaries/RepositorySummaryService';
-import { SUMMARY_SERVICE_ID } from './services/summaries/SummaryService';
+import { SUMMARY_SERVICE_ID } from './services/summaries/SummaryService.interface';
 
 export const container = new Container();
 

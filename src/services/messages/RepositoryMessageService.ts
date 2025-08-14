@@ -3,22 +3,22 @@ import { inject, injectable } from 'inversify';
 import {
   CHAT_REPOSITORY_ID,
   type ChatRepository,
-} from '../../repositories/interfaces/ChatRepository';
+} from '../../repositories/interfaces/ChatRepository.interface';
 import {
   CHAT_USER_REPOSITORY_ID,
   type ChatUserRepository,
-} from '../../repositories/interfaces/ChatUserRepository';
+} from '../../repositories/interfaces/ChatUserRepository.interface';
 import {
   MESSAGE_REPOSITORY_ID,
   type MessageRepository,
-} from '../../repositories/interfaces/MessageRepository';
+} from '../../repositories/interfaces/MessageRepository.interface';
 import {
   USER_REPOSITORY_ID,
   type UserRepository,
-} from '../../repositories/interfaces/UserRepository';
+} from '../../repositories/interfaces/UserRepository.interface';
 import { logger } from '../logging/logger';
-import { MessageService } from './MessageService';
-import { StoredMessage } from './StoredMessage';
+import { MessageService } from './MessageService.interface';
+import { StoredMessage } from './StoredMessage.interface';
 
 @injectable()
 export class RepositoryMessageService implements MessageService {

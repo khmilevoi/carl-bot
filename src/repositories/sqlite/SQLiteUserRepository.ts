@@ -4,7 +4,7 @@ import { DB_PROVIDER_ID, type SQLiteDbProvider } from '../DbProvider';
 import {
   type UserEntity,
   type UserRepository,
-} from '../interfaces/UserRepository';
+} from '../interfaces/UserRepository.interface';
 
 @injectable()
 export class SQLiteUserRepository implements UserRepository {

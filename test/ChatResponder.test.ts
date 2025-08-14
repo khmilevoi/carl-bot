@@ -1,14 +1,17 @@
 import type { Context } from 'telegraf';
 import { describe, expect, it } from 'vitest';
 
-import type { AIService, ChatMessage } from '../src/services/ai/AIService';
+import type {
+  AIService,
+  ChatMessage,
+} from '../src/services/ai/AIService.interface';
 import type { ChatMemoryManager } from '../src/services/chat/ChatMemory';
 import {
   ChatResponder,
   DefaultChatResponder,
 } from '../src/services/chat/ChatResponder';
-import type { SummaryService } from '../src/services/summaries/SummaryService';
-import { TriggerReason } from '../src/triggers/Trigger';
+import type { SummaryService } from '../src/services/summaries/SummaryService.interface';
+import { TriggerReason } from '../src/triggers/Trigger.interface';
 
 class MockAIService implements AIService {
   history: ChatMessage[] | undefined;

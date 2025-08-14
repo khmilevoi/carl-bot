@@ -4,11 +4,14 @@ import OpenAI from 'openai';
 import { ChatModel } from 'openai/resources/shared';
 import path from 'path';
 
-import { TriggerReason } from '../../triggers/Trigger';
+import { TriggerReason } from '../../triggers/Trigger.interface';
 import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
 import { logger } from '../logging/logger';
-import { PROMPT_SERVICE_ID, PromptService } from '../prompts/PromptService';
-import { AIService, ChatMessage } from './AIService';
+import {
+  PROMPT_SERVICE_ID,
+  PromptService,
+} from '../prompts/PromptService.interface';
+import { AIService, ChatMessage } from './AIService.interface';
 
 @injectable()
 export class ChatGPTService implements AIService {

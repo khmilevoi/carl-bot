@@ -6,7 +6,10 @@ import { InterestTrigger } from '../../triggers/InterestTrigger';
 import { MentionTrigger } from '../../triggers/MentionTrigger';
 import { NameTrigger } from '../../triggers/NameTrigger';
 import { ReplyTrigger } from '../../triggers/ReplyTrigger';
-import { TriggerContext, TriggerResult } from '../../triggers/Trigger';
+import {
+  TriggerContext,
+  TriggerResult,
+} from '../../triggers/Trigger.interface';
 import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
 import {
   INTEREST_CHECKER_ID,

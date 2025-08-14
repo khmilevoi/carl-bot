@@ -2,13 +2,13 @@ import type { ServiceIdentifier } from 'inversify';
 import { inject, injectable } from 'inversify';
 import { Context } from 'telegraf';
 
-import { TriggerReason } from '../../triggers/Trigger';
-import { AI_SERVICE_ID, AIService } from '../ai/AIService';
+import { TriggerReason } from '../../triggers/Trigger.interface';
+import { AI_SERVICE_ID, AIService } from '../ai/AIService.interface';
 import { MessageFactory } from '../messages/MessageFactory';
 import {
   SUMMARY_SERVICE_ID,
   SummaryService,
-} from '../summaries/SummaryService';
+} from '../summaries/SummaryService.interface';
 import { ChatMemoryManager } from './ChatMemory';
 
 export interface ChatResponder {
