@@ -1,9 +1,27 @@
+import type { ServiceIdentifier } from 'inversify';
+import { inject, injectable } from 'inversify';
+
+import { ENV_SERVICE_ID, type EnvService } from '../env/EnvService';
 import { logger } from '../logging/logger';
 
-export class DialogueManager {
-  private timers = new Map<number, NodeJS.Timeout>();
+export interface DialogueManager {
+  start(chatId: number): void;
+  extend(chatId: number): void;
+  isActive(chatId: number): boolean;
+}
 
-  constructor(private timeoutMs: number) {}
+export const DIALOGUE_MANAGER_ID = Symbol.for(
+  'DialogueManager'
+) as ServiceIdentifier<DialogueManager>;
+
+@injectable()
+export class DefaultDialogueManager implements DialogueManager {
+  private timers = new Map<number, NodeJS.Timeout>();
+  private timeoutMs: number;
+
+  constructor(@inject(ENV_SERVICE_ID) envService: EnvService) {
+    this.timeoutMs = envService.getDialogueTimeoutMs();
+  }
 
   private setTimer(chatId: number) {
     const existing = this.timers.get(chatId);

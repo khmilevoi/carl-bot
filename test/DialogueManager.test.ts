@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DialogueManager } from '../src/services/chat/DialogueManager';
+import {
+  DefaultDialogueManager,
+  type DialogueManager,
+} from '../src/services/chat/DialogueManager';
+import { TestEnvService } from '../src/services/env/EnvService';
 
 describe('DialogueManager', () => {
   beforeEach(() => {
@@ -8,7 +12,9 @@ describe('DialogueManager', () => {
   });
 
   it('deactivates after timeout', () => {
-    const dm = new DialogueManager(1000);
+    const env = new TestEnvService();
+    vi.spyOn(env, 'getDialogueTimeoutMs').mockReturnValue(1000);
+    const dm: DialogueManager = new DefaultDialogueManager(env);
     dm.start(1);
     expect(dm.isActive(1)).toBe(true);
     vi.advanceTimersByTime(1000);
@@ -16,7 +22,9 @@ describe('DialogueManager', () => {
   });
 
   it('extend resets timer', () => {
-    const dm = new DialogueManager(1000);
+    const env = new TestEnvService();
+    vi.spyOn(env, 'getDialogueTimeoutMs').mockReturnValue(1000);
+    const dm: DialogueManager = new DefaultDialogueManager(env);
     dm.start(1);
     vi.advanceTimersByTime(900);
     dm.extend(1);

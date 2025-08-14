@@ -2,6 +2,10 @@ import type { Context } from 'telegraf';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
+  DefaultDialogueManager,
+  type DialogueManager,
+} from '../src/services/chat/DialogueManager';
+import {
   DefaultTriggerPipeline,
   TriggerPipeline,
 } from '../src/services/chat/TriggerPipeline';
@@ -13,11 +17,16 @@ describe('TriggerPipeline', () => {
   const env = new TestEnvService();
 
   it('returns result when mention trigger matches', async () => {
-    const pipeline: TriggerPipeline = new DefaultTriggerPipeline(env, {
-      async check() {
-        return null;
+    const dialogue: DialogueManager = new DefaultDialogueManager(env);
+    const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
+      env,
+      {
+        async check() {
+          return null;
+        },
       },
-    });
+      dialogue
+    );
     const ctx = {
       message: { text: 'hi @bot' },
       me: 'bot',
@@ -35,9 +44,11 @@ describe('TriggerPipeline', () => {
     const interestChecker: InterestChecker = {
       check: vi.fn().mockResolvedValue(null),
     };
+    const dialogue: DialogueManager = new DefaultDialogueManager(env);
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
       env,
-      interestChecker
+      interestChecker,
+      dialogue
     );
     const ctx = {
       message: { text: 'hi @bot' },
@@ -61,9 +72,11 @@ describe('TriggerPipeline', () => {
         return result;
       },
     };
+    const dialogue: DialogueManager = new DefaultDialogueManager(env);
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
       env,
-      interestChecker
+      interestChecker,
+      dialogue
     );
     const ctx = {
       message: { text: 'hello there' },
