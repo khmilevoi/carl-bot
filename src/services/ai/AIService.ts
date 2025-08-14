@@ -17,7 +17,8 @@ export interface AIService {
   ask(
     history: ChatMessage[],
     summary?: string,
-    triggerReason?: TriggerReason
+    triggerReason?: TriggerReason,
+    attitudes?: { username: string; attitude?: string | null }[]
   ): Promise<string>;
   summarize(history: ChatMessage[], prev?: string): Promise<string>;
   checkInterest(
