@@ -10,6 +10,7 @@ const setRequiredEnv = (overrides: Record<string, string | undefined> = {}) => {
   process.env.DATABASE_URL = 'file:///tmp/test.db';
   process.env.ADMIN_CHAT_ID = '1';
   process.env.INTEREST_MESSAGE_INTERVAL = '25';
+  process.env.CHAT_HISTORY_LIMIT = '50';
   Object.entries(overrides).forEach(([k, v]) => {
     if (v === undefined) {
       delete process.env[k];
