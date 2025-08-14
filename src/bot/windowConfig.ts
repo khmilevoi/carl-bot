@@ -13,7 +13,7 @@ export interface WindowDefinition {
 
 export const windows: WindowDefinition[] = [
   {
-    id: 'main',
+    id: 'menu',
     text: 'Выберите действие:',
     buttons: [
       {
@@ -29,7 +29,7 @@ export const windows: WindowDefinition[] = [
     ],
   },
   {
-    id: 'admin_main',
+    id: 'admin_menu',
     text: 'Выберите действие:',
     buttons: [
       {

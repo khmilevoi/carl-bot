@@ -255,7 +255,7 @@ export class TelegramBot {
     assert(chatId, 'This is not a chat');
 
     if (chatId === this.env.ADMIN_CHAT_ID) {
-      await this.router.show(ctx, 'admin_main');
+      await this.router.show(ctx, 'admin_menu');
       return;
     }
 
@@ -289,7 +289,7 @@ export class TelegramBot {
       return;
     }
 
-    await this.router.show(ctx, 'main');
+    await this.router.show(ctx, 'menu');
   }
 
   private async showAdminChatsMenu(ctx: Context) {
