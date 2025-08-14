@@ -7,6 +7,7 @@ export interface PromptService {
   getPreviousSummaryPrompt(prev: string): Promise<string>;
   getInterestCheckPrompt(): Promise<string>;
   getAssessUsersPrompt(): Promise<string>;
+  getTriggerPrompt(why?: string, message?: string): Promise<string>;
   getUserPrompt(
     userMessage: string,
     messageId?: string,

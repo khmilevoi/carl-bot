@@ -22,6 +22,7 @@ class TempEnvService extends TestEnvService {
       userPromptSystem: join(this.dir, 'user_prompt_system_prompt.md'),
       priorityRulesSystem: join(this.dir, 'priority_rules_system_prompt.md'),
       assessUsers: join(this.dir, 'assess_users_prompt.md'),
+      replyTrigger: join(this.dir, 'reply_trigger_prompt.md'),
     };
   }
 }
@@ -55,6 +56,10 @@ describe('FilePromptService', () => {
     writeFileSync(join(dir, 'priority_rules_system_prompt.md'), '');
     assessUsersPath = join(dir, 'assess_users_prompt.md');
     writeFileSync(assessUsersPath, 'assess');
+    writeFileSync(
+      join(dir, 'reply_trigger_prompt.md'),
+      'trigger {{why}} {{message}}'
+    );
 
     const actual =
       await vi.importActual<typeof import('fs/promises')>('fs/promises');

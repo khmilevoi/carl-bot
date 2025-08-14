@@ -84,7 +84,6 @@ export class ChatGPTService implements AIService {
         content: await this.prompts.getAskSummaryPrompt(summary),
       });
     }
-
     if (triggerReason) {
       messages.push({
         role: 'system',
