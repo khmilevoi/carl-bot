@@ -38,6 +38,10 @@ import {
 } from './services/chat/ChatResponder';
 import { DefaultChatResetService } from './services/chat/DefaultChatResetService';
 import {
+  DefaultDialogueManager,
+  DIALOGUE_MANAGER_ID,
+} from './services/chat/DialogueManager';
+import {
   DefaultHistorySummarizer,
   HISTORY_SUMMARIZER_ID,
 } from './services/chat/HistorySummarizer';
@@ -135,6 +139,11 @@ container
   .inSingletonScope();
 
 container.bind(ChatMemoryManager).toSelf().inSingletonScope();
+
+container
+  .bind(DIALOGUE_MANAGER_ID)
+  .to(DefaultDialogueManager)
+  .inSingletonScope();
 
 container
   .bind<MessageContextExtractor>(MESSAGE_CONTEXT_EXTRACTOR_ID)

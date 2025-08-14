@@ -1,7 +1,11 @@
 import type { Context } from 'telegraf';
 import { describe, expect, it } from 'vitest';
 
-import { DialogueManager } from '../src/services/chat/DialogueManager';
+import {
+  DefaultDialogueManager,
+  type DialogueManager,
+} from '../src/services/chat/DialogueManager';
+import { TestEnvService } from '../src/services/env/EnvService';
 import { InterestChecker } from '../src/services/interest/InterestChecker';
 import { InterestTrigger } from '../src/triggers/InterestTrigger';
 import { TriggerContext } from '../src/triggers/Trigger.interface';
@@ -31,7 +35,9 @@ class MockInterestChecker implements InterestChecker {
 }
 
 describe('InterestTrigger', () => {
-  const dialogue = new DialogueManager(1000);
+  const dialogue: DialogueManager = new DefaultDialogueManager(
+    new TestEnvService()
+  );
   const baseCtx: TriggerContext = { text: '', replyText: '', chatId: 1 };
 
   it('returns null when message count is below threshold', async () => {

@@ -15,7 +15,7 @@ import {
   INTEREST_CHECKER_ID,
   InterestChecker,
 } from '../interest/InterestChecker';
-import { DialogueManager } from './DialogueManager';
+import { DIALOGUE_MANAGER_ID, type DialogueManager } from './DialogueManager';
 
 export interface TriggerPipeline {
   shouldRespond(
@@ -30,7 +30,6 @@ export const TRIGGER_PIPELINE_ID = Symbol.for(
 
 @injectable()
 export class DefaultTriggerPipeline implements TriggerPipeline {
-  private dialogue: DialogueManager;
   private mentionTrigger = new MentionTrigger();
   private replyTrigger = new ReplyTrigger();
   private nameTrigger: NameTrigger;
@@ -38,9 +37,9 @@ export class DefaultTriggerPipeline implements TriggerPipeline {
 
   constructor(
     @inject(ENV_SERVICE_ID) envService: EnvService,
-    @inject(INTEREST_CHECKER_ID) interestChecker: InterestChecker
+    @inject(INTEREST_CHECKER_ID) interestChecker: InterestChecker,
+    @inject(DIALOGUE_MANAGER_ID) private dialogue: DialogueManager
   ) {
-    this.dialogue = new DialogueManager(envService.getDialogueTimeoutMs());
     this.nameTrigger = new NameTrigger(envService.getBotName());
     this.interestTrigger = new InterestTrigger(interestChecker);
   }
