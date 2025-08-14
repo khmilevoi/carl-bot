@@ -30,10 +30,7 @@ import {
   DefaultChatApprovalService,
 } from './services/chat/ChatApprovalService';
 import { ChatMemoryManager } from './services/chat/ChatMemory';
-import {
-  CHAT_RESET_SERVICE_ID,
-  type ChatResetService,
-} from './services/chat/ChatResetService';
+import { CHAT_RESET_SERVICE_ID } from './services/chat/ChatResetService';
 import {
   CHAT_RESPONDER_ID,
   ChatResponder,
@@ -64,18 +61,12 @@ import {
   MESSAGE_CONTEXT_EXTRACTOR_ID,
   MessageContextExtractor,
 } from './services/messages/MessageContextExtractor';
-import {
-  MESSAGE_SERVICE_ID,
-  type MessageService,
-} from './services/messages/MessageService';
+import { MESSAGE_SERVICE_ID } from './services/messages/MessageService';
 import { RepositoryMessageService } from './services/messages/RepositoryMessageService';
 import { FilePromptService } from './services/prompts/FilePromptService';
 import { PROMPT_SERVICE_ID } from './services/prompts/PromptService';
 import { RepositorySummaryService } from './services/summaries/RepositorySummaryService';
-import {
-  SUMMARY_SERVICE_ID,
-  type SummaryService,
-} from './services/summaries/SummaryService';
+import { SUMMARY_SERVICE_ID } from './services/summaries/SummaryService';
 
 export const container = new Container();
 
