@@ -195,6 +195,28 @@ export class TelegramBot {
       }
     });
 
+    this.bot.action(/^admin_chat:(\S+)$/, async (ctx) => {
+      const adminChatId = this.env.ADMIN_CHAT_ID;
+      if (ctx.chat?.id !== adminChatId) {
+        await ctx.answerCbQuery();
+        return;
+      }
+      const chatId = Number(ctx.match[1]);
+      const status = await this.approvalService.getStatus(chatId);
+      await ctx.answerCbQuery();
+      await ctx.reply(`Статус чата ${chatId}: ${status}`, {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              status === 'banned'
+                ? { text: 'Разбанить', callback_data: `chat_unban:${chatId}` }
+                : { text: 'Забанить', callback_data: `chat_ban:${chatId}` },
+            ],
+          ],
+        },
+      });
+    });
+
     this.bot.action(/^chat_approve:(\S+)$/, async (ctx) => {
       const adminChatId = this.env.ADMIN_CHAT_ID;
       if (ctx.chat?.id !== adminChatId) {
@@ -228,7 +250,7 @@ export class TelegramBot {
       await this.approvalService.ban(chatId);
       await ctx.answerCbQuery('Чат забанен');
       await ctx.telegram.sendMessage(chatId, 'Доступ запрещён');
-      await ctx.reply(`Чат ${chatId} забанен`, {
+      await ctx.editMessageText(`Чат ${chatId} забанен`, {
         reply_markup: {
           inline_keyboard: [
             [{ text: 'Разбанить', callback_data: `chat_unban:${chatId}` }],
@@ -247,7 +269,13 @@ export class TelegramBot {
       const chatId = Number(ctx.match[1]);
       await this.approvalService.unban(chatId);
       await ctx.answerCbQuery('Чат разбанен');
-      await ctx.reply(`Чат ${chatId} разбанен`);
+      await ctx.editMessageText(`Чат ${chatId} разбанен`, {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: 'Забанить', callback_data: `chat_ban:${chatId}` }],
+          ],
+        },
+      });
       await ctx.telegram.sendMessage(chatId, 'Доступ разрешён');
     });
 
@@ -321,13 +349,21 @@ export class TelegramBot {
   }
 
   private async showAdminMenu(ctx: Context) {
-    await ctx.reply('Выберите действие администратора:', {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: '📊 Загрузить данные', callback_data: 'export_data' }],
-          [{ text: '🔄 Сбросить память', callback_data: 'reset_memory' }],
-        ],
+    const chats = await this.approvalService.listAll();
+    if (chats.length === 0) {
+      await ctx.reply('Нет чатов для управления');
+      return;
+    }
+
+    const keyboard = chats.map((c) => [
+      {
+        text: `${c.chatId} (${c.status})`,
+        callback_data: `admin_chat:${c.chatId}`,
       },
+    ]);
+
+    await ctx.reply('Выберите чат для управления:', {
+      reply_markup: { inline_keyboard: keyboard },
     });
   }
 
