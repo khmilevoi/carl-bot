@@ -28,11 +28,18 @@ module.exports = [
           argsIgnorePattern: '^_',
         },
       ],
-      'import/no-unused-modules': ['error', {
-        unusedExports: true,
-        missingExports: true,
-        ignoreExports: ['src/index.ts', 'src/repositories/DbProvider.ts', 'test/**'],
-      }],
+      'import/no-unused-modules': [
+        'error',
+        {
+          unusedExports: true,
+          missingExports: true,
+          ignoreExports: [
+            'src/index.ts',
+            'src/repositories/DbProvider.ts',
+            'test/**',
+          ],
+        },
+      ],
     },
     settings: {
       'import/extensions': ['.js', '.ts'],

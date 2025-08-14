@@ -11,6 +11,10 @@
   npm run test:coverage
   ```
   Do **not** run `npm run test:watch`.
+- Fix formatting before committing:
+  ```bash
+  npm run format:fix
+  ```
 - Useful npm scripts:
   - `npm run dev` – start in development mode
   - `npm run build` – compile TypeScript
