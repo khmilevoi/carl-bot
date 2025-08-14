@@ -15,6 +15,11 @@ export class MessageFactory {
 
     const { replyText, replyUsername, quoteText, username, fullName } = meta;
 
+    const chatId = ctx.chat?.id;
+    assert(chatId, 'No chat id');
+    const chatTitle =
+      ctx.chat && 'title' in ctx.chat ? ctx.chat.title : undefined;
+
     return {
       role: 'user',
       content: message.text,
@@ -27,18 +32,23 @@ export class MessageFactory {
       messageId: ctx.message?.message_id,
       firstName: ctx.from?.first_name,
       lastName: ctx.from?.last_name,
-      chatId: ctx.chat!.id,
-      chatTitle: 'title' in ctx.chat! ? ctx.chat.title : undefined,
+      chatId,
+      chatTitle,
     };
   }
 
   static fromAssistant(ctx: Context, content: string): StoredMessage {
+    const chatId = ctx.chat?.id;
+    assert(chatId, 'No chat id');
+    const chatTitle =
+      ctx.chat && 'title' in ctx.chat ? ctx.chat.title : undefined;
+
     return {
       role: 'assistant',
       content,
       username: ctx.me,
-      chatId: ctx.chat!.id,
-      chatTitle: 'title' in ctx.chat! ? ctx.chat.title : undefined,
+      chatId,
+      chatTitle,
     };
   }
 }
