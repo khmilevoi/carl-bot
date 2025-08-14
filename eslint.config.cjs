@@ -27,6 +27,7 @@ module.exports = [
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/prefer-optional-chain': 'error',
       '@typescript-eslint/prefer-nullish-coalescing': 'error',
+      '@typescript-eslint/no-non-null-assertion': 'error',
       '@typescript-eslint/ban-ts-comment': [
         'error',
         {
