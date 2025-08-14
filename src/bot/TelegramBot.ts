@@ -34,7 +34,7 @@ import {
 import { MessageFactory } from '../services/messages/MessageFactory';
 import { TriggerContext } from '../triggers/Trigger.interface';
 import { windows } from './windowConfig';
-import { WindowRouter } from './windowRouter';
+import { WindowRouter } from './WindowRouter';
 
 async function withTyping(ctx: Context, fn: () => Promise<void>) {
   await ctx.sendChatAction('typing');
@@ -255,7 +255,7 @@ export class TelegramBot {
     assert(chatId, 'This is not a chat');
 
     if (chatId === this.env.ADMIN_CHAT_ID) {
-      await this.router.showWindow(ctx, 'admin_main');
+      await this.router.show(ctx, 'admin_main');
       return;
     }
 
@@ -289,7 +289,7 @@ export class TelegramBot {
       return;
     }
 
-    await this.router.showWindow(ctx, 'main');
+    await this.router.show(ctx, 'main');
   }
 
   private async showAdminChatsMenu(ctx: Context) {
