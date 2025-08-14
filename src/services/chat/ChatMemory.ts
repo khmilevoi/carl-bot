@@ -36,7 +36,14 @@ export class ChatMemory {
       { chatId: this.chatId, historyLength: history.length, limit: this.limit },
       'Checking history limit after adding message'
     );
-    await this.summarizer.summarizeIfNeeded(this.chatId, history, this.limit);
+    const summarized = await this.summarizer.summarize(
+      this.chatId,
+      history,
+      this.limit
+    );
+    if (summarized) {
+      await this.summarizer.assessUsers(this.chatId, history);
+    }
   }
 
   public getHistory(): Promise<ChatMessage[]> {

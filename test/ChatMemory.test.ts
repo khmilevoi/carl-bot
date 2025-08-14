@@ -7,7 +7,8 @@ import { MessageService } from '../src/services/messages/MessageService';
 import { StoredMessage } from '../src/services/messages/StoredMessage';
 
 class FakeHistorySummarizer implements HistorySummarizer {
-  summarizeIfNeeded = vi.fn(async () => {});
+  summarize = vi.fn(async () => false);
+  assessUsers = vi.fn(async () => {});
 }
 
 class FakeMessageService implements MessageService {
@@ -79,7 +80,7 @@ describe('ChatMemory', () => {
       username: 'bot',
     });
 
-    expect(summarizer.summarizeIfNeeded).toHaveBeenCalledWith(
+    expect(summarizer.summarize).toHaveBeenCalledWith(
       1,
       [
         {
@@ -97,6 +98,7 @@ describe('ChatMemory', () => {
       ],
       2
     );
+    expect(summarizer.assessUsers).not.toHaveBeenCalled();
     const hist = await memory.getHistory();
     expect(hist).toEqual([
       { role: 'user', content: 'old', username: 'u1', chatId: 1 },
