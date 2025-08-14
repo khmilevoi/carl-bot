@@ -9,10 +9,12 @@ export class InterestTrigger implements Trigger {
   constructor(private checker: InterestChecker) {}
 
   async apply(
-    _ctx: Context,
+    ctx: Context,
     { chatId }: TriggerContext,
-    _dialogue: DialogueManager
+    dialogue: DialogueManager
   ): Promise<TriggerResult | null> {
+    void ctx;
+    void dialogue;
     const result = await this.checker.check(chatId);
     if (result) {
       logger.debug({ chatId }, 'Interest trigger matched');

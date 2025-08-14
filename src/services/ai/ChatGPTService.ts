@@ -125,6 +125,7 @@ export class ChatGPTService implements AIService {
     history: ChatMessage[],
     summary: string
   ): Promise<{ messageId: string; why: string } | null> {
+    void summary;
     const persona = await this.prompts.getPersona();
     const checkPrompt = await this.prompts.getInterestCheckPrompt();
     const messages: OpenAI.ChatCompletionMessageParam[] = [

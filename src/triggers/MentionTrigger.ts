@@ -8,8 +8,9 @@ export class MentionTrigger implements Trigger {
   async apply(
     ctx: Context,
     context: TriggerContext,
-    _dialogue: DialogueManager
+    dialogue: DialogueManager
   ): Promise<TriggerResult | null> {
+    void dialogue;
     const text = (ctx.message as any)?.text ?? '';
     if (text.includes(`@${ctx.me}`)) {
       context.text = text.replace(`@${(ctx as any).me}`, '').trim();
