@@ -58,14 +58,8 @@ export class FilePromptService implements PromptService {
     return this.priorityRulesSystemTemplate();
   }
 
-  async getUserPromptSystemPrompt(
-    attitudes: { username: string; attitude?: string | null }[] = []
-  ): Promise<string> {
-    const template = await this.userPromptSystemTemplate();
-    const attitudeText = attitudes.length
-      ? attitudes.map((a) => `@${a.username} — ${a.attitude ?? ''}`).join('; ')
-      : '';
-    return template.replace('{{attitudes}}', attitudeText);
+  async getUserPromptSystemPrompt(): Promise<string> {
+    return this.userPromptSystemTemplate();
   }
 
   async getAskSummaryPrompt(summary: string): Promise<string> {
@@ -96,7 +90,8 @@ export class FilePromptService implements PromptService {
     userName?: string,
     fullName?: string,
     replyMessage?: string,
-    quoteMessage?: string
+    quoteMessage?: string,
+    attitude?: string
   ): Promise<string> {
     const template = await this.userPromptTemplate();
     const prompt = template
@@ -105,7 +100,8 @@ export class FilePromptService implements PromptService {
       .replace('{{userName}}', userName ?? 'N/A')
       .replace('{{fullName}}', fullName ?? 'N/A')
       .replace('{{replyMessage}}', replyMessage ?? 'N/A')
-      .replace('{{quoteMessage}}', quoteMessage ?? 'N/A');
+      .replace('{{quoteMessage}}', quoteMessage ?? 'N/A')
+      .replace('{{attitude}}', attitude ?? '');
 
     return prompt;
   }

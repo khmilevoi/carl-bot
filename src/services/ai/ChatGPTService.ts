@@ -70,7 +70,7 @@ export class ChatGPTService implements AIService {
       },
       {
         role: 'system',
-        content: await this.prompts.getUserPromptSystemPrompt(attitudes),
+        content: await this.prompts.getUserPromptSystemPrompt(),
       },
     ];
     if (summary) {
@@ -92,7 +92,7 @@ export class ChatGPTService implements AIService {
       });
     }
 
-    // attitudes are injected via user prompt system template
+    // attitudes are injected via individual user prompts
 
     const historyMessages = await Promise.all(
       history.map<Promise<OpenAI.ChatCompletionMessageParam>>(async (m) =>
@@ -105,7 +105,9 @@ export class ChatGPTService implements AIService {
                 m.username,
                 m.fullName,
                 m.replyText,
-                m.quoteText
+                m.quoteText,
+                attitudes.find((a) => a.username === m.username)?.attitude ??
+                  undefined
               ),
             }
           : { role: 'assistant', content: m.content }
@@ -203,7 +205,9 @@ export class ChatGPTService implements AIService {
                 m.username,
                 m.fullName,
                 m.replyText,
-                m.quoteText
+                m.quoteText,
+                prevAttitudes.find((a) => a.username === m.username)
+                  ?.attitude ?? undefined
               ),
             }
           : { role: 'assistant', content: m.content }

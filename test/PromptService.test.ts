@@ -32,6 +32,7 @@ describe('FilePromptService', () => {
   let personaPath: string;
   let checkInterestPath: string;
   let assessUsersPath: string;
+  let userPromptSystemPath: string;
 
   beforeEach(async () => {
     vi.restoreAllMocks();
@@ -47,12 +48,10 @@ describe('FilePromptService', () => {
     writeFileSync(checkInterestPath, 'check');
     writeFileSync(
       join(dir, 'user_prompt.md'),
-      '{{messageId}}|{{userMessage}}|{{userName}}|{{fullName}}|{{replyMessage}}|{{quoteMessage}}'
+      '{{messageId}}|{{userMessage}}|{{userName}}|{{fullName}}|{{replyMessage}}|{{quoteMessage}}|{{attitude}}'
     );
-    writeFileSync(
-      join(dir, 'user_prompt_system_prompt.md'),
-      'Attitudes: {{attitudes}}'
-    );
+    userPromptSystemPath = join(dir, 'user_prompt_system_prompt.md');
+    writeFileSync(userPromptSystemPath, 'system');
     writeFileSync(join(dir, 'priority_rules_system_prompt.md'), '');
     assessUsersPath = join(dir, 'assess_users_prompt.md');
     writeFileSync(assessUsersPath, 'assess');
@@ -99,19 +98,24 @@ describe('FilePromptService', () => {
   });
 
   it('getUserPrompt substitutes values', async () => {
-    const prompt = await service.getUserPrompt('m', 'id', 'u', 'f', 'r', 'q');
-    expect(prompt).toBe('id|m|u|f|r|q');
+    const prompt = await service.getUserPrompt(
+      'm',
+      'id',
+      'u',
+      'f',
+      'r',
+      'q',
+      'a'
+    );
+    expect(prompt).toBe('id|m|u|f|r|q|a');
     const prompt2 = await service.getUserPrompt('m');
-    expect(prompt2).toBe('N/A|m|N/A|N/A|N/A|N/A');
+    expect(prompt2).toBe('N/A|m|N/A|N/A|N/A|N/A|');
   });
 
-  it('getUserPromptSystemPrompt substitutes attitudes', async () => {
-    const prompt = await service.getUserPromptSystemPrompt([
-      { username: 'user1', attitude: 'good' },
-      { username: 'user2', attitude: null },
-    ]);
-    expect(prompt).toBe('Attitudes: @user1 — good; @user2 — ');
-    const prompt2 = await service.getUserPromptSystemPrompt();
-    expect(prompt2).toBe('Attitudes: ');
+  it('getUserPromptSystemPrompt reads file only once', async () => {
+    expect(await service.getUserPromptSystemPrompt()).toBe('system');
+    expect(await service.getUserPromptSystemPrompt()).toBe('system');
+    expect(readFileSpy).toHaveBeenCalledWith(userPromptSystemPath, 'utf-8');
+    expect(readFileSpy).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,9 +1,7 @@
 export interface PromptService {
   getPersona(): Promise<string>;
   getPriorityRulesSystemPrompt(): Promise<string>;
-  getUserPromptSystemPrompt(
-    attitudes?: { username: string; attitude?: string | null }[]
-  ): Promise<string>;
+  getUserPromptSystemPrompt(): Promise<string>;
   getAskSummaryPrompt(summary: string): Promise<string>;
   getSummarizationSystemPrompt(): Promise<string>;
   getPreviousSummaryPrompt(prev: string): Promise<string>;
@@ -15,7 +13,8 @@ export interface PromptService {
     userName?: string,
     fullName?: string,
     replyMessage?: string,
-    quoteMessage?: string
+    quoteMessage?: string,
+    attitude?: string
   ): Promise<string>;
 }
 
