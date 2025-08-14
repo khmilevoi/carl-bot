@@ -16,6 +16,10 @@ export interface PromptService {
     quoteMessage?: string,
     attitude?: string
   ): Promise<string>;
+  getTriggerPrompt(
+    triggerReason: string,
+    triggerMessage: string
+  ): Promise<string>;
 }
 
 import type { ServiceIdentifier } from 'inversify';

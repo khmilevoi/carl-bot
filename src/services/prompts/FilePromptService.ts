@@ -17,6 +17,7 @@ export class FilePromptService implements PromptService {
   private readonly userPromptSystemTemplate: () => Promise<string>;
   private readonly assessUsersTemplate: () => Promise<string>;
   private readonly priorityRulesSystemTemplate: () => Promise<string>;
+  private readonly replyTriggerTemplate: () => Promise<string>;
 
   constructor(@inject(ENV_SERVICE_ID) envService: EnvService) {
     const files = envService.getPromptFiles();
@@ -47,6 +48,9 @@ export class FilePromptService implements PromptService {
     );
     this.assessUsersTemplate = createLazy(() =>
       readFile(files.assessUsers, 'utf-8')
+    );
+    this.replyTriggerTemplate = createLazy(() =>
+      readFile(files.replyTrigger, 'utf-8')
     );
   }
 
@@ -102,6 +106,19 @@ export class FilePromptService implements PromptService {
       .replace('{{replyMessage}}', replyMessage ?? 'N/A')
       .replace('{{quoteMessage}}', quoteMessage ?? 'N/A')
       .replace('{{attitude}}', attitude ?? '');
+
+    return prompt;
+  }
+
+  async getTriggerPrompt(
+    triggerReason: string,
+    triggerMessage: string
+  ): Promise<string> {
+    const template = await this.replyTriggerTemplate();
+
+    const prompt = template
+      .replace('{{triggerReason}}', triggerReason)
+      .replace('{{triggerMessage}}', triggerMessage);
 
     return prompt;
   }
