@@ -35,6 +35,13 @@
   `SQLiteDbProvider` implementation; business logic must use repository interfaces
   and remain database‑agnostic.
 
+## Code style
+
+- Remove unused parameters when possible; otherwise prefix them with an underscore
+  (`_param`) to satisfy `@typescript-eslint/no-unused-vars`.
+- When a Promise should be fire-and-forget, call it with `void` to avoid blocking
+  the main execution flow (e.g. `void this.logPrompt(...)`).
+
 ## Troubleshooting
 
 - `npm run build` may fail with `swc: not found`. Run `npm install` to install
