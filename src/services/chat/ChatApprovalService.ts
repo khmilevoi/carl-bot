@@ -2,6 +2,7 @@ import { inject, injectable, type ServiceIdentifier } from 'inversify';
 
 import {
   CHAT_ACCESS_REPOSITORY_ID,
+  type ChatAccessEntity,
   type ChatAccessRepository,
   type ChatStatus,
 } from '../../repositories/interfaces/ChatAccessRepository';
@@ -13,6 +14,7 @@ export interface ChatApprovalService {
   ban(chatId: number): Promise<void>;
   unban(chatId: number): Promise<void>;
   getStatus(chatId: number): Promise<ChatStatus>;
+  listAll(): Promise<ChatAccessEntity[]>;
 }
 
 export const CHAT_APPROVAL_SERVICE_ID = Symbol.for(
@@ -50,5 +52,9 @@ export class DefaultChatApprovalService implements ChatApprovalService {
   async getStatus(chatId: number): Promise<ChatStatus> {
     const entity = await this.accessRepo.get(chatId);
     return entity?.status ?? 'pending';
+  }
+
+  async listAll(): Promise<ChatAccessEntity[]> {
+    return this.accessRepo.listAll();
   }
 }
