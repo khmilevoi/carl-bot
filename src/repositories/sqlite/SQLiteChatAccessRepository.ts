@@ -70,4 +70,22 @@ export class SQLiteChatAccessRepository implements ChatAccessRepository {
       approvedAt: row.approved_at ?? undefined,
     }));
   }
+
+  async listAll(): Promise<ChatAccessEntity[]> {
+    const db = await this.db();
+    const rows = await db.all<
+      {
+        chat_id: number;
+        status: ChatStatus;
+        requested_at: number | null;
+        approved_at: number | null;
+      }[]
+    >('SELECT chat_id, status, requested_at, approved_at FROM chat_access');
+    return (rows ?? []).map((row) => ({
+      chatId: row.chat_id,
+      status: row.status,
+      requestedAt: row.requested_at ?? undefined,
+      approvedAt: row.approved_at ?? undefined,
+    }));
+  }
 }

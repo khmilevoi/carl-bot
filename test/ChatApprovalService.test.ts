@@ -14,6 +14,7 @@ describe('DefaultChatApprovalService', () => {
     get: vi.fn(),
     setStatus: vi.fn().mockResolvedValue(undefined),
     listPending: vi.fn(),
+    listAll: vi.fn(),
   };
 
   const envService = {
@@ -54,5 +55,12 @@ describe('DefaultChatApprovalService', () => {
 
     (repo.get as any).mockResolvedValueOnce(undefined);
     expect(await service.getStatus(6)).toBe('pending');
+  });
+
+  it('lists all chat access entries', async () => {
+    const entries = [{ chatId: 1, status: 'approved' }];
+    (repo.listAll as any).mockResolvedValueOnce(entries);
+    expect(await service.listAll()).toEqual(entries);
+    expect(repo.listAll).toHaveBeenCalled();
   });
 });
