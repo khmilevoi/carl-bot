@@ -11,6 +11,10 @@
   npm run test:coverage
   ```
   Do **not** run `npm run test:watch`.
+- Fix formatting before committing:
+  ```bash
+  npm run format:fix
+  ```
 - Useful npm scripts:
   - `npm run dev` – start in development mode
   - `npm run build` – compile TypeScript
@@ -34,6 +38,13 @@
   `listTables()`. Only modules that directly work with SQLite should depend on the
   `SQLiteDbProvider` implementation; business logic must use repository interfaces
   and remain database‑agnostic.
+
+## Code style
+
+- Remove unused parameters when possible; otherwise prefix them with an underscore
+  (`_param`) to satisfy `@typescript-eslint/no-unused-vars`.
+- When a Promise should be fire-and-forget, call it with `void` to avoid blocking
+  the main execution flow (e.g. `void this.logPrompt(...)`).
 
 ## Troubleshooting
 

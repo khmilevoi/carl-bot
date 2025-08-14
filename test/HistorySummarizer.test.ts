@@ -8,9 +8,9 @@ import { SummaryService } from '../src/services/summaries/SummaryService';
 
 class MockAIService {
   summarize = vi.fn(async () => 'new summary');
-  assessUsers = vi.fn(async (_msgs: ChatMessage[], _prev: any) => [
-    { username: 'user1', attitude: 'positive' },
-  ]);
+  assessUsers = vi.fn(async (_msgs: ChatMessage[], _prev: any) => {
+    return [{ username: 'user1', attitude: 'positive' }];
+  });
 }
 
 class MockMessageService implements MessageService {
@@ -28,7 +28,10 @@ class MockMessageService implements MessageService {
     return this.messages.length;
   }
 
-  async getLastMessages(_: number, limit: number): Promise<ChatMessage[]> {
+  async getLastMessages(
+    _chatId: number,
+    limit: number
+  ): Promise<ChatMessage[]> {
     return [...this.messages].slice(-limit).reverse();
   }
 
@@ -44,7 +47,7 @@ class MockSummaryService implements SummaryService {
     return this.summary;
   }
 
-  async setSummary(_: number, summary: string): Promise<void> {
+  async setSummary(_chatId: number, summary: string): Promise<void> {
     this.summary = summary;
   }
 

@@ -123,7 +123,7 @@ export class ChatGPTService implements AIService {
 
   public async checkInterest(
     history: ChatMessage[],
-    summary: string
+    _summary: string
   ): Promise<{ messageId: string; why: string } | null> {
     const persona = await this.prompts.getPersona();
     const checkPrompt = await this.prompts.getInterestCheckPrompt();
