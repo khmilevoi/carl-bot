@@ -13,6 +13,7 @@ export default defineConfig({
         'src/migrate.ts',
         'src/repositories/**',
         'src/services/env/**',
+        'src/services/logging/**',
         '**/*.interface.ts',
       ],
     },
