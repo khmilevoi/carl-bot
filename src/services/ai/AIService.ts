@@ -24,6 +24,9 @@ export interface AIService {
     history: ChatMessage[],
     summary: string
   ): Promise<{ messageId: string; why: string } | null>;
+  assessUsers(
+    messages: ChatMessage[]
+  ): Promise<{ username: string; attitude: string }[]>;
 }
 
 import type { ServiceIdentifier } from 'inversify';

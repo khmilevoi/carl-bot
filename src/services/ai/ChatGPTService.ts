@@ -170,6 +170,53 @@ export class ChatGPTService implements AIService {
     }
   }
 
+  public async assessUsers(
+    messages: ChatMessage[]
+  ): Promise<{ username: string; attitude: string }[]> {
+    const persona = await this.prompts.getPersona();
+    const systemPrompt =
+      'Проанализируй пользователей в диалоге и определи отношение бота к каждому. Верни JSON массив объектов {"username": "имя", "attitude": "отношение"}. Без пояснений.';
+    const reqMessages: OpenAI.ChatCompletionMessageParam[] = [
+      { role: 'system', content: persona },
+      { role: 'system', content: systemPrompt },
+    ];
+    const historyMessages = await Promise.all(
+      messages.map<Promise<OpenAI.ChatCompletionMessageParam>>(async (m) =>
+        m.role === 'user'
+          ? {
+              role: 'user',
+              content: await this.prompts.getUserPrompt(
+                m.content,
+                m.messageId?.toString(),
+                m.username,
+                m.fullName,
+                m.replyText,
+                m.quoteText
+              ),
+            }
+          : { role: 'assistant', content: m.content }
+      )
+    );
+    reqMessages.push(...historyMessages);
+    logger.debug(
+      { messages: messages.length },
+      'Sending user attitude assessment request'
+    );
+    const completion = await this.openai.chat.completions.create({
+      model: this.summaryModel,
+      messages: reqMessages,
+    });
+    logger.debug('Received user attitude assessment response');
+    const content = completion.choices[0]?.message?.content ?? '[]';
+    void this.logPrompt('assessUsers', reqMessages, content);
+    try {
+      return JSON.parse(content) as { username: string; attitude: string }[];
+    } catch (err) {
+      logger.error({ err, content }, 'Failed to parse assessUsers response');
+      return [];
+    }
+  }
+
   public async summarize(
     history: ChatMessage[],
     prev?: string

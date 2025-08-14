@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { UserRepository } from '../src/repositories/interfaces/UserRepository';
 import { ChatMessage } from '../src/services/ai/AIService';
 import { DefaultHistorySummarizer } from '../src/services/chat/HistorySummarizer';
 import { MessageService } from '../src/services/messages/MessageService';
@@ -7,6 +8,9 @@ import { SummaryService } from '../src/services/summaries/SummaryService';
 
 class MockAIService {
   summarize = vi.fn(async () => 'new summary');
+  assessUsers = vi.fn(async () => [
+    { username: 'user1', attitude: 'positive' },
+  ]);
 }
 
 class MockMessageService implements MessageService {
@@ -49,17 +53,35 @@ class MockSummaryService implements SummaryService {
   }
 }
 
+class MockUserRepository implements UserRepository {
+  updates: { userId: number; attitude: string }[] = [];
+  async setAttitude(userId: number, attitude: string): Promise<void> {
+    this.updates.push({ userId, attitude });
+  }
+  async upsert(_user: any): Promise<void> {}
+  async findById(_id: number): Promise<any> {
+    return undefined;
+  }
+}
+
 describe('HistorySummarizer', () => {
   let ai: MockAIService;
   let messages: MockMessageService;
   let summaries: MockSummaryService;
   let summarizer: DefaultHistorySummarizer;
+  let users: MockUserRepository;
 
   beforeEach(() => {
     ai = new MockAIService();
     messages = new MockMessageService();
     summaries = new MockSummaryService();
-    summarizer = new DefaultHistorySummarizer(ai as any, summaries, messages);
+    users = new MockUserRepository();
+    summarizer = new DefaultHistorySummarizer(
+      ai as any,
+      summaries,
+      messages,
+      users as any
+    );
   });
 
   it('does not summarize when history is within limit', async () => {
@@ -71,22 +93,30 @@ describe('HistorySummarizer', () => {
     await summarizer.summarizeIfNeeded(1, history, 3);
 
     expect(ai.summarize).not.toHaveBeenCalled();
+    expect(ai.assessUsers).not.toHaveBeenCalled();
     expect(messages.messages).toHaveLength(0);
+    expect(users.updates).toHaveLength(0);
   });
 
   it('summarizes and clears messages when history exceeds limit', async () => {
     const history: ChatMessage[] = [
-      { role: 'user', content: 'message 1' },
+      { role: 'user', content: 'message 1', username: 'user1', userId: 1 },
       { role: 'assistant', content: 'response 1' },
-      { role: 'user', content: 'message 2' },
+      { role: 'user', content: 'message 2', username: 'user2', userId: 2 },
       { role: 'assistant', content: 'response 2' },
-      { role: 'user', content: 'message 3' },
+      { role: 'user', content: 'message 3', username: 'user1', userId: 1 },
     ];
 
     await summarizer.summarizeIfNeeded(1, history, 3);
 
     expect(ai.summarize).toHaveBeenCalledWith(history, '');
+    expect(ai.assessUsers).toHaveBeenCalledWith(history);
+    expect(
+      ai.summarize.mock.invocationCallOrder[0] <
+        ai.assessUsers.mock.invocationCallOrder[0]
+    ).toBe(true);
     expect(summaries.summary).toBe('new summary');
+    expect(users.updates).toEqual([{ userId: 1, attitude: 'positive' }]);
     expect(messages.messages).toHaveLength(0);
   });
 
