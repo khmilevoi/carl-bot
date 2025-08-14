@@ -98,7 +98,7 @@ export class DefaultEnvService implements EnvService {
   }
 
   getDialogueTimeoutMs(): number {
-    return 60 * 1000;
+    return 2 * 60 * 1000;
   }
 
   getMigrationsDir(): string {
@@ -152,7 +152,7 @@ export class TestEnvService implements EnvService {
   }
 
   getDialogueTimeoutMs(): number {
-    return 60 * 1000;
+    return 2 * 60 * 1000;
   }
 
   getMigrationsDir(): string {
