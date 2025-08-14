@@ -3,6 +3,7 @@ import { Telegraf } from 'telegraf';
 import { describe, expect, it, vi } from 'vitest';
 
 import { TelegramBot } from '../src/bot/TelegramBot';
+import type { ChatRepository } from '../src/repositories/interfaces/ChatRepository.interface';
 import type { AdminService } from '../src/services/admin/AdminService.interface';
 import type { ChatApprovalService } from '../src/services/chat/ChatApprovalService';
 import type { ChatMemoryManager } from '../src/services/chat/ChatMemory';
@@ -56,6 +57,11 @@ class DummyApprovalService {
   listAll = vi.fn(async () => []);
 }
 
+class DummyChatRepository {
+  upsert = vi.fn(async () => {});
+  findById = vi.fn(async () => undefined);
+}
+
 describe('TelegramBot', () => {
   it('stores user messages via ChatMemoryManager', async () => {
     const memories = new MockChatMemoryManager();
@@ -79,7 +85,8 @@ describe('TelegramBot', () => {
       mockApprovalService as unknown as ChatApprovalService,
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
-      new DummyResponder() as unknown as ChatResponder
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatRepository() as unknown as ChatRepository
     );
     configureSpy.mockRestore();
 
@@ -115,6 +122,9 @@ describe('TelegramBot', () => {
       { chatId: 42, status: 'approved' },
     ]);
 
+    const chatRepo = new DummyChatRepository();
+    chatRepo.findById.mockResolvedValue({ chatId: 42, title: 'Test Chat' });
+
     const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
@@ -122,7 +132,8 @@ describe('TelegramBot', () => {
       approvalService as unknown as ChatApprovalService,
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
-      new DummyResponder() as unknown as ChatResponder
+      new DummyResponder() as unknown as ChatResponder,
+      chatRepo as unknown as ChatRepository
     );
     configureSpy.mockRestore();
 
@@ -133,10 +144,11 @@ describe('TelegramBot', () => {
     ).showAdminChatsMenu(ctx);
 
     expect(approvalService.listAll).toHaveBeenCalled();
+    expect(chatRepo.findById).toHaveBeenCalledWith(42);
     expect(ctx.reply).toHaveBeenCalledWith('Выберите чат для управления:', {
       reply_markup: {
         inline_keyboard: [
-          [{ text: '42 (approved)', callback_data: 'admin_chat:42' }],
+          [{ text: 'Test Chat (42)', callback_data: 'admin_chat:42' }],
         ],
       },
     });
@@ -155,7 +167,8 @@ describe('TelegramBot', () => {
       approvalService as unknown as ChatApprovalService,
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
-      new DummyResponder() as unknown as ChatResponder
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatRepository() as unknown as ChatRepository
     );
 
     const call = actionSpy.mock.calls.find(
@@ -194,7 +207,8 @@ describe('TelegramBot', () => {
       approvalService as unknown as ChatApprovalService,
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
-      new DummyResponder() as unknown as ChatResponder
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatRepository() as unknown as ChatRepository
     );
 
     const call = actionSpy.mock.calls.find(

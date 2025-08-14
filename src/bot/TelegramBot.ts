@@ -5,6 +5,10 @@ import { Context, Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
 
 import {
+  CHAT_REPOSITORY_ID,
+  type ChatRepository,
+} from '../repositories/interfaces/ChatRepository.interface';
+import {
   ADMIN_SERVICE_ID,
   AdminService,
 } from '../services/admin/AdminService.interface';
@@ -58,7 +62,8 @@ export class TelegramBot {
     @inject(MESSAGE_CONTEXT_EXTRACTOR_ID)
     private extractor: MessageContextExtractor,
     @inject(TRIGGER_PIPELINE_ID) private pipeline: TriggerPipeline,
-    @inject(CHAT_RESPONDER_ID) private responder: ChatResponder
+    @inject(CHAT_RESPONDER_ID) private responder: ChatResponder,
+    @inject(CHAT_REPOSITORY_ID) private chatRepo: ChatRepository
   ) {
     this.env = envService.env;
     this.bot = new Telegraf(this.env.BOT_TOKEN);
@@ -331,12 +336,18 @@ export class TelegramBot {
       return;
     }
 
-    const keyboard = chats.map((c) => [
-      {
-        text: `${c.chatId} (${c.status})`,
-        callback_data: `admin_chat:${c.chatId}`,
-      },
-    ]);
+    const keyboard = await Promise.all(
+      chats.map(async ({ chatId }) => {
+        const chat = await this.chatRepo.findById(chatId);
+        const title = chat?.title ?? 'Без названия';
+        return [
+          {
+            text: `${title} (${chatId})`,
+            callback_data: `admin_chat:${chatId}`,
+          },
+        ];
+      })
+    );
 
     await ctx.reply('Выберите чат для управления:', {
       reply_markup: { inline_keyboard: keyboard },
