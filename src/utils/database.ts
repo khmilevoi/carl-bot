@@ -1,6 +1,10 @@
 export function parseDatabaseUrl(databaseUrl: string | undefined): string {
-  if (!databaseUrl) {
-    throw new Error('DATABASE_URL is required');
+  if (!databaseUrl || databaseUrl.trim() === '') {
+    throw new Error('DATABASE_URL environment variable is required');
   }
-  return databaseUrl.replace(/^file:\/\//, '');
+  const trimmed = databaseUrl.trim();
+  if (trimmed.startsWith('file://')) {
+    return trimmed.replace(/^file:\/\//, '');
+  }
+  return trimmed;
 }
