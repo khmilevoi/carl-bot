@@ -19,6 +19,7 @@ module.exports = [
       'simple-import-sort/exports': 'error',
       'unused-imports/no-unused-imports': 'error',
       '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/consistent-type-imports': 'error',
       '@typescript-eslint/ban-ts-comment': [
         'error',
         {
