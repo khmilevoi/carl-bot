@@ -54,7 +54,8 @@ export class ChatGPTService implements AIService {
   public async ask(
     history: ChatMessage[],
     summary?: string,
-    triggerReason?: TriggerReason
+    triggerReason?: TriggerReason,
+    attitudes: { username: string; attitude?: string | null }[] = []
   ): Promise<string> {
     const persona = await this.prompts.getPersona();
     logger.debug(
@@ -89,6 +90,13 @@ export class ChatGPTService implements AIService {
         role: 'system',
         content: `Trigger message: ${triggerReason.message}`,
       });
+    }
+
+    if (attitudes.length > 0) {
+      const attitudeText = attitudes
+        .map((a) => `@${a.username} — ${a.attitude ?? ''}`)
+        .join('; ');
+      messages.push({ role: 'system', content: `Attitude: ${attitudeText}` });
     }
 
     const historyMessages = await Promise.all(
