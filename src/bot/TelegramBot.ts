@@ -115,8 +115,13 @@ export class TelegramBot {
       const userId = ctx.from?.id;
       assert(chatId, 'This is not a chat');
       assert(userId, 'No user id');
+      const firstName = ctx.from?.first_name;
+      const lastName = ctx.from?.last_name;
+      const username = ctx.from?.username;
+      const fullName = [firstName, lastName].filter(Boolean).join(' ');
+      const usernamePart = username ? ` @${username}` : '';
       const approveData = `user_approve:${chatId}:${userId}`;
-      const msg = `Chat ${chatId} user ${userId} requests data access.`;
+      const msg = `Chat ${chatId} user ${userId} (${fullName}${usernamePart}) requests data access.`;
       await ctx.telegram.sendMessage(this.env.ADMIN_CHAT_ID, msg, {
         reply_markup: {
           inline_keyboard: [
