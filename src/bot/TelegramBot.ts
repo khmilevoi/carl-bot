@@ -36,7 +36,10 @@ import { TriggerContext } from '../triggers/Trigger.interface';
 import { windows } from './windowConfig';
 import { WindowRouter } from './WindowRouter';
 
-export async function withTyping(ctx: Context, fn: () => Promise<void>) {
+export async function withTyping(
+  ctx: Context,
+  fn: () => Promise<void>
+): Promise<void> {
   await ctx.sendChatAction('typing');
   const chatId = ctx.chat?.id;
 
@@ -83,7 +86,7 @@ export class TelegramBot {
     this.configure();
   }
 
-  public async launch() {
+  public async launch(): Promise<void> {
     logger.info('Launching bot');
     await this.bot.telegram
       .deleteWebhook()
@@ -94,7 +97,7 @@ export class TelegramBot {
     logger.info('Bot launched');
   }
 
-  public stop(reason: string) {
+  public stop(reason: string): void {
     logger.info({ reason }, 'Stopping bot');
     this.bot.stop(reason);
   }
@@ -122,7 +125,7 @@ export class TelegramBot {
     );
   }
 
-  private configure() {
+  private configure(): void {
     this.bot.start((ctx) => this.showMenu(ctx));
     this.bot.command('menu', (ctx) => this.showMenu(ctx));
 
@@ -250,7 +253,7 @@ export class TelegramBot {
     this.bot.on(message('text'), (ctx) => this.handleText(ctx));
   }
 
-  private async showMenu(ctx: Context) {
+  private async showMenu(ctx: Context): Promise<void> {
     const chatId = ctx.chat?.id;
     assert(chatId, 'This is not a chat');
 
@@ -280,7 +283,7 @@ export class TelegramBot {
     await this.router.show(ctx, 'menu');
   }
 
-  private async showAdminChatsMenu(ctx: Context) {
+  private async showAdminChatsMenu(ctx: Context): Promise<void> {
     const chats = await this.approvalService.listAll();
     if (chats.length === 0) {
       await ctx.reply('Нет чатов для управления');
@@ -305,7 +308,7 @@ export class TelegramBot {
     });
   }
 
-  private async handleChatRequest(ctx: Context) {
+  private async handleChatRequest(ctx: Context): Promise<void> {
     const chatId = ctx.chat?.id;
     assert(chatId, 'This is not a chat');
     const title = ctx.chat && 'title' in ctx.chat ? ctx.chat.title : undefined;
@@ -315,7 +318,7 @@ export class TelegramBot {
     logger.info({ chatId }, 'Chat access request sent to admin');
   }
 
-  private async handleRequestAccess(ctx: Context) {
+  private async handleRequestAccess(ctx: Context): Promise<void> {
     const chatId = ctx.chat?.id;
     const userId = ctx.from?.id;
     assert(chatId, 'This is not a chat');
@@ -340,7 +343,7 @@ export class TelegramBot {
     await ctx.reply('Запрос отправлен администратору.');
   }
 
-  private async handleExportData(ctx: Context) {
+  private async handleExportData(ctx: Context): Promise<void> {
     const chatId = ctx.chat?.id;
     const userId = ctx.from?.id;
     assert(chatId, 'This is not a chat');
@@ -385,7 +388,7 @@ export class TelegramBot {
     }
   }
 
-  private async handleResetMemory(ctx: Context) {
+  private async handleResetMemory(ctx: Context): Promise<void> {
     const chatId = ctx.chat?.id;
     const userId = ctx.from?.id;
     assert(chatId, 'This is not a chat');
@@ -410,7 +413,7 @@ export class TelegramBot {
     }
   }
 
-  private async handleText(ctx: Context) {
+  private async handleText(ctx: Context): Promise<void> {
     const chatId = ctx.chat?.id;
     assert(!!chatId, 'This is not a chat');
     if (chatId === this.env.ADMIN_CHAT_ID) {

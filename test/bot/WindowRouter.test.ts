@@ -14,7 +14,11 @@ const windows: WindowDefinition[] = [
   { id: 'second', text: 'Second window', buttons: [] },
 ];
 
-function setupRouter() {
+function setupRouter(): {
+  router: WindowRouter;
+  goHandler: (ctx: Context) => Promise<void> | void;
+  backHandler: (ctx: Context) => Promise<void> | void;
+} {
   const bot = new Telegraf<Context>('token');
   const actionSpy = vi.spyOn(bot, 'action');
   const router = new WindowRouter(

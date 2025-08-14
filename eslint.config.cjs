@@ -47,6 +47,10 @@ module.exports = [
           argsIgnorePattern: '^_',
         },
       ],
+      '@typescript-eslint/explicit-function-return-type': [
+        'error',
+        { allowExpressions: true, allowTypedFunctionExpressions: true },
+      ],
       '@typescript-eslint/member-ordering': [
         'error',
         {
