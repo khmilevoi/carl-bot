@@ -5,7 +5,7 @@ import {
   type ChatAccessEntity,
   type ChatAccessRepository,
   type ChatStatus,
-} from '../../repositories/interfaces/ChatAccessRepository';
+} from '../../repositories/interfaces/ChatAccessRepository.interface';
 import { type Env, ENV_SERVICE_ID, type EnvService } from '../env/EnvService';
 
 export interface ChatApprovalService {

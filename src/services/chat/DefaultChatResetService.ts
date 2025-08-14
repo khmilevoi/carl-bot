@@ -4,12 +4,12 @@ import { logger } from '../logging/logger';
 import {
   MESSAGE_SERVICE_ID,
   type MessageService,
-} from '../messages/MessageService';
+} from '../messages/MessageService.interface';
 import {
   SUMMARY_SERVICE_ID,
   type SummaryService,
-} from '../summaries/SummaryService';
-import { ChatResetService } from './ChatResetService';
+} from '../summaries/SummaryService.interface';
+import { ChatResetService } from './ChatResetService.interface';
 
 @injectable()
 export class DefaultChatResetService implements ChatResetService {

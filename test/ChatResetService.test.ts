@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { MessageService } from '../src/services/messages/MessageService';
-import type { SummaryService } from '../src/services/summaries/SummaryService';
+import type { MessageService } from '../src/services/messages/MessageService.interface';
+import type { SummaryService } from '../src/services/summaries/SummaryService.interface';
 
 vi.mock('../src/services/logging/logger', () => ({
   logger: { debug: vi.fn() },

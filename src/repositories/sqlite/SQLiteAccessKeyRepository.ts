@@ -4,7 +4,7 @@ import { DB_PROVIDER_ID, type SQLiteDbProvider } from '../DbProvider';
 import {
   type AccessKeyEntity,
   type AccessKeyRepository,
-} from '../interfaces/AccessKeyRepository';
+} from '../interfaces/AccessKeyRepository.interface';
 
 @injectable()
 export class SQLiteAccessKeyRepository implements AccessKeyRepository {

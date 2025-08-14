@@ -4,7 +4,10 @@ import { inject, injectable } from 'inversify';
 import { Context, Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
 
-import { ADMIN_SERVICE_ID, AdminService } from '../services/admin/AdminService';
+import {
+  ADMIN_SERVICE_ID,
+  AdminService,
+} from '../services/admin/AdminService.interface';
 import {
   CHAT_APPROVAL_SERVICE_ID,
   ChatApprovalService,
@@ -25,7 +28,7 @@ import {
   MessageContextExtractor,
 } from '../services/messages/MessageContextExtractor';
 import { MessageFactory } from '../services/messages/MessageFactory';
-import { TriggerContext } from '../triggers/Trigger';
+import { TriggerContext } from '../triggers/Trigger.interface';
 
 async function withTyping(ctx: Context, fn: () => Promise<void>) {
   await ctx.sendChatAction('typing');

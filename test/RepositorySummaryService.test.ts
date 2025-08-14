@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { type SummaryRepository } from '../src/repositories/interfaces/SummaryRepository';
+import { type SummaryRepository } from '../src/repositories/interfaces/SummaryRepository.interface';
 import { RepositorySummaryService } from '../src/services/summaries/RepositorySummaryService';
 
 describe('RepositorySummaryService', () => {
