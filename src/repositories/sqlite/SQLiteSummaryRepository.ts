@@ -6,11 +6,6 @@ import { type SummaryRepository } from '../interfaces/SummaryRepository.interfac
 @injectable()
 export class SQLiteSummaryRepository implements SummaryRepository {
   constructor(@inject(DB_PROVIDER_ID) private dbProvider: SQLiteDbProvider) {}
-
-  private async db() {
-    return this.dbProvider.get();
-  }
-
   async upsert(chatId: number, summary: string): Promise<void> {
     const db = await this.db();
     await db.run(
@@ -32,5 +27,9 @@ export class SQLiteSummaryRepository implements SummaryRepository {
   async clearByChatId(chatId: number): Promise<void> {
     const db = await this.db();
     await db.run('DELETE FROM summaries WHERE chat_id = ?', chatId);
+  }
+
+  private async db() {
+    return this.dbProvider.get();
   }
 }

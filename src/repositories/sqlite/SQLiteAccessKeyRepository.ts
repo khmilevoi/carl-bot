@@ -9,11 +9,6 @@ import {
 @injectable()
 export class SQLiteAccessKeyRepository implements AccessKeyRepository {
   constructor(@inject(DB_PROVIDER_ID) private dbProvider: SQLiteDbProvider) {}
-
-  private async db() {
-    return this.dbProvider.get();
-  }
-
   async upsertKey({
     chatId,
     userId,
@@ -58,5 +53,9 @@ export class SQLiteAccessKeyRepository implements AccessKeyRepository {
   async deleteExpired(now: number): Promise<void> {
     const db = await this.db();
     await db.run('DELETE FROM access_keys WHERE expires_at <= ?', now);
+  }
+
+  private async db() {
+    return this.dbProvider.get();
   }
 }

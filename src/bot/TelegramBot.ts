@@ -80,6 +80,45 @@ export class TelegramBot {
     this.configure();
   }
 
+  public async launch() {
+    logger.info('Launching bot');
+    await this.bot.telegram
+      .deleteWebhook()
+      .catch((err) =>
+        logger.warn({ err }, 'Failed to delete existing webhook')
+      );
+    await this.bot.launch();
+    logger.info('Bot launched');
+  }
+
+  public stop(reason: string) {
+    logger.info({ reason }, 'Stopping bot');
+    this.bot.stop(reason);
+  }
+
+  public async sendChatApprovalRequest(
+    chatId: number,
+    title?: string
+  ): Promise<void> {
+    await this.approvalService.pending(chatId);
+
+    const name = title ? `${title} (${chatId})` : `Chat ${chatId}`;
+    await this.bot.telegram.sendMessage(
+      this.env.ADMIN_CHAT_ID,
+      `${name} запросил доступ`,
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: 'Разрешить', callback_data: `chat_approve:${chatId}` },
+              { text: 'Забанить', callback_data: `chat_ban:${chatId}` },
+            ],
+          ],
+        },
+      }
+    );
+  }
+
   private configure() {
     this.bot.start((ctx) => this.showMenu(ctx));
     this.bot.command('menu', (ctx) => this.showMenu(ctx));
@@ -423,44 +462,5 @@ export class TelegramBot {
       });
       logger.debug({ chatId }, 'Reply sent');
     });
-  }
-
-  public async launch() {
-    logger.info('Launching bot');
-    await this.bot.telegram
-      .deleteWebhook()
-      .catch((err) =>
-        logger.warn({ err }, 'Failed to delete existing webhook')
-      );
-    await this.bot.launch();
-    logger.info('Bot launched');
-  }
-
-  public stop(reason: string) {
-    logger.info({ reason }, 'Stopping bot');
-    this.bot.stop(reason);
-  }
-
-  public async sendChatApprovalRequest(
-    chatId: number,
-    title?: string
-  ): Promise<void> {
-    await this.approvalService.pending(chatId);
-
-    const name = title ? `${title} (${chatId})` : `Chat ${chatId}`;
-    await this.bot.telegram.sendMessage(
-      this.env.ADMIN_CHAT_ID,
-      `${name} запросил доступ`,
-      {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              { text: 'Разрешить', callback_data: `chat_approve:${chatId}` },
-              { text: 'Забанить', callback_data: `chat_ban:${chatId}` },
-            ],
-          ],
-        },
-      }
-    );
   }
 }

@@ -6,11 +6,6 @@ import { type ChatUserRepository } from '../interfaces/ChatUserRepository.interf
 @injectable()
 export class SQLiteChatUserRepository implements ChatUserRepository {
   constructor(@inject(DB_PROVIDER_ID) private dbProvider: SQLiteDbProvider) {}
-
-  private async db() {
-    return this.dbProvider.get();
-  }
-
   async link(chatId: number, userId: number): Promise<void> {
     const db = await this.db();
     await db.run(
@@ -28,5 +23,9 @@ export class SQLiteChatUserRepository implements ChatUserRepository {
       }[]
     >('SELECT user_id FROM chat_users WHERE chat_id = ?', chatId);
     return (rows ?? []).map((row) => row.user_id);
+  }
+
+  private async db() {
+    return this.dbProvider.get();
   }
 }

@@ -10,11 +10,6 @@ import {
 @injectable()
 export class SQLiteChatAccessRepository implements ChatAccessRepository {
   constructor(@inject(DB_PROVIDER_ID) private dbProvider: SQLiteDbProvider) {}
-
-  private async db() {
-    return this.dbProvider.get();
-  }
-
   async get(chatId: number): Promise<ChatAccessEntity | undefined> {
     const db = await this.db();
     const row = await db.get<{
@@ -87,5 +82,9 @@ export class SQLiteChatAccessRepository implements ChatAccessRepository {
       requestedAt: row.requested_at ?? undefined,
       approvedAt: row.approved_at ?? undefined,
     }));
+  }
+
+  private async db() {
+    return this.dbProvider.get();
   }
 }
