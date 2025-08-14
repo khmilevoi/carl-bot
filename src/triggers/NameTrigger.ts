@@ -12,9 +12,8 @@ export class NameTrigger implements Trigger {
   async apply(
     ctx: Context,
     context: TriggerContext,
-    dialogue: DialogueManager
+    _dialogue: DialogueManager
   ): Promise<TriggerResult | null> {
-    void dialogue;
     const text = context.text;
     if (this.pattern.test(text)) {
       context.text = text.replace(this.pattern, '').trim();

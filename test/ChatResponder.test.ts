@@ -39,8 +39,7 @@ class MockChatMemory {
 
 class MockChatMemoryManager implements ChatMemoryManager {
   memory = new MockChatMemory();
-  get(chatId: number): any {
-    void chatId;
+  get(_chatId: number): any {
     return this.memory;
   }
   async reset(): Promise<void> {}

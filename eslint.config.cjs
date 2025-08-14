@@ -19,11 +19,15 @@ module.exports = [
       'simple-import-sort/exports': 'error',
       'unused-imports/no-unused-imports': 'error',
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': ['error', {
-        vars: 'all',
-        args: 'after-used',
-        ignoreRestSiblings: true,
-      }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          vars: 'all',
+          args: 'after-used',
+          ignoreRestSiblings: true,
+          argsIgnorePattern: '^_',
+        },
+      ],
       'import/no-unused-modules': ['error', {
         unusedExports: true,
         missingExports: true,

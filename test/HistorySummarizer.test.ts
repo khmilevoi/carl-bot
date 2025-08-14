@@ -8,9 +8,7 @@ import { SummaryService } from '../src/services/summaries/SummaryService';
 
 class MockAIService {
   summarize = vi.fn(async () => 'new summary');
-  assessUsers = vi.fn(async (msgs: ChatMessage[], prev: any) => {
-    void msgs;
-    void prev;
+  assessUsers = vi.fn(async (_msgs: ChatMessage[], _prev: any) => {
     return [{ username: 'user1', attitude: 'positive' }];
   });
 }
@@ -22,8 +20,7 @@ class MockMessageService implements MessageService {
     this.messages.push(msg);
   }
 
-  async getMessages(chatId: number): Promise<ChatMessage[]> {
-    void chatId;
+  async getMessages(_chatId: number): Promise<ChatMessage[]> {
     return [...this.messages];
   }
 
@@ -31,8 +28,10 @@ class MockMessageService implements MessageService {
     return this.messages.length;
   }
 
-  async getLastMessages(chatId: number, limit: number): Promise<ChatMessage[]> {
-    void chatId;
+  async getLastMessages(
+    _chatId: number,
+    limit: number
+  ): Promise<ChatMessage[]> {
     return [...this.messages].slice(-limit).reverse();
   }
 
@@ -48,8 +47,7 @@ class MockSummaryService implements SummaryService {
     return this.summary;
   }
 
-  async setSummary(chatId: number, summary: string): Promise<void> {
-    void chatId;
+  async setSummary(_chatId: number, summary: string): Promise<void> {
     this.summary = summary;
   }
 
@@ -64,9 +62,7 @@ class MockUserRepository implements UserRepository {
   async setAttitude(userId: number, attitude: string): Promise<void> {
     this.updates.push({ userId, attitude });
   }
-  async upsert(user: any): Promise<void> {
-    void user;
-  }
+  async upsert(_user: any): Promise<void> {}
   async findById(id: number): Promise<any> {
     const attitude = this.attitudes.get(id);
     return attitude ? { id, attitude } : undefined;

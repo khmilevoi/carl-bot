@@ -8,9 +8,8 @@ export class ReplyTrigger implements Trigger {
   async apply(
     ctx: Context,
     context: TriggerContext,
-    dialogue: DialogueManager
+    _dialogue: DialogueManager
   ): Promise<TriggerResult | null> {
-    void dialogue;
     const reply = (ctx.message as any)?.reply_to_message;
 
     if (reply?.from?.username === ctx.me) {

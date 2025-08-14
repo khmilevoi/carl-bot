@@ -117,15 +117,14 @@ export class ChatGPTService implements AIService {
     });
     logger.debug('Received chat completion response');
     const response = completion.choices[0]?.message?.content ?? '';
-    void this.logPrompt('ask', messages, response);
+    await this.logPrompt('ask', messages, response);
     return response;
   }
 
   public async checkInterest(
     history: ChatMessage[],
-    summary: string
+    _summary: string
   ): Promise<{ messageId: string; why: string } | null> {
-    void summary;
     const persona = await this.prompts.getPersona();
     const checkPrompt = await this.prompts.getInterestCheckPrompt();
     const messages: OpenAI.ChatCompletionMessageParam[] = [
@@ -160,7 +159,7 @@ export class ChatGPTService implements AIService {
     });
     logger.debug('Received interest check response');
     const content = completion.choices[0]?.message?.content ?? '';
-    void this.logPrompt('interest', messages, content);
+    await this.logPrompt('interest', messages, content);
     try {
       return JSON.parse(content) as {
         messageId: string;
@@ -220,7 +219,7 @@ export class ChatGPTService implements AIService {
     });
     logger.debug('Received user attitude assessment response');
     const content = completion.choices[0]?.message?.content ?? '[]';
-    void this.logPrompt('assessUsers', reqMessages, content);
+    await this.logPrompt('assessUsers', reqMessages, content);
     try {
       return JSON.parse(content) as { username: string; attitude: string }[];
     } catch (err) {
@@ -269,14 +268,14 @@ export class ChatGPTService implements AIService {
       role: 'user',
       content: `История диалога:\n${historyText}`,
     });
-    void this.logPrompt('summary', messages);
+    await this.logPrompt('summary', messages);
     const completion = await this.openai.chat.completions.create({
       model: this.summaryModel,
       messages,
     });
     logger.debug('Received summary response');
     const response = completion.choices[0]?.message?.content ?? prev ?? '';
-    void this.logPrompt('summary', messages, response);
+    await this.logPrompt('summary', messages, response);
     return response;
   }
 }

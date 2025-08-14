@@ -33,9 +33,7 @@ class MockDb {
     return [];
   }
 
-  async exec(query: string) {
-    void query;
-  }
+  async exec(_query: string) {}
   async close() {}
 }
 
