@@ -33,6 +33,8 @@ import {
 } from '../services/messages/MessageContextExtractor';
 import { MessageFactory } from '../services/messages/MessageFactory';
 import { TriggerContext } from '../triggers/Trigger.interface';
+import { windows } from './windowConfig';
+import { WindowRouter } from './windowRouter';
 
 async function withTyping(ctx: Context, fn: () => Promise<void>) {
   await ctx.sendChatAction('typing');
@@ -52,6 +54,7 @@ async function withTyping(ctx: Context, fn: () => Promise<void>) {
 export class TelegramBot {
   private bot: Telegraf;
   private env: Env;
+  private router: WindowRouter;
 
   constructor(
     @inject(ENV_SERVICE_ID) envService: EnvService,
@@ -67,6 +70,11 @@ export class TelegramBot {
   ) {
     this.env = envService.env;
     this.bot = new Telegraf(this.env.BOT_TOKEN);
+    this.router = new WindowRouter(this.bot, windows, {
+      exportData: (ctx) => this.handleExportData(ctx),
+      resetMemory: (ctx) => this.handleResetMemory(ctx),
+      showAdminChatsMenu: (ctx) => this.showAdminChatsMenu(ctx),
+    });
     this.configure();
   }
 
@@ -136,39 +144,7 @@ export class TelegramBot {
       await ctx.reply('Запрос отправлен администратору.');
     });
 
-    // Обработчик для кнопки загрузки данных
-    this.bot.action('export_data', (ctx) => this.handleExportData(ctx));
-    this.bot.action('admin_export_data', (ctx) => this.handleExportData(ctx));
-
-    this.bot.action('admin_chats', async (ctx) => {
-      await this.showAdminChatsMenu(ctx);
-    });
-
-    // Обработчик для кнопки сброса памяти
-    this.bot.action('reset_memory', async (ctx) => {
-      const chatId = ctx.chat?.id;
-      const userId = ctx.from?.id;
-      assert(chatId, 'This is not a chat');
-      assert(userId, 'No user id');
-
-      if (chatId !== this.env.ADMIN_CHAT_ID) {
-        const allowed = await this.admin.hasAccess(chatId, userId);
-        if (!allowed) {
-          await ctx.answerCbQuery('Нет доступа или ключ просрочен');
-          return;
-        }
-      }
-
-      await ctx.answerCbQuery('Сбрасываю память диалога...');
-
-      try {
-        await this.memories.reset(chatId);
-        await ctx.reply('✅ Контекст диалога сброшен!');
-      } catch (error) {
-        logger.error({ error, chatId }, 'Failed to reset memory');
-        await ctx.reply('❌ Ошибка при сбросе памяти. Попробуйте позже.');
-      }
-    });
+    // Обработчики кнопок навигации и действий регистрируются в WindowRouter
 
     this.bot.action(/^admin_chat:(\S+)$/, async (ctx) => {
       const adminChatId = this.env.ADMIN_CHAT_ID;
@@ -279,7 +255,7 @@ export class TelegramBot {
     assert(chatId, 'This is not a chat');
 
     if (chatId === this.env.ADMIN_CHAT_ID) {
-      await this.showAdminMainMenu(ctx);
+      await this.router.showWindow(ctx, 'admin_main');
       return;
     }
 
@@ -313,25 +289,7 @@ export class TelegramBot {
       return;
     }
 
-    await ctx.reply('Выберите действие:', {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: '📊 Загрузить данные', callback_data: 'export_data' }],
-          [{ text: '🔄 Сбросить память', callback_data: 'reset_memory' }],
-        ],
-      },
-    });
-  }
-
-  private async showAdminMainMenu(ctx: Context) {
-    await ctx.reply('Выберите действие:', {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: '📊 Загрузить данные', callback_data: 'admin_export_data' }],
-          [{ text: '💬 Чаты', callback_data: 'admin_chats' }],
-        ],
-      },
-    });
+    await this.router.showWindow(ctx, 'main');
   }
 
   private async showAdminChatsMenu(ctx: Context) {
@@ -401,6 +359,31 @@ export class TelegramBot {
     } catch (error) {
       logger.error({ error, chatId }, 'Failed to export data');
       await ctx.reply('❌ Ошибка при загрузке данных. Попробуйте позже.');
+    }
+  }
+
+  private async handleResetMemory(ctx: Context) {
+    const chatId = ctx.chat?.id;
+    const userId = ctx.from?.id;
+    assert(chatId, 'This is not a chat');
+    assert(userId, 'No user id');
+
+    if (chatId !== this.env.ADMIN_CHAT_ID) {
+      const allowed = await this.admin.hasAccess(chatId, userId);
+      if (!allowed) {
+        await ctx.answerCbQuery('Нет доступа или ключ просрочен');
+        return;
+      }
+    }
+
+    await ctx.answerCbQuery('Сбрасываю память диалога...');
+
+    try {
+      await this.memories.reset(chatId);
+      await ctx.reply('✅ Контекст диалога сброшен!');
+    } catch (error) {
+      logger.error({ error, chatId }, 'Failed to reset memory');
+      await ctx.reply('❌ Ошибка при сбросе памяти. Попробуйте позже.');
     }
   }
 
