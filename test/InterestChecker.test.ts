@@ -14,7 +14,12 @@ function createChecker(opts: {
   history?: ChatMessage[];
   summary?: string;
   aiResult?: { messageId: string; why: string } | null;
-}) {
+}): {
+  checker: DefaultInterestChecker;
+  messages: MessageService;
+  summaries: SummaryService;
+  ai: AIService;
+} {
   const messages: MessageService = {
     getCount: vi.fn().mockResolvedValue(opts.count),
     getLastMessages: vi.fn().mockResolvedValue(opts.history ?? []),

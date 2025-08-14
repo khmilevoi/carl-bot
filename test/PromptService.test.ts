@@ -11,7 +11,18 @@ class TempEnvService extends TestEnvService {
     super();
   }
 
-  override getPromptFiles() {
+  override getPromptFiles(): {
+    persona: string;
+    askSummary: string;
+    summarizationSystem: string;
+    previousSummary: string;
+    checkInterest: string;
+    userPrompt: string;
+    userPromptSystem: string;
+    priorityRulesSystem: string;
+    assessUsers: string;
+    replyTrigger: string;
+  } {
     return {
       persona: join(this.dir, 'persona.md'),
       askSummary: join(this.dir, 'ask_summary_prompt.md'),

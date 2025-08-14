@@ -18,7 +18,7 @@ export class DefaultChatResetService implements ChatResetService {
     @inject(SUMMARY_SERVICE_ID) private summaries: SummaryService
   ) {}
 
-  async reset(chatId: number) {
+  async reset(chatId: number): Promise<void> {
     logger.debug({ chatId }, 'Resetting chat data');
     await this.messages.clearMessages(chatId);
     await this.summaries.clearSummary(chatId);

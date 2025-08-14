@@ -11,7 +11,10 @@ import type { ChatMemoryManager } from '../src/services/chat/ChatMemory';
 import type { ChatResponder } from '../src/services/chat/ChatResponder';
 import type { TriggerPipeline } from '../src/services/chat/TriggerPipeline';
 import type { EnvService } from '../src/services/env/EnvService';
-import type { MessageContextExtractor } from '../src/services/messages/MessageContextExtractor';
+import type {
+  MessageContext,
+  MessageContextExtractor,
+} from '../src/services/messages/MessageContextExtractor';
 
 class MockEnvService {
   env = { BOT_TOKEN: 'token', ADMIN_CHAT_ID: 1 } as EnvService['env'];
@@ -36,8 +39,8 @@ class DummyAdmin {
 }
 
 class DummyExtractor {
-  extract() {
-    return {};
+  extract(): MessageContext {
+    return {} as MessageContext;
   }
 }
 

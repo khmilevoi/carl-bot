@@ -23,12 +23,12 @@ export class DefaultDialogueManager implements DialogueManager {
     this.timeoutMs = envService.getDialogueTimeoutMs();
   }
 
-  start(chatId: number) {
+  start(chatId: number): void {
     logger.debug({ chatId }, 'Starting dialogue');
     this.setTimer(chatId);
   }
 
-  extend(chatId: number) {
+  extend(chatId: number): void {
     logger.debug({ chatId }, 'Extending dialogue');
     this.setTimer(chatId);
   }
@@ -37,7 +37,7 @@ export class DefaultDialogueManager implements DialogueManager {
     return this.timers.has(chatId);
   }
 
-  private setTimer(chatId: number) {
+  private setTimer(chatId: number): void {
     const existing = this.timers.get(chatId);
     if (existing) {
       clearTimeout(existing);
