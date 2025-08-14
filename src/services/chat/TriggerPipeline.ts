@@ -49,13 +49,14 @@ export class DefaultTriggerPipeline implements TriggerPipeline {
     const chatId = context.chatId;
     const inDialogue = this.dialogue.isActive(chatId);
     let result: TriggerResult | null = null;
-    result =
-      (await this.mentionTrigger.apply(ctx, context, this.dialogue)) ?? result;
-    result =
-      (await this.replyTrigger.apply(ctx, context, this.dialogue)) ?? result;
-    result =
-      (await this.nameTrigger.apply(ctx, context, this.dialogue)) ?? result;
 
+    result = await this.mentionTrigger.apply(ctx, context, this.dialogue);
+    if (!result) {
+      result = await this.replyTrigger.apply(ctx, context, this.dialogue);
+    }
+    if (!result) {
+      result = await this.nameTrigger.apply(ctx, context, this.dialogue);
+    }
     if (!result) {
       result = await this.interestTrigger.apply(ctx, context, this.dialogue);
     }
