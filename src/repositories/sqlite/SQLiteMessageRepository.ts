@@ -52,9 +52,10 @@ export class SQLiteMessageRepository implements MessageRepository {
         user_id: number | null;
         chat_id: number | null;
         message_id: number | null;
+        attitude: string | null;
       }[]
     >(
-      'SELECT m.role, m.content, u.username, u.first_name, u.last_name, m.reply_text, m.reply_username, m.quote_text, m.user_id, c.chat_id, m.message_id FROM messages m LEFT JOIN users u ON m.user_id = u.id LEFT JOIN chats c ON m.chat_id = c.chat_id WHERE m.chat_id = ? ORDER BY m.id',
+      'SELECT m.role, m.content, u.username, u.first_name, u.last_name, u.attitude, m.reply_text, m.reply_username, m.quote_text, m.user_id, c.chat_id, m.message_id FROM messages m LEFT JOIN users u ON m.user_id = u.id LEFT JOIN chats c ON m.chat_id = c.chat_id WHERE m.chat_id = ? ORDER BY m.id',
       chatId
     );
     return (
@@ -72,6 +73,7 @@ export class SQLiteMessageRepository implements MessageRepository {
         if (r.quote_text) entry.quoteText = r.quote_text;
         if (r.user_id) entry.userId = r.user_id;
         if (r.message_id) entry.messageId = r.message_id;
+        if (r.attitude) entry.attitude = r.attitude;
         return entry;
       }) ?? []
     );
@@ -104,9 +106,10 @@ export class SQLiteMessageRepository implements MessageRepository {
         user_id: number | null;
         chat_id: number | null;
         message_id: number | null;
+        attitude: string | null;
       }[]
     >(
-      'SELECT m.role, m.content, u.username, u.first_name, u.last_name, m.reply_text, m.reply_username, m.quote_text, m.user_id, c.chat_id, m.message_id FROM messages m LEFT JOIN users u ON m.user_id = u.id LEFT JOIN chats c ON m.chat_id = c.chat_id WHERE m.chat_id = ? ORDER BY m.id DESC LIMIT ?',
+      'SELECT m.role, m.content, u.username, u.first_name, u.last_name, u.attitude, m.reply_text, m.reply_username, m.quote_text, m.user_id, c.chat_id, m.message_id FROM messages m LEFT JOIN users u ON m.user_id = u.id LEFT JOIN chats c ON m.chat_id = c.chat_id WHERE m.chat_id = ? ORDER BY m.id DESC LIMIT ?',
       chatId,
       limit
     );
@@ -125,6 +128,7 @@ export class SQLiteMessageRepository implements MessageRepository {
         if (r.quote_text) entry.quoteText = r.quote_text;
         if (r.user_id) entry.userId = r.user_id;
         if (r.message_id) entry.messageId = r.message_id;
+        if (r.attitude) entry.attitude = r.attitude;
         return entry;
       }) ?? []
     );
