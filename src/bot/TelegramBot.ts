@@ -93,7 +93,7 @@ export class TelegramBot {
     this.bot.action('chat_request', async (ctx) => {
       const chatId = ctx.chat?.id;
       assert(chatId, 'This is not a chat');
-      const title = 'title' in ctx.chat! ? (ctx.chat as any).title : undefined;
+      const title = 'title' in ctx.chat! ? ctx.chat.title : undefined;
       logger.info({ chatId, title }, 'Chat access request received');
       await this.sendChatApprovalRequest(chatId, title);
 
@@ -379,7 +379,7 @@ export class TelegramBot {
 
     const status = await this.approvalService.getStatus(chatId);
     if (status === 'pending') {
-      const title = 'title' in ctx.chat! ? (ctx.chat as any).title : undefined;
+      const title = 'title' in ctx.chat! ? ctx.chat.title : undefined;
       await this.sendChatApprovalRequest(chatId, title);
 
       return;

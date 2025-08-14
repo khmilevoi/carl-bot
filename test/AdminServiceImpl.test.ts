@@ -1,5 +1,11 @@
+import type { Database } from 'sqlite';
 import { describe, expect, it, vi } from 'vitest';
 
+import type { DbProvider } from '../src/repositories/DbProvider';
+import type { ChatUserRepository } from '../src/repositories/interfaces/ChatUserRepository';
+import type { MessageRepository } from '../src/repositories/interfaces/MessageRepository';
+import type { SummaryRepository } from '../src/repositories/interfaces/SummaryRepository';
+import type { UserRepository } from '../src/repositories/interfaces/UserRepository';
 import { AdminServiceImpl } from '../src/services/admin/AdminServiceImpl';
 
 describe('AdminServiceImpl', () => {
@@ -33,12 +39,12 @@ describe('AdminServiceImpl', () => {
       })),
     };
     const admin = new AdminServiceImpl(
-      { get: vi.fn(), listTables: vi.fn() } as any,
-      {} as any,
-      messageRepo as any,
-      summaryRepo as any,
-      chatUserRepo as any,
-      userRepo as any
+      { get: vi.fn(), listTables: vi.fn() } as unknown as DbProvider<Database>,
+      {} as unknown as Database,
+      messageRepo as unknown as MessageRepository,
+      summaryRepo as unknown as SummaryRepository,
+      chatUserRepo as unknown as ChatUserRepository,
+      userRepo as unknown as UserRepository
     );
     const files = await admin.exportChatData(123);
     expect(files.map((f) => f.filename).sort()).toEqual([

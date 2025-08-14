@@ -7,8 +7,11 @@ import { StoredMessage } from './StoredMessage';
 
 export class MessageFactory {
   static fromUser(ctx: Context, meta: MessageContext): StoredMessage {
-    const message = ctx.message as any;
-    assert(message && typeof message.text === 'string', 'Нет текста сообщения');
+    const message = ctx.message;
+    assert(
+      message && 'text' in message && typeof message.text === 'string',
+      'Нет текста сообщения'
+    );
 
     const { replyText, replyUsername, quoteText, username, fullName } = meta;
 
@@ -25,7 +28,7 @@ export class MessageFactory {
       firstName: ctx.from?.first_name,
       lastName: ctx.from?.last_name,
       chatId: ctx.chat!.id,
-      chatTitle: (ctx.chat as any)?.title,
+      chatTitle: 'title' in ctx.chat! ? ctx.chat.title : undefined,
     };
   }
 
@@ -35,7 +38,7 @@ export class MessageFactory {
       content,
       username: ctx.me,
       chatId: ctx.chat!.id,
-      chatTitle: (ctx.chat as any)?.title,
+      chatTitle: 'title' in ctx.chat! ? ctx.chat.title : undefined,
     };
   }
 }

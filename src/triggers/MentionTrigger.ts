@@ -10,9 +10,14 @@ export class MentionTrigger implements Trigger {
     context: TriggerContext,
     _dialogue: DialogueManager
   ): Promise<TriggerResult | null> {
-    const text = (ctx.message as any)?.text ?? '';
-    if (text.includes(`@${ctx.me}`)) {
-      context.text = text.replace(`@${(ctx as any).me}`, '').trim();
+    const msg = ctx.message as Record<string, unknown> | undefined;
+    const text = typeof msg?.text === 'string' ? msg.text : '';
+    const me =
+      typeof (ctx as unknown as Record<string, unknown>).me === 'string'
+        ? (ctx as unknown as { me: string }).me
+        : '';
+    if (text.includes(`@${me}`)) {
+      context.text = text.replace(`@${me}`, '').trim();
       logger.debug({ chatId: context.chatId }, 'Mention trigger matched');
       return { replyToMessageId: null, reason: null };
     }

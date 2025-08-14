@@ -1,22 +1,30 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { UserRepository } from '../src/repositories/interfaces/UserRepository';
-import { ChatMessage } from '../src/services/ai/AIService';
+import type {
+  UserEntity,
+  UserRepository,
+} from '../src/repositories/interfaces/UserRepository';
+import type { AIService, ChatMessage } from '../src/services/ai/AIService';
 import { DefaultHistorySummarizer } from '../src/services/chat/HistorySummarizer';
-import { MessageService } from '../src/services/messages/MessageService';
-import { SummaryService } from '../src/services/summaries/SummaryService';
+import type { MessageService } from '../src/services/messages/MessageService';
+import type { SummaryService } from '../src/services/summaries/SummaryService';
 
-class MockAIService {
+class MockAIService implements AIService {
   summarize = vi.fn(async () => 'new summary');
-  assessUsers = vi.fn(async (_msgs: ChatMessage[], _prev: any) => {
-    return [{ username: 'user1', attitude: 'positive' }];
-  });
+  assessUsers = vi.fn(
+    async (
+      _msgs: ChatMessage[],
+      _prev?: { username: string; attitude: string }[]
+    ) => {
+      return [{ username: 'user1', attitude: 'positive' }];
+    }
+  );
 }
 
 class MockMessageService implements MessageService {
   messages: ChatMessage[] = [];
 
-  async addMessage(msg: any): Promise<void> {
+  async addMessage(msg: ChatMessage): Promise<void> {
     this.messages.push(msg);
   }
 
@@ -62,8 +70,8 @@ class MockUserRepository implements UserRepository {
   async setAttitude(userId: number, attitude: string): Promise<void> {
     this.updates.push({ userId, attitude });
   }
-  async upsert(_user: any): Promise<void> {}
-  async findById(id: number): Promise<any> {
+  async upsert(_user: UserEntity): Promise<void> {}
+  async findById(id: number): Promise<UserEntity | undefined> {
     const attitude = this.attitudes.get(id);
     return attitude ? { id, attitude } : undefined;
   }
@@ -83,12 +91,7 @@ describe('HistorySummarizer', () => {
     users = new MockUserRepository();
     users.attitudes.set(1, 'neutral');
     users.attitudes.set(2, 'hostile');
-    summarizer = new DefaultHistorySummarizer(
-      ai as any,
-      summaries,
-      messages,
-      users as any
-    );
+    summarizer = new DefaultHistorySummarizer(ai, summaries, messages, users);
   });
 
   it('does not summarize when history is within limit', async () => {

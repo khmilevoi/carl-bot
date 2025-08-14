@@ -1,10 +1,18 @@
+import type { Context } from 'telegraf';
 import { Telegraf } from 'telegraf';
 import { describe, expect, it, vi } from 'vitest';
 
 import { TelegramBot } from '../src/bot/TelegramBot';
+import type { AdminService } from '../src/services/admin/AdminService';
+import type { ChatApprovalService } from '../src/services/chat/ChatApprovalService';
+import type { ChatMemoryManager } from '../src/services/chat/ChatMemory';
+import type { ChatResponder } from '../src/services/chat/ChatResponder';
+import type { TriggerPipeline } from '../src/services/chat/TriggerPipeline';
+import type { EnvService } from '../src/services/env/EnvService';
+import type { MessageContextExtractor } from '../src/services/messages/MessageContextExtractor';
 
 class MockEnvService {
-  env = { BOT_TOKEN: 'token', ADMIN_CHAT_ID: 1 } as any;
+  env = { BOT_TOKEN: 'token', ADMIN_CHAT_ID: 1 } as EnvService['env'];
 }
 
 class MockChatMemory {
@@ -52,7 +60,10 @@ describe('TelegramBot', () => {
   it('stores user messages via ChatMemoryManager', async () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
-      .spyOn(TelegramBot.prototype as any, 'configure')
+      .spyOn(
+        TelegramBot.prototype as unknown as Record<string, unknown>,
+        'configure'
+      )
       .mockImplementation(() => {});
 
     // Мокаем approvalService.getStatus чтобы возвращать 'approved' и не показывать кнопки
@@ -62,25 +73,27 @@ describe('TelegramBot', () => {
     };
 
     const bot = new TelegramBot(
-      new MockEnvService() as any,
-      memories as any,
-      new DummyAdmin() as any,
-      mockApprovalService as any,
-      new DummyExtractor() as any,
-      new DummyPipeline() as any,
-      new DummyResponder() as any
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      mockApprovalService as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder
     );
     configureSpy.mockRestore();
 
-    const ctx: any = {
+    const ctx = {
       chat: { id: 2 },
       from: { id: 2 },
       message: { text: 'hi', message_id: 3 },
       reply: vi.fn(),
       answerCbQuery: vi.fn(),
-    };
+    } as unknown as Context;
 
-    await (bot as any).handleText(ctx);
+    await (
+      bot as unknown as { handleText: (ctx: Context) => Promise<void> }
+    ).handleText(ctx);
 
     expect(memories.get).toHaveBeenCalledWith(2);
     expect(memories.memory.addMessage).toHaveBeenCalledWith(
@@ -91,28 +104,33 @@ describe('TelegramBot', () => {
   it('shows admin menu with chats', async () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
-      .spyOn(TelegramBot.prototype as any, 'configure')
+      .spyOn(
+        TelegramBot.prototype as unknown as Record<string, unknown>,
+        'configure'
+      )
       .mockImplementation(() => {});
 
     const approvalService = new DummyApprovalService();
     approvalService.listAll.mockResolvedValue([
       { chatId: 42, status: 'approved' },
-    ] as any);
+    ]);
 
     const bot = new TelegramBot(
-      new MockEnvService() as any,
-      memories as any,
-      new DummyAdmin() as any,
-      approvalService as any,
-      new DummyExtractor() as any,
-      new DummyPipeline() as any,
-      new DummyResponder() as any
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      approvalService as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder
     );
     configureSpy.mockRestore();
 
-    const ctx: any = { reply: vi.fn() };
+    const ctx = { reply: vi.fn() } as unknown as Context;
 
-    await (bot as any).showAdminMenu(ctx);
+    await (
+      bot as unknown as { showAdminMenu: (ctx: Context) => Promise<void> }
+    ).showAdminMenu(ctx);
 
     expect(approvalService.listAll).toHaveBeenCalled();
     expect(ctx.reply).toHaveBeenCalledWith('Выберите чат для управления:', {
@@ -131,13 +149,13 @@ describe('TelegramBot', () => {
     const actionSpy = vi.spyOn(Telegraf.prototype, 'action');
 
     new TelegramBot(
-      new MockEnvService() as any,
-      memories as any,
-      new DummyAdmin() as any,
-      approvalService as any,
-      new DummyExtractor() as any,
-      new DummyPipeline() as any,
-      new DummyResponder() as any
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      approvalService as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder
     );
 
     const call = actionSpy.mock.calls.find(
@@ -147,12 +165,12 @@ describe('TelegramBot', () => {
     actionSpy.mockRestore();
     const handler = call![1];
 
-    const ctx: any = {
+    const ctx = {
       chat: { id: 1 },
       match: ['admin_chat:42', '42'],
       answerCbQuery: vi.fn(),
       reply: vi.fn(),
-    };
+    } as unknown as Context;
 
     await handler(ctx);
 
@@ -170,13 +188,13 @@ describe('TelegramBot', () => {
     const actionSpy = vi.spyOn(Telegraf.prototype, 'action');
 
     new TelegramBot(
-      new MockEnvService() as any,
-      memories as any,
-      new DummyAdmin() as any,
-      approvalService as any,
-      new DummyExtractor() as any,
-      new DummyPipeline() as any,
-      new DummyResponder() as any
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      approvalService as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder
     );
 
     const call = actionSpy.mock.calls.find(
@@ -186,13 +204,13 @@ describe('TelegramBot', () => {
     actionSpy.mockRestore();
     const handler = call![1];
 
-    const ctx: any = {
+    const ctx = {
       chat: { id: 1 },
       match: ['chat_ban:7', '7'],
       telegram: { sendMessage: vi.fn() },
       answerCbQuery: vi.fn(),
       editMessageText: vi.fn(),
-    };
+    } as unknown as Context;
 
     await handler(ctx);
 

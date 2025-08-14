@@ -18,7 +18,16 @@ module.exports = [
       'simple-import-sort/imports': 'error',
       'simple-import-sort/exports': 'error',
       'unused-imports/no-unused-imports': 'error',
-      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/ban-ts-comment': [
+        'error',
+        {
+          'ts-ignore': true,
+          'ts-nocheck': true,
+          'ts-check': true,
+          'ts-expect-error': true,
+        },
+      ],
       '@typescript-eslint/no-unused-vars': [
         'error',
         {

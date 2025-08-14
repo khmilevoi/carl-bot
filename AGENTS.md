@@ -45,6 +45,9 @@
   (`_param`) to satisfy `@typescript-eslint/no-unused-vars`.
 - When a Promise should be fire-and-forget, call it with `void` to avoid blocking
   the main execution flow (e.g. `void this.logPrompt(...)`).
+- When exporting or iterating over object properties (e.g. building CSV rows),
+  type header arrays with `keyof` instead of casting entities to `any` or
+  `Record<string, unknown>`. If a key cannot be typed, prefer `Reflect.get`.
 
 ## Troubleshooting
 
