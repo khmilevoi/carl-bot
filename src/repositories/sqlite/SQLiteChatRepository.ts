@@ -4,7 +4,7 @@ import { DB_PROVIDER_ID, type SQLiteDbProvider } from '../DbProvider';
 import {
   type ChatEntity,
   type ChatRepository,
-} from '../interfaces/ChatRepository';
+} from '../interfaces/ChatRepository.interface';
 
 @injectable()
 export class SQLiteChatRepository implements ChatRepository {

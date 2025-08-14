@@ -4,11 +4,14 @@ import OpenAI from 'openai';
 import { ChatModel } from 'openai/resources/shared';
 import path from 'path';
 
-import { TriggerReason } from '../../triggers/Trigger';
+import { TriggerReason } from '../../triggers/Trigger.interface';
 import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
 import { logger } from '../logging/logger';
-import { PROMPT_SERVICE_ID, PromptService } from '../prompts/PromptService';
-import { AIService, ChatMessage } from './AIService';
+import {
+  PROMPT_SERVICE_ID,
+  PromptService,
+} from '../prompts/PromptService.interface';
+import { AIService, ChatMessage } from './AIService.interface';
 
 @injectable()
 export class ChatGPTService implements AIService {
@@ -57,10 +60,12 @@ export class ChatGPTService implements AIService {
     triggerReason?: TriggerReason
   ): Promise<string> {
     const persona = await this.prompts.getPersona();
+
     logger.debug(
       { messages: history.length, summary: !!summary },
       'Sending chat completion request'
     );
+
     const messages: OpenAI.ChatCompletionMessageParam[] = [
       { role: 'system', content: persona },
       {
@@ -72,22 +77,21 @@ export class ChatGPTService implements AIService {
         content: await this.prompts.getUserPromptSystemPrompt(),
       },
     ];
+
     if (summary) {
       messages.push({
         role: 'system',
         content: await this.prompts.getAskSummaryPrompt(summary),
       });
     }
-    if (triggerReason?.why) {
+
+    if (triggerReason) {
       messages.push({
         role: 'system',
-        content: `Trigger reason: ${triggerReason.why}`,
-      });
-    }
-    if (triggerReason?.message) {
-      messages.push({
-        role: 'system',
-        content: `Trigger message: ${triggerReason.message}`,
+        content: await this.prompts.getTriggerPrompt(
+          triggerReason.why,
+          triggerReason.message
+        ),
       });
     }
 
@@ -268,7 +272,6 @@ export class ChatGPTService implements AIService {
       role: 'user',
       content: `История диалога:\n${historyText}`,
     });
-    void this.logPrompt('summary', messages);
     const completion = await this.openai.chat.completions.create({
       model: this.summaryModel,
       messages,

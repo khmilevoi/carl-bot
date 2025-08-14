@@ -2,10 +2,10 @@ import type { Database } from 'sqlite';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { DbProvider } from '../src/repositories/DbProvider';
-import type { ChatUserRepository } from '../src/repositories/interfaces/ChatUserRepository';
-import type { MessageRepository } from '../src/repositories/interfaces/MessageRepository';
-import type { SummaryRepository } from '../src/repositories/interfaces/SummaryRepository';
-import type { UserRepository } from '../src/repositories/interfaces/UserRepository';
+import type { ChatUserRepository } from '../src/repositories/interfaces/ChatUserRepository.interface';
+import type { MessageRepository } from '../src/repositories/interfaces/MessageRepository.interface';
+import type { SummaryRepository } from '../src/repositories/interfaces/SummaryRepository.interface';
+import type { UserRepository } from '../src/repositories/interfaces/UserRepository.interface';
 import { AdminServiceImpl } from '../src/services/admin/AdminServiceImpl';
 
 describe('AdminServiceImpl', () => {

@@ -51,6 +51,7 @@ export interface EnvService {
     userPromptSystem: string;
     priorityRulesSystem: string;
     assessUsers: string;
+    replyTrigger: string;
   };
   getBotName(): string;
   getDialogueTimeoutMs(): number;
@@ -88,6 +89,7 @@ export class DefaultEnvService implements EnvService {
       userPromptSystem: 'prompts/user_prompt_system_prompt.md',
       priorityRulesSystem: 'prompts/priority_rules_system_prompt.md',
       assessUsers: 'prompts/assess_users_prompt.md',
+      replyTrigger: 'prompts/reply_trigger_prompt.md',
     };
   }
 
@@ -113,7 +115,7 @@ export class TestEnvService implements EnvService {
       BOT_TOKEN: process.env.BOT_TOKEN ?? 'test',
       OPENAI_API_KEY: process.env.OPENAI_API_KEY ?? 'test',
       DATABASE_URL: process.env.DATABASE_URL ?? 'file:///tmp/test.db',
-      CHAT_HISTORY_LIMIT: process.env.CHAT_HISTORY_LIMIT,
+      CHAT_HISTORY_LIMIT: process.env.CHAT_HISTORY_LIMIT ?? '50',
       LOG_LEVEL: process.env.LOG_LEVEL ?? 'silent',
       ADMIN_CHAT_ID: process.env.ADMIN_CHAT_ID ?? '0',
       NODE_ENV: 'test',
@@ -141,6 +143,7 @@ export class TestEnvService implements EnvService {
       userPromptSystem: 'prompts/user_prompt_system_prompt.md',
       priorityRulesSystem: 'prompts/priority_rules_system_prompt.md',
       assessUsers: 'prompts/assess_users_prompt.md',
+      replyTrigger: 'prompts/reply_trigger_prompt.md',
     };
   }
 

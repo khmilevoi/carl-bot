@@ -5,7 +5,7 @@ import { DialogueManager } from '../src/services/chat/DialogueManager';
 import { MentionTrigger } from '../src/triggers/MentionTrigger';
 import { NameTrigger } from '../src/triggers/NameTrigger';
 import { ReplyTrigger } from '../src/triggers/ReplyTrigger';
-import { TriggerContext } from '../src/triggers/Trigger';
+import { TriggerContext } from '../src/triggers/Trigger.interface';
 
 describe('MentionTrigger', () => {
   const trigger = new MentionTrigger();

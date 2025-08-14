@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ChatAccessRepository } from '../src/repositories/interfaces/ChatAccessRepository';
+import type { ChatAccessRepository } from '../src/repositories/interfaces/ChatAccessRepository.interface';
 import { DefaultChatApprovalService } from '../src/services/chat/ChatApprovalService';
 import type { EnvService } from '../src/services/env/EnvService';
 

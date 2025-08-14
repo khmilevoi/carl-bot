@@ -9,8 +9,8 @@ export interface TriggerContext {
 }
 
 export interface TriggerReason {
-  message: string | null;
-  why: string | null;
+  message: string;
+  why: string;
 }
 
 export interface TriggerResult {

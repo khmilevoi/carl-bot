@@ -10,26 +10,26 @@ import {
 import {
   ACCESS_KEY_REPOSITORY_ID,
   type AccessKeyRepository,
-} from '../../repositories/interfaces/AccessKeyRepository';
+} from '../../repositories/interfaces/AccessKeyRepository.interface';
 import {
   CHAT_USER_REPOSITORY_ID,
   type ChatUserRepository,
-} from '../../repositories/interfaces/ChatUserRepository';
+} from '../../repositories/interfaces/ChatUserRepository.interface';
 import {
   MESSAGE_REPOSITORY_ID,
   type MessageRepository,
-} from '../../repositories/interfaces/MessageRepository';
+} from '../../repositories/interfaces/MessageRepository.interface';
 import {
   SUMMARY_REPOSITORY_ID,
   type SummaryRepository,
-} from '../../repositories/interfaces/SummaryRepository';
+} from '../../repositories/interfaces/SummaryRepository.interface';
 import {
   USER_REPOSITORY_ID,
   type UserEntity,
   type UserRepository,
-} from '../../repositories/interfaces/UserRepository';
-import type { ChatMessage } from '../ai/AIService';
-import { AdminService } from './AdminService';
+} from '../../repositories/interfaces/UserRepository.interface';
+import type { ChatMessage } from '../ai/AIService.interface';
+import { AdminService } from './AdminService.interface';
 
 @injectable()
 export class AdminServiceImpl implements AdminService {

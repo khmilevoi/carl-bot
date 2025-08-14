@@ -3,11 +3,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   UserEntity,
   UserRepository,
-} from '../src/repositories/interfaces/UserRepository';
-import type { AIService, ChatMessage } from '../src/services/ai/AIService';
+} from '../src/repositories/interfaces/UserRepository.interface';
+import type {
+  AIService,
+  ChatMessage,
+} from '../src/services/ai/AIService.interface';
 import { DefaultHistorySummarizer } from '../src/services/chat/HistorySummarizer';
-import type { MessageService } from '../src/services/messages/MessageService';
-import type { SummaryService } from '../src/services/summaries/SummaryService';
+import type { MessageService } from '../src/services/messages/MessageService.interface';
+import type { SummaryService } from '../src/services/summaries/SummaryService.interface';
 
 class MockAIService implements AIService {
   summarize = vi.fn(async () => 'new summary');

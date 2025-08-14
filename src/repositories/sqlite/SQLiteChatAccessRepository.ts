@@ -5,7 +5,7 @@ import {
   type ChatAccessEntity,
   type ChatAccessRepository,
   type ChatStatus,
-} from '../interfaces/ChatAccessRepository';
+} from '../interfaces/ChatAccessRepository.interface';
 
 @injectable()
 export class SQLiteChatAccessRepository implements ChatAccessRepository {

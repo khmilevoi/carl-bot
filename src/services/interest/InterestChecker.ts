@@ -1,13 +1,20 @@
 import type { ServiceIdentifier } from 'inversify';
 import { inject, injectable } from 'inversify';
 
-import { AI_SERVICE_ID, AIService, ChatMessage } from '../ai/AIService';
+import {
+  AI_SERVICE_ID,
+  AIService,
+  ChatMessage,
+} from '../ai/AIService.interface';
 import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
-import { MESSAGE_SERVICE_ID, MessageService } from '../messages/MessageService';
+import {
+  MESSAGE_SERVICE_ID,
+  MessageService,
+} from '../messages/MessageService.interface';
 import {
   SUMMARY_SERVICE_ID,
   SummaryService,
-} from '../summaries/SummaryService';
+} from '../summaries/SummaryService.interface';
 
 export interface InterestChecker {
   check(

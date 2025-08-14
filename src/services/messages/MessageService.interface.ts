@@ -1,7 +1,7 @@
 import type { ServiceIdentifier } from 'inversify';
 
-import { ChatMessage } from '../ai/AIService';
-import { StoredMessage } from './StoredMessage';
+import type { ChatMessage } from '../ai/AIService.interface';
+import type { StoredMessage } from './StoredMessage.interface';
 
 export interface MessageService {
   addMessage(message: StoredMessage): Promise<void>;
