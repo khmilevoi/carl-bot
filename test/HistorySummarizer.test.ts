@@ -8,7 +8,7 @@ import { SummaryService } from '../src/services/summaries/SummaryService';
 
 class MockAIService {
   summarize = vi.fn(async () => 'new summary');
-  assessUsers = vi.fn(async () => [
+  assessUsers = vi.fn(async (_msgs: ChatMessage[], _prev: any) => [
     { username: 'user1', attitude: 'positive' },
   ]);
 }
@@ -55,12 +55,14 @@ class MockSummaryService implements SummaryService {
 
 class MockUserRepository implements UserRepository {
   updates: { userId: number; attitude: string }[] = [];
+  attitudes = new Map<number, string>();
   async setAttitude(userId: number, attitude: string): Promise<void> {
     this.updates.push({ userId, attitude });
   }
   async upsert(_user: any): Promise<void> {}
-  async findById(_id: number): Promise<any> {
-    return undefined;
+  async findById(id: number): Promise<any> {
+    const attitude = this.attitudes.get(id);
+    return attitude ? { id, attitude } : undefined;
   }
 }
 
@@ -76,6 +78,8 @@ describe('HistorySummarizer', () => {
     messages = new MockMessageService();
     summaries = new MockSummaryService();
     users = new MockUserRepository();
+    users.attitudes.set(1, 'neutral');
+    users.attitudes.set(2, 'hostile');
     summarizer = new DefaultHistorySummarizer(
       ai as any,
       summaries,
@@ -110,7 +114,10 @@ describe('HistorySummarizer', () => {
     await summarizer.summarizeIfNeeded(1, history, 3);
 
     expect(ai.summarize).toHaveBeenCalledWith(history, '');
-    expect(ai.assessUsers).toHaveBeenCalledWith(history);
+    expect(ai.assessUsers).toHaveBeenCalledWith(history, [
+      { username: 'user1', attitude: 'neutral' },
+      { username: 'user2', attitude: 'hostile' },
+    ]);
     expect(
       ai.summarize.mock.invocationCallOrder[0] <
         ai.assessUsers.mock.invocationCallOrder[0]

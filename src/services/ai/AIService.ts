@@ -25,7 +25,8 @@ export interface AIService {
     summary: string
   ): Promise<{ messageId: string; why: string } | null>;
   assessUsers(
-    messages: ChatMessage[]
+    messages: ChatMessage[],
+    prevAttitudes?: { username: string; attitude: string }[]
   ): Promise<{ username: string; attitude: string }[]>;
 }
 

@@ -68,7 +68,19 @@ export class DefaultHistorySummarizer implements HistorySummarizer {
       'Generated new summary'
     );
 
-    const assessments = await this.ai.assessUsers(history);
+    const prevAttitudes: { username: string; attitude: string }[] = [];
+    const seen = new Set<number>();
+    for (const m of history) {
+      if (m.userId !== undefined && m.username && !seen.has(m.userId)) {
+        seen.add(m.userId);
+        const user = await this.users.findById(m.userId);
+        if (user?.attitude) {
+          prevAttitudes.push({ username: m.username, attitude: user.attitude });
+        }
+      }
+    }
+
+    const assessments = await this.ai.assessUsers(history, prevAttitudes);
     logger.debug(
       { chatId, assessments: assessments.length },
       'Assessed user attitudes'

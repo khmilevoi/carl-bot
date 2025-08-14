@@ -171,7 +171,8 @@ export class ChatGPTService implements AIService {
   }
 
   public async assessUsers(
-    messages: ChatMessage[]
+    messages: ChatMessage[],
+    prevAttitudes: { username: string; attitude: string }[] = []
   ): Promise<{ username: string; attitude: string }[]> {
     const persona = await this.prompts.getPersona();
     const systemPrompt =
@@ -180,6 +181,15 @@ export class ChatGPTService implements AIService {
       { role: 'system', content: persona },
       { role: 'system', content: systemPrompt },
     ];
+    if (prevAttitudes.length > 0) {
+      const attitudesText = prevAttitudes
+        .map((a) => `${a.username}: ${a.attitude}`)
+        .join('\n');
+      reqMessages.push({
+        role: 'system',
+        content: `Предыдущее отношение бота к пользователям:\n${attitudesText}`,
+      });
+    }
     const historyMessages = await Promise.all(
       messages.map<Promise<OpenAI.ChatCompletionMessageParam>>(async (m) =>
         m.role === 'user'
