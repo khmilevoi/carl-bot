@@ -130,10 +130,12 @@ export class TelegramBot {
       assert(chatId, 'This is not a chat');
       assert(userId, 'No user id');
 
-      const allowed = await this.admin.hasAccess(chatId, userId);
-      if (!allowed) {
-        await ctx.answerCbQuery('Нет доступа или ключ просрочен');
-        return;
+      if (chatId !== this.env.ADMIN_CHAT_ID) {
+        const allowed = await this.admin.hasAccess(chatId, userId);
+        if (!allowed) {
+          await ctx.answerCbQuery('Нет доступа или ключ просрочен');
+          return;
+        }
       }
 
       await ctx.answerCbQuery('Начинаю загрузку данных...');
@@ -174,10 +176,12 @@ export class TelegramBot {
       assert(chatId, 'This is not a chat');
       assert(userId, 'No user id');
 
-      const allowed = await this.admin.hasAccess(chatId, userId);
-      if (!allowed) {
-        await ctx.answerCbQuery('Нет доступа или ключ просрочен');
-        return;
+      if (chatId !== this.env.ADMIN_CHAT_ID) {
+        const allowed = await this.admin.hasAccess(chatId, userId);
+        if (!allowed) {
+          await ctx.answerCbQuery('Нет доступа или ключ просрочен');
+          return;
+        }
       }
 
       await ctx.answerCbQuery('Сбрасываю память диалога...');
@@ -271,6 +275,11 @@ export class TelegramBot {
     const chatId = ctx.chat?.id;
     assert(chatId, 'This is not a chat');
 
+    if (chatId === this.env.ADMIN_CHAT_ID) {
+      await this.showAdminMenu(ctx);
+      return;
+    }
+
     const status = await this.approvalService.getStatus(chatId);
     if (status === 'banned') {
       await ctx.reply('Доступ к боту запрещён.');
@@ -311,9 +320,25 @@ export class TelegramBot {
     });
   }
 
+  private async showAdminMenu(ctx: Context) {
+    await ctx.reply('Выберите действие администратора:', {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: '📊 Загрузить данные', callback_data: 'export_data' }],
+          [{ text: '🔄 Сбросить память', callback_data: 'reset_memory' }],
+        ],
+      },
+    });
+  }
+
   private async handleText(ctx: Context) {
     const chatId = ctx.chat?.id;
     assert(!!chatId, 'This is not a chat');
+    if (chatId === this.env.ADMIN_CHAT_ID) {
+      logger.debug({ chatId }, 'Ignoring admin chat message');
+      return;
+    }
+
     logger.debug({ chatId }, 'Received text message');
 
     const status = await this.approvalService.getStatus(chatId);
