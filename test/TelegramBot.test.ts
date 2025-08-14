@@ -2,6 +2,7 @@ import type { Context } from 'telegraf';
 import { Telegraf } from 'telegraf';
 import { describe, expect, it, vi } from 'vitest';
 
+import { admin_chats } from '../src/bot/routes';
 import { TelegramBot } from '../src/bot/TelegramBot';
 import * as TelegramBotModule from '../src/bot/TelegramBot';
 import type { ChatRepository } from '../src/repositories/interfaces/ChatRepository.interface';
@@ -110,87 +111,25 @@ describe('TelegramBot', () => {
     );
   });
 
-  it('shows admin chats menu', async () => {
-    const memories = new MockChatMemoryManager();
-    const configureSpy = vi
-      .spyOn(
-        TelegramBot.prototype as unknown as Record<string, unknown>,
-        'configure'
-      )
-      .mockImplementation(() => {});
-
-    const approvalService = new DummyApprovalService();
-    approvalService.listAll.mockResolvedValue([
-      { chatId: 42, status: 'approved' },
-    ]);
-
-    const chatRepo = new DummyChatRepository();
-    chatRepo.findById.mockResolvedValue({ chatId: 42, title: 'Test Chat' });
-
-    const bot = new TelegramBot(
-      new MockEnvService() as unknown as EnvService,
-      memories as unknown as ChatMemoryManager,
-      new DummyAdmin() as unknown as AdminService,
-      approvalService as unknown as ChatApprovalService,
-      new DummyExtractor() as unknown as MessageContextExtractor,
-      new DummyPipeline() as unknown as TriggerPipeline,
-      new DummyResponder() as unknown as ChatResponder,
-      chatRepo as unknown as ChatRepository
-    );
-    configureSpy.mockRestore();
-
+  it('builds admin_chats route with buttons', async () => {
+    const listChats = vi.fn(async () => [{ chatId: 42 }]);
+    const getChatTitle = vi.fn(async () => 'Test Chat');
+    const getChatStatus = vi.fn(async () => 'approved');
+    const api = { listChats, getChatTitle, getChatStatus, show: vi.fn() };
     const ctx = { reply: vi.fn() } as unknown as Context;
 
-    await (
-      bot as unknown as { showAdminChatsMenu: (ctx: Context) => Promise<void> }
-    ).showAdminChatsMenu(ctx);
+    const { buttons } = await admin_chats.build(api, ctx);
 
-    expect(approvalService.listAll).toHaveBeenCalled();
-    expect(chatRepo.findById).toHaveBeenCalledWith(42);
-    expect(ctx.reply).toHaveBeenCalledWith('Выберите чат для управления:', {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: 'Test Chat (42)', callback_data: 'admin_chat:42' }],
-        ],
-      },
-    });
-  });
+    expect(listChats).toHaveBeenCalled();
+    expect(getChatTitle).toHaveBeenCalledWith(42);
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0].text).toBe('Test Chat (42)');
 
-  it('handles admin_chat action and shows status with ban button', async () => {
-    const memories = new MockChatMemoryManager();
-    const approvalService = new DummyApprovalService();
-    approvalService.getStatus.mockResolvedValue('approved');
-    const actionSpy = vi.spyOn(Telegraf.prototype, 'action');
+    const btnCtx = { reply: vi.fn(), chat: { id: 1 } } as unknown as Context;
+    await buttons[0].handler(api, btnCtx);
 
-    new TelegramBot(
-      new MockEnvService() as unknown as EnvService,
-      memories as unknown as ChatMemoryManager,
-      new DummyAdmin() as unknown as AdminService,
-      approvalService as unknown as ChatApprovalService,
-      new DummyExtractor() as unknown as MessageContextExtractor,
-      new DummyPipeline() as unknown as TriggerPipeline,
-      new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository
-    );
-
-    const call = actionSpy.mock.calls.find(
-      ([pattern]) =>
-        pattern instanceof RegExp && pattern.source === '^admin_chat:(\\S+)$'
-    );
-    actionSpy.mockRestore();
-    const handler = call![1];
-
-    const ctx = {
-      chat: { id: 1 },
-      match: ['admin_chat:42', '42'],
-      answerCbQuery: vi.fn(),
-      reply: vi.fn(),
-    } as unknown as Context;
-
-    await handler(ctx);
-
-    expect(approvalService.getStatus).toHaveBeenCalledWith(42);
-    expect(ctx.reply).toHaveBeenCalledWith('Статус чата 42: approved', {
+    expect(getChatStatus).toHaveBeenCalledWith(42);
+    expect(btnCtx.reply).toHaveBeenCalledWith('Статус чата 42: approved', {
       reply_markup: {
         inline_keyboard: [[{ text: 'Забанить', callback_data: 'chat_ban:42' }]],
       },

@@ -33,7 +33,7 @@ import {
 } from '../services/messages/MessageContextExtractor';
 import { MessageFactory } from '../services/messages/MessageFactory';
 import { TriggerContext } from '../triggers/Trigger.interface';
-import { windows } from './windowConfig';
+import { routes, RoutesApi } from './routes';
 import { WindowRouter } from './WindowRouter';
 
 export async function withTyping(ctx: Context, fn: () => Promise<void>) {
@@ -54,7 +54,7 @@ export async function withTyping(ctx: Context, fn: () => Promise<void>) {
 export class TelegramBot {
   private bot: Telegraf;
   private env: Env;
-  private router: WindowRouter;
+  private router: WindowRouter<RoutesApi>;
 
   constructor(
     @inject(ENV_SERVICE_ID) envService: EnvService,
@@ -70,13 +70,19 @@ export class TelegramBot {
   ) {
     this.env = envService.env;
     this.bot = new Telegraf(this.env.BOT_TOKEN);
-    this.router = new WindowRouter(this.bot, windows, {
-      exportData: (ctx) => this.handleExportData(ctx),
-      resetMemory: (ctx) => this.handleResetMemory(ctx),
-      showAdminChatsMenu: (ctx) => this.showAdminChatsMenu(ctx),
-      requestChatAccess: (ctx) => this.handleChatRequest(ctx),
-      requestUserAccess: (ctx) => this.handleRequestAccess(ctx),
-    });
+    const actions: RoutesApi = {
+      exportData: (ctx: Context) => this.handleExportData(ctx),
+      resetMemory: (ctx: Context) => this.handleResetMemory(ctx),
+      requestChatAccess: (ctx: Context) => this.handleChatRequest(ctx),
+      requestUserAccess: (ctx: Context) => this.handleRequestAccess(ctx),
+      listChats: () => this.approvalService.listAll(),
+      getChatTitle: async (chatId: number) => {
+        const chat = await this.chatRepo.findById(chatId);
+        return chat?.title ?? 'Без названия';
+      },
+      getChatStatus: (chatId: number) => this.approvalService.getStatus(chatId),
+    };
+    this.router = new WindowRouter(this.bot, routes, actions);
     this.configure();
   }
 
@@ -142,28 +148,6 @@ export class TelegramBot {
     });
 
     // Обработчики кнопок навигации и действий регистрируются в WindowRouter
-
-    this.bot.action(/^admin_chat:(\S+)$/, async (ctx) => {
-      const adminChatId = this.env.ADMIN_CHAT_ID;
-      if (ctx.chat?.id !== adminChatId) {
-        await ctx.answerCbQuery();
-        return;
-      }
-      const chatId = Number(ctx.match[1]);
-      const status = await this.approvalService.getStatus(chatId);
-      await ctx.answerCbQuery();
-      await ctx.reply(`Статус чата ${chatId}: ${status}`, {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              status === 'banned'
-                ? { text: 'Разбанить', callback_data: `chat_unban:${chatId}` }
-                : { text: 'Забанить', callback_data: `chat_ban:${chatId}` },
-            ],
-          ],
-        },
-      });
-    });
 
     this.bot.action(/^chat_approve:(\S+)$/, async (ctx) => {
       const adminChatId = this.env.ADMIN_CHAT_ID;
@@ -275,31 +259,6 @@ export class TelegramBot {
     }
 
     await this.router.show(ctx, 'menu');
-  }
-
-  private async showAdminChatsMenu(ctx: Context) {
-    const chats = await this.approvalService.listAll();
-    if (chats.length === 0) {
-      await ctx.reply('Нет чатов для управления');
-      return;
-    }
-
-    const keyboard = await Promise.all(
-      chats.map(async ({ chatId }) => {
-        const chat = await this.chatRepo.findById(chatId);
-        const title = chat?.title ?? 'Без названия';
-        return [
-          {
-            text: `${title} (${chatId})`,
-            callback_data: `admin_chat:${chatId}`,
-          },
-        ];
-      })
-    );
-
-    await ctx.reply('Выберите чат для управления:', {
-      reply_markup: { inline_keyboard: keyboard },
-    });
   }
 
   private async handleChatRequest(ctx: Context) {
