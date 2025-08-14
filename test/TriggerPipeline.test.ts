@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   DefaultTriggerPipeline,
@@ -25,6 +25,25 @@ describe('TriggerPipeline', () => {
     };
     const res = await pipeline.shouldRespond(ctx, context);
     expect(res).not.toBeNull();
+  });
+
+  it('exits early when a trigger matches', async () => {
+    const interestChecker: InterestChecker = {
+      check: vi.fn().mockResolvedValue(null),
+    };
+    const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
+      env,
+      interestChecker
+    );
+    const ctx: any = { message: { text: 'hi @bot' }, me: 'bot' };
+    const context: TriggerContext = {
+      text: 'hi @bot',
+      replyText: '',
+      chatId: 1,
+    };
+    const res = await pipeline.shouldRespond(ctx, context);
+    expect(res).not.toBeNull();
+    expect(interestChecker.check).not.toHaveBeenCalled();
   });
 
   it('responds only when interest trigger returns result without mentions or replies', async () => {
