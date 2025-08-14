@@ -1,3 +1,4 @@
+import type { Context } from 'telegraf';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -10,7 +11,7 @@ describe('MessageContextExtractor', () => {
     new DefaultMessageContextExtractor();
 
   it('extracts username, fullName, reply and quote text', () => {
-    const ctx: any = {
+    const ctx = {
       from: { username: 'user', first_name: 'John', last_name: 'Smith' },
       message: {
         text: 'hi',
@@ -20,7 +21,7 @@ describe('MessageContextExtractor', () => {
         },
         quote: { text: 'quoted' },
       },
-    };
+    } as unknown as Context;
 
     const res = extractor.extract(ctx);
     expect(res.username).toBe('user');

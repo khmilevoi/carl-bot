@@ -10,7 +10,10 @@ export class ReplyTrigger implements Trigger {
     context: TriggerContext,
     _dialogue: DialogueManager
   ): Promise<TriggerResult | null> {
-    const reply = (ctx.message as any)?.reply_to_message;
+    const msg = ctx.message as
+      | { reply_to_message?: { from?: { username?: string } } }
+      | undefined;
+    const reply = msg?.reply_to_message;
 
     if (reply?.from?.username === ctx.me) {
       logger.debug({ chatId: context.chatId }, 'Reply trigger matched');

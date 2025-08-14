@@ -28,6 +28,7 @@ import {
   type UserEntity,
   type UserRepository,
 } from '../../repositories/interfaces/UserRepository';
+import type { ChatMessage } from '../ai/AIService';
 import { AdminService } from './AdminService';
 
 @injectable()
@@ -84,7 +85,7 @@ export class AdminServiceImpl implements AdminService {
 
     const messages = await this.messageRepo.findByChatId(chatId);
     if (messages.length > 0) {
-      const header = [
+      const header: (keyof ChatMessage)[] = [
         'role',
         'content',
         'username',
@@ -98,7 +99,7 @@ export class AdminServiceImpl implements AdminService {
         'chatId',
       ];
       const lines = messages.map((m) =>
-        header.map((h) => JSON.stringify((m as any)[h] ?? '')).join(',')
+        header.map((h) => JSON.stringify(m[h] ?? '')).join(',')
       );
       const csv = header.join(',') + '\n' + lines.join('\n');
       files.push({ filename: 'messages.csv', buffer: Buffer.from(csv) });
@@ -117,9 +118,15 @@ export class AdminServiceImpl implements AdminService {
       );
       const existing = users.filter((u): u is UserEntity => u !== undefined);
       if (existing.length > 0) {
-        const header = ['id', 'username', 'firstName', 'lastName', 'attitude'];
+        const header: (keyof UserEntity)[] = [
+          'id',
+          'username',
+          'firstName',
+          'lastName',
+          'attitude',
+        ];
         const lines = existing.map((u) =>
-          header.map((h) => JSON.stringify((u as any)[h] ?? '')).join(',')
+          header.map((h) => JSON.stringify(u[h] ?? '')).join(',')
         );
         const csv = header.join(',') + '\n' + lines.join('\n');
         files.push({ filename: 'users.csv', buffer: Buffer.from(csv) });
@@ -138,7 +145,7 @@ export class AdminServiceImpl implements AdminService {
     let header: string | undefined;
     const lines: string[] = [];
     while (true) {
-      const rows = await db.all<any[]>(
+      const rows: Record<string, unknown>[] = await db.all(
         `SELECT * FROM ${table} LIMIT ? OFFSET ?`,
         chunkSize,
         offset

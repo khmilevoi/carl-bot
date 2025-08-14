@@ -1,3 +1,4 @@
+import type { Context } from 'telegraf';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
@@ -17,7 +18,10 @@ describe('TriggerPipeline', () => {
         return null;
       },
     });
-    const ctx: any = { message: { text: 'hi @bot' }, me: 'bot' };
+    const ctx = {
+      message: { text: 'hi @bot' },
+      me: 'bot',
+    } as unknown as Context;
     const context: TriggerContext = {
       text: 'hi @bot',
       replyText: '',
@@ -35,7 +39,10 @@ describe('TriggerPipeline', () => {
       env,
       interestChecker
     );
-    const ctx: any = { message: { text: 'hi @bot' }, me: 'bot' };
+    const ctx = {
+      message: { text: 'hi @bot' },
+      me: 'bot',
+    } as unknown as Context;
     const context: TriggerContext = {
       text: 'hi @bot',
       replyText: '',
@@ -58,7 +65,10 @@ describe('TriggerPipeline', () => {
       env,
       interestChecker
     );
-    const ctx: any = { message: { text: 'hello there' }, me: 'bot' };
+    const ctx = {
+      message: { text: 'hello there' },
+      me: 'bot',
+    } as unknown as Context;
     const context: TriggerContext = {
       text: 'hello there',
       replyText: '',

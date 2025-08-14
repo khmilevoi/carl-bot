@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
-import { open } from 'sqlite';
+import { type Database, open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 
 import { container } from './container';
@@ -36,12 +36,14 @@ function loadMigrations(dir = envService.getMigrationsDir()): Migration[] {
   });
 }
 
-async function getDb() {
+async function getDb(): Promise<SqliteDatabase> {
   logger.info({ filename }, 'Connecting to database');
   return open({ filename, driver: sqlite3.Database });
 }
 
-async function ensureTable(db: any) {
+type SqliteDatabase = Database<sqlite3.Database, sqlite3.Statement>;
+
+async function ensureTable(db: SqliteDatabase) {
   logger.debug('Checking for migrations table');
   await db.run(
     'CREATE TABLE IF NOT EXISTS migrations (id TEXT PRIMARY KEY, applied_at TEXT)'
@@ -49,16 +51,16 @@ async function ensureTable(db: any) {
   logger.debug('Migrations table ready');
 }
 
-async function appliedMigrations(db: any): Promise<string[]> {
+async function appliedMigrations(db: SqliteDatabase): Promise<string[]> {
   logger.debug('Fetching applied migrations list');
-  const rows = (await db.all('SELECT id FROM migrations')) as { id: string }[];
-  const applied = rows.map((r: { id: string }) => r.id);
+  const rows: { id: string }[] = await db.all('SELECT id FROM migrations');
+  const applied = rows.map((r) => r.id);
   logger.info({ count: applied.length, applied }, 'Applied migrations found');
   return applied;
 }
 
 async function cleanupUnknownMigrations(
-  db: any,
+  db: SqliteDatabase,
   migrations: Migration[],
   applied: string[]
 ): Promise<string[]> {
@@ -74,12 +76,12 @@ async function cleanupUnknownMigrations(
   return applied;
 }
 
-async function clearDatabase(db: any) {
+async function clearDatabase(db: SqliteDatabase) {
   logger.info('Clearing database');
 
-  const tables = (await db.all(
+  const tables: { name: string }[] = await db.all(
     "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
-  )) as { name: string }[];
+  );
 
   if (tables.length > 0) {
     logger.info(

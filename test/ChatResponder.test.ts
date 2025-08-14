@@ -1,15 +1,16 @@
+import type { Context } from 'telegraf';
 import { describe, expect, it } from 'vitest';
 
-import { ChatMessage } from '../src/services/ai/AIService';
-import { ChatMemoryManager } from '../src/services/chat/ChatMemory';
+import type { AIService, ChatMessage } from '../src/services/ai/AIService';
+import type { ChatMemoryManager } from '../src/services/chat/ChatMemory';
 import {
   ChatResponder,
   DefaultChatResponder,
 } from '../src/services/chat/ChatResponder';
-import { SummaryService } from '../src/services/summaries/SummaryService';
+import type { SummaryService } from '../src/services/summaries/SummaryService';
 import { TriggerReason } from '../src/triggers/Trigger';
 
-class MockAIService {
+class MockAIService implements AIService {
   history: ChatMessage[] | undefined;
   summary: string | undefined;
   reason: TriggerReason | undefined;
@@ -29,7 +30,7 @@ class MockAIService {
 
 class MockChatMemory {
   messages: ChatMessage[] = [];
-  async addMessage(msg: any): Promise<void> {
+  async addMessage(msg: ChatMessage): Promise<void> {
     this.messages.push(msg);
   }
   async getHistory(): Promise<ChatMessage[]> {
@@ -39,7 +40,7 @@ class MockChatMemory {
 
 class MockChatMemoryManager implements ChatMemoryManager {
   memory = new MockChatMemory();
-  get(_chatId: number): any {
+  get(_chatId: number): MockChatMemory {
     return this.memory;
   }
   async reset(): Promise<void> {}
@@ -58,13 +59,13 @@ describe('ChatResponder', () => {
     const memories = new MockChatMemoryManager();
     const summaries = new MockSummaryService();
     const responder: ChatResponder = new DefaultChatResponder(
-      ai as any,
-      memories as any,
+      ai,
+      memories,
       summaries
     );
 
     await memories.get(1).addMessage({ role: 'user', content: 'hi' });
-    const ctx: any = { me: 'bot', chat: { id: 1 } };
+    const ctx = { me: 'bot', chat: { id: 1 } } as unknown as Context;
 
     const answer = await responder.generate(ctx, 1, {
       why: 'why',

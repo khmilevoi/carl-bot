@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ChatAccessRepository } from '../src/repositories/interfaces/ChatAccessRepository';
 import { DefaultChatApprovalService } from '../src/services/chat/ChatApprovalService';
+import type { EnvService } from '../src/services/env/EnvService';
 
 const sendMessage = vi.fn();
 
@@ -22,7 +23,7 @@ describe('DefaultChatApprovalService', () => {
       BOT_TOKEN: 'token',
       ADMIN_CHAT_ID: 42,
     },
-  } as any;
+  } as unknown as EnvService;
 
   let service: DefaultChatApprovalService;
 
@@ -50,16 +51,19 @@ describe('DefaultChatApprovalService', () => {
   });
 
   it('returns stored status or pending by default', async () => {
-    (repo.get as any).mockResolvedValueOnce({ chatId: 5, status: 'approved' });
+    vi.mocked(repo.get).mockResolvedValueOnce({
+      chatId: 5,
+      status: 'approved',
+    });
     expect(await service.getStatus(5)).toBe('approved');
 
-    (repo.get as any).mockResolvedValueOnce(undefined);
+    vi.mocked(repo.get).mockResolvedValueOnce(undefined);
     expect(await service.getStatus(6)).toBe('pending');
   });
 
   it('lists all chat access entries', async () => {
     const entries = [{ chatId: 1, status: 'approved' }];
-    (repo.listAll as any).mockResolvedValueOnce(entries);
+    vi.mocked(repo.listAll).mockResolvedValueOnce(entries);
     expect(await service.listAll()).toEqual(entries);
     expect(repo.listAll).toHaveBeenCalled();
   });

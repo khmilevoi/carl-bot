@@ -1,3 +1,4 @@
+import type { Context } from 'telegraf';
 import { describe, expect, it } from 'vitest';
 
 import { DialogueManager } from '../src/services/chat/DialogueManager';
@@ -11,10 +12,10 @@ describe('MentionTrigger', () => {
 
   it('removes bot mention and returns result', async () => {
     const ctx: TriggerContext = { text: '', replyText: '', chatId: 1 };
-    const telegrafCtx: any = {
+    const telegrafCtx = {
       message: { text: 'hello @bot' },
       me: 'bot',
-    };
+    } as unknown as Context;
     const res = await trigger.apply(telegrafCtx, ctx, new DialogueManager());
     expect(res).not.toBeNull();
     expect(res?.replyToMessageId).toBeNull();
@@ -24,10 +25,10 @@ describe('MentionTrigger', () => {
 
   it('returns null without mention', async () => {
     const ctx: TriggerContext = { text: '', replyText: '', chatId: 1 };
-    const telegrafCtx: any = {
+    const telegrafCtx = {
       message: { text: 'hello there' },
       me: 'bot',
-    };
+    } as unknown as Context;
     const res = await trigger.apply(telegrafCtx, ctx, new DialogueManager());
     expect(res).toBeNull();
     expect(ctx.text).toBe('');
@@ -43,7 +44,11 @@ describe('NameTrigger', () => {
       replyText: '',
       chatId: 1,
     };
-    const res = await trigger.apply({} as any, ctx, new DialogueManager());
+    const res = await trigger.apply(
+      {} as unknown as Context,
+      ctx,
+      new DialogueManager()
+    );
     expect(res).not.toBeNull();
     expect(ctx.text).toBe('how are you?');
   });
@@ -54,7 +59,11 @@ describe('NameTrigger', () => {
       replyText: '',
       chatId: 1,
     };
-    const res = await trigger.apply({} as any, ctx, new DialogueManager());
+    const res = await trigger.apply(
+      {} as unknown as Context,
+      ctx,
+      new DialogueManager()
+    );
     expect(res).toBeNull();
     expect(ctx.text).toBe('Hello Arkadius');
   });
@@ -65,17 +74,17 @@ describe('ReplyTrigger', () => {
 
   it('matches when message replies to bot', async () => {
     const ctx: TriggerContext = { text: '', replyText: '', chatId: 1 };
-    const telegrafCtx: any = {
+    const telegrafCtx = {
       me: 'bot',
       message: { reply_to_message: { from: { username: 'bot' } } },
-    };
+    } as unknown as Context;
     const res = await trigger.apply(telegrafCtx, ctx, new DialogueManager());
     expect(res).not.toBeNull();
   });
 
   it('returns null when not replying to bot', async () => {
     const ctx: TriggerContext = { text: '', replyText: '', chatId: 1 };
-    const telegrafCtx: any = { me: 'bot', message: {} };
+    const telegrafCtx = { me: 'bot', message: {} } as unknown as Context;
     const res = await trigger.apply(telegrafCtx, ctx, new DialogueManager());
     expect(res).toBeNull();
   });
