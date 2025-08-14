@@ -64,10 +64,12 @@ export class DefaultTriggerPipeline implements TriggerPipeline {
     }
 
     const matched = !!result;
-    if (matched && !inDialogue) {
-      this.dialogue.start(chatId);
-    } else if (!matched && inDialogue) {
-      this.dialogue.extend(chatId);
+    if (matched) {
+      if (inDialogue) {
+        this.dialogue.extend(chatId);
+      } else {
+        this.dialogue.start(chatId);
+      }
     }
 
     return result;

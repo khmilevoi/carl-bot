@@ -124,4 +124,30 @@ describe('TriggerPipeline', () => {
     expect(res).toBeNull();
     expect(interestChecker.check).not.toHaveBeenCalled();
   });
+
+  it('does not extend dialogue timer when no triggers match', async () => {
+    const interestChecker: InterestChecker = {
+      check: vi.fn().mockResolvedValue(null),
+    };
+    const dialogue: DialogueManager = new DefaultDialogueManager(env);
+    const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
+      env,
+      interestChecker,
+      dialogue
+    );
+    const ctx = {
+      message: { text: 'hello there' },
+      me: 'bot',
+    } as unknown as Context;
+    const context: TriggerContext = {
+      text: 'hello there',
+      replyText: '',
+      chatId: 1,
+    };
+    dialogue.start(1);
+    const extendSpy = vi.spyOn(dialogue, 'extend');
+    const res = await pipeline.shouldRespond(ctx, context);
+    expect(res).toBeNull();
+    expect(extendSpy).not.toHaveBeenCalled();
+  });
 });
