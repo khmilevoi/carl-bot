@@ -11,7 +11,7 @@ import { InterestTrigger } from '../src/triggers/InterestTrigger';
 import { TriggerContext } from '../src/triggers/Trigger.interface';
 
 class MockInterestChecker implements InterestChecker {
-  private count = 0;
+  public calls = 0;
   constructor(
     private readonly n: number,
     private readonly result: {
@@ -26,8 +26,8 @@ class MockInterestChecker implements InterestChecker {
     message: string;
     why: string;
   } | null> {
-    this.count += 1;
-    if (this.count < this.n) {
+    this.calls += 1;
+    if (this.calls < this.n) {
       return null;
     }
     return this.result;
@@ -85,5 +85,25 @@ describe('InterestTrigger', () => {
       dialogue
     );
     expect(res).toBeNull();
+  });
+
+  it('skips interest check when dialogue is active', async () => {
+    const checker = new MockInterestChecker(1, {
+      messageId: '1',
+      message: 'hi',
+      why: 'because',
+    });
+    const trigger = new InterestTrigger(checker);
+    const activeDialogue: DialogueManager = new DefaultDialogueManager(
+      new TestEnvService()
+    );
+    activeDialogue.start(baseCtx.chatId);
+    const res = await trigger.apply(
+      {} as unknown as Context,
+      baseCtx,
+      activeDialogue
+    );
+    expect(res).toBeNull();
+    expect(checker.calls).toBe(0);
   });
 });

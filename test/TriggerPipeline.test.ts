@@ -95,4 +95,33 @@ describe('TriggerPipeline', () => {
     res = await pipeline.shouldRespond(ctx, context);
     expect(res).not.toBeNull();
   });
+
+  it('skips interest trigger when dialogue is active', async () => {
+    const interestChecker: InterestChecker = {
+      check: vi.fn().mockResolvedValue({
+        messageId: '1',
+        message: 'hi',
+        why: 'because',
+      }),
+    };
+    const dialogue: DialogueManager = new DefaultDialogueManager(env);
+    const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
+      env,
+      interestChecker,
+      dialogue
+    );
+    dialogue.start(1);
+    const ctx = {
+      message: { text: 'hello there' },
+      me: 'bot',
+    } as unknown as Context;
+    const context: TriggerContext = {
+      text: 'hello there',
+      replyText: '',
+      chatId: 1,
+    };
+    const res = await pipeline.shouldRespond(ctx, context);
+    expect(res).toBeNull();
+    expect(interestChecker.check).not.toHaveBeenCalled();
+  });
 });
