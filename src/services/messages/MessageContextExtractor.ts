@@ -53,20 +53,20 @@ export class DefaultMessageContextExtractor implements MessageContextExtractor {
         if (from.first_name && from.last_name) {
           replyUsername = from.first_name + ' ' + from.last_name;
         } else {
-          replyUsername = from.first_name || from.username || undefined;
+          replyUsername = from.first_name ?? from.username;
         }
       }
     }
 
-    if (message?.quote && typeof message.quote.text === 'string') {
+    if (typeof message?.quote?.text === 'string') {
       quoteText = message.quote.text;
     }
 
-    const username = ctx.from?.username || 'Имя неизвестно';
+    const username = ctx.from?.username ?? 'Имя неизвестно';
     const fullName =
       ctx.from?.first_name && ctx.from?.last_name
         ? ctx.from.first_name + ' ' + ctx.from.last_name
-        : ctx.from?.first_name || ctx.from?.last_name || username;
+        : (ctx.from?.first_name ?? ctx.from?.last_name ?? username);
 
     return { replyText, replyUsername, quoteText, username, fullName };
   }

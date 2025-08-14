@@ -7,11 +7,8 @@ import { StoredMessage } from './StoredMessage.interface';
 
 export class MessageFactory {
   static fromUser(ctx: Context, meta: MessageContext): StoredMessage {
-    const message = ctx.message;
-    assert(
-      message && 'text' in message && typeof message.text === 'string',
-      'Нет текста сообщения'
-    );
+    const message = ctx.message as { text?: string } | undefined;
+    assert(typeof message?.text === 'string', 'Нет текста сообщения');
 
     const { replyText, replyUsername, quoteText, username, fullName } = meta;
 
@@ -22,7 +19,7 @@ export class MessageFactory {
 
     return {
       role: 'user',
-      content: message.text,
+      content: message.text!,
       username,
       fullName,
       replyText,
