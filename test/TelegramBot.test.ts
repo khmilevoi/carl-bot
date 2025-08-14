@@ -21,6 +21,7 @@ class MockChatMemoryManager {
 class DummyAdmin {
   hasAccess = vi.fn(async () => true);
   exportTables = vi.fn(async () => []);
+  exportChatData = vi.fn(async () => []);
   createAccessKey = vi.fn(async () => new Date());
 }
 

@@ -6,6 +6,9 @@ export interface AdminService {
   ): Promise<Date>;
   hasAccess(chatId: number, userId: number): Promise<boolean>;
   exportTables(): Promise<{ filename: string; buffer: Buffer }[]>;
+  exportChatData(
+    chatId: number
+  ): Promise<{ filename: string; buffer: Buffer }[]>;
 }
 
 import type { ServiceIdentifier } from 'inversify';

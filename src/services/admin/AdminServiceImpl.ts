@@ -11,6 +11,23 @@ import {
   ACCESS_KEY_REPOSITORY_ID,
   type AccessKeyRepository,
 } from '../../repositories/interfaces/AccessKeyRepository';
+import {
+  CHAT_USER_REPOSITORY_ID,
+  type ChatUserRepository,
+} from '../../repositories/interfaces/ChatUserRepository';
+import {
+  MESSAGE_REPOSITORY_ID,
+  type MessageRepository,
+} from '../../repositories/interfaces/MessageRepository';
+import {
+  SUMMARY_REPOSITORY_ID,
+  type SummaryRepository,
+} from '../../repositories/interfaces/SummaryRepository';
+import {
+  USER_REPOSITORY_ID,
+  type UserEntity,
+  type UserRepository,
+} from '../../repositories/interfaces/UserRepository';
 import { AdminService } from './AdminService';
 
 @injectable()
@@ -18,7 +35,11 @@ export class AdminServiceImpl implements AdminService {
   constructor(
     @inject(DB_PROVIDER_ID) private dbProvider: SQLiteDbProvider,
     @inject(ACCESS_KEY_REPOSITORY_ID)
-    private accessKeyRepo: AccessKeyRepository
+    private accessKeyRepo: AccessKeyRepository,
+    @inject(MESSAGE_REPOSITORY_ID) private messageRepo: MessageRepository,
+    @inject(SUMMARY_REPOSITORY_ID) private summaryRepo: SummaryRepository,
+    @inject(CHAT_USER_REPOSITORY_ID) private chatUserRepo: ChatUserRepository,
+    @inject(USER_REPOSITORY_ID) private userRepo: UserRepository
   ) {}
 
   async createAccessKey(
@@ -53,6 +74,58 @@ export class AdminServiceImpl implements AdminService {
         files.push({ filename: `${name}.csv`, buffer });
       }
     }
+    return files;
+  }
+
+  async exportChatData(
+    chatId: number
+  ): Promise<{ filename: string; buffer: Buffer }[]> {
+    const files: { filename: string; buffer: Buffer }[] = [];
+
+    const messages = await this.messageRepo.findByChatId(chatId);
+    if (messages.length > 0) {
+      const header = [
+        'role',
+        'content',
+        'username',
+        'fullName',
+        'replyText',
+        'replyUsername',
+        'quoteText',
+        'userId',
+        'messageId',
+        'attitude',
+        'chatId',
+      ];
+      const lines = messages.map((m) =>
+        header.map((h) => JSON.stringify((m as any)[h] ?? '')).join(',')
+      );
+      const csv = header.join(',') + '\n' + lines.join('\n');
+      files.push({ filename: 'messages.csv', buffer: Buffer.from(csv) });
+    }
+
+    const summary = await this.summaryRepo.findById(chatId);
+    if (summary) {
+      const csv = 'chat_id,summary\n' + `${chatId},${JSON.stringify(summary)}`;
+      files.push({ filename: 'summaries.csv', buffer: Buffer.from(csv) });
+    }
+
+    const userIds = await this.chatUserRepo.listByChat(chatId);
+    if (userIds.length > 0) {
+      const users = await Promise.all(
+        userIds.map((id) => this.userRepo.findById(id))
+      );
+      const existing = users.filter((u): u is UserEntity => u !== undefined);
+      if (existing.length > 0) {
+        const header = ['id', 'username', 'firstName', 'lastName', 'attitude'];
+        const lines = existing.map((u) =>
+          header.map((h) => JSON.stringify((u as any)[h] ?? '')).join(',')
+        );
+        const csv = header.join(',') + '\n' + lines.join('\n');
+        files.push({ filename: 'users.csv', buffer: Buffer.from(csv) });
+      }
+    }
+
     return files;
   }
 
