@@ -77,6 +77,29 @@ npm run lint:fix
 - Сервисы определяются через интерфейсы и Symbol-ключи Inversify; реализации
   привязываются в `src/container.ts`.
 
+### WindowRouter и windowConfig
+
+В `windowConfig` описываются окна меню и их кнопки:
+
+```ts
+interface WindowDefinition {
+  id: string; // уникальный идентификатор окна
+  text: string; // текст сообщения
+  buttons: Array<{
+    text: string; // подпись кнопки
+    callback: string; // значение callback_data
+    target?: string; // id окна для перехода
+    action?: string; // имя обработчика
+  }>;
+}
+```
+
+`WindowRouter` регистрирует обработчики `callback_data`, показывает окна и
+управляет стеком переходов. При навигации предыдущее сообщение удаляется, а при
+наличии истории автоматически добавляется кнопка «⬅️ Назад». Для показа окна
+используйте `router.show(ctx, id)` и передавайте словарь действий при создании
+экземпляра `WindowRouter`.
+
 ### Структура БД
 
 В SQLite используются следующие основные таблицы:
