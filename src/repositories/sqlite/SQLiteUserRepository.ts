@@ -9,11 +9,6 @@ import {
 @injectable()
 export class SQLiteUserRepository implements UserRepository {
   constructor(@inject(DB_PROVIDER_ID) private dbProvider: SQLiteDbProvider) {}
-
-  private async db() {
-    return this.dbProvider.get();
-  }
-
   async upsert({
     id,
     username,
@@ -62,5 +57,9 @@ export class SQLiteUserRepository implements UserRepository {
       attitude,
       userId
     );
+  }
+
+  private async db() {
+    return this.dbProvider.get();
   }
 }

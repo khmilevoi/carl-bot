@@ -22,6 +22,34 @@ export class WindowRouter {
     this.register();
   }
 
+  async show(ctx: Context, id: string, skipStack = false): Promise<void> {
+    const window = this.windows.find((w) => w.id === id);
+    if (!window) {
+      return;
+    }
+
+    const chatId = ctx.chat?.id;
+    assert(chatId, 'This is not a chat');
+
+    const current = this.currentWindow.get(chatId);
+    if (!skipStack && current && current !== id) {
+      this.getStack(chatId).push(current);
+    }
+    this.currentWindow.set(chatId, id);
+
+    const keyboard = window.buttons.map((b) => [
+      { text: b.text, callback_data: b.callback },
+    ]);
+
+    if (this.getStack(chatId).length > 0) {
+      keyboard.push([{ text: '⬅️ Назад', callback_data: 'back' }]);
+    }
+
+    await ctx.reply(window.text, {
+      reply_markup: { inline_keyboard: keyboard },
+    });
+  }
+
   private register() {
     for (const window of this.windows) {
       for (const button of window.buttons) {
@@ -70,33 +98,5 @@ export class WindowRouter {
       this.stacks.set(chatId, stack);
     }
     return stack;
-  }
-
-  async show(ctx: Context, id: string, skipStack = false): Promise<void> {
-    const window = this.windows.find((w) => w.id === id);
-    if (!window) {
-      return;
-    }
-
-    const chatId = ctx.chat?.id;
-    assert(chatId, 'This is not a chat');
-
-    const current = this.currentWindow.get(chatId);
-    if (!skipStack && current && current !== id) {
-      this.getStack(chatId).push(current);
-    }
-    this.currentWindow.set(chatId, id);
-
-    const keyboard = window.buttons.map((b) => [
-      { text: b.text, callback_data: b.callback },
-    ]);
-
-    if (this.getStack(chatId).length > 0) {
-      keyboard.push([{ text: '⬅️ Назад', callback_data: 'back' }]);
-    }
-
-    await ctx.reply(window.text, {
-      reply_markup: { inline_keyboard: keyboard },
-    });
   }
 }

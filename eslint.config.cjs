@@ -37,6 +37,27 @@ module.exports = [
           argsIgnorePattern: '^_',
         },
       ],
+      '@typescript-eslint/member-ordering': [
+        'error',
+        {
+          default: [
+            'signature',
+            'public-static-field',
+            'protected-static-field',
+            'private-static-field',
+            'public-static-method',
+            'protected-static-method',
+            'private-static-method',
+            'public-instance-field',
+            'protected-instance-field',
+            'private-instance-field',
+            'constructor',
+            'public-instance-method',
+            'protected-instance-method',
+            'private-instance-method',
+          ],
+        },
+      ],
       'import/no-unused-modules': [
         'error',
         {

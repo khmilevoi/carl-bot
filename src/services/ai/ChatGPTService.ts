@@ -33,27 +33,6 @@ export class ChatGPTService implements AIService {
     logger.debug('ChatGPTService initialized');
   }
 
-  private async logPrompt(
-    type: string,
-    messages: OpenAI.ChatCompletionMessageParam[],
-    response?: string
-  ): Promise<void> {
-    if (!this.envService.env.LOG_PROMPTS) {
-      return;
-    }
-    const filePath = path.join(process.cwd(), 'prompts.log');
-    const entry = `\n[${new Date().toISOString()}] ${type}\nPROMPT:\n${JSON.stringify(
-      messages,
-      null,
-      2
-    )}\n${response ? `RESPONSE:\n${response}\n` : ''}---\n`;
-    try {
-      await fs.appendFile(filePath, entry);
-    } catch (err) {
-      logger.error({ err }, 'Failed to write prompt log');
-    }
-  }
-
   public async ask(
     history: ChatMessage[],
     summary?: string,
@@ -279,5 +258,26 @@ export class ChatGPTService implements AIService {
     const response = completion.choices[0]?.message?.content ?? prev ?? '';
     void this.logPrompt('summary', messages, response);
     return response;
+  }
+
+  private async logPrompt(
+    type: string,
+    messages: OpenAI.ChatCompletionMessageParam[],
+    response?: string
+  ): Promise<void> {
+    if (!this.envService.env.LOG_PROMPTS) {
+      return;
+    }
+    const filePath = path.join(process.cwd(), 'prompts.log');
+    const entry = `\n[${new Date().toISOString()}] ${type}\nPROMPT:\n${JSON.stringify(
+      messages,
+      null,
+      2
+    )}\n${response ? `RESPONSE:\n${response}\n` : ''}---\n`;
+    try {
+      await fs.appendFile(filePath, entry);
+    } catch (err) {
+      logger.error({ err }, 'Failed to write prompt log');
+    }
   }
 }

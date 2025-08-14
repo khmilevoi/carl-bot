@@ -9,11 +9,6 @@ import {
 @injectable()
 export class SQLiteChatRepository implements ChatRepository {
   constructor(@inject(DB_PROVIDER_ID) private dbProvider: SQLiteDbProvider) {}
-
-  private async db() {
-    return this.dbProvider.get();
-  }
-
   async upsert({ chatId, title }: ChatEntity): Promise<void> {
     const db = await this.db();
     await db.run(
@@ -30,5 +25,9 @@ export class SQLiteChatRepository implements ChatRepository {
       chatId
     );
     return row ? { chatId: row.chat_id, title: row.title } : undefined;
+  }
+
+  private async db() {
+    return this.dbProvider.get();
   }
 }

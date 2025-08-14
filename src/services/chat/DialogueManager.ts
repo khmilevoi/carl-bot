@@ -23,18 +23,6 @@ export class DefaultDialogueManager implements DialogueManager {
     this.timeoutMs = envService.getDialogueTimeoutMs();
   }
 
-  private setTimer(chatId: number) {
-    const existing = this.timers.get(chatId);
-    if (existing) {
-      clearTimeout(existing);
-    }
-    const timer = setTimeout(() => {
-      this.timers.delete(chatId);
-      logger.debug({ chatId }, 'Dialogue timed out');
-    }, this.timeoutMs);
-    this.timers.set(chatId, timer);
-  }
-
   start(chatId: number) {
     logger.debug({ chatId }, 'Starting dialogue');
     this.setTimer(chatId);
@@ -47,5 +35,17 @@ export class DefaultDialogueManager implements DialogueManager {
 
   isActive(chatId: number): boolean {
     return this.timers.has(chatId);
+  }
+
+  private setTimer(chatId: number) {
+    const existing = this.timers.get(chatId);
+    if (existing) {
+      clearTimeout(existing);
+    }
+    const timer = setTimeout(() => {
+      this.timers.delete(chatId);
+      logger.debug({ chatId }, 'Dialogue timed out');
+    }, this.timeoutMs);
+    this.timers.set(chatId, timer);
   }
 }
