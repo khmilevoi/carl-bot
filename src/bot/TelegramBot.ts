@@ -74,6 +74,8 @@ export class TelegramBot {
       exportData: (ctx) => this.handleExportData(ctx),
       resetMemory: (ctx) => this.handleResetMemory(ctx),
       showAdminChatsMenu: (ctx) => this.showAdminChatsMenu(ctx),
+      requestChatAccess: (ctx) => this.handleChatRequest(ctx),
+      requestUserAccess: (ctx) => this.handleRequestAccess(ctx),
     });
     this.configure();
   }
@@ -96,52 +98,8 @@ export class TelegramBot {
           { chatId, status },
           'Chat not approved, showing request access button'
         );
-        await ctx.reply('Этот чат не находится в списке разрешённых.', {
-          reply_markup: {
-            inline_keyboard: [
-              [{ text: 'Запросить доступ', callback_data: 'chat_request' }],
-            ],
-          },
-        });
+        await this.router.show(ctx, 'chat_not_approved');
       }
-    });
-
-    this.bot.action('chat_request', async (ctx) => {
-      const chatId = ctx.chat?.id;
-      assert(chatId, 'This is not a chat');
-      const title = 'title' in ctx.chat! ? ctx.chat.title : undefined;
-      logger.info({ chatId, title }, 'Chat access request received');
-      await this.sendChatApprovalRequest(chatId, title);
-
-      await ctx.answerCbQuery();
-      await ctx.reply('Запрос отправлен');
-      logger.info({ chatId }, 'Chat access request sent to admin');
-    });
-
-    this.bot.action('request_access', async (ctx) => {
-      const chatId = ctx.chat?.id;
-      const userId = ctx.from?.id;
-      assert(chatId, 'This is not a chat');
-      assert(userId, 'No user id');
-      const firstName = ctx.from?.first_name;
-      const lastName = ctx.from?.last_name;
-      const username = ctx.from?.username;
-      const fullName = [firstName, lastName].filter(Boolean).join(' ');
-      const usernamePart = username ? ` @${username}` : '';
-      const approveData = `user_approve:${chatId}:${userId}`;
-      const msg = `Chat ${chatId} user ${userId} (${fullName}${usernamePart}) requests data access.`;
-      await ctx.telegram.sendMessage(this.env.ADMIN_CHAT_ID, msg, {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              { text: 'Одобрить', callback_data: approveData },
-              { text: 'Забанить чат', callback_data: `chat_ban:${chatId}` },
-            ],
-          ],
-        },
-      });
-      await ctx.answerCbQuery();
-      await ctx.reply('Запрос отправлен администратору.');
     });
 
     // Обработчики кнопок навигации и действий регистрируются в WindowRouter
@@ -255,7 +213,7 @@ export class TelegramBot {
     assert(chatId, 'This is not a chat');
 
     if (chatId === this.env.ADMIN_CHAT_ID) {
-      await this.router.show(ctx, 'admin_main');
+      await this.router.show(ctx, 'admin_menu');
       return;
     }
 
@@ -265,13 +223,7 @@ export class TelegramBot {
       return;
     }
     if (status !== 'approved') {
-      await ctx.reply('Этот чат не находится в списке разрешённых.', {
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: 'Запросить доступ', callback_data: 'chat_request' }],
-          ],
-        },
-      });
+      await this.router.show(ctx, 'chat_not_approved');
       return;
     }
 
@@ -279,17 +231,11 @@ export class TelegramBot {
     if (!userId) return;
     const allowed = await this.admin.hasAccess(chatId, userId);
     if (!allowed) {
-      await ctx.reply('Для работы с данными нужен доступ.', {
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: '🔑 Запросить доступ', callback_data: 'request_access' }],
-          ],
-        },
-      });
+      await this.router.show(ctx, 'no_access');
       return;
     }
 
-    await this.router.show(ctx, 'main');
+    await this.router.show(ctx, 'menu');
   }
 
   private async showAdminChatsMenu(ctx: Context) {
@@ -315,6 +261,41 @@ export class TelegramBot {
     await ctx.reply('Выберите чат для управления:', {
       reply_markup: { inline_keyboard: keyboard },
     });
+  }
+
+  private async handleChatRequest(ctx: Context) {
+    const chatId = ctx.chat?.id;
+    assert(chatId, 'This is not a chat');
+    const title = 'title' in ctx.chat! ? ctx.chat.title : undefined;
+    logger.info({ chatId, title }, 'Chat access request received');
+    await this.sendChatApprovalRequest(chatId, title);
+    await ctx.reply('Запрос отправлен');
+    logger.info({ chatId }, 'Chat access request sent to admin');
+  }
+
+  private async handleRequestAccess(ctx: Context) {
+    const chatId = ctx.chat?.id;
+    const userId = ctx.from?.id;
+    assert(chatId, 'This is not a chat');
+    assert(userId, 'No user id');
+    const firstName = ctx.from?.first_name;
+    const lastName = ctx.from?.last_name;
+    const username = ctx.from?.username;
+    const fullName = [firstName, lastName].filter(Boolean).join(' ');
+    const usernamePart = username ? ` @${username}` : '';
+    const approveData = `user_approve:${chatId}:${userId}`;
+    const msg = `Chat ${chatId} user ${userId} (${fullName}${usernamePart}) requests data access.`;
+    await ctx.telegram.sendMessage(this.env.ADMIN_CHAT_ID, msg, {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: 'Одобрить', callback_data: approveData },
+            { text: 'Забанить чат', callback_data: `chat_ban:${chatId}` },
+          ],
+        ],
+      },
+    });
+    await ctx.reply('Запрос отправлен администратору.');
   }
 
   private async handleExportData(ctx: Context) {

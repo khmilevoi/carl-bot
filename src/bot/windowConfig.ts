@@ -13,7 +13,7 @@ export interface WindowDefinition {
 
 export const windows: WindowDefinition[] = [
   {
-    id: 'main',
+    id: 'menu',
     text: 'Выберите действие:',
     buttons: [
       {
@@ -29,7 +29,7 @@ export const windows: WindowDefinition[] = [
     ],
   },
   {
-    id: 'admin_main',
+    id: 'admin_menu',
     text: 'Выберите действие:',
     buttons: [
       {
@@ -41,6 +41,28 @@ export const windows: WindowDefinition[] = [
         text: '💬 Чаты',
         callback: 'admin_chats',
         action: 'showAdminChatsMenu',
+      },
+    ],
+  },
+  {
+    id: 'chat_not_approved',
+    text: 'Этот чат не находится в списке разрешённых.',
+    buttons: [
+      {
+        text: 'Запросить доступ',
+        callback: 'chat_request',
+        action: 'requestChatAccess',
+      },
+    ],
+  },
+  {
+    id: 'no_access',
+    text: 'Для работы с данными нужен доступ.',
+    buttons: [
+      {
+        text: '🔑 Запросить доступ',
+        callback: 'request_access',
+        action: 'requestUserAccess',
       },
     ],
   },
