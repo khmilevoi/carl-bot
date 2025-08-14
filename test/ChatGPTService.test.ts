@@ -14,7 +14,6 @@ describe('ChatGPTService', () => {
   let env: TestEnvService;
 
   beforeEach(async () => {
-    vi.restoreAllMocks();
     vi.resetModules();
 
     openaiCreate = vi.fn<[], unknown>();
@@ -45,6 +44,7 @@ describe('ChatGPTService', () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     delete process.env.LOG_PROMPTS;
   });
 
