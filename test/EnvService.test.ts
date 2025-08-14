@@ -101,7 +101,7 @@ describe('EnvService', () => {
   it('getDialogueTimeoutMs returns timeout in ms', () => {
     setRequiredEnv();
     const env = new TestEnvService();
-    expect(env.getDialogueTimeoutMs()).toBe(60_000);
+    expect(env.getDialogueTimeoutMs()).toBe(120_000);
   });
 
   it('getMigrationsDir returns migrations directory', () => {
