@@ -5,6 +5,10 @@ import {
   type ChatRepository,
 } from '../../repositories/interfaces/ChatRepository';
 import {
+  CHAT_USER_REPOSITORY_ID,
+  type ChatUserRepository,
+} from '../../repositories/interfaces/ChatUserRepository';
+import {
   MESSAGE_REPOSITORY_ID,
   type MessageRepository,
 } from '../../repositories/interfaces/MessageRepository';
@@ -21,7 +25,8 @@ export class RepositoryMessageService implements MessageService {
   constructor(
     @inject(CHAT_REPOSITORY_ID) private chatRepo: ChatRepository,
     @inject(USER_REPOSITORY_ID) private userRepo: UserRepository,
-    @inject(MESSAGE_REPOSITORY_ID) private messageRepo: MessageRepository
+    @inject(MESSAGE_REPOSITORY_ID) private messageRepo: MessageRepository,
+    @inject(CHAT_USER_REPOSITORY_ID) private chatUserRepo: ChatUserRepository
   ) {}
 
   async addMessage(message: StoredMessage) {
@@ -40,6 +45,7 @@ export class RepositoryMessageService implements MessageService {
       firstName: message.firstName ?? null,
       lastName: message.lastName ?? null,
     });
+    await this.chatUserRepo.link(message.chatId, storedUserId);
     await this.messageRepo.insert({
       ...message,
       userId: storedUserId,
