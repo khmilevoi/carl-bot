@@ -178,7 +178,10 @@ describe('TelegramBot', () => {
         pattern instanceof RegExp && pattern.source === '^admin_chat:(\\S+)$'
     );
     actionSpy.mockRestore();
-    const handler = call![1];
+    if (!call) {
+      throw new Error('Handler not found');
+    }
+    const handler = call[1];
 
     const ctx = {
       chat: { id: 1 },
@@ -218,7 +221,10 @@ describe('TelegramBot', () => {
         pattern instanceof RegExp && pattern.source === '^chat_ban:(\\S+)$'
     );
     actionSpy.mockRestore();
-    const handler = call![1];
+    if (!call) {
+      throw new Error('Handler not found');
+    }
+    const handler = call[1];
 
     const ctx = {
       chat: { id: 1 },
@@ -355,7 +361,10 @@ describe('TelegramBot', () => {
         pattern.source === '^user_approve:(\\S+):(\\S+)$'
     );
     actionSpy.mockRestore();
-    const handler = call![1];
+    if (!call) {
+      throw new Error('Handler not found');
+    }
+    const handler = call[1];
 
     const ctx = {
       chat: { id: 1 },
@@ -815,7 +824,7 @@ describe('TelegramBot', () => {
     await vi.advanceTimersByTimeAsync(4000);
     expect(ctx.telegram.sendChatAction).toHaveBeenCalledWith(1, 'typing');
 
-    resolveFn!();
+    resolveFn?.();
     await promise;
 
     await vi.advanceTimersByTimeAsync(4000);

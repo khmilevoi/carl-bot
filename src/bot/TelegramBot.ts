@@ -38,9 +38,12 @@ import { WindowRouter } from './WindowRouter';
 
 export async function withTyping(ctx: Context, fn: () => Promise<void>) {
   await ctx.sendChatAction('typing');
+  const chatId = ctx.chat?.id;
 
   const timer = setInterval(() => {
-    ctx.telegram.sendChatAction(ctx.chat!.id, 'typing').catch(() => {});
+    if (chatId !== undefined) {
+      ctx.telegram.sendChatAction(chatId, 'typing').catch(() => {});
+    }
   }, 4000);
 
   try {
@@ -305,7 +308,7 @@ export class TelegramBot {
   private async handleChatRequest(ctx: Context) {
     const chatId = ctx.chat?.id;
     assert(chatId, 'This is not a chat');
-    const title = 'title' in ctx.chat! ? ctx.chat.title : undefined;
+    const title = ctx.chat && 'title' in ctx.chat ? ctx.chat.title : undefined;
     logger.info({ chatId, title }, 'Chat access request received');
     await this.sendChatApprovalRequest(chatId, title);
     await ctx.reply('Запрос отправлен');
@@ -419,7 +422,8 @@ export class TelegramBot {
 
     const status = await this.approvalService.getStatus(chatId);
     if (status === 'pending') {
-      const title = 'title' in ctx.chat! ? ctx.chat.title : undefined;
+      const title =
+        ctx.chat && 'title' in ctx.chat ? ctx.chat.title : undefined;
       await this.sendChatApprovalRequest(chatId, title);
 
       return;
