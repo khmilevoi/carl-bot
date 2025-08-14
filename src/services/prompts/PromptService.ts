@@ -6,13 +6,15 @@ export interface PromptService {
   getSummarizationSystemPrompt(): Promise<string>;
   getPreviousSummaryPrompt(prev: string): Promise<string>;
   getInterestCheckPrompt(): Promise<string>;
+  getAssessUsersPrompt(): Promise<string>;
   getUserPrompt(
     userMessage: string,
     messageId?: string,
     userName?: string,
     fullName?: string,
     replyMessage?: string,
-    quoteMessage?: string
+    quoteMessage?: string,
+    attitude?: string
   ): Promise<string>;
 }
 

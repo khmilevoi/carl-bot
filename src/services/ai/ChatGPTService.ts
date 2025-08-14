@@ -54,8 +54,7 @@ export class ChatGPTService implements AIService {
   public async ask(
     history: ChatMessage[],
     summary?: string,
-    triggerReason?: TriggerReason,
-    attitudes: { username: string; attitude?: string | null }[] = []
+    triggerReason?: TriggerReason
   ): Promise<string> {
     const persona = await this.prompts.getPersona();
     logger.debug(
@@ -92,13 +91,6 @@ export class ChatGPTService implements AIService {
       });
     }
 
-    if (attitudes.length > 0) {
-      const attitudeText = attitudes
-        .map((a) => `@${a.username} — ${a.attitude ?? ''}`)
-        .join('; ');
-      messages.push({ role: 'system', content: `Attitude: ${attitudeText}` });
-    }
-
     const historyMessages = await Promise.all(
       history.map<Promise<OpenAI.ChatCompletionMessageParam>>(async (m) =>
         m.role === 'user'
@@ -110,7 +102,8 @@ export class ChatGPTService implements AIService {
                 m.username,
                 m.fullName,
                 m.replyText,
-                m.quoteText
+                m.quoteText,
+                m.attitude ?? undefined
               ),
             }
           : { role: 'assistant', content: m.content }
@@ -183,8 +176,7 @@ export class ChatGPTService implements AIService {
     prevAttitudes: { username: string; attitude: string }[] = []
   ): Promise<{ username: string; attitude: string }[]> {
     const persona = await this.prompts.getPersona();
-    const systemPrompt =
-      'Проанализируй пользователей в диалоге и определи отношение бота к каждому. Верни JSON массив объектов {"username": "имя", "attitude": "отношение"}. Без пояснений.';
+    const systemPrompt = await this.prompts.getAssessUsersPrompt();
     const reqMessages: OpenAI.ChatCompletionMessageParam[] = [
       { role: 'system', content: persona },
       { role: 'system', content: systemPrompt },
@@ -209,7 +201,8 @@ export class ChatGPTService implements AIService {
                 m.username,
                 m.fullName,
                 m.replyText,
-                m.quoteText
+                m.quoteText,
+                m.attitude ?? undefined
               ),
             }
           : { role: 'assistant', content: m.content }

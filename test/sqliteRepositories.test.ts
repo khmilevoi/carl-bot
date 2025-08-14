@@ -91,6 +91,7 @@ describe('SQLite repositories', () => {
       username: 'alice',
       firstName: 'Alice',
       lastName: 'Smith',
+      attitude: 'neutral',
     });
     await messageRepo.insert({
       chatId: 1,
@@ -116,6 +117,7 @@ describe('SQLite repositories', () => {
         userId: 1,
         messageId: 11,
         chatId: 1,
+        attitude: 'neutral',
       },
       { role: 'assistant', content: 'hello', username: 'bot', chatId: 1 },
     ]);

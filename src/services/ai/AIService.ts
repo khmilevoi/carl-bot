@@ -9,6 +9,7 @@ export interface ChatMessage {
   userId?: number;
   messageId?: number;
   chatId?: number;
+  attitude?: string | null;
 }
 
 import { TriggerReason } from '../../triggers/Trigger';
@@ -17,8 +18,7 @@ export interface AIService {
   ask(
     history: ChatMessage[],
     summary?: string,
-    triggerReason?: TriggerReason,
-    attitudes?: { username: string; attitude?: string | null }[]
+    triggerReason?: TriggerReason
   ): Promise<string>;
   summarize(history: ChatMessage[], prev?: string): Promise<string>;
   checkInterest(

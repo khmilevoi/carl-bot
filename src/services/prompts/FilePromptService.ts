@@ -15,6 +15,7 @@ export class FilePromptService implements PromptService {
   private readonly checkInterestTemplate: () => Promise<string>;
   private readonly userPromptTemplate: () => Promise<string>;
   private readonly userPromptSystemTemplate: () => Promise<string>;
+  private readonly assessUsersTemplate: () => Promise<string>;
   private readonly priorityRulesSystemTemplate: () => Promise<string>;
 
   constructor(@inject(ENV_SERVICE_ID) envService: EnvService) {
@@ -43,6 +44,9 @@ export class FilePromptService implements PromptService {
     );
     this.priorityRulesSystemTemplate = createLazy(() =>
       readFile(files.priorityRulesSystem, 'utf-8')
+    );
+    this.assessUsersTemplate = createLazy(() =>
+      readFile(files.assessUsers, 'utf-8')
     );
   }
 
@@ -76,13 +80,18 @@ export class FilePromptService implements PromptService {
     return this.checkInterestTemplate();
   }
 
+  async getAssessUsersPrompt(): Promise<string> {
+    return this.assessUsersTemplate();
+  }
+
   async getUserPrompt(
     userMessage: string,
     messageId?: string,
     userName?: string,
     fullName?: string,
     replyMessage?: string,
-    quoteMessage?: string
+    quoteMessage?: string,
+    attitude?: string
   ): Promise<string> {
     const template = await this.userPromptTemplate();
     const prompt = template
@@ -91,7 +100,8 @@ export class FilePromptService implements PromptService {
       .replace('{{userName}}', userName ?? 'N/A')
       .replace('{{fullName}}', fullName ?? 'N/A')
       .replace('{{replyMessage}}', replyMessage ?? 'N/A')
-      .replace('{{quoteMessage}}', quoteMessage ?? 'N/A');
+      .replace('{{quoteMessage}}', quoteMessage ?? 'N/A')
+      .replace('{{attitude}}', attitude ?? '');
 
     return prompt;
   }
