@@ -6,10 +6,15 @@ export function createLazy<T>(loader: () => Promise<T>): () => Promise<T> {
       return cache;
     }
     if (!promise) {
-      promise = loader().then((value) => {
-        cache = value;
-        return value;
-      });
+      promise = loader()
+        .then((value) => {
+          cache = value;
+          return value;
+        })
+        .catch((error) => {
+          promise = null;
+          throw error;
+        });
     }
     return promise;
   };
