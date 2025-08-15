@@ -1,6 +1,6 @@
-import { Context } from 'telegraf';
+import type { Context } from 'telegraf';
 
-import { DialogueManager } from '../services/chat/DialogueManager';
+import type { DialogueManager } from '../services/chat/DialogueManager';
 
 export interface TriggerContext {
   text: string;

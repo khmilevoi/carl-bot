@@ -102,6 +102,7 @@ module.exports = [
       'eslint.config.cjs',
       'test/**',
       'vitest.config.ts',
+      'coverage/**'
     ],
   },
 ];

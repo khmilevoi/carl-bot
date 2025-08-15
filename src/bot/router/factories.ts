@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 
-import { Context } from 'telegraf';
+import type { Context } from 'telegraf';
 
 export type RouterApi<T extends Record<string, unknown>> = {
   show: (ctx: Context, id: string) => Promise<void>;
