@@ -9,6 +9,7 @@ export class MessageFactory {
   static fromUser(ctx: Context, meta: MessageContext): StoredMessage {
     const message = ctx.message as { text?: string } | undefined;
     assert(typeof message?.text === 'string', 'Нет текста сообщения');
+    const text = message.text as string;
 
     const { replyText, replyUsername, quoteText, username, fullName } = meta;
 
@@ -19,7 +20,7 @@ export class MessageFactory {
 
     return {
       role: 'user',
-      content: message.text,
+      content: text,
       username,
       fullName,
       replyText,
