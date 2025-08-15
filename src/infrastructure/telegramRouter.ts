@@ -51,7 +51,11 @@ export function registerRoutes<RouteId extends string = string>(
     }
   ): Promise<void>;
 } {
-  const history = new Map<number, RouteId[]>();
+  interface HistoryItem {
+    id: RouteId;
+    loadData?: () => Promise<unknown> | unknown;
+  }
+  const history = new Map<number, HistoryItem[]>();
 
   async function show(
     ctx: Context,
@@ -65,17 +69,22 @@ export function registerRoutes<RouteId extends string = string>(
     const route = routes.find((w) => w.id === id);
     if (!route) return;
 
-    const stack = history.get(chatId) ?? [];
-    const index = stack.indexOf(id);
+    let stack = history.get(chatId) ?? [];
+    let index = stack.findIndex((h) => h.id === id);
     if (index >= 0) {
-      history.set(chatId, stack.slice(0, index + 1));
-    } else {
-      stack.push(id);
+      if (opts?.loadData) {
+        stack[index].loadData = opts.loadData;
+      }
+      stack = stack.slice(0, index + 1);
       history.set(chatId, stack);
+    } else {
+      stack.push({ id, loadData: opts?.loadData });
+      history.set(chatId, stack);
+      index = stack.length - 1;
     }
 
     const { text, buttons } = await route.build({
-      loadData: opts?.loadData ?? (async () => undefined),
+      loadData: stack[index].loadData ?? (async () => undefined),
     });
 
     const keyboard = buttons.map((b) => [
@@ -125,7 +134,7 @@ export function registerRoutes<RouteId extends string = string>(
       const prev = stack[stack.length - 1];
       if (prev) {
         history.set(chatId, stack);
-        await show(ctx, prev);
+        await show(ctx, prev.id);
       } else {
         history.delete(chatId);
       }

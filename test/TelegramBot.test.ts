@@ -238,6 +238,69 @@ describe('TelegramBot', () => {
     });
   });
 
+  it('returns to admin_chats with list after back from admin_chat', async () => {
+    const memories = new MockChatMemoryManager();
+    const approvalService = new DummyApprovalService();
+    approvalService.getStatus.mockResolvedValue('approved');
+    const actionSpy = vi.spyOn(Telegraf.prototype, 'action');
+
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      approvalService as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatRepository() as unknown as ChatRepository
+    );
+    await new Promise((resolve) => setImmediate(resolve));
+
+    const backCall = actionSpy.mock.calls.find(
+      ([pattern]) => pattern === 'back'
+    );
+    actionSpy.mockRestore();
+    if (!backCall) {
+      throw new Error('Back handler not found');
+    }
+    const backHandler = backCall[1];
+
+    const loadChats = vi.fn(async () => [
+      { id: 42, title: 'Chat A' },
+      { id: 43, title: 'Chat B' },
+    ]);
+    const ctx = { chat: { id: 1 }, reply: vi.fn() } as unknown as Context;
+    await (bot as unknown as { router: any }).router.show(ctx, 'admin_menu');
+    await (bot as unknown as { router: any }).router.show(ctx, 'admin_chats', {
+      loadData: loadChats,
+    });
+    await (
+      bot as unknown as {
+        showAdminChat: (ctx: Context, id: number) => Promise<void>;
+      }
+    ).showAdminChat(ctx, 42);
+
+    const ctxBack = {
+      chat: { id: 1 },
+      deleteMessage: vi.fn(async () => {}),
+      reply: vi.fn(),
+      answerCbQuery: vi.fn(async () => {}),
+    } as unknown as Context;
+
+    await backHandler(ctxBack);
+
+    expect(loadChats).toHaveBeenCalledTimes(2);
+    expect(ctxBack.reply).toHaveBeenCalledWith('Выберите чат для управления:', {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: 'Chat A (42)', callback_data: 'admin_chat:42' }],
+          [{ text: 'Chat B (43)', callback_data: 'admin_chat:43' }],
+          [{ text: '⬅️ Назад', callback_data: 'back' }],
+        ],
+      },
+    });
+  });
+
   it('chat_ban updates message', async () => {
     const memories = new MockChatMemoryManager();
     const approvalService = new DummyApprovalService();
