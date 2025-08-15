@@ -31,9 +31,9 @@ import {
 } from './services/chat/ChatApprovalService';
 import { ChatMemoryManager } from './services/chat/ChatMemory';
 import { CHAT_RESET_SERVICE_ID } from './services/chat/ChatResetService.interface';
+import type { ChatResponder } from './services/chat/ChatResponder';
 import {
   CHAT_RESPONDER_ID,
-  ChatResponder,
   DefaultChatResponder,
 } from './services/chat/ChatResponder';
 import { DefaultChatResetService } from './services/chat/DefaultChatResetService';
@@ -45,25 +45,25 @@ import {
   DefaultHistorySummarizer,
   HISTORY_SUMMARIZER_ID,
 } from './services/chat/HistorySummarizer';
+import type { TriggerPipeline } from './services/chat/TriggerPipeline';
 import {
   DefaultTriggerPipeline,
   TRIGGER_PIPELINE_ID,
-  TriggerPipeline,
 } from './services/chat/TriggerPipeline';
+import type { EnvService } from './services/env/EnvService';
 import {
   DefaultEnvService,
   ENV_SERVICE_ID,
-  EnvService,
   TestEnvService,
 } from './services/env/EnvService';
 import {
   DefaultInterestChecker,
   INTEREST_CHECKER_ID,
 } from './services/interest/InterestChecker';
+import type { MessageContextExtractor } from './services/messages/MessageContextExtractor';
 import {
   DefaultMessageContextExtractor,
   MESSAGE_CONTEXT_EXTRACTOR_ID,
-  MessageContextExtractor,
 } from './services/messages/MessageContextExtractor';
 import { MESSAGE_SERVICE_ID } from './services/messages/MessageService.interface';
 import { RepositoryMessageService } from './services/messages/RepositoryMessageService';

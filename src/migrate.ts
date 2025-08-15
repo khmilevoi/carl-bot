@@ -4,7 +4,8 @@ import { type Database, open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 
 import { container } from './container';
-import { ENV_SERVICE_ID, EnvService } from './services/env/EnvService';
+import type { EnvService } from './services/env/EnvService';
+import { ENV_SERVICE_ID } from './services/env/EnvService';
 import { logger } from './services/logging/logger';
 import { parseDatabaseUrl } from './utils/database';
 

@@ -1,14 +1,15 @@
 import assert from 'node:assert';
 
-import { Context } from 'telegraf';
+import type { Context } from 'telegraf';
 
-import { MessageContext } from './MessageContextExtractor';
-import { StoredMessage } from './StoredMessage.interface';
+import type { MessageContext } from './MessageContextExtractor';
+import type { StoredMessage } from './StoredMessage.interface';
 
 export class MessageFactory {
   static fromUser(ctx: Context, meta: MessageContext): StoredMessage {
     const message = ctx.message as { text?: string } | undefined;
-    assert(typeof message?.text === 'string', 'Нет текста сообщения');
+    const text = message?.text;
+    assert(typeof text === 'string', 'Нет текста сообщения');
 
     const { replyText, replyUsername, quoteText, username, fullName } = meta;
 
@@ -19,7 +20,7 @@ export class MessageFactory {
 
     return {
       role: 'user',
-      content: message.text!,
+      content: text,
       username,
       fullName,
       replyText,

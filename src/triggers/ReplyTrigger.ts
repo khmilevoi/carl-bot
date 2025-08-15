@@ -1,8 +1,12 @@
-import { Context } from 'telegraf';
+import type { Context } from 'telegraf';
 
-import { DialogueManager } from '../services/chat/DialogueManager';
+import type { DialogueManager } from '../services/chat/DialogueManager';
 import { logger } from '../services/logging/logger';
-import { Trigger, TriggerContext, TriggerResult } from './Trigger.interface';
+import type {
+  Trigger,
+  TriggerContext,
+  TriggerResult,
+} from './Trigger.interface';
 
 export class ReplyTrigger implements Trigger {
   async apply(

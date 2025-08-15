@@ -71,8 +71,8 @@ export class AdminServiceImpl implements AdminService {
     const files: { filename: string; buffer: Buffer }[] = [];
     for (const name of tableNames) {
       const buffer = await this.exportTable(db, name);
-      if ((buffer?.length ?? 0) > 0) {
-        files.push({ filename: `${name}.csv`, buffer: buffer! });
+      if (buffer && buffer.length > 0) {
+        files.push({ filename: `${name}.csv`, buffer });
       }
     }
     return files;
