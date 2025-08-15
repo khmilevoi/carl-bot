@@ -14,11 +14,21 @@ module.exports = [
       'unused-imports': unusedImports,
       import: importPlugin,
     },
+    languageOptions: {
+      parserOptions: {
+        project: './tsconfig.json',
+        tsconfigRootDir: __dirname,
+      },
+    },
     rules: {
       'simple-import-sort/imports': 'error',
       'simple-import-sort/exports': 'error',
       'unused-imports/no-unused-imports': 'error',
       '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/consistent-type-imports': 'error',
+      '@typescript-eslint/prefer-optional-chain': 'error',
+      '@typescript-eslint/prefer-nullish-coalescing': 'error',
+      '@typescript-eslint/no-non-null-assertion': 'error',
       '@typescript-eslint/ban-ts-comment': [
         'error',
         {
@@ -36,6 +46,10 @@ module.exports = [
           ignoreRestSiblings: true,
           argsIgnorePattern: '^_',
         },
+      ],
+      '@typescript-eslint/explicit-function-return-type': [
+        'error',
+        { allowExpressions: true, allowTypedFunctionExpressions: true },
       ],
       '@typescript-eslint/member-ordering': [
         'error',
@@ -82,6 +96,12 @@ module.exports = [
   },
   prettier,
   {
-    ignores: ['dist/**', 'node_modules/**', 'eslint.config.cjs'],
+    ignores: [
+      'dist/**',
+      'node_modules/**',
+      'eslint.config.cjs',
+      'test/**',
+      'vitest.config.ts',
+    ],
   },
 ];

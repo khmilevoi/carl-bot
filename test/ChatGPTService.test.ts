@@ -2,13 +2,18 @@ import { promises as fs } from 'fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ChatMessage } from '../src/services/ai/AIService';
+import type { ChatGPTService as ChatGPTServiceType } from '../src/services/ai/ChatGPTService';
 import { TestEnvService } from '../src/services/env/EnvService';
 import { logger } from '../src/services/logging/logger';
 import type { PromptService } from '../src/services/prompts/PromptService';
 
+interface ChatGPTServiceConstructor {
+  new (env: TestEnvService, prompts: PromptService): ChatGPTServiceType;
+}
+
 describe('ChatGPTService', () => {
-  let ChatGPTService: typeof import('../src/services/ai/ChatGPTService').ChatGPTService;
-  let service: import('../src/services/ai/ChatGPTService').ChatGPTService;
+  let ChatGPTService: ChatGPTServiceConstructor;
+  let service: ChatGPTServiceType;
   let openaiCreate: ReturnType<typeof vi.fn<[], unknown>>;
   let prompts: Record<string, unknown>;
   let env: TestEnvService;

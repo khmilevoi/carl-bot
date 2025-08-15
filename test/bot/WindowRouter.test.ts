@@ -2,43 +2,36 @@ import type { Context } from 'telegraf';
 import { Telegraf } from 'telegraf';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { WindowDefinition } from '../../src/bot/windowConfig';
+import { createButton, createRoute } from '../../src/bot/router/factories';
 import { WindowRouter } from '../../src/bot/WindowRouter';
-
-const windows: WindowDefinition[] = [
-  {
-    id: 'first',
-    text: 'First window',
-    buttons: [{ text: 'Next', callback: 'to_second', target: 'second' }],
-  },
-  { id: 'second', text: 'Second window', buttons: [] },
-];
 
 function setupRouter() {
   const bot = new Telegraf<Context>('token');
   const actionSpy = vi.spyOn(bot, 'action');
-  const router = new WindowRouter(
-    bot,
-    windows,
-    {} as Record<string, (ctx: Context) => Promise<void> | void>
-  );
-  const goHandler = actionSpy.mock.calls.find(
-    ([pattern]) => pattern === 'to_second'
-  )![1];
-  const backHandler = actionSpy.mock.calls.find(
-    ([pattern]) => pattern === 'back'
-  )![1];
-  actionSpy.mockRestore();
-  return { router, goHandler, backHandler };
+  const routes = [
+    createRoute('first', 'First window', () => ({
+      buttons: [createButton('Next', (a, ctx) => a.show(ctx, 'second'))],
+    })),
+    createRoute('second', 'Second window', () => ({ buttons: [] })),
+  ];
+  const router = new WindowRouter(bot, routes, {} as Record<string, never>);
+  return { router, actionSpy };
 }
 
 describe('WindowRouter', () => {
   it('transitions between windows and back', async () => {
-    const { router, goHandler, backHandler } = setupRouter();
+    const { router, actionSpy } = setupRouter();
     await router.show(
       { chat: { id: 1 }, reply: vi.fn() } as unknown as Context,
       'first'
     );
+
+    const goHandler = actionSpy.mock.calls.find(
+      ([pattern]) => pattern !== 'back'
+    )![1];
+    const backHandler = actionSpy.mock.calls.find(
+      ([pattern]) => pattern === 'back'
+    )![1];
 
     const ctx = {
       chat: { id: 1 },
@@ -65,17 +58,23 @@ describe('WindowRouter', () => {
     await backHandler(ctxBack);
     expect(ctxBack.reply).toHaveBeenCalledWith('First window', {
       reply_markup: {
-        inline_keyboard: [[{ text: 'Next', callback_data: 'to_second' }]],
+        inline_keyboard: [
+          [{ text: 'Next', callback_data: expect.any(String) }],
+        ],
       },
     });
   });
 
   it('adds back button when history exists', async () => {
-    const { router, goHandler } = setupRouter();
+    const { router, actionSpy } = setupRouter();
     await router.show(
       { chat: { id: 1 }, reply: vi.fn() } as unknown as Context,
       'first'
     );
+
+    const goHandler = actionSpy.mock.calls.find(
+      ([pattern]) => pattern !== 'back'
+    )![1];
 
     const ctx = {
       chat: { id: 1 },
@@ -95,11 +94,18 @@ describe('WindowRouter', () => {
   });
 
   it('deletes messages on navigation and back', async () => {
-    const { router, goHandler, backHandler } = setupRouter();
+    const { router, actionSpy } = setupRouter();
     await router.show(
       { chat: { id: 1 }, reply: vi.fn() } as unknown as Context,
       'first'
     );
+
+    const goHandler = actionSpy.mock.calls.find(
+      ([pattern]) => pattern !== 'back'
+    )![1];
+    const backHandler = actionSpy.mock.calls.find(
+      ([pattern]) => pattern === 'back'
+    )![1];
 
     const ctx = {
       chat: { id: 1 },

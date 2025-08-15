@@ -1,30 +1,25 @@
 import assert from 'node:assert';
 
-import { Context, Telegraf } from 'telegraf';
+import type { Context, Telegraf } from 'telegraf';
 
-import type { WindowDefinition } from './windowConfig';
+import type { RouteDescriptor, RouterApi } from './router/factories';
 
-interface ActionHandlers {
-  [key: string]: (ctx: Context) => Promise<void> | void;
-}
-
-type StackItem = string;
-
-export class WindowRouter {
-  private stacks = new Map<number, StackItem[]>();
+export class WindowRouter<T extends Record<string, unknown>> {
+  private stacks = new Map<number, string[]>();
   private currentWindow = new Map<number, string>();
+  private registered = new Set<string>();
 
   constructor(
     private readonly bot: Telegraf<Context>,
-    private readonly windows: WindowDefinition[],
-    private readonly actions: ActionHandlers
+    private readonly routes: RouteDescriptor<T>[],
+    private readonly actions: T
   ) {
-    this.register();
+    this.registerBack();
   }
 
   async show(ctx: Context, id: string, skipStack = false): Promise<void> {
-    const window = this.windows.find((w) => w.id === id);
-    if (!window) {
+    const route = this.routes.find((r) => r.id === id);
+    if (!route) {
       return;
     }
 
@@ -37,7 +32,24 @@ export class WindowRouter {
     }
     this.currentWindow.set(chatId, id);
 
-    const keyboard = window.buttons.map((b) => [
+    const api = this.getApi();
+    const { buttons } = await route.build(api, ctx);
+
+    for (const button of buttons) {
+      if (this.registered.has(button.callback)) {
+        continue;
+      }
+      this.registered.add(button.callback);
+      this.bot.action(button.callback, async (btnCtx) => {
+        const btnChatId = btnCtx.chat?.id;
+        assert(btnChatId, 'This is not a chat');
+        await btnCtx.deleteMessage().catch(() => {});
+        await button.handler(api, btnCtx);
+        await btnCtx.answerCbQuery().catch(() => {});
+      });
+    }
+
+    const keyboard = buttons.map((b) => [
       { text: b.text, callback_data: b.callback },
     ]);
 
@@ -45,35 +57,28 @@ export class WindowRouter {
       keyboard.push([{ text: '⬅️ Назад', callback_data: 'back' }]);
     }
 
-    await ctx.reply(window.text, {
+    await ctx.reply(route.text, {
       reply_markup: { inline_keyboard: keyboard },
     });
   }
 
-  private register() {
-    for (const window of this.windows) {
-      for (const button of window.buttons) {
-        this.bot.action(button.callback, async (ctx) => {
-          const chatId = ctx.chat?.id;
-          assert(chatId, 'This is not a chat');
-          await ctx.deleteMessage().catch(() => {});
-
-          if (button.target) {
-            await this.show(ctx, button.target);
-          }
-
-          if (button.action) {
-            const action = this.actions[button.action];
-            if (action) {
-              await action(ctx);
-            }
-          }
-
-          await ctx.answerCbQuery().catch(() => {});
-        });
-      }
+  registerButton(button: {
+    text: string;
+    callback: string;
+    handler: (api: RouterApi<T>, ctx: Context) => Promise<void> | void;
+  }): { text: string; callback_data: string } {
+    const api = this.getApi();
+    if (!this.registered.has(button.callback)) {
+      this.registered.add(button.callback);
+      this.bot.action(button.callback, async (ctx) => {
+        await button.handler(api, ctx);
+        await ctx.answerCbQuery().catch(() => {});
+      });
     }
+    return { text: button.text, callback_data: button.callback };
+  }
 
+  private registerBack(): void {
     this.bot.action('back', async (ctx) => {
       const chatId = ctx.chat?.id;
       assert(chatId, 'This is not a chat');
@@ -91,7 +96,14 @@ export class WindowRouter {
     });
   }
 
-  private getStack(chatId: number): StackItem[] {
+  private getApi(): RouterApi<T> {
+    return {
+      show: (ctx: Context, id: string) => this.show(ctx, id),
+      ...this.actions,
+    } as RouterApi<T>;
+  }
+
+  private getStack(chatId: number): string[] {
     let stack = this.stacks.get(chatId);
     if (!stack) {
       stack = [];

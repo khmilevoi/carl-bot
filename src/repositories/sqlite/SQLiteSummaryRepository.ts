@@ -1,4 +1,5 @@
 import { inject, injectable } from 'inversify';
+import type { Database } from 'sqlite';
 
 import { DB_PROVIDER_ID, type SQLiteDbProvider } from '../DbProvider';
 import { type SummaryRepository } from '../interfaces/SummaryRepository.interface';
@@ -29,7 +30,7 @@ export class SQLiteSummaryRepository implements SummaryRepository {
     await db.run('DELETE FROM summaries WHERE chat_id = ?', chatId);
   }
 
-  private async db() {
+  private async db(): Promise<Database> {
     return this.dbProvider.get();
   }
 }

@@ -2,7 +2,9 @@ import type { Context } from 'telegraf';
 import { Telegraf } from 'telegraf';
 import { describe, expect, it, vi } from 'vitest';
 
+import { admin_chats, type RoutesApi } from '../src/bot/routes';
 import { TelegramBot } from '../src/bot/TelegramBot';
+import { WindowRouter } from '../src/bot/WindowRouter';
 import * as TelegramBotModule from '../src/bot/TelegramBot';
 import type { ChatRepository } from '../src/repositories/interfaces/ChatRepository.interface';
 import type { AdminService } from '../src/services/admin/AdminService.interface';
@@ -11,7 +13,10 @@ import type { ChatMemoryManager } from '../src/services/chat/ChatMemory';
 import type { ChatResponder } from '../src/services/chat/ChatResponder';
 import type { TriggerPipeline } from '../src/services/chat/TriggerPipeline';
 import type { EnvService } from '../src/services/env/EnvService';
-import type { MessageContextExtractor } from '../src/services/messages/MessageContextExtractor';
+import type {
+  MessageContext,
+  MessageContextExtractor,
+} from '../src/services/messages/MessageContextExtractor';
 
 class MockEnvService {
   env = { BOT_TOKEN: 'token', ADMIN_CHAT_ID: 1 } as EnvService['env'];
@@ -36,8 +41,8 @@ class DummyAdmin {
 }
 
 class DummyExtractor {
-  extract() {
-    return {};
+  extract(): MessageContext {
+    return {} as MessageContext;
   }
 }
 
@@ -110,7 +115,27 @@ describe('TelegramBot', () => {
     );
   });
 
-  it('shows admin chats menu', async () => {
+  it('builds admin_chats route with buttons', async () => {
+    const listChats = vi.fn(async () => [{ chatId: 42 }]);
+    const getChatTitle = vi.fn(async () => 'Test Chat');
+    const showChatStatus = vi.fn();
+    const api = { listChats, getChatTitle, showChatStatus, show: vi.fn() };
+    const ctx = { reply: vi.fn() } as unknown as Context;
+
+    const { buttons } = await admin_chats.build(api, ctx);
+
+    expect(listChats).toHaveBeenCalled();
+    expect(getChatTitle).toHaveBeenCalledWith(42);
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0].text).toBe('Test Chat (42)');
+
+    const btnCtx = { reply: vi.fn(), chat: { id: 1 } } as unknown as Context;
+    await buttons[0].handler(api, btnCtx);
+
+    expect(showChatStatus).toHaveBeenCalledWith(btnCtx, 42);
+  });
+
+  it('showChatStatus replies with button', async () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
       .spyOn(
@@ -120,13 +145,7 @@ describe('TelegramBot', () => {
       .mockImplementation(() => {});
 
     const approvalService = new DummyApprovalService();
-    approvalService.listAll.mockResolvedValue([
-      { chatId: 42, status: 'approved' },
-    ]);
-
-    const chatRepo = new DummyChatRepository();
-    chatRepo.findById.mockResolvedValue({ chatId: 42, title: 'Test Chat' });
-
+    approvalService.getStatus.mockResolvedValue('approved');
     const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
@@ -135,106 +154,33 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      chatRepo as unknown as ChatRepository
+      new DummyChatRepository() as unknown as ChatRepository
     );
     configureSpy.mockRestore();
 
+    const registerSpy = vi
+      .spyOn(
+        (bot as unknown as { router: WindowRouter<RoutesApi> }).router,
+        'registerButton'
+      )
+      .mockImplementation((btn) => ({
+        text: btn.text,
+        callback_data: btn.callback,
+      }));
+
     const ctx = { reply: vi.fn() } as unknown as Context;
-
     await (
-      bot as unknown as { showAdminChatsMenu: (ctx: Context) => Promise<void> }
-    ).showAdminChatsMenu(ctx);
+      bot as unknown as {
+        showChatStatus: (ctx: Context, chatId: number) => Promise<void>;
+      }
+    ).showChatStatus(ctx, 7);
 
-    expect(approvalService.listAll).toHaveBeenCalled();
-    expect(chatRepo.findById).toHaveBeenCalledWith(42);
-    expect(ctx.reply).toHaveBeenCalledWith('Выберите чат для управления:', {
+    expect(approvalService.getStatus).toHaveBeenCalledWith(7);
+    expect(registerSpy).toHaveBeenCalled();
+    expect(ctx.reply).toHaveBeenCalledWith('Статус чата 7: approved', {
       reply_markup: {
         inline_keyboard: [
-          [{ text: 'Test Chat (42)', callback_data: 'admin_chat:42' }],
-        ],
-      },
-    });
-  });
-
-  it('handles admin_chat action and shows status with ban button', async () => {
-    const memories = new MockChatMemoryManager();
-    const approvalService = new DummyApprovalService();
-    approvalService.getStatus.mockResolvedValue('approved');
-    const actionSpy = vi.spyOn(Telegraf.prototype, 'action');
-
-    new TelegramBot(
-      new MockEnvService() as unknown as EnvService,
-      memories as unknown as ChatMemoryManager,
-      new DummyAdmin() as unknown as AdminService,
-      approvalService as unknown as ChatApprovalService,
-      new DummyExtractor() as unknown as MessageContextExtractor,
-      new DummyPipeline() as unknown as TriggerPipeline,
-      new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository
-    );
-
-    const call = actionSpy.mock.calls.find(
-      ([pattern]) =>
-        pattern instanceof RegExp && pattern.source === '^admin_chat:(\\S+)$'
-    );
-    actionSpy.mockRestore();
-    const handler = call![1];
-
-    const ctx = {
-      chat: { id: 1 },
-      match: ['admin_chat:42', '42'],
-      answerCbQuery: vi.fn(),
-      reply: vi.fn(),
-    } as unknown as Context;
-
-    await handler(ctx);
-
-    expect(approvalService.getStatus).toHaveBeenCalledWith(42);
-    expect(ctx.reply).toHaveBeenCalledWith('Статус чата 42: approved', {
-      reply_markup: {
-        inline_keyboard: [[{ text: 'Забанить', callback_data: 'chat_ban:42' }]],
-      },
-    });
-  });
-
-  it('chat_ban updates message', async () => {
-    const memories = new MockChatMemoryManager();
-    const approvalService = new DummyApprovalService();
-    const actionSpy = vi.spyOn(Telegraf.prototype, 'action');
-
-    new TelegramBot(
-      new MockEnvService() as unknown as EnvService,
-      memories as unknown as ChatMemoryManager,
-      new DummyAdmin() as unknown as AdminService,
-      approvalService as unknown as ChatApprovalService,
-      new DummyExtractor() as unknown as MessageContextExtractor,
-      new DummyPipeline() as unknown as TriggerPipeline,
-      new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository
-    );
-
-    const call = actionSpy.mock.calls.find(
-      ([pattern]) =>
-        pattern instanceof RegExp && pattern.source === '^chat_ban:(\\S+)$'
-    );
-    actionSpy.mockRestore();
-    const handler = call![1];
-
-    const ctx = {
-      chat: { id: 1 },
-      match: ['chat_ban:7', '7'],
-      telegram: { sendMessage: vi.fn() },
-      answerCbQuery: vi.fn(),
-      editMessageText: vi.fn(),
-    } as unknown as Context;
-
-    await handler(ctx);
-
-    expect(approvalService.ban).toHaveBeenCalledWith(7);
-    expect(ctx.editMessageText).toHaveBeenCalledWith('Чат 7 забанен', {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: 'Разбанить', callback_data: 'chat_unban:7' }],
+          [{ text: 'Забанить', callback_data: expect.any(String) }],
         ],
       },
     });
@@ -331,14 +277,19 @@ describe('TelegramBot', () => {
     expect(ctx.reply).toHaveBeenCalledWith('Запрос отправлен администратору.');
   });
 
-  it('handles user_approve action', async () => {
+  it('approve button creates access key', async () => {
     const memories = new MockChatMemoryManager();
     const admin = new DummyAdmin();
     const approveDate = new Date('2020-01-01T00:00:00.000Z');
     admin.createAccessKey.mockResolvedValue(approveDate);
-    const actionSpy = vi.spyOn(Telegraf.prototype, 'action');
+    const configureSpy = vi
+      .spyOn(
+        TelegramBot.prototype as unknown as Record<string, unknown>,
+        'configure'
+      )
+      .mockImplementation(() => {});
 
-    new TelegramBot(
+    const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       admin as unknown as AdminService,
@@ -348,31 +299,38 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository
     );
+    configureSpy.mockRestore();
 
-    const call = actionSpy.mock.calls.find(
-      ([pattern]) =>
-        pattern instanceof RegExp &&
-        pattern.source === '^user_approve:(\\S+):(\\S+)$'
+    const registerSpy = vi.spyOn(
+      (bot as unknown as { router: WindowRouter<RoutesApi> }).router,
+      'registerButton'
     );
-    actionSpy.mockRestore();
-    const handler = call![1];
 
+    const telegram = { sendMessage: vi.fn() };
     const ctx = {
-      chat: { id: 1 },
-      match: ['user_approve:5:6', '5', '6'],
-      answerCbQuery: vi.fn(),
+      chat: { id: 5 },
+      from: { id: 6, first_name: 'John' },
       reply: vi.fn(),
-      telegram: { sendMessage: vi.fn() },
+      telegram,
     } as unknown as Context;
 
-    await handler(ctx);
+    await (
+      bot as unknown as { handleRequestAccess: (ctx: Context) => Promise<void> }
+    ).handleRequestAccess(ctx);
+
+    expect(registerSpy).toHaveBeenCalled();
+    const approveHandler = registerSpy.mock.calls[0][0].handler;
+    const aCtx = {
+      editMessageText: vi.fn(),
+      telegram: { sendMessage: vi.fn() },
+    } as unknown as Context;
+    await approveHandler({} as RoutesApi, aCtx);
 
     expect(admin.createAccessKey).toHaveBeenCalledWith(5, 6);
-    expect(ctx.answerCbQuery).toHaveBeenCalledWith('Доступ одобрен');
-    expect(ctx.reply).toHaveBeenCalledWith(
+    expect(aCtx.editMessageText).toHaveBeenCalledWith(
       'Одобрено для чата 5 и пользователя 6'
     );
-    expect(ctx.telegram.sendMessage).toHaveBeenCalledWith(
+    expect(aCtx.telegram.sendMessage).toHaveBeenCalledWith(
       5,
       `Доступ к данным разрешен для пользователя 6 до ${approveDate.toISOString()}. Используйте меню для экспорта и сброса`
     );
@@ -815,7 +773,7 @@ describe('TelegramBot', () => {
     await vi.advanceTimersByTimeAsync(4000);
     expect(ctx.telegram.sendChatAction).toHaveBeenCalledWith(1, 'typing');
 
-    resolveFn!();
+    resolveFn?.();
     await promise;
 
     await vi.advanceTimersByTimeAsync(4000);

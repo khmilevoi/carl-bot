@@ -7,14 +7,14 @@ class MockDb {
   migrations: string[] = [];
   hasMigrationsTable = false;
 
-  async get(query: string) {
+  async get(query: string): Promise<{ name: string } | undefined> {
     if (query.includes('sqlite_master') && query.includes('migrations')) {
       return this.hasMigrationsTable ? { name: 'migrations' } : undefined;
     }
     return undefined;
   }
 
-  async run(query: string, id?: string) {
+  async run(query: string, id?: string): Promise<void> {
     if (query.startsWith('CREATE TABLE')) {
       this.hasMigrationsTable = true;
     } else if (query.startsWith('INSERT INTO migrations')) {
@@ -26,15 +26,15 @@ class MockDb {
     }
   }
 
-  async all(query: string) {
+  async all(query: string): Promise<{ id: string }[]> {
     if (query === 'SELECT id FROM migrations') {
       return this.migrations.map((id) => ({ id }));
     }
     return [];
   }
 
-  async exec(_query: string) {}
-  async close() {}
+  async exec(_query: string): Promise<void> {}
+  async close(): Promise<void> {}
 }
 
 vi.mock('sqlite', () => ({
@@ -46,7 +46,7 @@ vi.mock('sqlite3', () => ({
 
 let mockDb: MockDb;
 
-async function loadMigrateModule() {
+async function loadMigrateModule(): Promise<void> {
   const mod = await import('../src/migrate');
   migrateUp = mod.migrateUp;
 }

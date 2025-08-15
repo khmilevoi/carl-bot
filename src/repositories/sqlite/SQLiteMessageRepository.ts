@@ -1,4 +1,5 @@
 import { inject, injectable } from 'inversify';
+import type { Database } from 'sqlite';
 
 import type { ChatMessage } from '../../services/ai/AIService.interface';
 import type { StoredMessage } from '../../services/messages/StoredMessage.interface';
@@ -134,7 +135,7 @@ export class SQLiteMessageRepository implements MessageRepository {
     await db.run('DELETE FROM messages WHERE chat_id = ?', chatId);
   }
 
-  private async db() {
+  private async db(): Promise<Database> {
     return this.dbProvider.get();
   }
 }
