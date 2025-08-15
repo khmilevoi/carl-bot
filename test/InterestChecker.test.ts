@@ -103,6 +103,6 @@ describe('DefaultInterestChecker', () => {
       aiResult: { messageId: '42', why: 'w' },
     });
     const res = await checker.check(chatId);
-    expect(res).toEqual({ messageId: '42', message: '', why: 'w' });
+    expect(res).toEqual(null);
   });
 });

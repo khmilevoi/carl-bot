@@ -56,9 +56,18 @@ export class DefaultInterestChecker implements InterestChecker {
     if (!result) {
       return null;
     }
-    const msg =
-      history.find((m) => m.messageId?.toString() === result.messageId)
-        ?.content ?? '';
-    return { ...result, message: msg };
+    const msg = history.find(
+      (m) => m.messageId?.toString() === result.messageId
+    );
+
+    if (!msg) {
+      return null;
+    }
+
+    return {
+      message: msg.content,
+      messageId: result.messageId,
+      why: result.why,
+    };
   }
 }
