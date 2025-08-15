@@ -151,9 +151,7 @@ export class AdminServiceImpl implements AdminService {
         offset
       );
       if (rows.length === 0) break;
-      if (!header) {
-        header = Object.keys(rows[0]).join(',');
-      }
+      header ??= Object.keys(rows[0]).join(',');
       for (const row of rows) {
         const line = Object.keys(row)
           .map((k) => JSON.stringify(row[k] ?? ''))

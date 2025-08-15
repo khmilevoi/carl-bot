@@ -13,17 +13,17 @@ export class RepositorySummaryService implements SummaryService {
     @inject(SUMMARY_REPOSITORY_ID) private summaryRepo: SummaryRepository
   ) {}
 
-  async getSummary(chatId: number) {
+  async getSummary(chatId: number): Promise<string> {
     logger.debug({ chatId }, 'Fetching summary');
     return this.summaryRepo.findById(chatId);
   }
 
-  async setSummary(chatId: number, summary: string) {
+  async setSummary(chatId: number, summary: string): Promise<void> {
     logger.debug({ chatId }, 'Storing summary');
     await this.summaryRepo.upsert(chatId, summary);
   }
 
-  async clearSummary(chatId: number) {
+  async clearSummary(chatId: number): Promise<void> {
     logger.debug({ chatId }, 'Clearing summary');
     await this.summaryRepo.clearByChatId(chatId);
   }
