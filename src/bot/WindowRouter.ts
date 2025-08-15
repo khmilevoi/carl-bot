@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 
-import { Context, Telegraf } from 'telegraf';
+import type { Context, Telegraf } from 'telegraf';
 
 import type { RouteDescriptor, RouterApi } from './router/factories';
 
@@ -62,7 +62,7 @@ export class WindowRouter<T extends Record<string, unknown>> {
     });
   }
 
-  private registerBack() {
+  private registerBack(): void {
     this.bot.action('back', async (ctx) => {
       const chatId = ctx.chat?.id;
       assert(chatId, 'This is not a chat');

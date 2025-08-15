@@ -5,7 +5,11 @@ import { describe, expect, it, vi } from 'vitest';
 import { createButton, createRoute } from '../../src/bot/router/factories';
 import { WindowRouter } from '../../src/bot/WindowRouter';
 
-function setupRouter() {
+function setupRouter(): {
+  router: WindowRouter;
+  goHandler: (ctx: Context) => Promise<void> | void;
+  backHandler: (ctx: Context) => Promise<void> | void;
+} {
   const bot = new Telegraf<Context>('token');
   const actionSpy = vi.spyOn(bot, 'action');
   const routes = [

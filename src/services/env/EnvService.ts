@@ -70,7 +70,7 @@ export class DefaultEnvService implements EnvService {
     this.env = envSchema.parse(process.env);
   }
 
-  getModels() {
+  getModels(): { ask: ChatModel; summary: ChatModel; interest: ChatModel } {
     return {
       ask: 'o3' as ChatModel,
       summary: 'o3-mini' as ChatModel,
@@ -78,7 +78,18 @@ export class DefaultEnvService implements EnvService {
     };
   }
 
-  getPromptFiles() {
+  getPromptFiles(): {
+    persona: string;
+    askSummary: string;
+    summarizationSystem: string;
+    previousSummary: string;
+    checkInterest: string;
+    userPrompt: string;
+    userPromptSystem: string;
+    priorityRulesSystem: string;
+    assessUsers: string;
+    replyTrigger: string;
+  } {
     return {
       persona: 'prompts/persona.md',
       askSummary: 'prompts/ask_summary_prompt.md',
@@ -124,7 +135,7 @@ export class TestEnvService implements EnvService {
     });
   }
 
-  getModels() {
+  getModels(): { ask: ChatModel; summary: ChatModel; interest: ChatModel } {
     return {
       ask: 'o3' as ChatModel,
       summary: 'o3-mini' as ChatModel,
@@ -132,7 +143,18 @@ export class TestEnvService implements EnvService {
     };
   }
 
-  getPromptFiles() {
+  getPromptFiles(): {
+    persona: string;
+    askSummary: string;
+    summarizationSystem: string;
+    previousSummary: string;
+    checkInterest: string;
+    userPrompt: string;
+    userPromptSystem: string;
+    priorityRulesSystem: string;
+    assessUsers: string;
+    replyTrigger: string;
+  } {
     return {
       persona: 'prompts/persona.md',
       askSummary: 'prompts/ask_summary_prompt.md',

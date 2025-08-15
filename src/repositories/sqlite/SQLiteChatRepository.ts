@@ -1,4 +1,5 @@
 import { inject, injectable } from 'inversify';
+import type { Database } from 'sqlite';
 
 import { DB_PROVIDER_ID, type SQLiteDbProvider } from '../DbProvider';
 import {
@@ -27,7 +28,7 @@ export class SQLiteChatRepository implements ChatRepository {
     return row ? { chatId: row.chat_id, title: row.title } : undefined;
   }
 
-  private async db() {
+  private async db(): Promise<Database> {
     return this.dbProvider.get();
   }
 }

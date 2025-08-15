@@ -16,7 +16,7 @@ class FakeHistorySummarizer implements HistorySummarizer {
 class FakeMessageService implements MessageService {
   private data = new Map<number, ChatMessage[]>();
 
-  async addMessage(message: StoredMessage) {
+  async addMessage(message: StoredMessage): Promise<void> {
     const list = this.data.get(message.chatId) ?? [];
     const entry: ChatMessage = {
       role: message.role,
@@ -34,16 +34,16 @@ class FakeMessageService implements MessageService {
     this.data.set(message.chatId, list);
   }
 
-  async getMessages(chatId: number) {
+  async getMessages(chatId: number): Promise<ChatMessage[]> {
     const list = this.data.get(chatId) ?? [];
     return list.map((m) => ({ ...m }));
   }
 
-  async getCount(chatId: number) {
+  async getCount(chatId: number): Promise<number> {
     return (this.data.get(chatId) ?? []).length;
   }
 
-  async getLastMessages(chatId: number, limit: number) {
+  async getLastMessages(chatId: number, limit: number): Promise<ChatMessage[]> {
     const list = this.data.get(chatId) ?? [];
     return list
       .slice(-limit)
@@ -51,7 +51,7 @@ class FakeMessageService implements MessageService {
       .map((m) => ({ ...m }));
   }
 
-  async clearMessages(chatId: number) {
+  async clearMessages(chatId: number): Promise<void> {
     this.data.set(chatId, []);
   }
 }

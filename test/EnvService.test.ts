@@ -4,7 +4,9 @@ import { TestEnvService } from '../src/services/env/EnvService';
 
 const OLD_ENV = { ...process.env };
 
-const setRequiredEnv = (overrides: Record<string, string | undefined> = {}) => {
+const setRequiredEnv = (
+  overrides: Record<string, string | undefined> = {}
+): void => {
   process.env.BOT_TOKEN = 'token';
   process.env.OPENAI_API_KEY = 'key';
   process.env.DATABASE_URL = 'file:///tmp/test.db';

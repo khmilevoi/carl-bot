@@ -1,4 +1,5 @@
 import { mkdtempSync, writeFileSync } from 'fs';
+import type * as fsPromises from 'fs/promises';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -11,7 +12,18 @@ class TempEnvService extends TestEnvService {
     super();
   }
 
-  override getPromptFiles() {
+  override getPromptFiles(): {
+    persona: string;
+    askSummary: string;
+    summarizationSystem: string;
+    previousSummary: string;
+    checkInterest: string;
+    userPrompt: string;
+    userPromptSystem: string;
+    priorityRulesSystem: string;
+    assessUsers: string;
+    replyTrigger: string;
+  } {
     return {
       persona: join(this.dir, 'persona.md'),
       askSummary: join(this.dir, 'ask_summary_prompt.md'),
@@ -69,8 +81,7 @@ describe('FilePromptService', () => {
       'trigger {{triggerReason}} {{triggerMessage}}'
     );
 
-    const actual =
-      await vi.importActual<typeof import('fs/promises')>('fs/promises');
+    const actual = await vi.importActual<typeof fsPromises>('fs/promises');
     readFileSpy = vi.fn(actual.readFile);
     vi.doMock('fs/promises', () => ({ ...actual, readFile: readFileSpy }));
 

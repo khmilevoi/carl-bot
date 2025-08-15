@@ -4,7 +4,8 @@ import { type Database, open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 
 import { container } from './container';
-import { ENV_SERVICE_ID, EnvService } from './services/env/EnvService';
+import type { EnvService } from './services/env/EnvService';
+import { ENV_SERVICE_ID } from './services/env/EnvService';
 import { logger } from './services/logging/logger';
 import { parseDatabaseUrl } from './utils/database';
 
@@ -43,7 +44,7 @@ async function getDb(): Promise<SqliteDatabase> {
 
 type SqliteDatabase = Database<sqlite3.Database, sqlite3.Statement>;
 
-async function ensureTable(db: SqliteDatabase) {
+async function ensureTable(db: SqliteDatabase): Promise<void> {
   logger.debug('Checking for migrations table');
   await db.run(
     'CREATE TABLE IF NOT EXISTS migrations (id TEXT PRIMARY KEY, applied_at TEXT)'
@@ -76,7 +77,7 @@ async function cleanupUnknownMigrations(
   return applied;
 }
 
-async function clearDatabase(db: SqliteDatabase) {
+async function clearDatabase(db: SqliteDatabase): Promise<void> {
   logger.info('Clearing database');
 
   const tables: { name: string }[] = await db.all(
@@ -108,7 +109,7 @@ async function clearDatabase(db: SqliteDatabase) {
   }
 }
 
-async function migrateUp() {
+async function migrateUp(): Promise<void> {
   logger.info('Starting migration process (UP)');
 
   let db = await getDb();
@@ -160,7 +161,7 @@ async function migrateUp() {
   await db.close();
 }
 
-async function migrateDown() {
+async function migrateDown(): Promise<void> {
   logger.info('Starting migration rollback (DOWN)');
 
   const db = await getDb();
@@ -196,7 +197,7 @@ async function migrateDown() {
   await db.close();
 }
 
-async function checkMigrations() {
+async function checkMigrations(): Promise<boolean> {
   logger.info('Checking migration status');
 
   const db = await getDb();
