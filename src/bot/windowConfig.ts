@@ -6,9 +6,15 @@ import {
   type RouteApi,
 } from '../infrastructure/telegramRouter';
 
-type WindowId = 'menu' | 'admin_menu' | 'chat_not_approved' | 'no_access';
-
-type WindowDefinition = RouteApi<WindowId>;
+export type WindowId =
+  | 'menu'
+  | 'admin_menu'
+  | 'admin_chats'
+  | 'admin_chat'
+  | 'chat_not_approved'
+  | 'no_access'
+  | 'chat_approval_request'
+  | 'user_access_request';
 
 const b = createButton<WindowId>;
 const r = createRoute<WindowId>;
@@ -16,15 +22,14 @@ const r = createRoute<WindowId>;
 interface WindowActions {
   exportData(ctx: Context): Promise<void> | void;
   resetMemory(ctx: Context): Promise<void> | void;
-  showAdminChatsMenu(ctx: Context): Promise<void> | void;
   requestChatAccess(ctx: Context): Promise<void> | void;
   requestUserAccess(ctx: Context): Promise<void> | void;
+  showAdminChats(ctx: Context): Promise<void> | void;
 }
 
-export function createWindows(actions: WindowActions): WindowDefinition[] {
+export function createWindows(actions: WindowActions): RouteApi<WindowId>[] {
   return [
-    r({
-      id: 'menu',
+    r('menu', async () => ({
       text: 'Выберите действие:',
       buttons: [
         b({
@@ -38,9 +43,8 @@ export function createWindows(actions: WindowActions): WindowDefinition[] {
           action: actions.resetMemory,
         }),
       ],
-    }),
-    r({
-      id: 'admin_menu',
+    })),
+    r('admin_menu', async () => ({
       text: 'Выберите действие:',
       buttons: [
         b({
@@ -51,12 +55,41 @@ export function createWindows(actions: WindowActions): WindowDefinition[] {
         b({
           text: '💬 Чаты',
           callback: 'admin_chats',
-          action: actions.showAdminChatsMenu,
+          action: actions.showAdminChats,
         }),
       ],
+    })),
+    r('admin_chats', async ({ loadData }) => {
+      const chats = (await loadData()) as { id: number; title: string }[];
+      return {
+        text: 'Выберите чат для управления:',
+        buttons: chats.map((chat) =>
+          b({
+            text: `${chat.title} (${chat.id})`,
+            callback: `admin_chat:${chat.id}`,
+          })
+        ),
+      };
     }),
-    r({
-      id: 'chat_not_approved',
+    r('admin_chat', async ({ loadData }) => {
+      const { chatId, status } = (await loadData()) as {
+        chatId: number;
+        status: string;
+      };
+      return {
+        text: `Статус чата ${chatId}: ${status}`,
+        buttons: [
+          b({
+            text: status === 'banned' ? 'Разбанить' : 'Забанить',
+            callback:
+              status === 'banned'
+                ? `chat_unban:${chatId}`
+                : `chat_ban:${chatId}`,
+          }),
+        ],
+      };
+    }),
+    r('chat_not_approved', async () => ({
       text: 'Этот чат не находится в списке разрешённых.',
       buttons: [
         b({
@@ -65,9 +98,8 @@ export function createWindows(actions: WindowActions): WindowDefinition[] {
           action: actions.requestChatAccess,
         }),
       ],
-    }),
-    r({
-      id: 'no_access',
+    })),
+    r('no_access', async () => ({
       text: 'Для работы с данными нужен доступ.',
       buttons: [
         b({
@@ -76,6 +108,33 @@ export function createWindows(actions: WindowActions): WindowDefinition[] {
           action: actions.requestUserAccess,
         }),
       ],
+    })),
+    r('chat_approval_request', async ({ loadData }) => {
+      const { name, chatId } = (await loadData()) as {
+        name: string;
+        chatId: number;
+      };
+      return {
+        text: `${name} запросил доступ`,
+        buttons: [
+          b({ text: 'Разрешить', callback: `chat_approve:${chatId}` }),
+          b({ text: 'Забанить', callback: `chat_ban:${chatId}` }),
+        ],
+      };
+    }),
+    r('user_access_request', async ({ loadData }) => {
+      const { msg, chatId, userId } = (await loadData()) as {
+        msg: string;
+        chatId: number;
+        userId: number;
+      };
+      return {
+        text: msg,
+        buttons: [
+          b({ text: 'Одобрить', callback: `user_approve:${chatId}:${userId}` }),
+          b({ text: 'Забанить чат', callback: `chat_ban:${chatId}` }),
+        ],
+      };
     }),
   ];
 }

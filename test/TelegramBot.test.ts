@@ -142,11 +142,12 @@ describe('TelegramBot', () => {
     );
     configureSpy.mockRestore();
 
-    const ctx = { reply: vi.fn() } as unknown as Context;
+    const ctx = { chat: { id: 1 }, reply: vi.fn() } as unknown as Context;
 
-    await (
-      bot as unknown as { showAdminChatsMenu: (ctx: Context) => Promise<void> }
-    ).showAdminChatsMenu(ctx);
+    await (bot as unknown as { router: any }).router.show(ctx, 'admin_chats', {
+      loadData: () =>
+        (bot as unknown as { getChats: () => Promise<unknown> }).getChats(),
+    });
 
     expect(approvalService.listAll).toHaveBeenCalled();
     expect(chatRepo.findById).toHaveBeenCalledWith(42);
@@ -165,7 +166,7 @@ describe('TelegramBot', () => {
     approvalService.getStatus.mockResolvedValue('approved');
     const actionSpy = vi.spyOn(Telegraf.prototype, 'action');
 
-    new TelegramBot(
+    const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -186,19 +187,33 @@ describe('TelegramBot', () => {
     }
     const handler = call[1];
 
+    // simulate entering admin_chats route to populate history
+    await (
+      bot as unknown as { router: unknown } as { router: any }
+    ).router.show(
+      { chat: { id: 1 }, reply: vi.fn() } as unknown as Context,
+      'admin_chats',
+      { loadData: () => [] }
+    );
+
     const ctx = {
       chat: { id: 1 },
       match: ['admin_chat:42', '42'],
       answerCbQuery: vi.fn(),
+      deleteMessage: vi.fn(async () => {}),
       reply: vi.fn(),
     } as unknown as Context;
 
     await handler(ctx);
 
     expect(approvalService.getStatus).toHaveBeenCalledWith(42);
+    expect(ctx.deleteMessage).toHaveBeenCalled();
     expect(ctx.reply).toHaveBeenCalledWith('Статус чата 42: approved', {
       reply_markup: {
-        inline_keyboard: [[{ text: 'Забанить', callback_data: 'chat_ban:42' }]],
+        inline_keyboard: [
+          [{ text: 'Забанить', callback_data: 'chat_ban:42' }],
+          [{ text: '⬅️ Назад', callback_data: 'back' }],
+        ],
       },
     });
   });
@@ -206,9 +221,12 @@ describe('TelegramBot', () => {
   it('chat_ban updates message', async () => {
     const memories = new MockChatMemoryManager();
     const approvalService = new DummyApprovalService();
+    approvalService.getStatus
+      .mockResolvedValueOnce('approved')
+      .mockResolvedValueOnce('banned');
     const actionSpy = vi.spyOn(Telegraf.prototype, 'action');
 
-    new TelegramBot(
+    const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -229,21 +247,40 @@ describe('TelegramBot', () => {
     }
     const handler = call[1];
 
+    // navigate to admin_chat view for chat 7
+    await (bot as unknown as { router: any }).router.show(
+      { chat: { id: 1 }, reply: vi.fn() } as unknown as Context,
+      'admin_chats',
+      { loadData: () => [] }
+    );
+    await (
+      bot as unknown as {
+        showAdminChat: (ctx: Context, id: number) => Promise<void>;
+      }
+    ).showAdminChat(
+      { chat: { id: 1 }, reply: vi.fn() } as unknown as Context,
+      7
+    );
+
     const ctx = {
       chat: { id: 1 },
       match: ['chat_ban:7', '7'],
       telegram: { sendMessage: vi.fn() },
       answerCbQuery: vi.fn(),
-      editMessageText: vi.fn(),
+      deleteMessage: vi.fn(async () => {}),
+      reply: vi.fn(),
     } as unknown as Context;
 
     await handler(ctx);
 
     expect(approvalService.ban).toHaveBeenCalledWith(7);
-    expect(ctx.editMessageText).toHaveBeenCalledWith('Чат 7 забанен', {
+    expect(ctx.telegram.sendMessage).toHaveBeenCalledWith(7, 'Доступ запрещён');
+    expect(ctx.deleteMessage).toHaveBeenCalled();
+    expect(ctx.reply).toHaveBeenCalledWith('Статус чата 7: banned', {
       reply_markup: {
         inline_keyboard: [
           [{ text: 'Разбанить', callback_data: 'chat_unban:7' }],
+          [{ text: '⬅️ Назад', callback_data: 'back' }],
         ],
       },
     });
@@ -315,7 +352,10 @@ describe('TelegramBot', () => {
     );
     configureSpy.mockRestore();
 
-    const telegram = { sendMessage: vi.fn() };
+    const sendMessageSpy = vi
+      .spyOn((bot as unknown as { bot: Telegraf }).bot.telegram, 'sendMessage')
+      .mockResolvedValue(undefined as never);
+
     const ctx = {
       chat: { id: 5 },
       from: {
@@ -325,14 +365,13 @@ describe('TelegramBot', () => {
         username: 'jdoe',
       },
       reply: vi.fn(),
-      telegram,
     } as unknown as Context;
 
     await (
       bot as unknown as { handleRequestAccess: (ctx: Context) => Promise<void> }
     ).handleRequestAccess(ctx);
 
-    expect(telegram.sendMessage).toHaveBeenCalledWith(
+    expect(sendMessageSpy).toHaveBeenCalledWith(
       1,
       'Chat 5 user 6 (John Doe @jdoe) requests data access.',
       expect.objectContaining({ reply_markup: expect.any(Object) })
@@ -599,7 +638,9 @@ describe('TelegramBot', () => {
     botWithRouter.router = { show: vi.fn() };
     const ctx = { chat: { id: 1 } } as unknown as Context;
     await botWithRouter.showMenu(ctx);
-    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'admin_menu');
+    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'admin_menu', {
+      resetStack: true,
+    });
   });
 
   it('shows banned and pending states in menu', async () => {
@@ -637,7 +678,8 @@ describe('TelegramBot', () => {
     await botWithRouter.showMenu(pendingCtx);
     expect(botWithRouter.router.show).toHaveBeenLastCalledWith(
       pendingCtx,
-      'chat_not_approved'
+      'chat_not_approved',
+      { resetStack: true }
     );
   });
 
@@ -670,7 +712,9 @@ describe('TelegramBot', () => {
     botWithRouter.router = { show: vi.fn() };
     const ctx = { chat: { id: 2 }, from: { id: 5 } } as unknown as Context;
     await botWithRouter.showMenu(ctx);
-    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'no_access');
+    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'no_access', {
+      resetStack: true,
+    });
   });
 
   it('handles pending and banned chats in text handler', async () => {

@@ -34,7 +34,7 @@ import {
 } from '../services/messages/MessageContextExtractor';
 import { MessageFactory } from '../services/messages/MessageFactory';
 import { TriggerContext } from '../triggers/Trigger.interface';
-import { createWindows } from './windowConfig';
+import { createWindows, type WindowId } from './windowConfig';
 
 export async function withTyping(
   ctx: Context,
@@ -60,7 +60,7 @@ export async function withTyping(
 export class TelegramBot {
   private bot: Telegraf;
   private env: Env;
-  private router: ReturnType<typeof registerRoutes>;
+  private router: ReturnType<typeof registerRoutes<WindowId>>;
 
   constructor(
     @inject(ENV_SERVICE_ID) envService: EnvService,
@@ -76,16 +76,19 @@ export class TelegramBot {
   ) {
     this.env = envService.env;
     this.bot = new Telegraf(this.env.BOT_TOKEN);
-    this.router = registerRoutes(
-      this.bot,
-      createWindows({
-        exportData: (ctx) => this.handleExportData(ctx),
-        resetMemory: (ctx) => this.handleResetMemory(ctx),
-        showAdminChatsMenu: (ctx) => this.showAdminChatsMenu(ctx),
-        requestChatAccess: (ctx) => this.handleChatRequest(ctx),
-        requestUserAccess: (ctx) => this.handleRequestAccess(ctx),
-      })
-    );
+    const actions = {
+      exportData: (ctx: Context) => this.handleExportData(ctx),
+      resetMemory: (ctx: Context) => this.handleResetMemory(ctx),
+      requestChatAccess: (ctx: Context) => this.handleChatRequest(ctx),
+      requestUserAccess: (ctx: Context) => this.handleRequestAccess(ctx),
+      showAdminChats: (ctx: Context) =>
+        this.router.show(ctx, 'admin_chats', {
+          loadData: () => this.getChats(),
+          resetStack: true,
+        }),
+    };
+    const windows = createWindows(actions);
+    this.router = registerRoutes<WindowId>(this.bot, windows);
     this.configure();
   }
 
@@ -110,22 +113,16 @@ export class TelegramBot {
     title?: string
   ): Promise<void> {
     await this.approvalService.pending(chatId);
-
     const name = title ? `${title} (${chatId})` : `Chat ${chatId}`;
-    await this.bot.telegram.sendMessage(
-      this.env.ADMIN_CHAT_ID,
-      `${name} запросил доступ`,
-      {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              { text: 'Разрешить', callback_data: `chat_approve:${chatId}` },
-              { text: 'Забанить', callback_data: `chat_ban:${chatId}` },
-            ],
-          ],
-        },
-      }
-    );
+    const ctx = {
+      chat: { id: this.env.ADMIN_CHAT_ID },
+      reply: (text: string, extra?: object) =>
+        this.bot.telegram.sendMessage(this.env.ADMIN_CHAT_ID, text, extra),
+    } as unknown as Context;
+    await this.router.show(ctx, 'chat_approval_request', {
+      loadData: () => ({ name, chatId }),
+      resetStack: true,
+    });
   }
 
   private configure(): void {
@@ -146,7 +143,7 @@ export class TelegramBot {
           { chatId, status },
           'Chat not approved, showing request access button'
         );
-        await this.router.show(ctx, 'chat_not_approved');
+        await this.router.show(ctx, 'chat_not_approved', { resetStack: true });
       }
     });
 
@@ -159,19 +156,9 @@ export class TelegramBot {
         return;
       }
       const chatId = Number(ctx.match[1]);
-      const status = await this.approvalService.getStatus(chatId);
+      await ctx.deleteMessage().catch(() => {});
       await ctx.answerCbQuery();
-      await ctx.reply(`Статус чата ${chatId}: ${status}`, {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              status === 'banned'
-                ? { text: 'Разбанить', callback_data: `chat_unban:${chatId}` }
-                : { text: 'Забанить', callback_data: `chat_ban:${chatId}` },
-            ],
-          ],
-        },
-      });
+      await this.showAdminChat(ctx, chatId);
     });
 
     this.bot.action(/^chat_approve:(\S+)$/, async (ctx) => {
@@ -207,13 +194,8 @@ export class TelegramBot {
       await this.approvalService.ban(chatId);
       await ctx.answerCbQuery('Чат забанен');
       await ctx.telegram.sendMessage(chatId, 'Доступ запрещён');
-      await ctx.editMessageText(`Чат ${chatId} забанен`, {
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: 'Разбанить', callback_data: `chat_unban:${chatId}` }],
-          ],
-        },
-      });
+      await ctx.deleteMessage().catch(() => {});
+      await this.showAdminChat(ctx, chatId, true);
       logger.info({ chatId }, 'Chat access banned successfully');
     });
 
@@ -226,14 +208,9 @@ export class TelegramBot {
       const chatId = Number(ctx.match[1]);
       await this.approvalService.unban(chatId);
       await ctx.answerCbQuery('Чат разбанен');
-      await ctx.editMessageText(`Чат ${chatId} разбанен`, {
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: 'Забанить', callback_data: `chat_ban:${chatId}` }],
-          ],
-        },
-      });
       await ctx.telegram.sendMessage(chatId, 'Доступ разрешён');
+      await ctx.deleteMessage().catch(() => {});
+      await this.showAdminChat(ctx, chatId, true);
     });
 
     this.bot.action(/^user_approve:(\S+):(\S+)$/, async (ctx) => {
@@ -261,7 +238,7 @@ export class TelegramBot {
     assert(chatId, 'This is not a chat');
 
     if (chatId === this.env.ADMIN_CHAT_ID) {
-      await this.router.show(ctx, 'admin_menu');
+      await this.router.show(ctx, 'admin_menu', { resetStack: true });
       return;
     }
 
@@ -271,7 +248,7 @@ export class TelegramBot {
       return;
     }
     if (status !== 'approved') {
-      await this.router.show(ctx, 'chat_not_approved');
+      await this.router.show(ctx, 'chat_not_approved', { resetStack: true });
       return;
     }
 
@@ -279,36 +256,36 @@ export class TelegramBot {
     if (!userId) return;
     const allowed = await this.admin.hasAccess(chatId, userId);
     if (!allowed) {
-      await this.router.show(ctx, 'no_access');
+      await this.router.show(ctx, 'no_access', { resetStack: true });
       return;
     }
 
-    await this.router.show(ctx, 'menu');
+    await this.router.show(ctx, 'menu', { resetStack: true });
   }
 
-  private async showAdminChatsMenu(ctx: Context): Promise<void> {
-    const chats = await this.approvalService.listAll();
-    if (chats.length === 0) {
-      await ctx.reply('Нет чатов для управления');
-      return;
-    }
+  private async showAdminChat(
+    ctx: Context,
+    chatId: number,
+    keepParent = false
+  ): Promise<void> {
+    const load = async (): Promise<{ chatId: number; status: string }> => ({
+      chatId,
+      status: await this.approvalService.getStatus(chatId),
+    });
+    await this.router.show(ctx, 'admin_chat', {
+      loadData: load,
+      keepParent,
+    });
+  }
 
-    const keyboard = await Promise.all(
+  private async getChats(): Promise<{ id: number; title: string }[]> {
+    const chats = await this.approvalService.listAll();
+    return Promise.all(
       chats.map(async ({ chatId }) => {
         const chat = await this.chatRepo.findById(chatId);
-        const title = chat?.title ?? 'Без названия';
-        return [
-          {
-            text: `${title} (${chatId})`,
-            callback_data: `admin_chat:${chatId}`,
-          },
-        ];
+        return { id: chatId, title: chat?.title ?? 'Без названия' };
       })
     );
-
-    await ctx.reply('Выберите чат для управления:', {
-      reply_markup: { inline_keyboard: keyboard },
-    });
   }
 
   private async handleChatRequest(ctx: Context): Promise<void> {
@@ -331,17 +308,15 @@ export class TelegramBot {
     const username = ctx.from?.username;
     const fullName = [firstName, lastName].filter(Boolean).join(' ');
     const usernamePart = username ? ` @${username}` : '';
-    const approveData = `user_approve:${chatId}:${userId}`;
     const msg = `Chat ${chatId} user ${userId} (${fullName}${usernamePart}) requests data access.`;
-    await ctx.telegram.sendMessage(this.env.ADMIN_CHAT_ID, msg, {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            { text: 'Одобрить', callback_data: approveData },
-            { text: 'Забанить чат', callback_data: `chat_ban:${chatId}` },
-          ],
-        ],
-      },
+    const adminCtx = {
+      chat: { id: this.env.ADMIN_CHAT_ID },
+      reply: (text: string, extra?: object) =>
+        this.bot.telegram.sendMessage(this.env.ADMIN_CHAT_ID, text, extra),
+    } as unknown as Context;
+    await this.router.show(adminCtx, 'user_access_request', {
+      loadData: () => ({ msg, chatId, userId }),
+      resetStack: true,
     });
     await ctx.reply('Запрос отправлен администратору.');
   }
