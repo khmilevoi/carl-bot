@@ -658,9 +658,7 @@ describe('TelegramBot', () => {
     botWithRouter.router = { show: vi.fn() };
     const ctx = { chat: { id: 1 } } as unknown as Context;
     await botWithRouter.showMenu(ctx);
-    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'admin_menu', {
-      resetStack: true,
-    });
+    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'admin_menu');
   });
 
   it('shows banned and pending states in menu', async () => {
@@ -698,8 +696,7 @@ describe('TelegramBot', () => {
     await botWithRouter.showMenu(pendingCtx);
     expect(botWithRouter.router.show).toHaveBeenLastCalledWith(
       pendingCtx,
-      'chat_not_approved',
-      { resetStack: true }
+      'chat_not_approved'
     );
   });
 
@@ -732,9 +729,7 @@ describe('TelegramBot', () => {
     botWithRouter.router = { show: vi.fn() };
     const ctx = { chat: { id: 2 }, from: { id: 5 } } as unknown as Context;
     await botWithRouter.showMenu(ctx);
-    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'no_access', {
-      resetStack: true,
-    });
+    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'no_access');
   });
 
   it('handles pending and banned chats in text handler', async () => {

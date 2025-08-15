@@ -120,7 +120,6 @@ export class TelegramBot {
     } as unknown as Context;
     await this.router.show(ctx, 'chat_approval_request', {
       loadData: () => ({ name, chatId }),
-      resetStack: true,
     });
   }
 
@@ -142,7 +141,7 @@ export class TelegramBot {
           { chatId, status },
           'Chat not approved, showing request access button'
         );
-        await this.router.show(ctx, 'chat_not_approved', { resetStack: true });
+        await this.router.show(ctx, 'chat_not_approved');
       }
     });
 
@@ -194,7 +193,7 @@ export class TelegramBot {
       await ctx.answerCbQuery('Чат забанен');
       await ctx.telegram.sendMessage(chatId, 'Доступ запрещён');
       await ctx.deleteMessage().catch(() => {});
-      await this.showAdminChat(ctx, chatId, true);
+      await this.showAdminChat(ctx, chatId);
       logger.info({ chatId }, 'Chat access banned successfully');
     });
 
@@ -209,7 +208,7 @@ export class TelegramBot {
       await ctx.answerCbQuery('Чат разбанен');
       await ctx.telegram.sendMessage(chatId, 'Доступ разрешён');
       await ctx.deleteMessage().catch(() => {});
-      await this.showAdminChat(ctx, chatId, true);
+      await this.showAdminChat(ctx, chatId);
     });
 
     this.bot.action(/^user_approve:(\S+):(\S+)$/, async (ctx) => {
@@ -237,7 +236,7 @@ export class TelegramBot {
     assert(chatId, 'This is not a chat');
 
     if (chatId === this.env.ADMIN_CHAT_ID) {
-      await this.router.show(ctx, 'admin_menu', { resetStack: true });
+      await this.router.show(ctx, 'admin_menu');
       return;
     }
 
@@ -247,7 +246,7 @@ export class TelegramBot {
       return;
     }
     if (status !== 'approved') {
-      await this.router.show(ctx, 'chat_not_approved', { resetStack: true });
+      await this.router.show(ctx, 'chat_not_approved');
       return;
     }
 
@@ -255,25 +254,20 @@ export class TelegramBot {
     if (!userId) return;
     const allowed = await this.admin.hasAccess(chatId, userId);
     if (!allowed) {
-      await this.router.show(ctx, 'no_access', { resetStack: true });
+      await this.router.show(ctx, 'no_access');
       return;
     }
 
-    await this.router.show(ctx, 'menu', { resetStack: true });
+    await this.router.show(ctx, 'menu');
   }
 
-  private async showAdminChat(
-    ctx: Context,
-    chatId: number,
-    keepParent = false
-  ): Promise<void> {
+  private async showAdminChat(ctx: Context, chatId: number): Promise<void> {
     const load = async (): Promise<{ chatId: number; status: string }> => ({
       chatId,
       status: await this.approvalService.getStatus(chatId),
     });
     await this.router.show(ctx, 'admin_chat', {
       loadData: load,
-      keepParent,
     });
   }
 
@@ -315,7 +309,6 @@ export class TelegramBot {
     } as unknown as Context;
     await this.router.show(adminCtx, 'user_access_request', {
       loadData: () => ({ msg, chatId, userId }),
-      resetStack: true,
     });
     await ctx.reply('Запрос отправлен администратору.');
   }
