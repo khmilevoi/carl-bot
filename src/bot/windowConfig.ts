@@ -6,9 +6,17 @@ import {
   type RouteApi,
 } from '../infrastructure/telegramRouter';
 
-type WindowId = 'menu' | 'admin_menu' | 'chat_not_approved' | 'no_access';
+export type WindowId =
+  | 'menu'
+  | 'admin_menu'
+  | 'admin_chats'
+  | 'admin_chat'
+  | 'chat_not_approved'
+  | 'no_access'
+  | 'chat_approval_request'
+  | 'user_access_request';
 
-type WindowDefinition = RouteApi<WindowId>;
+export type WindowDefinition = RouteApi<WindowId>;
 
 const b = createButton<WindowId>;
 const r = createRoute<WindowId>;
@@ -16,9 +24,9 @@ const r = createRoute<WindowId>;
 interface WindowActions {
   exportData(ctx: Context): Promise<void> | void;
   resetMemory(ctx: Context): Promise<void> | void;
-  showAdminChatsMenu(ctx: Context): Promise<void> | void;
   requestChatAccess(ctx: Context): Promise<void> | void;
   requestUserAccess(ctx: Context): Promise<void> | void;
+  getChats(): Promise<{ id: number; title: string }[]>;
 }
 
 export function createWindows(actions: WindowActions): WindowDefinition[] {
@@ -51,10 +59,22 @@ export function createWindows(actions: WindowActions): WindowDefinition[] {
         b({
           text: '💬 Чаты',
           callback: 'admin_chats',
-          action: actions.showAdminChatsMenu,
+          target: 'admin_chats',
         }),
       ],
     }),
+    r({
+      id: 'admin_chats',
+      text: 'Выберите чат для управления:',
+      buttons: async () =>
+        (await actions.getChats()).map((chat) =>
+          b({
+            text: `${chat.title} (${chat.id})`,
+            callback: `admin_chat:${chat.id}`,
+          })
+        ),
+    }),
+    r({ id: 'admin_chat', text: '', buttons: [] }),
     r({
       id: 'chat_not_approved',
       text: 'Этот чат не находится в списке разрешённых.',
@@ -77,5 +97,7 @@ export function createWindows(actions: WindowActions): WindowDefinition[] {
         }),
       ],
     }),
+    r({ id: 'chat_approval_request', text: '', buttons: [] }),
+    r({ id: 'user_access_request', text: '', buttons: [] }),
   ];
 }

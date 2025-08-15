@@ -24,13 +24,17 @@ const windows: RouteApi<RouteId>[] = [
 ];
 
 function setupRouter(): {
-  router: ReturnType<typeof registerRoutes<RouteId>>;
+  router: ReturnType<typeof registerRoutes<RouteId, Record<string, never>>>;
   goHandler: (ctx: Context) => Promise<void> | void;
   backHandler: (ctx: Context) => Promise<void> | void;
 } {
   const bot = new Telegraf<Context>('token');
   const actionSpy = vi.spyOn(bot, 'action');
-  const router = registerRoutes<RouteId>(bot, windows);
+  const router = registerRoutes<RouteId, Record<string, never>>(
+    bot,
+    windows,
+    {}
+  );
   const goCall = actionSpy.mock.calls.find(
     ([pattern]) => pattern === 'to_second'
   );

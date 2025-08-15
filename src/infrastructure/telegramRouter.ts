@@ -10,10 +10,14 @@ export interface ButtonApi<RouteId extends string = string> {
   action?: (ctx: Context) => Promise<void> | void;
 }
 
-export interface RouteApi<RouteId extends string = string> {
+export interface RouteApi<RouteId extends string = string, Actions = unknown> {
   id: RouteId;
   text: string;
-  buttons: ButtonApi<RouteId>[];
+  buttons:
+    | ButtonApi<RouteId>[]
+    | ((
+        actions: Actions
+      ) => Promise<ButtonApi<RouteId>[]> | ButtonApi<RouteId>[]);
 }
 
 export function createButton<RouteId extends string = string>(
@@ -22,15 +26,19 @@ export function createButton<RouteId extends string = string>(
   return button;
 }
 
-export function createRoute<RouteId extends string = string>(
-  route: RouteApi<RouteId>
-): RouteApi<RouteId> {
+export function createRoute<RouteId extends string = string, Actions = unknown>(
+  route: RouteApi<RouteId, Actions>
+): RouteApi<RouteId, Actions> {
   return route;
 }
 
-export function registerRoutes<RouteId extends string = string>(
+export function registerRoutes<
+  RouteId extends string = string,
+  Actions = unknown,
+>(
   bot: Telegraf<Context>,
-  routes: RouteApi<RouteId>[]
+  routes: RouteApi<RouteId, Actions>[],
+  actions: Actions
 ): { show(ctx: Context, id: RouteId, skipStack?: boolean): Promise<void> } {
   const stacks = new Map<number, RouteId[]>();
   const current = new Map<number, RouteId>();
@@ -63,7 +71,11 @@ export function registerRoutes<RouteId extends string = string>(
     }
     current.set(chatId, id);
 
-    const keyboard = route.buttons.map((b) => [
+    const buttons =
+      typeof route.buttons === 'function'
+        ? await route.buttons(actions)
+        : route.buttons;
+    const keyboard = buttons.map((b) => [
       { text: b.text, callback_data: b.callback },
     ]);
 
@@ -77,6 +89,9 @@ export function registerRoutes<RouteId extends string = string>(
   }
 
   for (const route of routes) {
+    if (typeof route.buttons === 'function') {
+      continue;
+    }
     for (const button of route.buttons) {
       bot.action(button.callback, async (ctx) => {
         const chatId = ctx.chat?.id;
