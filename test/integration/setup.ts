@@ -1,14 +1,15 @@
 import { mkdtempSync } from 'fs';
 import { tmpdir } from 'os';
 import { join } from 'path';
+import { vi } from 'vitest';
+import type { Container } from 'inversify';
 
 // Ensure we are in test mode before loading the container
 process.env.NODE_ENV = 'test';
+process.env.ADMIN_CHAT_ID = '1';
 const tmpDbDir = mkdtempSync(join(tmpdir(), 'ark-bot-test-'));
 process.env.DATABASE_URL = `file://${join(tmpDbDir, 'test.db')}`;
 
-import { container } from '../../src/container';
-import { migrateUp } from '../../src/migrate';
 import {
   type AIService,
   AI_SERVICE_ID,
@@ -16,6 +17,7 @@ import {
 } from '../../src/services/ai/AIService.interface';
 import type { TriggerReason } from '../../src/triggers/Trigger.interface';
 import type { Context, Telegram } from 'telegraf';
+let container: Container;
 
 // Stable mock for AIService
 class MockAIService implements AIService {
@@ -48,21 +50,22 @@ class MockAIService implements AIService {
 
 // Stable mock for Telegram API
 class MockTelegram implements Partial<Telegram> {
-  public sendMessage = async () => ({ message_id: 0 });
-  public sendChatAction = async () => {};
-  public sendDocument = async () => ({ message_id: 0 });
-  public deleteWebhook = async () => {};
-  public editMessageText = async () => {};
+  public sendMessage = vi.fn(async () => ({ message_id: 0 }));
+  public sendChatAction = vi.fn(async () => {});
+  public sendDocument = vi.fn(async () => ({ message_id: 0 }));
+  public deleteWebhook = vi.fn(async () => {});
+  public editMessageText = vi.fn(async () => {});
 }
 
 export async function init(): Promise<void> {
-  // Run database migrations for the temporary database
+  const { container: c } = await import(`../../src/container?${Date.now()}`);
+  container = c;
+  const { migrateUp } = await import(`../../src/migrate?${Date.now()}`);
   await migrateUp();
-  // Replace AI service with mock implementation
-  container
-    .rebind<AIService>(AI_SERVICE_ID)
-    .to(MockAIService)
-    .inSingletonScope();
+  if (container.isBound(AI_SERVICE_ID)) {
+    container.unbind(AI_SERVICE_ID);
+  }
+  container.bind<AIService>(AI_SERVICE_ID).to(MockAIService).inSingletonScope();
 }
 
 export interface MockContextOptions {
@@ -91,10 +94,11 @@ export function createContext(options: MockContextOptions = {}): Context {
       text,
     } as any,
     telegram: telegram as unknown as Telegram,
-    reply: async () => {},
-    replyWithDocument: async () => ({ message_id: 0 }),
-    answerCbQuery: async () => {},
-    sendChatAction: async () => {},
+    reply: vi.fn(async () => {}),
+    replyWithDocument: vi.fn(async () => ({ message_id: 0 })),
+    answerCbQuery: vi.fn(async () => {}),
+    sendChatAction: vi.fn(async () => {}),
+    deleteMessage: vi.fn(async () => {}),
   } as unknown as Context;
 }
 

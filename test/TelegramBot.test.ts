@@ -301,6 +301,86 @@ describe('TelegramBot', () => {
     });
   });
 
+  it('chat_approve sends notifications', async () => {
+    const memories = new MockChatMemoryManager();
+    const approvalService = new DummyApprovalService();
+    const actionSpy = vi.spyOn(Telegraf.prototype, 'action');
+
+    new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      approvalService as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatRepository() as unknown as ChatRepository
+    );
+
+    const call = actionSpy.mock.calls.find(
+      ([pattern]) =>
+        pattern instanceof RegExp && pattern.source === '^chat_approve:(\\S+)$'
+    );
+    actionSpy.mockRestore();
+    if (!call) {
+      throw new Error('Handler not found');
+    }
+    const handler = call[1];
+
+    const ctx = {
+      chat: { id: 1 },
+      match: ['chat_approve:7', '7'],
+      telegram: { sendMessage: vi.fn() },
+      answerCbQuery: vi.fn(),
+    } as unknown as Context;
+
+    await handler(ctx);
+
+    expect(approvalService.approve).toHaveBeenCalledWith(7);
+    expect(ctx.answerCbQuery).toHaveBeenCalledWith('Чат одобрен');
+    expect(ctx.telegram.sendMessage).toHaveBeenCalledWith(7, 'Доступ разрешён');
+  });
+
+  it('chat_approve ignores non-admin chats', async () => {
+    const memories = new MockChatMemoryManager();
+    const approvalService = new DummyApprovalService();
+    const actionSpy = vi.spyOn(Telegraf.prototype, 'action');
+
+    new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      approvalService as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatRepository() as unknown as ChatRepository
+    );
+
+    const call = actionSpy.mock.calls.find(
+      ([pattern]) =>
+        pattern instanceof RegExp && pattern.source === '^chat_approve:(\\S+)$'
+    );
+    actionSpy.mockRestore();
+    if (!call) {
+      throw new Error('Handler not found');
+    }
+    const handler = call[1];
+
+    const ctx = {
+      chat: { id: 99 },
+      match: ['chat_approve:7', '7'],
+      telegram: { sendMessage: vi.fn() },
+      answerCbQuery: vi.fn(),
+    } as unknown as Context;
+
+    await handler(ctx);
+
+    expect(approvalService.approve).not.toHaveBeenCalled();
+    expect(ctx.answerCbQuery).toHaveBeenCalled();
+    expect(ctx.telegram.sendMessage).not.toHaveBeenCalled();
+  });
+
   it('chat_ban updates message', async () => {
     const memories = new MockChatMemoryManager();
     const approvalService = new DummyApprovalService();
@@ -357,12 +437,81 @@ describe('TelegramBot', () => {
     await handler(ctx);
 
     expect(approvalService.ban).toHaveBeenCalledWith(7);
+    expect(ctx.answerCbQuery).toHaveBeenCalledWith('Чат забанен');
     expect(ctx.telegram.sendMessage).toHaveBeenCalledWith(7, 'Доступ запрещён');
     expect(ctx.deleteMessage).toHaveBeenCalled();
     expect(ctx.reply).toHaveBeenCalledWith('Статус чата 7: banned', {
       reply_markup: {
         inline_keyboard: [
           [{ text: 'Разбанить', callback_data: 'chat_unban:7' }],
+          [{ text: '⬅️ Назад', callback_data: 'back' }],
+        ],
+      },
+    });
+  });
+
+  it('chat_unban updates message', async () => {
+    const memories = new MockChatMemoryManager();
+    const approvalService = new DummyApprovalService();
+    approvalService.getStatus
+      .mockResolvedValueOnce('banned')
+      .mockResolvedValueOnce('approved');
+    const actionSpy = vi.spyOn(Telegraf.prototype, 'action');
+
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      approvalService as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatRepository() as unknown as ChatRepository
+    );
+
+    const call = actionSpy.mock.calls.find(
+      ([pattern]) =>
+        pattern instanceof RegExp && pattern.source === '^chat_unban:(\\S+)$'
+    );
+    actionSpy.mockRestore();
+    if (!call) {
+      throw new Error('Handler not found');
+    }
+    const handler = call[1];
+
+    await (bot as unknown as { router: any }).router.show(
+      { chat: { id: 1 }, reply: vi.fn() } as unknown as Context,
+      'admin_chats',
+      { loadData: () => [] }
+    );
+    await (
+      bot as unknown as {
+        showAdminChat: (ctx: Context, id: number) => Promise<void>;
+      }
+    ).showAdminChat(
+      { chat: { id: 1 }, reply: vi.fn() } as unknown as Context,
+      7
+    );
+
+    const ctx = {
+      chat: { id: 1 },
+      match: ['chat_unban:7', '7'],
+      telegram: { sendMessage: vi.fn() },
+      answerCbQuery: vi.fn(),
+      deleteMessage: vi.fn(async () => {}),
+      reply: vi.fn(),
+    } as unknown as Context;
+
+    await handler(ctx);
+
+    expect(approvalService.unban).toHaveBeenCalledWith(7);
+    expect(ctx.answerCbQuery).toHaveBeenCalledWith('Чат разбанен');
+    expect(ctx.telegram.sendMessage).toHaveBeenCalledWith(7, 'Доступ разрешён');
+    expect(ctx.deleteMessage).toHaveBeenCalled();
+    expect(ctx.reply).toHaveBeenCalledWith('Статус чата 7: approved', {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: 'Забанить', callback_data: 'chat_ban:7' }],
           [{ text: '⬅️ Назад', callback_data: 'back' }],
         ],
       },
