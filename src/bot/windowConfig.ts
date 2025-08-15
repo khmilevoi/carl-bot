@@ -60,9 +60,13 @@ export function createWindows(actions: WindowActions): RouteApi<WindowId>[] {
       ],
     })),
     r('admin_chats', async ({ loadData }) => {
-      const chats = (await loadData()) as { id: number; title: string }[];
+      const chats =
+        ((await loadData()) as { id: number; title: string }[]) ?? [];
       return {
-        text: 'Выберите чат для управления:',
+        text:
+          chats.length > 0
+            ? 'Выберите чат для управления:'
+            : 'Нет доступных чатов',
         buttons: chats.map((chat) =>
           b({
             text: `${chat.title} (${chat.id})`,

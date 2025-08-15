@@ -8,7 +8,7 @@ import {
   registerRoutes,
 } from '../../src/infrastructure/telegramRouter';
 
-type RouteId = 'first' | 'second';
+type RouteId = 'first' | 'second' | 'third' | 'needs_data';
 
 const b = createButton<RouteId>;
 const r = createRoute<RouteId>;
@@ -150,19 +150,48 @@ describe('telegramRouter', () => {
       },
     });
   });
-});
 
-it('resets history when resetStack is true', async () => {
-  const { router } = await setupRouter();
-  const ctx = { chat: { id: 1 }, reply: vi.fn() } as unknown as Context;
+  it('resets history when resetStack is true', async () => {
+    const { router } = await setupRouter();
+    const ctx = { chat: { id: 1 }, reply: vi.fn() } as unknown as Context;
 
-  await router.show(ctx, 'first');
-  await router.show(ctx, 'second');
-  await router.show(ctx, 'first', { resetStack: true });
+    await router.show(ctx, 'first');
+    await router.show(ctx, 'second');
+    await router.show(ctx, 'first', { resetStack: true });
 
-  expect(ctx.reply).toHaveBeenNthCalledWith(3, 'First window', {
-    reply_markup: {
-      inline_keyboard: [[{ text: 'Next', callback_data: 'to_second' }]],
-    },
+    expect(ctx.reply).toHaveBeenNthCalledWith(3, 'First window', {
+      reply_markup: {
+        inline_keyboard: [[{ text: 'Next', callback_data: 'to_second' }]],
+      },
+    });
+  });
+
+  it('does nothing when route id is not found', async () => {
+    const { router } = await setupRouter();
+    const ctx = { chat: { id: 1 }, reply: vi.fn() } as unknown as Context;
+
+    await router.show(ctx, 'third');
+
+    expect(ctx.reply).not.toHaveBeenCalled();
+  });
+
+  it('throws when context has no chat', async () => {
+    const { router } = await setupRouter();
+    await expect(
+      router.show({ reply: vi.fn() } as unknown as Context, 'first')
+    ).rejects.toThrow('This is not a chat');
+  });
+
+  it('skips routes that require data during registration', async () => {
+    const bot = new Telegraf<Context>('token');
+    const needsDataRoute = r('needs_data', async ({ loadData }) => {
+      const items = (await loadData()) as string[];
+      return {
+        text: 'needs data',
+        buttons: items.map((text) => b({ text, callback: text })),
+      };
+    });
+
+    expect(() => registerRoutes<RouteId>(bot, [needsDataRoute])).not.toThrow();
   });
 });
