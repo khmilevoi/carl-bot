@@ -84,7 +84,6 @@ export class TelegramBot {
       showAdminChats: (ctx: Context) =>
         this.router.show(ctx, 'admin_chats', {
           loadData: () => this.getChats(),
-          resetStack: true,
         }),
     };
     const windows = createWindows(actions);

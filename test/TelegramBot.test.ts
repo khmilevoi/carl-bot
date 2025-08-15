@@ -113,7 +113,7 @@ describe('TelegramBot', () => {
     );
   });
 
-  it('shows admin chats menu', async () => {
+  it('shows admin chats menu with back button', async () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
       .spyOn(
@@ -130,6 +130,7 @@ describe('TelegramBot', () => {
     const chatRepo = new DummyChatRepository();
     chatRepo.findById.mockResolvedValue({ chatId: 42, title: 'Test Chat' });
 
+    const actionSpy = vi.spyOn(Telegraf.prototype, 'action');
     const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
@@ -140,14 +141,32 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       chatRepo as unknown as ChatRepository
     );
+    await new Promise((resolve) => setImmediate(resolve));
+    const call = actionSpy.mock.calls.find(
+      ([pattern]) => pattern === 'admin_chats'
+    );
+    actionSpy.mockRestore();
     configureSpy.mockRestore();
+    if (!call) throw new Error('Handler not found');
+    const handler = call[1];
 
-    const ctx = { chat: { id: 1 }, reply: vi.fn() } as unknown as Context;
+    await (
+      bot as unknown as {
+        router: { show: (ctx: Context, id: string) => Promise<void> };
+      }
+    ).router.show(
+      { chat: { id: 1 }, reply: vi.fn() } as unknown as Context,
+      'admin_menu'
+    );
 
-    await (bot as unknown as { router: any }).router.show(ctx, 'admin_chats', {
-      loadData: () =>
-        (bot as unknown as { getChats: () => Promise<unknown> }).getChats(),
-    });
+    const ctx = {
+      chat: { id: 1 },
+      deleteMessage: vi.fn(async () => {}),
+      reply: vi.fn(),
+      answerCbQuery: vi.fn(async () => {}),
+    } as unknown as Context;
+
+    await handler(ctx);
 
     expect(approvalService.listAll).toHaveBeenCalled();
     expect(chatRepo.findById).toHaveBeenCalledWith(42);
@@ -155,6 +174,7 @@ describe('TelegramBot', () => {
       reply_markup: {
         inline_keyboard: [
           [{ text: 'Test Chat (42)', callback_data: 'admin_chat:42' }],
+          [{ text: '⬅️ Назад', callback_data: 'back' }],
         ],
       },
     });
