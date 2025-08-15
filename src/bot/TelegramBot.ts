@@ -4,6 +4,7 @@ import { inject, injectable } from 'inversify';
 import { Context, Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
 
+import { registerRoutes } from '../infrastructure/telegramRouter';
 import {
   CHAT_REPOSITORY_ID,
   type ChatRepository,
@@ -33,8 +34,7 @@ import {
 } from '../services/messages/MessageContextExtractor';
 import { MessageFactory } from '../services/messages/MessageFactory';
 import { TriggerContext } from '../triggers/Trigger.interface';
-import { windows } from './windowConfig';
-import { WindowRouter } from './WindowRouter';
+import { createWindows } from './windowConfig';
 
 export async function withTyping(
   ctx: Context,
@@ -60,7 +60,7 @@ export async function withTyping(
 export class TelegramBot {
   private bot: Telegraf;
   private env: Env;
-  private router: WindowRouter;
+  private router: ReturnType<typeof registerRoutes>;
 
   constructor(
     @inject(ENV_SERVICE_ID) envService: EnvService,
@@ -76,13 +76,16 @@ export class TelegramBot {
   ) {
     this.env = envService.env;
     this.bot = new Telegraf(this.env.BOT_TOKEN);
-    this.router = new WindowRouter(this.bot, windows, {
-      exportData: (ctx) => this.handleExportData(ctx),
-      resetMemory: (ctx) => this.handleResetMemory(ctx),
-      showAdminChatsMenu: (ctx) => this.showAdminChatsMenu(ctx),
-      requestChatAccess: (ctx) => this.handleChatRequest(ctx),
-      requestUserAccess: (ctx) => this.handleRequestAccess(ctx),
-    });
+    this.router = registerRoutes(
+      this.bot,
+      createWindows({
+        exportData: (ctx) => this.handleExportData(ctx),
+        resetMemory: (ctx) => this.handleResetMemory(ctx),
+        showAdminChatsMenu: (ctx) => this.showAdminChatsMenu(ctx),
+        requestChatAccess: (ctx) => this.handleChatRequest(ctx),
+        requestUserAccess: (ctx) => this.handleRequestAccess(ctx),
+      })
+    );
     this.configure();
   }
 
@@ -147,7 +150,7 @@ export class TelegramBot {
       }
     });
 
-    // Обработчики кнопок навигации и действий регистрируются в WindowRouter
+    // Обработчики кнопок навигации и действий регистрируются в registerRoutes
 
     this.bot.action(/^admin_chat:(\S+)$/, async (ctx) => {
       const adminChatId = this.env.ADMIN_CHAT_ID;

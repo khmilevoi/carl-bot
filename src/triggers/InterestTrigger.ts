@@ -1,9 +1,13 @@
-import { Context } from 'telegraf';
+import type { Context } from 'telegraf';
 
-import { DialogueManager } from '../services/chat/DialogueManager';
-import { InterestChecker } from '../services/interest/InterestChecker';
+import type { DialogueManager } from '../services/chat/DialogueManager';
+import type { InterestChecker } from '../services/interest/InterestChecker';
 import { logger } from '../services/logging/logger';
-import { Trigger, TriggerContext, TriggerResult } from './Trigger.interface';
+import type {
+  Trigger,
+  TriggerContext,
+  TriggerResult,
+} from './Trigger.interface';
 
 export class InterestTrigger implements Trigger {
   constructor(private checker: InterestChecker) {}

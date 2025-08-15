@@ -2,30 +2,35 @@ import type { Context } from 'telegraf';
 import { Telegraf } from 'telegraf';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { WindowDefinition } from '../../src/bot/windowConfig';
-import { WindowRouter } from '../../src/bot/WindowRouter';
+import {
+  createButton,
+  createRoute,
+  registerRoutes,
+  type RouteApi,
+} from '../../src/infrastructure/telegramRouter';
 
-const windows: WindowDefinition[] = [
-  {
+type RouteId = 'first' | 'second';
+
+const b = createButton<RouteId>;
+const r = createRoute<RouteId>;
+
+const windows: RouteApi<RouteId>[] = [
+  r({
     id: 'first',
     text: 'First window',
-    buttons: [{ text: 'Next', callback: 'to_second', target: 'second' }],
-  },
-  { id: 'second', text: 'Second window', buttons: [] },
+    buttons: [b({ text: 'Next', callback: 'to_second', target: 'second' })],
+  }),
+  r({ id: 'second', text: 'Second window', buttons: [] }),
 ];
 
 function setupRouter(): {
-  router: WindowRouter;
+  router: ReturnType<typeof registerRoutes<RouteId>>;
   goHandler: (ctx: Context) => Promise<void> | void;
   backHandler: (ctx: Context) => Promise<void> | void;
 } {
   const bot = new Telegraf<Context>('token');
   const actionSpy = vi.spyOn(bot, 'action');
-  const router = new WindowRouter(
-    bot,
-    windows,
-    {} as Record<string, (ctx: Context) => Promise<void> | void>
-  );
+  const router = registerRoutes<RouteId>(bot, windows);
   const goCall = actionSpy.mock.calls.find(
     ([pattern]) => pattern === 'to_second'
   );
@@ -39,7 +44,7 @@ function setupRouter(): {
   return { router, goHandler, backHandler };
 }
 
-describe('WindowRouter', () => {
+describe('telegramRouter', () => {
   it('transitions between windows and back', async () => {
     const { router, goHandler, backHandler } = setupRouter();
     await router.show(
