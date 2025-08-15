@@ -151,13 +151,13 @@ describe('telegramRouter', () => {
     });
   });
 
-  it('resets history when resetStack is true', async () => {
+  it('resets history when navigating to an existing route', async () => {
     const { router } = await setupRouter();
     const ctx = { chat: { id: 1 }, reply: vi.fn() } as unknown as Context;
 
     await router.show(ctx, 'first');
     await router.show(ctx, 'second');
-    await router.show(ctx, 'first', { resetStack: true });
+    await router.show(ctx, 'first');
 
     expect(ctx.reply).toHaveBeenNthCalledWith(3, 'First window', {
       reply_markup: {

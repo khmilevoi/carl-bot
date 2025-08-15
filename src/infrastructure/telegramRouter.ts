@@ -8,7 +8,6 @@ export interface ButtonApi<RouteId extends string = string> {
   callback: string;
   target?: RouteId;
   action?: (ctx: Context) => Promise<void> | void;
-  resetStack?: boolean;
 }
 
 interface RouteBuilderOptions<Data = unknown> {
@@ -49,53 +48,50 @@ export function registerRoutes<RouteId extends string = string>(
     id: RouteId,
     opts?: {
       loadData?: () => Promise<unknown> | unknown;
-      resetStack?: boolean;
-      keepParent?: boolean;
     }
   ): Promise<void>;
 } {
-  const parents = new Map<number, RouteId>();
-  const current = new Map<number, RouteId>();
+  interface HistoryItem {
+    id: RouteId;
+    loadData?: () => Promise<unknown> | unknown;
+  }
+  const history = new Map<number, HistoryItem[]>();
 
   async function show(
     ctx: Context,
     id: RouteId,
     opts?: {
       loadData?: () => Promise<unknown> | unknown;
-      resetStack?: boolean;
-      keepParent?: boolean;
     }
   ): Promise<void> {
+    const chatId = ctx.chat?.id;
+    assert(chatId, 'This is not a chat');
     const route = routes.find((w) => w.id === id);
     if (!route) return;
 
-    const chatId = ctx.chat?.id;
-    assert(chatId, 'This is not a chat');
-
-    const prev = current.get(chatId);
-    let parent: RouteId | undefined;
-    if (opts?.resetStack) {
-      parent = undefined;
-    } else if (opts?.keepParent) {
-      parent = parents.get(chatId);
+    let stack = history.get(chatId) ?? [];
+    let index = stack.findIndex((h) => h.id === id);
+    if (index >= 0) {
+      if (opts?.loadData) {
+        stack[index].loadData = opts.loadData;
+      }
+      stack = stack.slice(0, index + 1);
+      history.set(chatId, stack);
     } else {
-      parent = prev;
+      stack.push({ id, loadData: opts?.loadData });
+      history.set(chatId, stack);
+      index = stack.length - 1;
     }
-    if (parent) {
-      parents.set(chatId, parent);
-    } else {
-      parents.delete(chatId);
-    }
-    current.set(chatId, id);
 
     const { text, buttons } = await route.build({
-      loadData: opts?.loadData ?? (async () => undefined),
+      loadData: stack[index].loadData ?? (async () => undefined),
     });
 
     const keyboard = buttons.map((b) => [
       { text: b.text, callback_data: b.callback },
     ]);
-    if (parents.has(chatId)) {
+    const newStack = history.get(chatId);
+    if (newStack && newStack.length > 1) {
       keyboard.push([{ text: '⬅️ Назад', callback_data: 'back' }]);
     }
 
@@ -113,9 +109,7 @@ export function registerRoutes<RouteId extends string = string>(
             await ctx.deleteMessage().catch(() => {});
 
             if (button.target) {
-              await show(ctx, button.target, {
-                resetStack: button.resetStack,
-              });
+              await show(ctx, button.target);
             }
             if (button.action) {
               await button.action(ctx);
@@ -134,11 +128,16 @@ export function registerRoutes<RouteId extends string = string>(
     assert(chatId, 'This is not a chat');
     await ctx.deleteMessage().catch(() => {});
 
-    const prev = parents.get(chatId);
-    if (prev) {
-      await show(ctx, prev, { resetStack: true });
-    } else {
-      current.delete(chatId);
+    const stack = history.get(chatId);
+    if (stack && stack.length > 0) {
+      stack.pop();
+      const prev = stack[stack.length - 1];
+      if (prev) {
+        history.set(chatId, stack);
+        await show(ctx, prev.id);
+      } else {
+        history.delete(chatId);
+      }
     }
 
     await ctx.answerCbQuery().catch(() => {});

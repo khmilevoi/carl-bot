@@ -113,7 +113,7 @@ describe('TelegramBot', () => {
     );
   });
 
-  it('shows admin chats menu', async () => {
+  it('shows admin chats menu with back button', async () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
       .spyOn(
@@ -130,6 +130,7 @@ describe('TelegramBot', () => {
     const chatRepo = new DummyChatRepository();
     chatRepo.findById.mockResolvedValue({ chatId: 42, title: 'Test Chat' });
 
+    const actionSpy = vi.spyOn(Telegraf.prototype, 'action');
     const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
@@ -140,14 +141,32 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       chatRepo as unknown as ChatRepository
     );
+    await new Promise((resolve) => setImmediate(resolve));
+    const call = actionSpy.mock.calls.find(
+      ([pattern]) => pattern === 'admin_chats'
+    );
+    actionSpy.mockRestore();
     configureSpy.mockRestore();
+    if (!call) throw new Error('Handler not found');
+    const handler = call[1];
 
-    const ctx = { chat: { id: 1 }, reply: vi.fn() } as unknown as Context;
+    await (
+      bot as unknown as {
+        router: { show: (ctx: Context, id: string) => Promise<void> };
+      }
+    ).router.show(
+      { chat: { id: 1 }, reply: vi.fn() } as unknown as Context,
+      'admin_menu'
+    );
 
-    await (bot as unknown as { router: any }).router.show(ctx, 'admin_chats', {
-      loadData: () =>
-        (bot as unknown as { getChats: () => Promise<unknown> }).getChats(),
-    });
+    const ctx = {
+      chat: { id: 1 },
+      deleteMessage: vi.fn(async () => {}),
+      reply: vi.fn(),
+      answerCbQuery: vi.fn(async () => {}),
+    } as unknown as Context;
+
+    await handler(ctx);
 
     expect(approvalService.listAll).toHaveBeenCalled();
     expect(chatRepo.findById).toHaveBeenCalledWith(42);
@@ -155,6 +174,7 @@ describe('TelegramBot', () => {
       reply_markup: {
         inline_keyboard: [
           [{ text: 'Test Chat (42)', callback_data: 'admin_chat:42' }],
+          [{ text: '⬅️ Назад', callback_data: 'back' }],
         ],
       },
     });
@@ -212,6 +232,69 @@ describe('TelegramBot', () => {
       reply_markup: {
         inline_keyboard: [
           [{ text: 'Забанить', callback_data: 'chat_ban:42' }],
+          [{ text: '⬅️ Назад', callback_data: 'back' }],
+        ],
+      },
+    });
+  });
+
+  it('returns to admin_chats with list after back from admin_chat', async () => {
+    const memories = new MockChatMemoryManager();
+    const approvalService = new DummyApprovalService();
+    approvalService.getStatus.mockResolvedValue('approved');
+    const actionSpy = vi.spyOn(Telegraf.prototype, 'action');
+
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      approvalService as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatRepository() as unknown as ChatRepository
+    );
+    await new Promise((resolve) => setImmediate(resolve));
+
+    const backCall = actionSpy.mock.calls.find(
+      ([pattern]) => pattern === 'back'
+    );
+    actionSpy.mockRestore();
+    if (!backCall) {
+      throw new Error('Back handler not found');
+    }
+    const backHandler = backCall[1];
+
+    const loadChats = vi.fn(async () => [
+      { id: 42, title: 'Chat A' },
+      { id: 43, title: 'Chat B' },
+    ]);
+    const ctx = { chat: { id: 1 }, reply: vi.fn() } as unknown as Context;
+    await (bot as unknown as { router: any }).router.show(ctx, 'admin_menu');
+    await (bot as unknown as { router: any }).router.show(ctx, 'admin_chats', {
+      loadData: loadChats,
+    });
+    await (
+      bot as unknown as {
+        showAdminChat: (ctx: Context, id: number) => Promise<void>;
+      }
+    ).showAdminChat(ctx, 42);
+
+    const ctxBack = {
+      chat: { id: 1 },
+      deleteMessage: vi.fn(async () => {}),
+      reply: vi.fn(),
+      answerCbQuery: vi.fn(async () => {}),
+    } as unknown as Context;
+
+    await backHandler(ctxBack);
+
+    expect(loadChats).toHaveBeenCalledTimes(2);
+    expect(ctxBack.reply).toHaveBeenCalledWith('Выберите чат для управления:', {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: 'Chat A (42)', callback_data: 'admin_chat:42' }],
+          [{ text: 'Chat B (43)', callback_data: 'admin_chat:43' }],
           [{ text: '⬅️ Назад', callback_data: 'back' }],
         ],
       },
@@ -638,9 +721,7 @@ describe('TelegramBot', () => {
     botWithRouter.router = { show: vi.fn() };
     const ctx = { chat: { id: 1 } } as unknown as Context;
     await botWithRouter.showMenu(ctx);
-    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'admin_menu', {
-      resetStack: true,
-    });
+    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'admin_menu');
   });
 
   it('shows banned and pending states in menu', async () => {
@@ -678,8 +759,7 @@ describe('TelegramBot', () => {
     await botWithRouter.showMenu(pendingCtx);
     expect(botWithRouter.router.show).toHaveBeenLastCalledWith(
       pendingCtx,
-      'chat_not_approved',
-      { resetStack: true }
+      'chat_not_approved'
     );
   });
 
@@ -712,9 +792,7 @@ describe('TelegramBot', () => {
     botWithRouter.router = { show: vi.fn() };
     const ctx = { chat: { id: 2 }, from: { id: 5 } } as unknown as Context;
     await botWithRouter.showMenu(ctx);
-    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'no_access', {
-      resetStack: true,
-    });
+    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'no_access');
   });
 
   it('handles pending and banned chats in text handler', async () => {
