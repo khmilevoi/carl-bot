@@ -9,13 +9,12 @@ import {
   type RouteApi,
 } from '../../src/infrastructure/telegramRouter';
 
-type Action = never;
 type RouteId = 'first' | 'second';
 
-const b = createButton<Action, RouteId>;
-const r = createRoute<Action, RouteId>;
+const b = createButton<RouteId>;
+const r = createRoute<RouteId>;
 
-const windows: RouteApi<Action, RouteId>[] = [
+const windows: RouteApi<RouteId>[] = [
   r({
     id: 'first',
     text: 'First window',
@@ -25,17 +24,13 @@ const windows: RouteApi<Action, RouteId>[] = [
 ];
 
 function setupRouter(): {
-  router: ReturnType<typeof registerRoutes<Action, RouteId>>;
+  router: ReturnType<typeof registerRoutes<RouteId>>;
   goHandler: (ctx: Context) => Promise<void> | void;
   backHandler: (ctx: Context) => Promise<void> | void;
 } {
   const bot = new Telegraf<Context>('token');
   const actionSpy = vi.spyOn(bot, 'action');
-  const router = registerRoutes<Action, RouteId>(
-    bot,
-    windows,
-    {} as Record<Action, (ctx: Context) => Promise<void> | void>
-  );
+  const router = registerRoutes<RouteId>(bot, windows);
   const goCall = actionSpy.mock.calls.find(
     ([pattern]) => pattern === 'to_second'
   );

@@ -34,7 +34,7 @@ import {
 } from '../services/messages/MessageContextExtractor';
 import { MessageFactory } from '../services/messages/MessageFactory';
 import { TriggerContext } from '../triggers/Trigger.interface';
-import { windows } from './windowConfig';
+import { createWindows } from './windowConfig';
 
 export async function withTyping(
   ctx: Context,
@@ -76,13 +76,16 @@ export class TelegramBot {
   ) {
     this.env = envService.env;
     this.bot = new Telegraf(this.env.BOT_TOKEN);
-    this.router = registerRoutes(this.bot, windows, {
-      exportData: (ctx) => this.handleExportData(ctx),
-      resetMemory: (ctx) => this.handleResetMemory(ctx),
-      showAdminChatsMenu: (ctx) => this.showAdminChatsMenu(ctx),
-      requestChatAccess: (ctx) => this.handleChatRequest(ctx),
-      requestUserAccess: (ctx) => this.handleRequestAccess(ctx),
-    });
+    this.router = registerRoutes(
+      this.bot,
+      createWindows({
+        exportData: (ctx) => this.handleExportData(ctx),
+        resetMemory: (ctx) => this.handleResetMemory(ctx),
+        showAdminChatsMenu: (ctx) => this.showAdminChatsMenu(ctx),
+        requestChatAccess: (ctx) => this.handleChatRequest(ctx),
+        requestUserAccess: (ctx) => this.handleRequestAccess(ctx),
+      })
+    );
     this.configure();
   }
 

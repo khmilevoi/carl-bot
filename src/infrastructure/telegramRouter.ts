@@ -3,46 +3,34 @@ import assert from 'node:assert';
 
 import type { Context, Telegraf } from 'telegraf';
 
-export interface ButtonApi<
-  Action extends string = string,
-  RouteId extends string = string,
-> {
+export interface ButtonApi<RouteId extends string = string> {
   text: string;
   callback: string;
   target?: RouteId;
-  action?: Action;
+  action?: (ctx: Context) => Promise<void> | void;
 }
 
-export interface RouteApi<
-  Action extends string = string,
-  RouteId extends string = string,
-> {
+export interface RouteApi<RouteId extends string = string> {
   id: RouteId;
   text: string;
-  buttons: ButtonApi<Action, RouteId>[];
+  buttons: ButtonApi<RouteId>[];
 }
 
-export function createButton<
-  Action extends string = string,
-  RouteId extends string = string,
->(button: ButtonApi<Action, RouteId>): ButtonApi<Action, RouteId> {
+export function createButton<RouteId extends string = string>(
+  button: ButtonApi<RouteId>
+): ButtonApi<RouteId> {
   return button;
 }
 
-export function createRoute<
-  Action extends string = string,
-  RouteId extends string = string,
->(route: RouteApi<Action, RouteId>): RouteApi<Action, RouteId> {
+export function createRoute<RouteId extends string = string>(
+  route: RouteApi<RouteId>
+): RouteApi<RouteId> {
   return route;
 }
 
-export function registerRoutes<
-  Action extends string = string,
-  RouteId extends string = string,
->(
+export function registerRoutes<RouteId extends string = string>(
   bot: Telegraf<Context>,
-  routes: RouteApi<Action, RouteId>[],
-  actions: Record<Action, (ctx: Context) => Promise<void> | void>
+  routes: RouteApi<RouteId>[]
 ): { show(ctx: Context, id: RouteId, skipStack?: boolean): Promise<void> } {
   const stacks = new Map<number, RouteId[]>();
   const current = new Map<number, RouteId>();
@@ -100,10 +88,7 @@ export function registerRoutes<
         }
 
         if (button.action) {
-          const action = actions[button.action];
-          if (action) {
-            await action(ctx);
-          }
+          await button.action(ctx);
         }
 
         await ctx.answerCbQuery().catch(() => {});
