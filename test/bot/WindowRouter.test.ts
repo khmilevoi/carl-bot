@@ -6,7 +6,6 @@ import {
   createButton,
   createRoute,
   registerRoutes,
-  type RouteApi,
 } from '../../src/infrastructure/telegramRouter';
 
 type RouteId = 'first' | 'second';
@@ -14,27 +13,23 @@ type RouteId = 'first' | 'second';
 const b = createButton<RouteId>;
 const r = createRoute<RouteId>;
 
-const windows: RouteApi<RouteId>[] = [
-  r({
-    id: 'first',
+const windows = [
+  r('first', async () => ({
     text: 'First window',
     buttons: [b({ text: 'Next', callback: 'to_second', target: 'second' })],
-  }),
-  r({ id: 'second', text: 'Second window', buttons: [] }),
+  })),
+  r('second', async () => ({ text: 'Second window', buttons: [] })),
 ];
 
-function setupRouter(): {
-  router: ReturnType<typeof registerRoutes<RouteId, Record<string, never>>>;
+async function setupRouter(): Promise<{
+  router: ReturnType<typeof registerRoutes<RouteId>>;
   goHandler: (ctx: Context) => Promise<void> | void;
   backHandler: (ctx: Context) => Promise<void> | void;
-} {
+}> {
   const bot = new Telegraf<Context>('token');
   const actionSpy = vi.spyOn(bot, 'action');
-  const router = registerRoutes<RouteId, Record<string, never>>(
-    bot,
-    windows,
-    {}
-  );
+  const router = registerRoutes<RouteId>(bot, windows);
+  await new Promise((resolve) => setImmediate(resolve));
   const goCall = actionSpy.mock.calls.find(
     ([pattern]) => pattern === 'to_second'
   );
@@ -50,7 +45,7 @@ function setupRouter(): {
 
 describe('telegramRouter', () => {
   it('transitions between windows and back', async () => {
-    const { router, goHandler, backHandler } = setupRouter();
+    const { router, goHandler, backHandler } = await setupRouter();
     await router.show(
       { chat: { id: 1 }, reply: vi.fn() } as unknown as Context,
       'first'
@@ -87,7 +82,7 @@ describe('telegramRouter', () => {
   });
 
   it('adds back button when history exists', async () => {
-    const { router, goHandler } = setupRouter();
+    const { router, goHandler } = await setupRouter();
     await router.show(
       { chat: { id: 1 }, reply: vi.fn() } as unknown as Context,
       'first'
@@ -111,7 +106,7 @@ describe('telegramRouter', () => {
   });
 
   it('deletes messages on navigation and back', async () => {
-    const { router, goHandler, backHandler } = setupRouter();
+    const { router, goHandler, backHandler } = await setupRouter();
     await router.show(
       { chat: { id: 1 }, reply: vi.fn() } as unknown as Context,
       'first'
@@ -140,7 +135,7 @@ describe('telegramRouter', () => {
   });
 
   it('adds back button when show is called directly', async () => {
-    const { router } = setupRouter();
+    const { router } = await setupRouter();
     const ctx = {
       chat: { id: 1 },
       reply: vi.fn(),
@@ -154,5 +149,20 @@ describe('telegramRouter', () => {
         inline_keyboard: [[{ text: '⬅️ Назад', callback_data: 'back' }]],
       },
     });
+  });
+});
+
+it('resets history when resetStack is true', async () => {
+  const { router } = await setupRouter();
+  const ctx = { chat: { id: 1 }, reply: vi.fn() } as unknown as Context;
+
+  await router.show(ctx, 'first');
+  await router.show(ctx, 'second');
+  await router.show(ctx, 'first', { resetStack: true });
+
+  expect(ctx.reply).toHaveBeenNthCalledWith(3, 'First window', {
+    reply_markup: {
+      inline_keyboard: [[{ text: 'Next', callback_data: 'to_second' }]],
+    },
   });
 });

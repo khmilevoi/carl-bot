@@ -144,7 +144,10 @@ describe('TelegramBot', () => {
 
     const ctx = { chat: { id: 1 }, reply: vi.fn() } as unknown as Context;
 
-    await (bot as unknown as { router: any }).router.show(ctx, 'admin_chats');
+    await (bot as unknown as { router: any }).router.show(ctx, 'admin_chats', {
+      loadData: () =>
+        (bot as unknown as { getChats: () => Promise<unknown> }).getChats(),
+    });
 
     expect(approvalService.listAll).toHaveBeenCalled();
     expect(chatRepo.findById).toHaveBeenCalledWith(42);
@@ -189,7 +192,8 @@ describe('TelegramBot', () => {
       bot as unknown as { router: unknown } as { router: any }
     ).router.show(
       { chat: { id: 1 }, reply: vi.fn() } as unknown as Context,
-      'admin_chats'
+      'admin_chats',
+      { loadData: () => [] }
     );
 
     const ctx = {
@@ -246,7 +250,8 @@ describe('TelegramBot', () => {
     // navigate to admin_chat view for chat 7
     await (bot as unknown as { router: any }).router.show(
       { chat: { id: 1 }, reply: vi.fn() } as unknown as Context,
-      'admin_chats'
+      'admin_chats',
+      { loadData: () => [] }
     );
     await (
       bot as unknown as {
@@ -633,7 +638,9 @@ describe('TelegramBot', () => {
     botWithRouter.router = { show: vi.fn() };
     const ctx = { chat: { id: 1 } } as unknown as Context;
     await botWithRouter.showMenu(ctx);
-    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'admin_menu');
+    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'admin_menu', {
+      resetStack: true,
+    });
   });
 
   it('shows banned and pending states in menu', async () => {
@@ -671,7 +678,8 @@ describe('TelegramBot', () => {
     await botWithRouter.showMenu(pendingCtx);
     expect(botWithRouter.router.show).toHaveBeenLastCalledWith(
       pendingCtx,
-      'chat_not_approved'
+      'chat_not_approved',
+      { resetStack: true }
     );
   });
 
@@ -704,7 +712,9 @@ describe('TelegramBot', () => {
     botWithRouter.router = { show: vi.fn() };
     const ctx = { chat: { id: 2 }, from: { id: 5 } } as unknown as Context;
     await botWithRouter.showMenu(ctx);
-    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'no_access');
+    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'no_access', {
+      resetStack: true,
+    });
   });
 
   it('handles pending and banned chats in text handler', async () => {
