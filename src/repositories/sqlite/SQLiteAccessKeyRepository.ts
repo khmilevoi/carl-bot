@@ -1,4 +1,5 @@
 import { inject, injectable } from 'inversify';
+import type { Database } from 'sqlite';
 
 import { DB_PROVIDER_ID, type SQLiteDbProvider } from '../DbProvider';
 import {
@@ -55,7 +56,7 @@ export class SQLiteAccessKeyRepository implements AccessKeyRepository {
     await db.run('DELETE FROM access_keys WHERE expires_at <= ?', now);
   }
 
-  private async db() {
+  private async db(): Promise<Database> {
     return this.dbProvider.get();
   }
 }

@@ -23,7 +23,7 @@ export class ChatMemory {
     private limit: number
   ) {}
 
-  public async addMessage(message: StoredMessage) {
+  public async addMessage(message: StoredMessage): Promise<void> {
     logger.debug(
       { chatId: this.chatId, role: message.role, limit: this.limit },
       'Adding message'
@@ -69,7 +69,7 @@ export class ChatMemoryManager {
     return new ChatMemory(this.messages, this.summarizer, chatId, this.limit);
   }
 
-  public async reset(chatId: number) {
+  public async reset(chatId: number): Promise<void> {
     logger.debug({ chatId }, 'Resetting chat memory');
     await this.resetService.reset(chatId);
   }

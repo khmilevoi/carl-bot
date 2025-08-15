@@ -1,6 +1,6 @@
 import type { ServiceIdentifier } from 'inversify';
 import { injectable } from 'inversify';
-import { Context } from 'telegraf';
+import type { Context } from 'telegraf';
 import type { Message } from 'telegraf/typings/core/types/typegram';
 
 export interface MessageContext {
@@ -57,11 +57,9 @@ export class DefaultMessageContextExtractor implements MessageContextExtractor {
         }
       }
     }
-    if (
-      message?.quote !== undefined &&
-      typeof message.quote.text === 'string'
-    ) {
-      quoteText = message.quote.text;
+    const quote = message?.quote;
+    if (typeof quote?.text === 'string') {
+      quoteText = quote.text;
     }
 
     const username = ctx.from?.username ?? 'Имя неизвестно';

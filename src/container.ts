@@ -33,7 +33,7 @@ import { ChatMemoryManager } from './services/chat/ChatMemory';
 import { CHAT_RESET_SERVICE_ID } from './services/chat/ChatResetService.interface';
 import {
   CHAT_RESPONDER_ID,
-  ChatResponder,
+  type ChatResponder,
   DefaultChatResponder,
 } from './services/chat/ChatResponder';
 import { DefaultChatResetService } from './services/chat/DefaultChatResetService';
@@ -48,12 +48,12 @@ import {
 import {
   DefaultTriggerPipeline,
   TRIGGER_PIPELINE_ID,
-  TriggerPipeline,
+  type TriggerPipeline,
 } from './services/chat/TriggerPipeline';
 import {
   DefaultEnvService,
   ENV_SERVICE_ID,
-  EnvService,
+  type EnvService,
   TestEnvService,
 } from './services/env/EnvService';
 import {
@@ -63,7 +63,7 @@ import {
 import {
   DefaultMessageContextExtractor,
   MESSAGE_CONTEXT_EXTRACTOR_ID,
-  MessageContextExtractor,
+  type MessageContextExtractor,
 } from './services/messages/MessageContextExtractor';
 import { MESSAGE_SERVICE_ID } from './services/messages/MessageService.interface';
 import { RepositoryMessageService } from './services/messages/RepositoryMessageService';

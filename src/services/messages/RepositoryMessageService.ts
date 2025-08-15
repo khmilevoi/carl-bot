@@ -16,6 +16,7 @@ import {
   USER_REPOSITORY_ID,
   type UserRepository,
 } from '../../repositories/interfaces/UserRepository.interface';
+import type { ChatMessage } from '../ai/AIService.interface';
 import { logger } from '../logging/logger';
 import { MessageService } from './MessageService.interface';
 import { StoredMessage } from './StoredMessage.interface';
@@ -29,7 +30,7 @@ export class RepositoryMessageService implements MessageService {
     @inject(CHAT_USER_REPOSITORY_ID) private chatUserRepo: ChatUserRepository
   ) {}
 
-  async addMessage(message: StoredMessage) {
+  async addMessage(message: StoredMessage): Promise<void> {
     logger.debug(
       { chatId: message.chatId, role: message.role },
       'Inserting message into database'
@@ -52,22 +53,22 @@ export class RepositoryMessageService implements MessageService {
     });
   }
 
-  async getMessages(chatId: number) {
+  async getMessages(chatId: number): Promise<ChatMessage[]> {
     logger.debug({ chatId }, 'Fetching messages from database');
     return this.messageRepo.findByChatId(chatId);
   }
 
-  async getCount(chatId: number) {
+  async getCount(chatId: number): Promise<number> {
     logger.debug({ chatId }, 'Counting messages in database');
     return this.messageRepo.countByChatId(chatId);
   }
 
-  async getLastMessages(chatId: number, limit: number) {
+  async getLastMessages(chatId: number, limit: number): Promise<ChatMessage[]> {
     logger.debug({ chatId, limit }, 'Fetching last messages from database');
     return this.messageRepo.findLastByChatId(chatId, limit);
   }
 
-  async clearMessages(chatId: number) {
+  async clearMessages(chatId: number): Promise<void> {
     logger.debug({ chatId }, 'Clearing messages table');
     await this.messageRepo.clearByChatId(chatId);
   }

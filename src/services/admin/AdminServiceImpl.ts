@@ -71,7 +71,7 @@ export class AdminServiceImpl implements AdminService {
     const files: { filename: string; buffer: Buffer }[] = [];
     for (const name of tableNames) {
       const buffer = await this.exportTable(db, name);
-      if (buffer && buffer.length > 0) {
+      if (buffer !== null && buffer.length > 0) {
         files.push({ filename: `${name}.csv`, buffer });
       }
     }
@@ -151,9 +151,7 @@ export class AdminServiceImpl implements AdminService {
         offset
       );
       if (rows.length === 0) break;
-      if (header === undefined) {
-        header = Object.keys(rows[0]).join(',');
-      }
+      header ??= Object.keys(rows[0]).join(',');
       for (const row of rows) {
         const line = Object.keys(row)
           .map((k) => JSON.stringify(row[k] ?? ''))

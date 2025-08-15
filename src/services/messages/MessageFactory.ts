@@ -1,23 +1,28 @@
 import assert from 'node:assert';
 
-import { Context } from 'telegraf';
+import type { Context } from 'telegraf';
 
-import { MessageContext } from './MessageContextExtractor';
-import { StoredMessage } from './StoredMessage.interface';
+import type { MessageContext } from './MessageContextExtractor';
+import type { StoredMessage } from './StoredMessage.interface';
 
 export class MessageFactory {
   static fromUser(ctx: Context, meta: MessageContext): StoredMessage {
-    const message = ctx.message;
-    assert(
-      message && 'text' in message && typeof message.text === 'string',
-      'Нет текста сообщения'
-    );
+    const msg = ctx.message as { text?: string } | undefined;
+    const text = msg?.text;
+    assert(typeof text === 'string', 'Нет текста сообщения');
 
     const { replyText, replyUsername, quoteText, username, fullName } = meta;
 
+    const chatId = ctx.chat?.id;
+    assert(chatId !== undefined, 'No chat id');
+    const chatTitle =
+      ctx.chat !== undefined && 'title' in ctx.chat
+        ? ctx.chat.title
+        : undefined;
+
     return {
       role: 'user',
-      content: message.text,
+      content: text,
       username,
       fullName,
       replyText,
@@ -27,18 +32,25 @@ export class MessageFactory {
       messageId: ctx.message?.message_id,
       firstName: ctx.from?.first_name,
       lastName: ctx.from?.last_name,
-      chatId: ctx.chat!.id,
-      chatTitle: 'title' in ctx.chat! ? ctx.chat.title : undefined,
+      chatId,
+      chatTitle,
     };
   }
 
   static fromAssistant(ctx: Context, content: string): StoredMessage {
+    const chatId = ctx.chat?.id;
+    assert(chatId !== undefined, 'No chat id');
+    const chatTitle =
+      ctx.chat !== undefined && 'title' in ctx.chat
+        ? ctx.chat.title
+        : undefined;
+
     return {
       role: 'assistant',
       content,
       username: ctx.me,
-      chatId: ctx.chat!.id,
-      chatTitle: 'title' in ctx.chat! ? ctx.chat.title : undefined,
+      chatId,
+      chatTitle,
     };
   }
 }

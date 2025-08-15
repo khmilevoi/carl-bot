@@ -14,7 +14,11 @@ const windows: WindowDefinition[] = [
   { id: 'second', text: 'Second window', buttons: [] },
 ];
 
-function setupRouter() {
+function setupRouter(): {
+  router: WindowRouter;
+  goHandler: (ctx: Context) => Promise<void> | void;
+  backHandler: (ctx: Context) => Promise<void> | void;
+} {
   const bot = new Telegraf<Context>('token');
   const actionSpy = vi.spyOn(bot, 'action');
   const router = new WindowRouter(
@@ -22,13 +26,16 @@ function setupRouter() {
     windows,
     {} as Record<string, (ctx: Context) => Promise<void> | void>
   );
-  const goHandler = actionSpy.mock.calls.find(
+  const goCall = actionSpy.mock.calls.find(
     ([pattern]) => pattern === 'to_second'
-  )![1];
-  const backHandler = actionSpy.mock.calls.find(
-    ([pattern]) => pattern === 'back'
-  )![1];
+  );
+  const backCall = actionSpy.mock.calls.find(([pattern]) => pattern === 'back');
   actionSpy.mockRestore();
+  if (!goCall || !backCall) {
+    throw new Error('Handlers not registered');
+  }
+  const goHandler = goCall[1];
+  const backHandler = backCall[1];
   return { router, goHandler, backHandler };
 }
 

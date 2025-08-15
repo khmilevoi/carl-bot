@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 
-import { Context, Telegraf } from 'telegraf';
+import type { Context, Telegraf } from 'telegraf';
 
 import type { WindowDefinition } from './windowConfig';
 
@@ -50,7 +50,7 @@ export class WindowRouter {
     });
   }
 
-  private register() {
+  private register(): void {
     for (const window of this.windows) {
       for (const button of window.buttons) {
         this.bot.action(button.callback, async (ctx) => {
