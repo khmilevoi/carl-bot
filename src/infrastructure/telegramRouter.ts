@@ -21,6 +21,13 @@ export interface RouteApi<RouteId extends string = string, Data = unknown> {
   ) => Promise<{ text: string; buttons: ButtonApi<RouteId>[] }>;
 }
 
+interface RouteNode<RouteId extends string> {
+  id: RouteId;
+  parent?: RouteNode<RouteId>;
+  children: RouteNode<RouteId>[];
+  loadData?: () => Promise<unknown> | unknown;
+}
+
 export function createButton<RouteId extends string = string>(
   button: ButtonApi<RouteId>
 ): ButtonApi<RouteId> {
@@ -50,15 +57,10 @@ export function registerRoutes<RouteId extends string = string>(
       loadData?: () => Promise<unknown> | unknown;
     }
   ): Promise<void>;
+  current: Map<number, RouteNode<RouteId>>;
 } {
-  interface Node {
-    id: RouteId;
-    parent?: Node;
-    children: Node[];
-    loadData?: () => Promise<unknown> | unknown;
-  }
-  const trees = new Map<number, Node>();
-  const current = new Map<number, Node>();
+  const trees = new Map<number, RouteNode<RouteId>>();
+  const current = new Map<number, RouteNode<RouteId>>();
   const registered = new Set<string>();
 
   function registerButton(button: ButtonApi<RouteId>): void {
@@ -104,8 +106,8 @@ export function registerRoutes<RouteId extends string = string>(
     const route = routes.find((w) => w.id === id);
     if (!route) return;
     const currentNode = current.get(chatId);
-    let node: Node | undefined;
-    let parentForNew: Node | undefined;
+    let node: RouteNode<RouteId> | undefined;
+    let parentForNew: RouteNode<RouteId> | undefined;
 
     if (!currentNode) {
       const root = trees.get(chatId);
@@ -117,7 +119,7 @@ export function registerRoutes<RouteId extends string = string>(
     } else if (currentNode.id === id) {
       node = currentNode;
     } else {
-      let ancestor: Node | undefined = currentNode.parent;
+      let ancestor: RouteNode<RouteId> | undefined = currentNode.parent;
       while (ancestor && ancestor.id !== id) {
         ancestor = ancestor.parent;
       }
@@ -191,5 +193,5 @@ export function registerRoutes<RouteId extends string = string>(
     await ctx.answerCbQuery().catch(() => {});
   });
 
-  return { show };
+  return { show, current };
 }
