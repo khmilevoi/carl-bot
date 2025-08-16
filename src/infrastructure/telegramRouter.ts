@@ -59,6 +59,38 @@ export function registerRoutes<RouteId extends string = string>(
   }
   const trees = new Map<number, Node>();
   const current = new Map<number, Node>();
+  const registered = new Set<string>();
+
+  function registerButton(button: ButtonApi<RouteId>): void {
+    if (registered.has(button.callback)) return;
+    registered.add(button.callback);
+    bot.action(button.callback, async (ctx) => {
+      const chatId = ctx.chat?.id;
+      assert(chatId, 'This is not a chat');
+      await ctx.deleteMessage().catch(() => {});
+
+      if (button.target) {
+        await show(ctx, button.target);
+      }
+      if (button.action) {
+        await button.action(ctx);
+      }
+      await ctx.answerCbQuery().catch(() => {});
+    });
+  }
+
+  async function buildRoute(
+    route: RouteApi<RouteId, unknown>,
+    loader?: () => Promise<unknown> | unknown
+  ): Promise<{ text: string; buttons: ButtonApi<RouteId>[] }> {
+    const result = await route.build({
+      loadData: async () => await loader?.(),
+    });
+    for (const button of result.buttons) {
+      registerButton(button);
+    }
+    return result;
+  }
 
   async function show(
     ctx: Context,
@@ -71,61 +103,64 @@ export function registerRoutes<RouteId extends string = string>(
     assert(chatId, 'This is not a chat');
     const route = routes.find((w) => w.id === id);
     if (!route) return;
-    let currentNode = current.get(chatId);
+    const currentNode = current.get(chatId);
+    let node: Node | undefined;
+    let parentForNew: Node | undefined;
 
     if (!currentNode) {
       const root = trees.get(chatId);
       if (root && root.id === id) {
-        currentNode = root;
-        if (opts?.loadData) currentNode.loadData = opts.loadData;
+        node = root;
       } else {
-        currentNode = {
-          id,
-          children: [],
-          loadData: opts?.loadData,
-        };
-        trees.set(chatId, currentNode);
+        parentForNew = undefined;
       }
-      current.set(chatId, currentNode);
     } else if (currentNode.id === id) {
-      if (opts?.loadData) {
-        currentNode.loadData = opts.loadData;
-      }
+      node = currentNode;
     } else {
       let ancestor: Node | undefined = currentNode.parent;
       while (ancestor && ancestor.id !== id) {
         ancestor = ancestor.parent;
       }
       if (ancestor) {
-        if (opts?.loadData) ancestor.loadData = opts.loadData;
-        current.set(chatId, ancestor);
-        currentNode = ancestor;
+        node = ancestor;
       } else {
-        let next = currentNode.children.find((c) => c.id === id);
-        if (!next) {
-          next = {
-            id,
-            parent: currentNode,
-            children: [],
-            loadData: opts?.loadData,
-          };
-          currentNode.children.push(next);
-        } else if (opts?.loadData) {
-          next.loadData = opts.loadData;
+        const child = currentNode.children.find((c) => c.id === id);
+        if (child) {
+          node = child;
+        } else {
+          parentForNew = currentNode;
         }
-        current.set(chatId, next);
-        currentNode = next;
       }
     }
 
-    const { text, buttons } = await route.build({
-      loadData: currentNode.loadData ?? (async () => undefined),
-    });
+    const built = await buildRoute(
+      route,
+      opts?.loadData ?? node?.loadData
+    ).catch(() => undefined);
+    if (!built) return;
+    const { text, buttons } = built;
+
+    if (!node) {
+      node = {
+        id,
+        parent: parentForNew,
+        children: [],
+        loadData: opts?.loadData,
+      };
+      if (parentForNew) {
+        parentForNew.children.push(node);
+      } else {
+        trees.set(chatId, node);
+      }
+    } else if (opts?.loadData) {
+      node.loadData = opts.loadData;
+    }
+    current.set(chatId, node);
 
     const keyboard = buttons.map((b) => [
       { text: b.text, callback_data: b.callback },
     ]);
-    if (currentNode.parent) {
+    if (node.parent) {
       keyboard.push([{ text: '⬅️ Назад', callback_data: 'back' }]);
     }
 
@@ -133,28 +168,9 @@ export function registerRoutes<RouteId extends string = string>(
   }
 
   for (const route of routes) {
-    route
-      .build({ loadData: async () => undefined })
-      .then(({ buttons }) => {
-        for (const button of buttons) {
-          bot.action(button.callback, async (ctx) => {
-            const chatId = ctx.chat?.id;
-            assert(chatId, 'This is not a chat');
-            await ctx.deleteMessage().catch(() => {});
-
-            if (button.target) {
-              await show(ctx, button.target);
-            }
-            if (button.action) {
-              await button.action(ctx);
-            }
-            await ctx.answerCbQuery().catch(() => {});
-          });
-        }
-      })
-      .catch(() => {
-        /* ignore routes requiring data */
-      });
+    buildRoute(route).catch(() => {
+      /* ignore routes requiring data */
+    });
   }
 
   bot.action('back', async (ctx) => {
