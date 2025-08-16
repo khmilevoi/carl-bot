@@ -328,10 +328,7 @@ describe('telegramRouter', () => {
     await promise;
     expect(ctx.reply).toHaveBeenNthCalledWith(2, 'needs data', {
       reply_markup: {
-        inline_keyboard: [
-          [{ text: 'delayed', callback_data: 'delayed' }],
-          [{ text: '⬅️ Назад', callback_data: 'back' }],
-        ],
+        inline_keyboard: [[{ text: 'delayed', callback_data: 'delayed' }]],
       },
     });
     expect((router as any).current.get(1)?.id).toBe('needs_data');
