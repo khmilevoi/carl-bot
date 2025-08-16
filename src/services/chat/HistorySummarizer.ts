@@ -116,7 +116,7 @@ export class DefaultHistorySummarizer implements HistorySummarizer {
       const userMsg = history.find(
         (m) => m.username === username && m.userId !== undefined
       );
-      if (userMsg?.userId !== undefined) {
+      if (userMsg?.userId !== undefined && attitude.trim() !== '') {
         await this.users.setAttitude(userMsg.userId, attitude);
       }
     }
