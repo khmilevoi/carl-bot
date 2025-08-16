@@ -51,11 +51,14 @@ export function registerRoutes<RouteId extends string = string>(
     }
   ): Promise<void>;
 } {
-  interface HistoryItem {
+  interface Node {
     id: RouteId;
+    parent?: Node;
+    children: Node[];
     loadData?: () => Promise<unknown> | unknown;
   }
-  const history = new Map<number, HistoryItem[]>();
+  const trees = new Map<number, Node>();
+  const current = new Map<number, Node>();
 
   async function show(
     ctx: Context,
@@ -68,30 +71,61 @@ export function registerRoutes<RouteId extends string = string>(
     assert(chatId, 'This is not a chat');
     const route = routes.find((w) => w.id === id);
     if (!route) return;
+    let node = current.get(chatId);
 
-    let stack = history.get(chatId) ?? [];
-    let index = stack.findIndex((h) => h.id === id);
-    if (index >= 0) {
-      if (opts?.loadData) {
-        stack[index].loadData = opts.loadData;
+    if (!node) {
+      const root = trees.get(chatId);
+      if (root && root.id === id) {
+        node = root;
+        if (opts?.loadData) node.loadData = opts.loadData;
+      } else {
+        node = {
+          id,
+          children: [],
+          loadData: opts?.loadData,
+        };
+        trees.set(chatId, node);
       }
-      stack = stack.slice(0, index + 1);
-      history.set(chatId, stack);
+      current.set(chatId, node);
+    } else if (node.id === id) {
+      if (opts?.loadData) {
+        node.loadData = opts.loadData;
+      }
     } else {
-      stack.push({ id, loadData: opts?.loadData });
-      history.set(chatId, stack);
-      index = stack.length - 1;
+      let ancestor: Node | undefined = node.parent;
+      while (ancestor && ancestor.id !== id) {
+        ancestor = ancestor.parent;
+      }
+      if (ancestor) {
+        if (opts?.loadData) ancestor.loadData = opts.loadData;
+        current.set(chatId, ancestor);
+        node = ancestor;
+      } else {
+        let next = node.children.find((c) => c.id === id);
+        if (!next) {
+          next = {
+            id,
+            parent: node,
+            children: [],
+            loadData: opts?.loadData,
+          };
+          node.children.push(next);
+        } else if (opts?.loadData) {
+          next.loadData = opts.loadData;
+        }
+        current.set(chatId, next);
+        node = next;
+      }
     }
 
     const { text, buttons } = await route.build({
-      loadData: stack[index].loadData ?? (async () => undefined),
+      loadData: node.loadData ?? (async () => undefined),
     });
 
     const keyboard = buttons.map((b) => [
       { text: b.text, callback_data: b.callback },
     ]);
-    const newStack = history.get(chatId);
-    if (newStack && newStack.length > 1) {
+    if (node.parent) {
       keyboard.push([{ text: '⬅️ Назад', callback_data: 'back' }]);
     }
 
@@ -128,16 +162,14 @@ export function registerRoutes<RouteId extends string = string>(
     assert(chatId, 'This is not a chat');
     await ctx.deleteMessage().catch(() => {});
 
-    const stack = history.get(chatId);
-    if (stack && stack.length > 0) {
-      stack.pop();
-      const prev = stack[stack.length - 1];
-      if (prev) {
-        history.set(chatId, stack);
-        await show(ctx, prev.id);
-      } else {
-        history.delete(chatId);
-      }
+    const node = current.get(chatId);
+    const parent = node?.parent;
+    if (parent) {
+      current.set(chatId, parent);
+      await show(ctx, parent.id);
+    } else {
+      current.delete(chatId);
+      trees.delete(chatId);
     }
 
     await ctx.answerCbQuery().catch(() => {});
