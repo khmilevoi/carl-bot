@@ -175,6 +175,22 @@ describe('telegramRouter', () => {
     expect(ctx.reply).not.toHaveBeenCalled();
   });
 
+  it('reuses existing nodes and updates load data', async () => {
+    const { router } = await setupRouter();
+    const ctx = { chat: { id: 1 }, reply: vi.fn() } as unknown as Context;
+
+    await router.show(ctx, 'first');
+    await router.show(ctx, 'second');
+    await router.show(ctx, 'first');
+    await router.show(ctx, 'second');
+    await router.show(ctx, 'first', { loadData: async () => undefined });
+    await router.show(ctx, 'second', { loadData: async () => undefined });
+    await router.show(ctx, 'second');
+    await router.show(ctx, 'second', { loadData: async () => undefined });
+
+    expect(ctx.reply).toHaveBeenCalledTimes(8);
+  });
+
   it('throws when context has no chat', async () => {
     const { router } = await setupRouter();
     await expect(
