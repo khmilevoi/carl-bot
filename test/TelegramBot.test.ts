@@ -113,7 +113,7 @@ describe('TelegramBot', () => {
     );
   });
 
-  it('shows admin chats menu with back button', async () => {
+  it('shows admin chats menu', async () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
       .spyOn(
@@ -174,7 +174,6 @@ describe('TelegramBot', () => {
       reply_markup: {
         inline_keyboard: [
           [{ text: 'Test Chat (42)', callback_data: 'admin_chat:42' }],
-          [{ text: '⬅️ Назад', callback_data: 'back' }],
         ],
       },
     });
@@ -230,15 +229,12 @@ describe('TelegramBot', () => {
     expect(ctx.deleteMessage).toHaveBeenCalled();
     expect(ctx.reply).toHaveBeenCalledWith('Статус чата 42: approved', {
       reply_markup: {
-        inline_keyboard: [
-          [{ text: 'Забанить', callback_data: 'chat_ban:42' }],
-          [{ text: '⬅️ Назад', callback_data: 'back' }],
-        ],
+        inline_keyboard: [[{ text: 'Забанить', callback_data: 'chat_ban:42' }]],
       },
     });
   });
 
-  it('returns to admin_chats with list after back from admin_chat', async () => {
+  it('does nothing on back from admin_chat without parent', async () => {
     const memories = new MockChatMemoryManager();
     const approvalService = new DummyApprovalService();
     approvalService.getStatus.mockResolvedValue('approved');
@@ -289,16 +285,8 @@ describe('TelegramBot', () => {
 
     await backHandler(ctxBack);
 
-    expect(loadChats).toHaveBeenCalledTimes(2);
-    expect(ctxBack.reply).toHaveBeenCalledWith('Выберите чат для управления:', {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: 'Chat A (42)', callback_data: 'admin_chat:42' }],
-          [{ text: 'Chat B (43)', callback_data: 'admin_chat:43' }],
-          [{ text: '⬅️ Назад', callback_data: 'back' }],
-        ],
-      },
-    });
+    expect(loadChats).toHaveBeenCalledTimes(1);
+    expect(ctxBack.reply).not.toHaveBeenCalled();
   });
 
   it('chat_ban updates message', async () => {
@@ -363,7 +351,6 @@ describe('TelegramBot', () => {
       reply_markup: {
         inline_keyboard: [
           [{ text: 'Разбанить', callback_data: 'chat_unban:7' }],
-          [{ text: '⬅️ Назад', callback_data: 'back' }],
         ],
       },
     });

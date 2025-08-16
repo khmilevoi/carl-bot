@@ -62,6 +62,7 @@ export function registerRoutes<RouteId extends string = string>(
   const trees = new Map<number, RouteNode<RouteId>>();
   const current = new Map<number, RouteNode<RouteId>>();
   const registered = new Set<string>();
+  const parents = new Map<RouteId, RouteId>(); // map child route id to parent id
 
   function registerButton(button: ButtonApi<RouteId>): void {
     if (registered.has(button.callback)) return;
@@ -90,6 +91,9 @@ export function registerRoutes<RouteId extends string = string>(
     });
     for (const button of result.buttons) {
       registerButton(button);
+      if (button.target) {
+        parents.set(button.target, route.id); // remember parent route
+      }
     }
     return result;
   }
@@ -105,11 +109,19 @@ export function registerRoutes<RouteId extends string = string>(
     assert(chatId, 'This is not a chat');
     const route = routes.find((w) => w.id === id);
     if (!route) return;
+    const declaredParent = parents.get(id); // parent id declared in button.target
     const currentNode = current.get(chatId);
     let node: RouteNode<RouteId> | undefined;
     let parentForNew: RouteNode<RouteId> | undefined;
 
-    if (!currentNode) {
+    if (!declaredParent) {
+      const root = trees.get(chatId);
+      trees.delete(chatId);
+      current.delete(chatId);
+      if (root && root.id === id) {
+        node = root;
+      }
+    } else if (!currentNode) {
       const root = trees.get(chatId);
       if (root && root.id === id) {
         node = root;
