@@ -71,61 +71,61 @@ export function registerRoutes<RouteId extends string = string>(
     assert(chatId, 'This is not a chat');
     const route = routes.find((w) => w.id === id);
     if (!route) return;
-    let node = current.get(chatId);
+    let currentNode = current.get(chatId);
 
-    if (!node) {
+    if (!currentNode) {
       const root = trees.get(chatId);
       if (root && root.id === id) {
-        node = root;
-        if (opts?.loadData) node.loadData = opts.loadData;
+        currentNode = root;
+        if (opts?.loadData) currentNode.loadData = opts.loadData;
       } else {
-        node = {
+        currentNode = {
           id,
           children: [],
           loadData: opts?.loadData,
         };
-        trees.set(chatId, node);
+        trees.set(chatId, currentNode);
       }
-      current.set(chatId, node);
-    } else if (node.id === id) {
+      current.set(chatId, currentNode);
+    } else if (currentNode.id === id) {
       if (opts?.loadData) {
-        node.loadData = opts.loadData;
+        currentNode.loadData = opts.loadData;
       }
     } else {
-      let ancestor: Node | undefined = node.parent;
+      let ancestor: Node | undefined = currentNode.parent;
       while (ancestor && ancestor.id !== id) {
         ancestor = ancestor.parent;
       }
       if (ancestor) {
         if (opts?.loadData) ancestor.loadData = opts.loadData;
         current.set(chatId, ancestor);
-        node = ancestor;
+        currentNode = ancestor;
       } else {
-        let next = node.children.find((c) => c.id === id);
+        let next = currentNode.children.find((c) => c.id === id);
         if (!next) {
           next = {
             id,
-            parent: node,
+            parent: currentNode,
             children: [],
             loadData: opts?.loadData,
           };
-          node.children.push(next);
+          currentNode.children.push(next);
         } else if (opts?.loadData) {
           next.loadData = opts.loadData;
         }
         current.set(chatId, next);
-        node = next;
+        currentNode = next;
       }
     }
 
     const { text, buttons } = await route.build({
-      loadData: node.loadData ?? (async () => undefined),
+      loadData: currentNode.loadData ?? (async () => undefined),
     });
 
     const keyboard = buttons.map((b) => [
       { text: b.text, callback_data: b.callback },
     ]);
-    if (node.parent) {
+    if (currentNode.parent) {
       keyboard.push([{ text: '⬅️ Назад', callback_data: 'back' }]);
     }
 
@@ -162,8 +162,8 @@ export function registerRoutes<RouteId extends string = string>(
     assert(chatId, 'This is not a chat');
     await ctx.deleteMessage().catch(() => {});
 
-    const node = current.get(chatId);
-    const parent = node?.parent;
+    const currentNode = current.get(chatId);
+    const parent = currentNode?.parent;
     if (parent) {
       current.set(chatId, parent);
       await show(ctx, parent.id);
