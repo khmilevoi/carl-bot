@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 
 import { ChatMessage } from '../ai/AIService.interface';
-import { logger } from '../logging/logger';
+import { createPinoLogger } from '../logging/logger';
 import {
   INTEREST_MESSAGE_STORE_ID,
   type InterestMessageStore,
@@ -23,6 +23,8 @@ import { HISTORY_SUMMARIZER_ID, HistorySummarizer } from './HistorySummarizer';
 
 @injectable()
 export class ChatMemory {
+  private readonly logger = createPinoLogger();
+
   constructor(
     private messages: MessageService,
     private summarizer: HistorySummarizer,
@@ -32,7 +34,7 @@ export class ChatMemory {
   ) {}
 
   public async addMessage(message: StoredMessage): Promise<void> {
-    logger.debug(
+    this.logger.debug(
       { chatId: this.chatId, role: message.role, limit: this.limit },
       'Adding message'
     );
@@ -41,7 +43,7 @@ export class ChatMemory {
 
     // Проверяем лимит после добавления сообщения
     const history = await this.messages.getMessages(this.chatId);
-    logger.debug(
+    this.logger.debug(
       { chatId: this.chatId, historyLength: history.length, limit: this.limit },
       'Checking history limit after adding message'
     );
@@ -62,6 +64,8 @@ export class ChatMemory {
 
 @injectable()
 export class ChatMemoryManager {
+  private readonly logger = createPinoLogger();
+
   constructor(
     @inject(MESSAGE_SERVICE_ID) private messages: MessageService,
     @inject(HISTORY_SUMMARIZER_ID) private summarizer: HistorySummarizer,
@@ -71,7 +75,7 @@ export class ChatMemoryManager {
   ) {}
 
   public async get(chatId: number): Promise<ChatMemory> {
-    logger.debug({ chatId }, 'Creating chat memory');
+    this.logger.debug({ chatId }, 'Creating chat memory');
     const { historyLimit } = await this.config.getConfig(chatId);
     return new ChatMemory(
       this.messages,
@@ -83,7 +87,7 @@ export class ChatMemoryManager {
   }
 
   public async reset(chatId: number): Promise<void> {
-    logger.debug({ chatId }, 'Resetting chat memory');
+    this.logger.debug({ chatId }, 'Resetting chat memory');
     await this.resetService.reset(chatId);
     this.localStore.clearMessages(chatId);
   }

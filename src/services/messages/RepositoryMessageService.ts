@@ -17,12 +17,13 @@ import {
   type UserRepository,
 } from '../../repositories/interfaces/UserRepository.interface';
 import type { ChatMessage } from '../ai/AIService.interface';
-import { logger } from '../logging/logger';
+import { createPinoLogger } from '../logging/logger';
 import { MessageService } from './MessageService.interface';
 import { StoredMessage } from './StoredMessage.interface';
 
 @injectable()
 export class RepositoryMessageService implements MessageService {
+  private readonly logger = createPinoLogger();
   constructor(
     @inject(CHAT_REPOSITORY_ID) private chatRepo: ChatRepository,
     @inject(USER_REPOSITORY_ID) private userRepo: UserRepository,
@@ -31,7 +32,7 @@ export class RepositoryMessageService implements MessageService {
   ) {}
 
   async addMessage(message: StoredMessage): Promise<void> {
-    logger.debug(
+    this.logger.debug(
       { chatId: message.chatId, role: message.role },
       'Inserting message into database'
     );
@@ -54,22 +55,25 @@ export class RepositoryMessageService implements MessageService {
   }
 
   async getMessages(chatId: number): Promise<ChatMessage[]> {
-    logger.debug({ chatId }, 'Fetching messages from database');
+    this.logger.debug({ chatId }, 'Fetching messages from database');
     return this.messageRepo.findByChatId(chatId);
   }
 
   async getCount(chatId: number): Promise<number> {
-    logger.debug({ chatId }, 'Counting messages in database');
+    this.logger.debug({ chatId }, 'Counting messages in database');
     return this.messageRepo.countByChatId(chatId);
   }
 
   async getLastMessages(chatId: number, limit: number): Promise<ChatMessage[]> {
-    logger.debug({ chatId, limit }, 'Fetching last messages from database');
+    this.logger.debug(
+      { chatId, limit },
+      'Fetching last messages from database'
+    );
     return this.messageRepo.findLastByChatId(chatId, limit);
   }
 
   async clearMessages(chatId: number): Promise<void> {
-    logger.debug({ chatId }, 'Clearing messages table');
+    this.logger.debug({ chatId }, 'Clearing messages table');
     await this.messageRepo.clearByChatId(chatId);
   }
 }

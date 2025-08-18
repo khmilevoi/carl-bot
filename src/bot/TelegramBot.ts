@@ -33,7 +33,7 @@ import {
   TriggerPipeline,
 } from '../services/chat/TriggerPipeline';
 import { Env, ENV_SERVICE_ID, EnvService } from '../services/env/EnvService';
-import { logger } from '../services/logging/logger';
+import { createPinoLogger } from '../services/logging/logger';
 import {
   MESSAGE_CONTEXT_EXTRACTOR_ID,
   MessageContextExtractor,
@@ -71,6 +71,7 @@ export class TelegramBot {
     number,
     { type: 'history' | 'interest'; chatId: number; admin: boolean }
   >();
+  private readonly logger = createPinoLogger();
 
   constructor(
     @inject(ENV_SERVICE_ID) envService: EnvService,
@@ -107,18 +108,18 @@ export class TelegramBot {
   }
 
   public async launch(): Promise<void> {
-    logger.info('Launching bot');
+    this.logger.info('Launching bot');
     await this.bot.telegram
       .deleteWebhook()
       .catch((err) =>
-        logger.warn({ err }, 'Failed to delete existing webhook')
+        this.logger.warn({ err }, 'Failed to delete existing webhook')
       );
     await this.bot.launch();
-    logger.info('Bot launched');
+    this.logger.info('Bot launched');
   }
 
   public stop(reason: string): void {
-    logger.info({ reason }, 'Stopping bot');
+    this.logger.info({ reason }, 'Stopping bot');
     this.bot.stop(reason);
   }
 
@@ -144,15 +145,15 @@ export class TelegramBot {
 
     this.bot.telegram
       .setMyCommands([{ command: 'menu', description: 'Показать меню' }])
-      .catch((err) => logger.error({ err }, 'Failed to set bot commands'));
+      .catch((err) => this.logger.error({ err }, 'Failed to set bot commands'));
 
     this.bot.on('my_chat_member', async (ctx) => {
       const chatId = ctx.chat?.id;
       assert(chatId, 'This is not a chat');
-      logger.info({ chatId }, 'Bot added to chat');
+      this.logger.info({ chatId }, 'Bot added to chat');
       const status = await this.approvalService.getStatus(chatId);
       if (status !== 'approved') {
-        logger.info(
+        this.logger.info(
           { chatId, status },
           'Chat not approved, showing request access button'
         );
@@ -199,7 +200,7 @@ export class TelegramBot {
     this.bot.action(/^chat_approve:(\S+)$/, async (ctx) => {
       const adminChatId = this.env.ADMIN_CHAT_ID;
       if (ctx.chat?.id !== adminChatId) {
-        logger.warn(
+        this.logger.warn(
           { adminChatId, requestChatId: ctx.chat?.id },
           'Unauthorized chat approval attempt'
         );
@@ -207,17 +208,17 @@ export class TelegramBot {
         return;
       }
       const chatId = Number(ctx.match[1]);
-      logger.info({ chatId, adminChatId }, 'Approving chat access');
+      this.logger.info({ chatId, adminChatId }, 'Approving chat access');
       await this.approvalService.approve(chatId);
       await ctx.answerCbQuery('Чат одобрен');
       await ctx.telegram.sendMessage(chatId, 'Доступ разрешён');
-      logger.info({ chatId }, 'Chat access approved successfully');
+      this.logger.info({ chatId }, 'Chat access approved successfully');
     });
 
     this.bot.action(/^chat_ban:(\S+)$/, async (ctx) => {
       const adminChatId = this.env.ADMIN_CHAT_ID;
       if (ctx.chat?.id !== adminChatId) {
-        logger.warn(
+        this.logger.warn(
           { adminChatId, requestChatId: ctx.chat?.id },
           'Unauthorized chat ban attempt'
         );
@@ -225,13 +226,13 @@ export class TelegramBot {
         return;
       }
       const chatId = Number(ctx.match[1]);
-      logger.info({ chatId, adminChatId }, 'Banning chat access');
+      this.logger.info({ chatId, adminChatId }, 'Banning chat access');
       await this.approvalService.ban(chatId);
       await ctx.answerCbQuery('Чат забанен');
       await ctx.telegram.sendMessage(chatId, 'Доступ запрещён');
       await ctx.deleteMessage().catch(() => {});
       await this.showAdminChat(ctx, chatId);
-      logger.info({ chatId }, 'Chat access banned successfully');
+      this.logger.info({ chatId }, 'Chat access banned successfully');
     });
 
     this.bot.action(/^chat_unban:(\S+)$/, async (ctx) => {
@@ -318,10 +319,10 @@ export class TelegramBot {
     const chatId = ctx.chat?.id;
     assert(chatId, 'This is not a chat');
     const title = ctx.chat && 'title' in ctx.chat ? ctx.chat.title : undefined;
-    logger.info({ chatId, title }, 'Chat access request received');
+    this.logger.info({ chatId, title }, 'Chat access request received');
     await this.sendChatApprovalRequest(chatId, title);
     await ctx.reply('Запрос отправлен');
-    logger.info({ chatId }, 'Chat access request sent to admin');
+    this.logger.info({ chatId }, 'Chat access request sent to admin');
   }
 
   private async handleRequestAccess(ctx: Context): Promise<void> {
@@ -396,7 +397,7 @@ export class TelegramBot {
 
       await ctx.reply('✅ Загрузка данных завершена!');
     } catch (error) {
-      logger.error({ error, chatId }, 'Failed to export data');
+      this.logger.error({ error, chatId }, 'Failed to export data');
       await ctx.reply('❌ Ошибка при загрузке данных. Попробуйте позже.');
     }
   }
@@ -475,7 +476,7 @@ export class TelegramBot {
       await this.memories.reset(chatId);
       await ctx.reply('✅ Контекст диалога сброшен!');
     } catch (error) {
-      logger.error({ error, chatId }, 'Failed to reset memory');
+      this.logger.error({ error, chatId }, 'Failed to reset memory');
       await ctx.reply('❌ Ошибка при сбросе памяти. Попробуйте позже.');
     }
   }
@@ -506,7 +507,7 @@ export class TelegramBot {
           await ctx.reply('✅ Интервал интереса обновлён');
         }
       } catch (error) {
-        logger.error(
+        this.logger.error(
           { error, chatId: awaiting.chatId },
           'Failed to update chat config'
         );
@@ -529,11 +530,11 @@ export class TelegramBot {
       return;
     }
     if (chatId === this.env.ADMIN_CHAT_ID) {
-      logger.debug({ chatId }, 'Ignoring admin chat message');
+      this.logger.debug({ chatId }, 'Ignoring admin chat message');
       return;
     }
 
-    logger.debug({ chatId }, 'Received text message');
+    this.logger.debug({ chatId }, 'Received text message');
 
     const status = await this.approvalService.getStatus(chatId);
     if (status === 'pending') {
@@ -545,7 +546,7 @@ export class TelegramBot {
     }
 
     if (status === 'banned') {
-      logger.warn({ chatId }, 'Message from banned chat ignored');
+      this.logger.warn({ chatId }, 'Message from banned chat ignored');
       return;
     }
 
@@ -560,27 +561,27 @@ export class TelegramBot {
       chatId,
     };
 
-    logger.debug({ chatId }, 'Checking triggers');
+    this.logger.debug({ chatId }, 'Checking triggers');
     const triggerResult = await this.pipeline.shouldRespond(ctx, context);
     if (!triggerResult) {
-      logger.debug({ chatId }, 'No trigger matched');
+      this.logger.debug({ chatId }, 'No trigger matched');
       return;
     }
 
     await withTyping(ctx, async () => {
-      logger.debug({ chatId }, 'Generating answer');
+      this.logger.debug({ chatId }, 'Generating answer');
       const answer = await this.responder.generate(
         ctx,
         chatId,
         triggerResult.reason ?? undefined
       );
-      logger.debug({ chatId }, 'Answer generated');
+      this.logger.debug({ chatId }, 'Answer generated');
 
       const replyId = triggerResult.replyToMessageId ?? userMsg.messageId;
       ctx.reply(answer, {
         reply_parameters: replyId ? { message_id: replyId } : undefined,
       });
-      logger.debug({ chatId }, 'Reply sent');
+      this.logger.debug({ chatId }, 'Reply sent');
     });
   }
 }

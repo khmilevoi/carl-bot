@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ChatMessage } from '../src/services/ai/AIService';
 import type { ChatGPTService as ChatGPTServiceType } from '../src/services/ai/ChatGPTService';
 import { TestEnvService } from '../src/services/env/EnvService';
-import { logger } from '../src/services/logging/logger';
 import type { PromptService } from '../src/services/prompts/PromptService';
 
 interface ChatGPTServiceConstructor {
@@ -121,9 +120,6 @@ describe('ChatGPTService', () => {
       ],
     });
 
-    const errorSpy = vi.fn<unknown[], unknown>();
-    (logger as unknown as { error: (...args: unknown[]) => unknown }).error =
-      errorSpy;
     openaiCreate.mockResolvedValueOnce({
       choices: [{ message: { content: 'not-json' } }],
     });
@@ -165,9 +161,6 @@ describe('ChatGPTService', () => {
       ],
     });
 
-    const errorSpy = vi.fn<unknown[], unknown>();
-    (logger as unknown as { error: (...args: unknown[]) => unknown }).error =
-      errorSpy;
     openaiCreate.mockResolvedValueOnce({
       choices: [{ message: { content: 'oops' } }],
     });

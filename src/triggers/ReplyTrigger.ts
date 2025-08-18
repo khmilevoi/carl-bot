@@ -1,7 +1,8 @@
 import type { Context } from 'telegraf';
 
 import type { DialogueManager } from '../services/chat/DialogueManager';
-import { logger } from '../services/logging/logger';
+import { createPinoLogger } from '../services/logging/logger';
+const logger = createPinoLogger();
 import type {
   Trigger,
   TriggerContext,
