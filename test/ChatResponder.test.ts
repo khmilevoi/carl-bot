@@ -55,7 +55,7 @@ class MockChatMemory {
 
 class MockChatMemoryManager implements ChatMemoryManager {
   memory = new MockChatMemory();
-  get(_chatId: number): MockChatMemory {
+  async get(_chatId: number): Promise<MockChatMemory> {
     return this.memory;
   }
   async reset(): Promise<void> {}
@@ -79,7 +79,8 @@ describe('ChatResponder', () => {
       summaries
     );
 
-    await memories.get(1).addMessage({ role: 'user', content: 'hi' });
+    const mem1 = await memories.get(1);
+    await mem1.addMessage({ role: 'user', content: 'hi' });
     const ctx = { me: 'bot', chat: { id: 1 } } as unknown as Context;
 
     const answer = await responder.generate(ctx, 1, {
@@ -104,7 +105,8 @@ describe('ChatResponder', () => {
       summaries
     );
 
-    await memories.get(1).addMessage({ role: 'user', content: 'hi' });
+    const mem2 = await memories.get(1);
+    await mem2.addMessage({ role: 'user', content: 'hi' });
     const ctx = { me: 'bot', chat: { id: 1 } } as unknown as Context;
 
     await expect(responder.generate(ctx, 1)).rejects.toThrow('ask failed');

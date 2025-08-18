@@ -4,6 +4,8 @@ import { ChatMessage } from '../src/services/ai/AIService.interface';
 import { ChatMemory, ChatMemoryManager } from '../src/services/chat/ChatMemory';
 import { ChatResetService } from '../src/services/chat/ChatResetService.interface';
 import { HistorySummarizer } from '../src/services/chat/HistorySummarizer';
+import type { ChatConfigService } from '../src/services/chat/ChatConfigService';
+import type { ChatConfigEntity } from '../src/repositories/interfaces/ChatConfigRepository.interface';
 import {
   InterestMessageStore,
   InterestMessageStoreImpl,
@@ -155,17 +157,37 @@ describe('ChatMemoryManager', () => {
     getLastMessages = vi.fn(() => []);
     clearMessages = vi.fn();
   }
+  class DummyChatConfigService implements ChatConfigService {
+    constructor(private historyLimit: number) {}
+    getConfig = vi.fn(
+      async (chatId: number): Promise<ChatConfigEntity> => ({
+        chatId,
+        historyLimit: this.historyLimit,
+        interestInterval: 0,
+      })
+    );
+    setHistoryLimit = vi.fn(async () => {});
+    setInterestInterval = vi.fn(async () => {});
+  }
 
-  it('creates ChatMemory with default limit', () => {
+  it('creates ChatMemory with limit from ChatConfigService', async () => {
+    const summarizer = new FakeHistorySummarizer();
+    const config = new DummyChatConfigService(2);
     const manager = new ChatMemoryManager(
       new FakeMessageService(),
-      new FakeHistorySummarizer(),
+      summarizer,
       new DummyResetService(),
       new DummyInterestMessageStore(),
+      config
+    );
+    const mem = await manager.get(5);
+    await mem.addMessage({ chatId: 5, role: 'user', content: 'hi' });
+    expect(summarizer.summarize).toHaveBeenCalledWith(
+      5,
+      [{ chatId: 5, role: 'user', content: 'hi' }],
       2
     );
-    const mem = manager.get(5);
-    expect(mem).toBeInstanceOf(ChatMemory);
+    expect(config.getConfig).toHaveBeenCalledWith(5);
   });
 
   it('resets memory using ChatResetService', async () => {
@@ -176,7 +198,7 @@ describe('ChatMemoryManager', () => {
       new FakeHistorySummarizer(),
       reset,
       local,
-      2
+      new DummyChatConfigService(2)
     );
     await manager.reset(7);
     expect(reset.reset).toHaveBeenCalledWith(7);

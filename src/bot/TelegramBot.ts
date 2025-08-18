@@ -409,7 +409,8 @@ export class TelegramBot {
 
     const meta = this.extractor.extract(ctx);
     const userMsg = MessageFactory.fromUser(ctx, meta);
-    await this.memories.get(chatId).addMessage(userMsg);
+    const memory = await this.memories.get(chatId);
+    await memory.addMessage(userMsg);
 
     const context: TriggerContext = {
       text: `${userMsg.content};`,
