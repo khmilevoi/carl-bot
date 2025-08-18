@@ -35,12 +35,8 @@ function createChecker(opts: {
   const ai: AIService = {
     checkInterest: vi.fn().mockResolvedValue(opts.aiResult ?? null),
   } as unknown as AIService;
-  const env = {
-    env: { INTEREST_MESSAGE_INTERVAL: interval },
-  } as unknown;
-
   return {
-    checker: new DefaultInterestChecker(store, summaries, ai, env as any),
+    checker: new DefaultInterestChecker(store, summaries, ai, interval),
     store,
     summaries,
     ai,
@@ -124,7 +120,7 @@ describe('DefaultInterestChecker', () => {
       {
         checkInterest: vi.fn().mockResolvedValue(null),
       } as unknown as AIService,
-      { env: { INTEREST_MESSAGE_INTERVAL: 1 } } as any
+      1
     );
 
     await checker.check(chatId);

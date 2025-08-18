@@ -4,7 +4,6 @@ import { ChatMessage } from '../src/services/ai/AIService.interface';
 import { ChatMemory, ChatMemoryManager } from '../src/services/chat/ChatMemory';
 import { ChatResetService } from '../src/services/chat/ChatResetService.interface';
 import { HistorySummarizer } from '../src/services/chat/HistorySummarizer';
-import { EnvService } from '../src/services/env/EnvService';
 import {
   InterestMessageStore,
   InterestMessageStoreImpl,
@@ -149,9 +148,6 @@ describe('ChatMemoryManager', () => {
   class DummyResetService implements ChatResetService {
     reset = vi.fn(async () => {});
   }
-  class DummyEnvService implements EnvService {
-    env = { CHAT_HISTORY_LIMIT: 2 } as EnvService['env'];
-  }
   class DummyInterestMessageStore implements InterestMessageStore {
     addMessage = vi.fn();
     getMessages = vi.fn(() => []);
@@ -160,13 +156,13 @@ describe('ChatMemoryManager', () => {
     clearMessages = vi.fn();
   }
 
-  it('creates ChatMemory with limit from env', () => {
+  it('creates ChatMemory with default limit', () => {
     const manager = new ChatMemoryManager(
       new FakeMessageService(),
       new FakeHistorySummarizer(),
       new DummyResetService(),
       new DummyInterestMessageStore(),
-      new DummyEnvService()
+      2
     );
     const mem = manager.get(5);
     expect(mem).toBeInstanceOf(ChatMemory);
@@ -180,7 +176,7 @@ describe('ChatMemoryManager', () => {
       new FakeHistorySummarizer(),
       reset,
       local,
-      new DummyEnvService()
+      2
     );
     await manager.reset(7);
     expect(reset.reset).toHaveBeenCalledWith(7);

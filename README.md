@@ -26,15 +26,16 @@
    ```
    BOT_TOKEN=your-telegram-token
    OPENAI_API_KEY=your-openai-key
-   LOG_PROMPTS=false            # сохранять ли промпты в prompts.log
-   CHAT_HISTORY_LIMIT=50        # сколько сообщений хранить до суммаризации
    ADMIN_CHAT_ID=123456         # ID чата администратора для выдачи ключей
+   LOG_PROMPTS=false            # логировать запросы и ответы в prompts.log
    ```
-   Если вы добавляете или изменяете переменные окружения, не забудьте обновить файл `.env.example`.
-3. Запустите в режиме разработки:
-   ```bash
-   npm run dev
-   ```
+
+Если вы добавляете или изменяете переменные окружения, не забудьте обновить файл `.env.example`. 3. Запустите в режиме разработки:
+
+```bash
+npm run dev
+```
+
 4. Собрайте проект:
    ```bash
    npm run build
