@@ -14,6 +14,8 @@ export type WindowId =
   | 'admin_menu'
   | 'admin_chats'
   | 'admin_chat'
+  | 'admin_chat_history_limit'
+  | 'admin_chat_interest_interval'
   | 'chat_not_approved'
   | 'no_access'
   | 'chat_approval_request'
@@ -123,7 +125,29 @@ export function createWindows(actions: WindowActions): RouteApi<WindowId>[] {
                 ? `chat_unban:${chatId}`
                 : `chat_ban:${chatId}`,
           }),
+          b({
+            text: '🕒 Лимит истории',
+            callback: `admin_chat_history_limit:${chatId}`,
+          }),
+          b({
+            text: '✨ Интервал интереса',
+            callback: `admin_chat_interest_interval:${chatId}`,
+          }),
         ],
+      };
+    }),
+    r('admin_chat_history_limit', async ({ loadData }) => {
+      const { chatId } = (await loadData()) as { chatId: number };
+      return {
+        text: `Введите новый лимит истории для чата ${chatId}:`,
+        buttons: [],
+      };
+    }),
+    r('admin_chat_interest_interval', async ({ loadData }) => {
+      const { chatId } = (await loadData()) as { chatId: number };
+      return {
+        text: `Введите новый интервал интереса для чата ${chatId}:`,
+        buttons: [],
       };
     }),
     r('chat_not_approved', async () => ({

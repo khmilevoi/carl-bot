@@ -9,6 +9,8 @@ export interface AdminService {
   exportChatData(
     chatId: number
   ): Promise<{ filename: string; buffer: Buffer }[]>;
+  setHistoryLimit(chatId: number, value: number): Promise<void>;
+  setInterestInterval(chatId: number, value: number): Promise<void>;
 }
 
 import type { ServiceIdentifier } from 'inversify';
