@@ -9,6 +9,7 @@ import {
 } from './repositories/DbProvider';
 import { ACCESS_KEY_REPOSITORY_ID } from './repositories/interfaces/AccessKeyRepository.interface';
 import { CHAT_ACCESS_REPOSITORY_ID } from './repositories/interfaces/ChatAccessRepository.interface';
+import { CHAT_CONFIG_REPOSITORY_ID } from './repositories/interfaces/ChatConfigRepository.interface';
 import { CHAT_REPOSITORY_ID } from './repositories/interfaces/ChatRepository.interface';
 import { CHAT_USER_REPOSITORY_ID } from './repositories/interfaces/ChatUserRepository.interface';
 import { MESSAGE_REPOSITORY_ID } from './repositories/interfaces/MessageRepository.interface';
@@ -16,6 +17,7 @@ import { SUMMARY_REPOSITORY_ID } from './repositories/interfaces/SummaryReposito
 import { USER_REPOSITORY_ID } from './repositories/interfaces/UserRepository.interface';
 import { SQLiteAccessKeyRepository } from './repositories/sqlite/SQLiteAccessKeyRepository';
 import { SQLiteChatAccessRepository } from './repositories/sqlite/SQLiteChatAccessRepository';
+import { SQLiteChatConfigRepository } from './repositories/sqlite/SQLiteChatConfigRepository';
 import { SQLiteChatRepository } from './repositories/sqlite/SQLiteChatRepository';
 import { SQLiteChatUserRepository } from './repositories/sqlite/SQLiteChatUserRepository';
 import { SQLiteMessageRepository } from './repositories/sqlite/SQLiteMessageRepository';
@@ -29,6 +31,11 @@ import {
   CHAT_APPROVAL_SERVICE_ID,
   DefaultChatApprovalService,
 } from './services/chat/ChatApprovalService';
+import {
+  CHAT_CONFIG_SERVICE_ID,
+  type ChatConfigService,
+  RepositoryChatConfigService,
+} from './services/chat/ChatConfigService';
 import { ChatMemoryManager } from './services/chat/ChatMemory';
 import { CHAT_RESET_SERVICE_ID } from './services/chat/ChatResetService.interface';
 import type { ChatResponder } from './services/chat/ChatResponder';
@@ -116,6 +123,11 @@ container
   .inSingletonScope();
 
 container
+  .bind<ChatConfigService>(CHAT_CONFIG_SERVICE_ID)
+  .to(RepositoryChatConfigService)
+  .inSingletonScope();
+
+container
   .bind(INTEREST_CHECKER_ID)
   .to(DefaultInterestChecker)
   .inSingletonScope();
@@ -144,6 +156,11 @@ container
 container
   .bind(CHAT_ACCESS_REPOSITORY_ID)
   .to(SQLiteChatAccessRepository)
+  .inSingletonScope();
+
+container
+  .bind(CHAT_CONFIG_REPOSITORY_ID)
+  .to(SQLiteChatConfigRepository)
   .inSingletonScope();
 
 container.bind(ChatMemoryManager).toSelf().inSingletonScope();
