@@ -30,6 +30,7 @@ interface WindowActions {
   requestChatAccess(ctx: Context): Promise<void> | void;
   requestUserAccess(ctx: Context): Promise<void> | void;
   showAdminChats(ctx: Context): Promise<void> | void;
+  showChatSettings(ctx: Context): Promise<void> | void;
   configHistoryLimit(ctx: Context): Promise<void> | void;
   configInterestInterval(ctx: Context): Promise<void> | void;
 }
@@ -52,25 +53,31 @@ export function createWindows(actions: WindowActions): RouteApi<WindowId>[] {
         b({
           text: '⚙️ Настройки',
           callback: 'chat_settings',
-          target: 'chat_settings',
+          action: actions.showChatSettings,
         }),
       ],
     })),
-    r('chat_settings', async () => ({
-      text: 'Выберите настройку:',
-      buttons: [
-        b({
-          text: '🕒 Лимит истории',
-          callback: 'config_history_limit',
-          action: actions.configHistoryLimit,
-        }),
-        b({
-          text: '✨ Интервал интереса',
-          callback: 'config_interest_interval',
-          action: actions.configInterestInterval,
-        }),
-      ],
-    })),
+    r('chat_settings', async ({ loadData }) => {
+      const config = (await loadData()) as {
+        historyLimit: number;
+        interestInterval: number;
+      };
+      return {
+        text: 'Выберите настройку:',
+        buttons: [
+          b({
+            text: `🕒 Лимит истории (${config.historyLimit})`,
+            callback: 'config_history_limit',
+            action: actions.configHistoryLimit,
+          }),
+          b({
+            text: `✨ Интервал интереса (${config.interestInterval})`,
+            callback: 'config_interest_interval',
+            action: actions.configInterestInterval,
+          }),
+        ],
+      };
+    }),
     r('chat_history_limit', async () => ({
       text: 'Введите новый лимит истории:',
       buttons: [],
@@ -111,9 +118,10 @@ export function createWindows(actions: WindowActions): RouteApi<WindowId>[] {
       };
     }),
     r('admin_chat', async ({ loadData }) => {
-      const { chatId, status } = (await loadData()) as {
+      const { chatId, status, config } = (await loadData()) as {
         chatId: number;
         status: string;
+        config: { historyLimit: number; interestInterval: number };
       };
       return {
         text: `Статус чата ${chatId}: ${status}`,
@@ -126,11 +134,11 @@ export function createWindows(actions: WindowActions): RouteApi<WindowId>[] {
                 : `chat_ban:${chatId}`,
           }),
           b({
-            text: '🕒 Лимит истории',
+            text: `🕒 Лимит истории (${config.historyLimit})`,
             callback: `admin_chat_history_limit:${chatId}`,
           }),
           b({
-            text: '✨ Интервал интереса',
+            text: `✨ Интервал интереса (${config.interestInterval})`,
             callback: `admin_chat_interest_interval:${chatId}`,
           }),
         ],
