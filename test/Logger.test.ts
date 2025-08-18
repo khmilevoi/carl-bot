@@ -24,7 +24,6 @@ describe('logger', () => {
       DATABASE_URL: 'file:///tmp/test.db',
       ADMIN_CHAT_ID: '1',
       INTEREST_MESSAGE_INTERVAL: '1',
-      CHAT_HISTORY_LIMIT: '2',
     };
     vi.resetModules();
     const { logger } = await import('../src/services/logging/logger');
