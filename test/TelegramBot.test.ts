@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { TelegramBot } from '../src/bot/TelegramBot';
 import * as TelegramBotModule from '../src/bot/TelegramBot';
+import { createWindows } from '../src/bot/windowConfig';
 import type { ChatRepository } from '../src/repositories/interfaces/ChatRepository.interface';
 import type { AdminService } from '../src/services/admin/AdminService.interface';
 import type { ChatApprovalService } from '../src/services/chat/ChatApprovalService';
@@ -11,6 +12,7 @@ import type { ChatMemoryManager } from '../src/services/chat/ChatMemory';
 import type { ChatResponder } from '../src/services/chat/ChatResponder';
 import type { TriggerPipeline } from '../src/services/chat/TriggerPipeline';
 import type { EnvService } from '../src/services/env/EnvService';
+import type { ChatConfigService } from '../src/services/chat/ChatConfigService';
 import type {
   MessageContext,
   MessageContextExtractor,
@@ -67,7 +69,139 @@ class DummyChatRepository {
   findById = vi.fn(async () => undefined);
 }
 
+class DummyChatConfigService {
+  getConfig = vi.fn();
+  setHistoryLimit = vi.fn(async () => {});
+  setInterestInterval = vi.fn(async () => {});
+}
+
 describe('TelegramBot', () => {
+  it('contains settings menu item', async () => {
+    const windows = createWindows({
+      exportData: vi.fn(),
+      resetMemory: vi.fn(),
+      requestChatAccess: vi.fn(),
+      requestUserAccess: vi.fn(),
+      showAdminChats: vi.fn(),
+      configHistoryLimit: vi.fn(),
+      configInterestInterval: vi.fn(),
+    });
+    const menu = windows.find((w) => w.id === 'menu');
+    if (!menu) throw new Error('route not found');
+    const { buttons } = await menu.build({ loadData: async () => undefined });
+    expect(buttons.some((b) => b.text === '⚙️ Настройки')).toBe(true);
+  });
+
+  it('updates history limit on valid input', async () => {
+    const memories = new MockChatMemoryManager();
+    const config = new DummyChatConfigService();
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      new DummyApprovalService() as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatRepository() as unknown as ChatRepository,
+      config as unknown as ChatConfigService
+    );
+    const showSpy = vi
+      .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
+      .mockResolvedValue(undefined);
+    await (
+      bot as unknown as {
+        handleConfigHistoryLimit: (ctx: Context) => Promise<void>;
+      }
+    ).handleConfigHistoryLimit({ chat: { id: 10 } } as Context);
+    const ctxText = {
+      chat: { id: 10 },
+      message: { text: '5' },
+      reply: vi.fn(),
+    } as unknown as Context;
+    await (
+      bot as unknown as { handleText: (ctx: Context) => Promise<void> }
+    ).handleText(ctxText);
+    expect(config.setHistoryLimit).toHaveBeenCalledWith(10, 5);
+    expect(ctxText.reply).toHaveBeenCalledWith('✅ Лимит истории обновлён');
+    expect(showSpy).toHaveBeenCalledWith(ctxText, 'menu');
+  });
+
+  it('updates interest interval on valid input', async () => {
+    const memories = new MockChatMemoryManager();
+    const config = new DummyChatConfigService();
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      new DummyApprovalService() as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatRepository() as unknown as ChatRepository,
+      config as unknown as ChatConfigService
+    );
+    const showSpy = vi
+      .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
+      .mockResolvedValue(undefined);
+    await (
+      bot as unknown as {
+        handleConfigInterestInterval: (ctx: Context) => Promise<void>;
+      }
+    ).handleConfigInterestInterval({ chat: { id: 11 } } as Context);
+    const ctxText = {
+      chat: { id: 11 },
+      message: { text: '15' },
+      reply: vi.fn(),
+    } as unknown as Context;
+    await (
+      bot as unknown as { handleText: (ctx: Context) => Promise<void> }
+    ).handleText(ctxText);
+    expect(config.setInterestInterval).toHaveBeenCalledWith(11, 15);
+    expect(ctxText.reply).toHaveBeenCalledWith('✅ Интервал интереса обновлён');
+    expect(showSpy).toHaveBeenCalledWith(ctxText, 'menu');
+  });
+
+  it('handles invalid config input', async () => {
+    const memories = new MockChatMemoryManager();
+    const config = new DummyChatConfigService();
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      new DummyApprovalService() as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatRepository() as unknown as ChatRepository,
+      config as unknown as ChatConfigService
+    );
+    const showSpy = vi
+      .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
+      .mockResolvedValue(undefined);
+    await (
+      bot as unknown as {
+        handleConfigInterestInterval: (ctx: Context) => Promise<void>;
+      }
+    ).handleConfigInterestInterval({ chat: { id: 12 } } as Context);
+    const ctxText = {
+      chat: { id: 12 },
+      message: { text: '100' },
+      reply: vi.fn(),
+    } as unknown as Context;
+    config.setInterestInterval.mockImplementationOnce(async () => {
+      throw new Error('Invalid interest interval');
+    });
+    await (
+      bot as unknown as { handleText: (ctx: Context) => Promise<void> }
+    ).handleText(ctxText);
+    expect(config.setInterestInterval).toHaveBeenCalledWith(12, 100);
+    expect(ctxText.reply).toHaveBeenCalledWith(
+      '❌ Введите положительное целое число'
+    );
+    expect(showSpy).toHaveBeenCalledWith(ctxText, 'menu');
+  });
+
   it('stores user messages via ChatMemoryManager', async () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
@@ -91,7 +225,8 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository
+      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatConfigService() as unknown as ChatConfigService
     );
     configureSpy.mockRestore();
 
@@ -139,7 +274,8 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      chatRepo as unknown as ChatRepository
+      chatRepo as unknown as ChatRepository,
+      new DummyChatConfigService() as unknown as ChatConfigService
     );
     await new Promise((resolve) => setImmediate(resolve));
     const call = actionSpy.mock.calls.find(
@@ -193,7 +329,8 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository
+      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatConfigService() as unknown as ChatConfigService
     );
 
     const call = actionSpy.mock.calls.find(
@@ -248,7 +385,8 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository
+      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatConfigService() as unknown as ChatConfigService
     );
     await new Promise((resolve) => setImmediate(resolve));
 
@@ -305,7 +443,8 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository
+      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatConfigService() as unknown as ChatConfigService
     );
 
     const call = actionSpy.mock.calls.find(
@@ -375,7 +514,8 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository
+      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatConfigService() as unknown as ChatConfigService
     );
     configureSpy.mockRestore();
 
@@ -418,7 +558,8 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository
+      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatConfigService() as unknown as ChatConfigService
     );
     configureSpy.mockRestore();
 
@@ -464,7 +605,8 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository
+      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatConfigService() as unknown as ChatConfigService
     );
 
     const call = actionSpy.mock.calls.find(
@@ -520,7 +662,8 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository
+      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatConfigService() as unknown as ChatConfigService
     );
     configureSpy.mockRestore();
 
@@ -570,7 +713,8 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository
+      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatConfigService() as unknown as ChatConfigService
     );
     configureSpy.mockRestore();
 
@@ -614,7 +758,8 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository
+      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatConfigService() as unknown as ChatConfigService
     );
     configureSpy.mockRestore();
 
@@ -657,7 +802,8 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository
+      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatConfigService() as unknown as ChatConfigService
     );
     configureSpy.mockRestore();
 
@@ -698,7 +844,8 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository
+      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatConfigService() as unknown as ChatConfigService
     );
     configureSpy.mockRestore();
     const botWithRouter = bot as unknown as {
@@ -729,7 +876,8 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository
+      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatConfigService() as unknown as ChatConfigService
     );
     configureSpy.mockRestore();
     const botWithRouter = bot as unknown as {
@@ -769,7 +917,8 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository
+      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatConfigService() as unknown as ChatConfigService
     );
     configureSpy.mockRestore();
     const botWithRouter = bot as unknown as {
@@ -802,7 +951,8 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository
+      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatConfigService() as unknown as ChatConfigService
     );
     configureSpy.mockRestore();
     const sendRequest = vi
@@ -854,7 +1004,8 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository
+      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatConfigService() as unknown as ChatConfigService
     );
     configureSpy.mockRestore();
     const ctx = {
@@ -886,7 +1037,8 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository
+      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatConfigService() as unknown as ChatConfigService
     );
     configureSpy.mockRestore();
     const deleteWebhook = vi

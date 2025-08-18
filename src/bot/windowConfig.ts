@@ -8,6 +8,9 @@ import {
 
 export type WindowId =
   | 'menu'
+  | 'chat_settings'
+  | 'chat_history_limit'
+  | 'chat_interest_interval'
   | 'admin_menu'
   | 'admin_chats'
   | 'admin_chat'
@@ -25,6 +28,8 @@ interface WindowActions {
   requestChatAccess(ctx: Context): Promise<void> | void;
   requestUserAccess(ctx: Context): Promise<void> | void;
   showAdminChats(ctx: Context): Promise<void> | void;
+  configHistoryLimit(ctx: Context): Promise<void> | void;
+  configInterestInterval(ctx: Context): Promise<void> | void;
 }
 
 export function createWindows(actions: WindowActions): RouteApi<WindowId>[] {
@@ -42,7 +47,35 @@ export function createWindows(actions: WindowActions): RouteApi<WindowId>[] {
           callback: 'reset_memory',
           action: actions.resetMemory,
         }),
+        b({
+          text: '⚙️ Настройки',
+          callback: 'chat_settings',
+          target: 'chat_settings',
+        }),
       ],
+    })),
+    r('chat_settings', async () => ({
+      text: 'Выберите настройку:',
+      buttons: [
+        b({
+          text: '🕒 Лимит истории',
+          callback: 'config_history_limit',
+          action: actions.configHistoryLimit,
+        }),
+        b({
+          text: '✨ Интервал интереса',
+          callback: 'config_interest_interval',
+          action: actions.configInterestInterval,
+        }),
+      ],
+    })),
+    r('chat_history_limit', async () => ({
+      text: 'Введите новый лимит истории:',
+      buttons: [],
+    })),
+    r('chat_interest_interval', async () => ({
+      text: 'Введите новый интервал интереса:',
+      buttons: [],
     })),
     r('admin_menu', async () => ({
       text: 'Выберите действие:',

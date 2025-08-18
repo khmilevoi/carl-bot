@@ -39,6 +39,13 @@ export class RepositoryChatConfigService implements ChatConfigService {
   }
 
   async setHistoryLimit(chatId: number, historyLimit: number): Promise<void> {
+    if (
+      !Number.isInteger(historyLimit) ||
+      historyLimit <= 0 ||
+      historyLimit > 50
+    ) {
+      throw new Error('Invalid history limit');
+    }
     const config = await this.getConfig(chatId);
     await this.repo.upsert({ ...config, historyLimit });
   }
@@ -47,6 +54,13 @@ export class RepositoryChatConfigService implements ChatConfigService {
     chatId: number,
     interestInterval: number
   ): Promise<void> {
+    if (
+      !Number.isInteger(interestInterval) ||
+      interestInterval <= 0 ||
+      interestInterval > 50
+    ) {
+      throw new Error('Invalid interest interval');
+    }
     const config = await this.getConfig(chatId);
     await this.repo.upsert({ ...config, interestInterval });
   }
