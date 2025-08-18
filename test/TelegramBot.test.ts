@@ -42,6 +42,8 @@ class DummyAdmin {
   exportTables = vi.fn(async () => []);
   exportChatData = vi.fn(async () => []);
   createAccessKey = vi.fn(async () => new Date());
+  setHistoryLimit = vi.fn(async () => {});
+  setInterestInterval = vi.fn(async () => {});
 }
 
 class DummyExtractor {
@@ -246,6 +248,212 @@ describe('TelegramBot', () => {
     expect(showSpy).toHaveBeenCalledWith(ctxText, 'menu');
   });
 
+  it('admin updates history limit on valid input', async () => {
+    const memories = new MockChatMemoryManager();
+    const admin = new DummyAdmin();
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      admin as unknown as AdminService,
+      new DummyApprovalService() as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatConfigService() as unknown as ChatConfigService
+    );
+    const showSpy = vi
+      .spyOn(
+        bot as unknown as {
+          showAdminChat: (ctx: Context, id: number) => Promise<void>;
+        },
+        'showAdminChat'
+      )
+      .mockResolvedValue(undefined);
+    await (
+      bot as unknown as {
+        handleAdminConfigHistoryLimit: (
+          ctx: Context,
+          chatId: number
+        ) => Promise<void>;
+      }
+    ).handleAdminConfigHistoryLimit(
+      {
+        chat: { id: 1 },
+        reply: vi.fn(),
+      } as Context,
+      42
+    );
+    const ctxText = {
+      chat: { id: 1 },
+      message: { text: '5' },
+      reply: vi.fn(),
+    } as unknown as Context;
+    await (
+      bot as unknown as { handleText: (ctx: Context) => Promise<void> }
+    ).handleText(ctxText);
+    expect(admin.setHistoryLimit).toHaveBeenCalledWith(42, 5);
+    expect(ctxText.reply).toHaveBeenCalledWith('✅ Лимит истории обновлён');
+    expect(showSpy).toHaveBeenCalledWith(ctxText, 42);
+  });
+
+  it('admin updates interest interval on valid input', async () => {
+    const memories = new MockChatMemoryManager();
+    const admin = new DummyAdmin();
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      admin as unknown as AdminService,
+      new DummyApprovalService() as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatConfigService() as unknown as ChatConfigService
+    );
+    const showSpy = vi
+      .spyOn(
+        bot as unknown as {
+          showAdminChat: (ctx: Context, id: number) => Promise<void>;
+        },
+        'showAdminChat'
+      )
+      .mockResolvedValue(undefined);
+    await (
+      bot as unknown as {
+        handleAdminConfigInterestInterval: (
+          ctx: Context,
+          chatId: number
+        ) => Promise<void>;
+      }
+    ).handleAdminConfigInterestInterval(
+      {
+        chat: { id: 1 },
+        reply: vi.fn(),
+      } as Context,
+      43
+    );
+    const ctxText = {
+      chat: { id: 1 },
+      message: { text: '10' },
+      reply: vi.fn(),
+    } as unknown as Context;
+    await (
+      bot as unknown as { handleText: (ctx: Context) => Promise<void> }
+    ).handleText(ctxText);
+    expect(admin.setInterestInterval).toHaveBeenCalledWith(43, 10);
+    expect(ctxText.reply).toHaveBeenCalledWith('✅ Интервал интереса обновлён');
+    expect(showSpy).toHaveBeenCalledWith(ctxText, 43);
+  });
+
+  it('admin handles invalid history limit input', async () => {
+    const memories = new MockChatMemoryManager();
+    const admin = new DummyAdmin();
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      admin as unknown as AdminService,
+      new DummyApprovalService() as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatConfigService() as unknown as ChatConfigService
+    );
+    const showSpy = vi
+      .spyOn(
+        bot as unknown as {
+          showAdminChat: (ctx: Context, id: number) => Promise<void>;
+        },
+        'showAdminChat'
+      )
+      .mockResolvedValue(undefined);
+    await (
+      bot as unknown as {
+        handleAdminConfigHistoryLimit: (
+          ctx: Context,
+          chatId: number
+        ) => Promise<void>;
+      }
+    ).handleAdminConfigHistoryLimit(
+      {
+        chat: { id: 1 },
+        reply: vi.fn(),
+      } as Context,
+      44
+    );
+    const ctxText = {
+      chat: { id: 1 },
+      message: { text: '100' },
+      reply: vi.fn(),
+    } as unknown as Context;
+    admin.setHistoryLimit.mockImplementationOnce(async () => {
+      throw new InvalidHistoryLimitError('Invalid history limit');
+    });
+    await (
+      bot as unknown as { handleText: (ctx: Context) => Promise<void> }
+    ).handleText(ctxText);
+    expect(admin.setHistoryLimit).toHaveBeenCalledWith(44, 100);
+    expect(ctxText.reply).toHaveBeenCalledWith(
+      '❌ Лимит истории должен быть целым числом от 1 до 50'
+    );
+    expect(showSpy).toHaveBeenCalledWith(ctxText, 44);
+  });
+
+  it('admin handles invalid interest interval input', async () => {
+    const memories = new MockChatMemoryManager();
+    const admin = new DummyAdmin();
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      admin as unknown as AdminService,
+      new DummyApprovalService() as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatConfigService() as unknown as ChatConfigService
+    );
+    const showSpy = vi
+      .spyOn(
+        bot as unknown as {
+          showAdminChat: (ctx: Context, id: number) => Promise<void>;
+        },
+        'showAdminChat'
+      )
+      .mockResolvedValue(undefined);
+    await (
+      bot as unknown as {
+        handleAdminConfigInterestInterval: (
+          ctx: Context,
+          chatId: number
+        ) => Promise<void>;
+      }
+    ).handleAdminConfigInterestInterval(
+      {
+        chat: { id: 1 },
+        reply: vi.fn(),
+      } as Context,
+      45
+    );
+    const ctxText = {
+      chat: { id: 1 },
+      message: { text: '100' },
+      reply: vi.fn(),
+    } as unknown as Context;
+    admin.setInterestInterval.mockImplementationOnce(async () => {
+      throw new InvalidInterestIntervalError('Invalid interest interval');
+    });
+    await (
+      bot as unknown as { handleText: (ctx: Context) => Promise<void> }
+    ).handleText(ctxText);
+    expect(admin.setInterestInterval).toHaveBeenCalledWith(45, 100);
+    expect(ctxText.reply).toHaveBeenCalledWith(
+      '❌ Интервал интереса должен быть целым числом от 1 до 50'
+    );
+    expect(showSpy).toHaveBeenCalledWith(ctxText, 45);
+  });
+
   it('stores user messages via ChatMemoryManager', async () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
@@ -410,7 +618,21 @@ describe('TelegramBot', () => {
     expect(ctx.deleteMessage).toHaveBeenCalled();
     expect(ctx.reply).toHaveBeenCalledWith('Статус чата 42: approved', {
       reply_markup: {
-        inline_keyboard: [[{ text: 'Забанить', callback_data: 'chat_ban:42' }]],
+        inline_keyboard: [
+          [{ text: 'Забанить', callback_data: 'chat_ban:42' }],
+          [
+            {
+              text: '🕒 Лимит истории',
+              callback_data: 'admin_chat_history_limit:42',
+            },
+          ],
+          [
+            {
+              text: '✨ Интервал интереса',
+              callback_data: 'admin_chat_interest_interval:42',
+            },
+          ],
+        ],
       },
     });
   });
@@ -534,6 +756,18 @@ describe('TelegramBot', () => {
       reply_markup: {
         inline_keyboard: [
           [{ text: 'Разбанить', callback_data: 'chat_unban:7' }],
+          [
+            {
+              text: '🕒 Лимит истории',
+              callback_data: 'admin_chat_history_limit:7',
+            },
+          ],
+          [
+            {
+              text: '✨ Интервал интереса',
+              callback_data: 'admin_chat_interest_interval:7',
+            },
+          ],
         ],
       },
     });

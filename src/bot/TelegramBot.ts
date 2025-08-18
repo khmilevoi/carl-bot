@@ -67,7 +67,10 @@ export class TelegramBot {
   private bot: Telegraf;
   private env: Env;
   private router: ReturnType<typeof registerRoutes<WindowId>>;
-  private awaitingConfig = new Map<number, 'history' | 'interest'>();
+  private awaitingConfig = new Map<
+    number,
+    { type: 'history' | 'interest'; chatId: number; admin: boolean }
+  >();
 
   constructor(
     @inject(ENV_SERVICE_ID) envService: EnvService,
@@ -168,6 +171,28 @@ export class TelegramBot {
       await ctx.deleteMessage().catch(() => {});
       await ctx.answerCbQuery();
       await this.showAdminChat(ctx, chatId);
+    });
+
+    this.bot.action(/^admin_chat_history_limit:(\S+)$/, async (ctx) => {
+      const adminChatId = this.env.ADMIN_CHAT_ID;
+      if (ctx.chat?.id !== adminChatId) {
+        await ctx.answerCbQuery();
+        return;
+      }
+      const chatId = Number(ctx.match[1]);
+      await ctx.answerCbQuery();
+      await this.handleAdminConfigHistoryLimit(ctx, chatId);
+    });
+
+    this.bot.action(/^admin_chat_interest_interval:(\S+)$/, async (ctx) => {
+      const adminChatId = this.env.ADMIN_CHAT_ID;
+      if (ctx.chat?.id !== adminChatId) {
+        await ctx.answerCbQuery();
+        return;
+      }
+      const chatId = Number(ctx.match[1]);
+      await ctx.answerCbQuery();
+      await this.handleAdminConfigInterestInterval(ctx, chatId);
     });
 
     this.bot.action(/^chat_approve:(\S+)$/, async (ctx) => {
@@ -372,15 +397,55 @@ export class TelegramBot {
   private async handleConfigHistoryLimit(ctx: Context): Promise<void> {
     const chatId = ctx.chat?.id;
     assert(chatId, 'This is not a chat');
-    this.awaitingConfig.set(chatId, 'history');
+    this.awaitingConfig.set(chatId, {
+      type: 'history',
+      chatId,
+      admin: false,
+    });
     await this.router.show(ctx, 'chat_history_limit');
   }
 
   private async handleConfigInterestInterval(ctx: Context): Promise<void> {
     const chatId = ctx.chat?.id;
     assert(chatId, 'This is not a chat');
-    this.awaitingConfig.set(chatId, 'interest');
+    this.awaitingConfig.set(chatId, {
+      type: 'interest',
+      chatId,
+      admin: false,
+    });
     await this.router.show(ctx, 'chat_interest_interval');
+  }
+
+  private async handleAdminConfigHistoryLimit(
+    ctx: Context,
+    targetChatId: number
+  ): Promise<void> {
+    const adminChatId = ctx.chat?.id;
+    assert(adminChatId, 'This is not a chat');
+    this.awaitingConfig.set(adminChatId, {
+      type: 'history',
+      chatId: targetChatId,
+      admin: true,
+    });
+    await this.router.show(ctx, 'admin_chat_history_limit', {
+      loadData: async () => ({ chatId: targetChatId }),
+    });
+  }
+
+  private async handleAdminConfigInterestInterval(
+    ctx: Context,
+    targetChatId: number
+  ): Promise<void> {
+    const adminChatId = ctx.chat?.id;
+    assert(adminChatId, 'This is not a chat');
+    this.awaitingConfig.set(adminChatId, {
+      type: 'interest',
+      chatId: targetChatId,
+      admin: true,
+    });
+    await this.router.show(ctx, 'admin_chat_interest_interval', {
+      loadData: async () => ({ chatId: targetChatId }),
+    });
   }
 
   private async handleResetMemory(ctx: Context): Promise<void> {
@@ -418,15 +483,26 @@ export class TelegramBot {
         ctx.message && 'text' in ctx.message ? ctx.message.text : undefined;
       const value = Number(text);
       try {
-        if (awaiting === 'history') {
-          await this.chatConfig.setHistoryLimit(chatId, value);
+        if (awaiting.type === 'history') {
+          if (awaiting.admin) {
+            await this.admin.setHistoryLimit(awaiting.chatId, value);
+          } else {
+            await this.chatConfig.setHistoryLimit(awaiting.chatId, value);
+          }
           await ctx.reply('✅ Лимит истории обновлён');
         } else {
-          await this.chatConfig.setInterestInterval(chatId, value);
+          if (awaiting.admin) {
+            await this.admin.setInterestInterval(awaiting.chatId, value);
+          } else {
+            await this.chatConfig.setInterestInterval(awaiting.chatId, value);
+          }
           await ctx.reply('✅ Интервал интереса обновлён');
         }
       } catch (error) {
-        logger.error({ error, chatId }, 'Failed to update chat config');
+        logger.error(
+          { error, chatId: awaiting.chatId },
+          'Failed to update chat config'
+        );
         const message = (() => {
           if (error instanceof InvalidHistoryLimitError) {
             return '❌ Лимит истории должен быть целым числом от 1 до 50';
@@ -438,7 +514,11 @@ export class TelegramBot {
         })();
         await ctx.reply(message);
       }
-      await this.router.show(ctx, 'menu');
+      if (awaiting.admin) {
+        await this.showAdminChat(ctx, awaiting.chatId);
+      } else {
+        await this.router.show(ctx, 'menu');
+      }
       return;
     }
     if (chatId === this.env.ADMIN_CHAT_ID) {

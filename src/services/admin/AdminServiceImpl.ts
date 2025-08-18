@@ -29,6 +29,10 @@ import {
   type UserRepository,
 } from '../../repositories/interfaces/UserRepository.interface';
 import type { ChatMessage } from '../ai/AIService.interface';
+import {
+  CHAT_CONFIG_SERVICE_ID,
+  type ChatConfigService,
+} from '../chat/ChatConfigService';
 import { AdminService } from './AdminService.interface';
 
 @injectable()
@@ -40,7 +44,8 @@ export class AdminServiceImpl implements AdminService {
     @inject(MESSAGE_REPOSITORY_ID) private messageRepo: MessageRepository,
     @inject(SUMMARY_REPOSITORY_ID) private summaryRepo: SummaryRepository,
     @inject(CHAT_USER_REPOSITORY_ID) private chatUserRepo: ChatUserRepository,
-    @inject(USER_REPOSITORY_ID) private userRepo: UserRepository
+    @inject(USER_REPOSITORY_ID) private userRepo: UserRepository,
+    @inject(CHAT_CONFIG_SERVICE_ID) private chatConfig: ChatConfigService
   ) {}
 
   async createAccessKey(
@@ -134,6 +139,14 @@ export class AdminServiceImpl implements AdminService {
     }
 
     return files;
+  }
+
+  async setHistoryLimit(chatId: number, value: number): Promise<void> {
+    await this.chatConfig.setHistoryLimit(chatId, value);
+  }
+
+  async setInterestInterval(chatId: number, value: number): Promise<void> {
+    await this.chatConfig.setInterestInterval(chatId, value);
   }
 
   private async exportTable(
