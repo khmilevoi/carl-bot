@@ -13,7 +13,10 @@ import type { ChatResponder } from '../src/services/chat/ChatResponder';
 import type { TriggerPipeline } from '../src/services/chat/TriggerPipeline';
 import type { EnvService } from '../src/services/env/EnvService';
 import type { ChatConfigService } from '../src/services/chat/ChatConfigService';
-import { InvalidInterestIntervalError } from '../src/services/chat/ChatConfigService';
+import {
+  InvalidInterestIntervalError,
+  InvalidHistoryLimitError,
+} from '../src/services/chat/ChatConfigService';
 import type {
   MessageContext,
   MessageContextExtractor,
@@ -163,7 +166,47 @@ describe('TelegramBot', () => {
     expect(showSpy).toHaveBeenCalledWith(ctxText, 'menu');
   });
 
-  it('handles invalid config input', async () => {
+  it('handles invalid history limit input', async () => {
+    const memories = new MockChatMemoryManager();
+    const config = new DummyChatConfigService();
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      new DummyApprovalService() as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatRepository() as unknown as ChatRepository,
+      config as unknown as ChatConfigService
+    );
+    const showSpy = vi
+      .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
+      .mockResolvedValue(undefined);
+    await (
+      bot as unknown as {
+        handleConfigHistoryLimit: (ctx: Context) => Promise<void>;
+      }
+    ).handleConfigHistoryLimit({ chat: { id: 12 } } as Context);
+    const ctxText = {
+      chat: { id: 12 },
+      message: { text: '100' },
+      reply: vi.fn(),
+    } as unknown as Context;
+    config.setHistoryLimit.mockImplementationOnce(async () => {
+      throw new InvalidHistoryLimitError('Invalid history limit');
+    });
+    await (
+      bot as unknown as { handleText: (ctx: Context) => Promise<void> }
+    ).handleText(ctxText);
+    expect(config.setHistoryLimit).toHaveBeenCalledWith(12, 100);
+    expect(ctxText.reply).toHaveBeenCalledWith(
+      '❌ Лимит истории должен быть целым числом от 1 до 50'
+    );
+    expect(showSpy).toHaveBeenCalledWith(ctxText, 'menu');
+  });
+
+  it('handles invalid interest interval input', async () => {
     const memories = new MockChatMemoryManager();
     const config = new DummyChatConfigService();
     const bot = new TelegramBot(
@@ -184,9 +227,9 @@ describe('TelegramBot', () => {
       bot as unknown as {
         handleConfigInterestInterval: (ctx: Context) => Promise<void>;
       }
-    ).handleConfigInterestInterval({ chat: { id: 12 } } as Context);
+    ).handleConfigInterestInterval({ chat: { id: 13 } } as Context);
     const ctxText = {
-      chat: { id: 12 },
+      chat: { id: 13 },
       message: { text: '100' },
       reply: vi.fn(),
     } as unknown as Context;
@@ -196,9 +239,9 @@ describe('TelegramBot', () => {
     await (
       bot as unknown as { handleText: (ctx: Context) => Promise<void> }
     ).handleText(ctxText);
-    expect(config.setInterestInterval).toHaveBeenCalledWith(12, 100);
+    expect(config.setInterestInterval).toHaveBeenCalledWith(13, 100);
     expect(ctxText.reply).toHaveBeenCalledWith(
-      '❌ Введите положительное целое число'
+      '❌ Интервал интереса должен быть целым числом от 1 до 50'
     );
     expect(showSpy).toHaveBeenCalledWith(ctxText, 'menu');
   });

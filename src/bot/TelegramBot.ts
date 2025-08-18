@@ -427,11 +427,15 @@ export class TelegramBot {
         }
       } catch (error) {
         logger.error({ error, chatId }, 'Failed to update chat config');
-        const message =
-          error instanceof InvalidHistoryLimitError ||
-          error instanceof InvalidInterestIntervalError
-            ? '❌ Введите положительное целое число'
-            : '❌ Ошибка при обновлении параметра';
+        const message = (() => {
+          if (error instanceof InvalidHistoryLimitError) {
+            return '❌ Лимит истории должен быть целым числом от 1 до 50';
+          }
+          if (error instanceof InvalidInterestIntervalError) {
+            return '❌ Интервал интереса должен быть целым числом от 1 до 50';
+          }
+          return '❌ Ошибка при обновлении параметра';
+        })();
         await ctx.reply(message);
       }
       await this.router.show(ctx, 'menu');
