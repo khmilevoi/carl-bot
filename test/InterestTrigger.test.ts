@@ -5,7 +5,6 @@ import {
   DefaultDialogueManager,
   type DialogueManager,
 } from '../src/services/chat/DialogueManager';
-import { TestEnvService } from '../src/services/env/EnvService';
 import { InterestChecker } from '../src/services/interest/InterestChecker';
 import { InterestTrigger } from '../src/triggers/InterestTrigger';
 import { TriggerContext } from '../src/triggers/Trigger.interface';
@@ -35,9 +34,9 @@ class MockInterestChecker implements InterestChecker {
 }
 
 describe('InterestTrigger', () => {
-  const dialogue: DialogueManager = new DefaultDialogueManager(
-    new TestEnvService()
-  );
+  const dialogue: DialogueManager = new DefaultDialogueManager({
+    getDialogueTimeoutMs: () => 0,
+  } as any);
   const baseCtx: TriggerContext = { text: '', replyText: '', chatId: 1 };
 
   it('returns null when message count is below threshold', async () => {
@@ -94,9 +93,9 @@ describe('InterestTrigger', () => {
       why: 'because',
     });
     const trigger = new InterestTrigger(checker);
-    const activeDialogue: DialogueManager = new DefaultDialogueManager(
-      new TestEnvService()
-    );
+    const activeDialogue: DialogueManager = new DefaultDialogueManager({
+      getDialogueTimeoutMs: () => 0,
+    } as any);
     activeDialogue.start(baseCtx.chatId);
     const res = await trigger.apply(
       {} as unknown as Context,
