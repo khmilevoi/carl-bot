@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { AIService, ChatMessage } from '../src/services/ai/AIService.interface';
 import { EnvService } from '../src/services/env/EnvService';
 import { DefaultInterestChecker } from '../src/services/interest/InterestChecker';
-import { MessageService } from '../src/services/messages/MessageService.interface';
+import { InterestMessageStore } from '../src/services/messages/InterestMessageStore';
 import { SummaryService } from '../src/services/summaries/SummaryService.interface';
 
 const interval = 2;
@@ -16,14 +16,17 @@ function createChecker(opts: {
   aiResult?: { messageId: string; why: string } | null;
 }): {
   checker: DefaultInterestChecker;
-  messages: MessageService;
+  store: InterestMessageStore;
   summaries: SummaryService;
   ai: AIService;
 } {
-  const messages: MessageService = {
-    getCount: vi.fn().mockResolvedValue(opts.count),
-    getLastMessages: vi.fn().mockResolvedValue(opts.history ?? []),
-  } as unknown as MessageService;
+  const store: InterestMessageStore = {
+    addMessage: vi.fn(),
+    getMessages: vi.fn(() => []),
+    getCount: vi.fn(() => opts.count),
+    getLastMessages: vi.fn(() => opts.history ?? []),
+    clearMessages: vi.fn(),
+  } as unknown as InterestMessageStore;
   const summaries: SummaryService = {
     getSummary: vi.fn().mockResolvedValue(opts.summary),
   } as unknown as SummaryService;
@@ -37,8 +40,8 @@ function createChecker(opts: {
   } as EnvService;
 
   return {
-    checker: new DefaultInterestChecker(messages, summaries, ai, env),
-    messages,
+    checker: new DefaultInterestChecker(store, summaries, ai, env),
+    store,
     summaries,
     ai,
   };
@@ -46,12 +49,13 @@ function createChecker(opts: {
 
 describe('DefaultInterestChecker', () => {
   it('returns null when message count is not divisible by interval', async () => {
-    const { checker, messages, summaries, ai } = createChecker({ count: 3 });
+    const { checker, store, summaries, ai } = createChecker({ count: 1 });
 
     const res = await checker.check(chatId);
 
     expect(res).toBeNull();
-    expect(messages.getLastMessages).not.toHaveBeenCalled();
+    expect(store.getLastMessages).not.toHaveBeenCalled();
+    expect(store.clearMessages).not.toHaveBeenCalled();
     expect(summaries.getSummary).not.toHaveBeenCalled();
     expect(ai.checkInterest).not.toHaveBeenCalled();
   });
@@ -61,8 +65,8 @@ describe('DefaultInterestChecker', () => {
       { role: 'user', content: 'hello', messageId: 1 },
       { role: 'user', content: 'world', messageId: 2 },
     ];
-    const { checker, messages, summaries, ai } = createChecker({
-      count: 4,
+    const { checker, store, summaries, ai } = createChecker({
+      count: 2,
       history,
       summary: 'summary',
       aiResult: { messageId: '2', why: 'because' },
@@ -70,7 +74,8 @@ describe('DefaultInterestChecker', () => {
 
     const res = await checker.check(chatId);
 
-    expect(messages.getLastMessages).toHaveBeenCalledWith(chatId, interval);
+    expect(store.getLastMessages).toHaveBeenCalledWith(chatId, interval);
+    expect(store.clearMessages).toHaveBeenCalledWith(chatId);
     expect(summaries.getSummary).toHaveBeenCalledWith(chatId);
     expect(ai.checkInterest).toHaveBeenCalledWith(history, 'summary');
     expect(res).toEqual({ messageId: '2', message: 'world', why: 'because' });
@@ -81,8 +86,8 @@ describe('DefaultInterestChecker', () => {
       { role: 'user', content: 'msg1', messageId: 1 },
       { role: 'user', content: 'msg2', messageId: 2 },
     ];
-    const { checker } = createChecker({
-      count: 4,
+    const { checker, store } = createChecker({
+      count: 2,
       history,
       summary: 'summary',
       aiResult: null,
@@ -90,13 +95,14 @@ describe('DefaultInterestChecker', () => {
 
     const res = await checker.check(chatId);
     expect(res).toBeNull();
+    expect(store.clearMessages).toHaveBeenCalledWith(chatId);
   });
 
   it('uses empty message when ID not found', async () => {
     const history: ChatMessage[] = [
       { role: 'user', content: 'msg1', messageId: 1 },
     ];
-    const { checker } = createChecker({
+    const { checker, store } = createChecker({
       count: 2,
       history,
       summary: '',
@@ -104,5 +110,6 @@ describe('DefaultInterestChecker', () => {
     });
     const res = await checker.check(chatId);
     expect(res).toEqual(null);
+    expect(store.clearMessages).toHaveBeenCalledWith(chatId);
   });
 });

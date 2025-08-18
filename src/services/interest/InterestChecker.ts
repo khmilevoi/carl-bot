@@ -8,9 +8,9 @@ import {
 } from '../ai/AIService.interface';
 import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
 import {
-  MESSAGE_SERVICE_ID,
-  MessageService,
-} from '../messages/MessageService.interface';
+  INTEREST_MESSAGE_STORE_ID,
+  InterestMessageStore,
+} from '../messages/InterestMessageStore';
 import {
   SUMMARY_SERVICE_ID,
   SummaryService,
@@ -31,7 +31,8 @@ export class DefaultInterestChecker implements InterestChecker {
   private readonly interval: number;
 
   constructor(
-    @inject(MESSAGE_SERVICE_ID) private messages: MessageService,
+    @inject(INTEREST_MESSAGE_STORE_ID)
+    private interestMessageStore: InterestMessageStore,
     @inject(SUMMARY_SERVICE_ID) private summaries: SummaryService,
     @inject(AI_SERVICE_ID) private ai: AIService,
     @inject(ENV_SERVICE_ID) envService: EnvService
@@ -42,15 +43,15 @@ export class DefaultInterestChecker implements InterestChecker {
   async check(
     chatId: number
   ): Promise<{ messageId: string; message: string; why: string } | null> {
-    const count = await this.messages.getCount(chatId);
-    if (count % this.interval !== 0) {
+    const count = this.interestMessageStore.getCount(chatId);
+    if (count < this.interval) {
       return null;
     }
-
-    const history: ChatMessage[] = await this.messages.getLastMessages(
+    const history: ChatMessage[] = this.interestMessageStore.getLastMessages(
       chatId,
       this.interval
     );
+    this.interestMessageStore.clearMessages(chatId);
     const summary = (await this.summaries.getSummary(chatId)) ?? '';
     const result = await this.ai.checkInterest(history, summary);
     if (!result) {
