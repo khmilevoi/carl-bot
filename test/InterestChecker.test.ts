@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { AIService, ChatMessage } from '../src/services/ai/AIService.interface';
 import { DefaultInterestChecker } from '../src/services/interest/InterestChecker';
+import { ChatConfigService } from '../src/services/chat/ChatConfigService';
 import {
   InterestMessageStore,
   InterestMessageStoreImpl,
@@ -21,6 +22,7 @@ function createChecker(opts: {
   store: InterestMessageStore;
   summaries: SummaryService;
   ai: AIService;
+  chatConfig: ChatConfigService;
 } {
   const store: InterestMessageStore = {
     addMessage: vi.fn(),
@@ -35,21 +37,34 @@ function createChecker(opts: {
   const ai: AIService = {
     checkInterest: vi.fn().mockResolvedValue(opts.aiResult ?? null),
   } as unknown as AIService;
+  const chatConfig: ChatConfigService = {
+    getConfig: vi.fn().mockResolvedValue({
+      chatId,
+      historyLimit: 0,
+      interestInterval: interval,
+    }),
+    setHistoryLimit: vi.fn(),
+    setInterestInterval: vi.fn(),
+  } as unknown as ChatConfigService;
   return {
-    checker: new DefaultInterestChecker(store, summaries, ai, interval),
+    checker: new DefaultInterestChecker(store, summaries, ai, chatConfig),
     store,
     summaries,
     ai,
+    chatConfig,
   };
 }
 
 describe('DefaultInterestChecker', () => {
   it('returns null when message count is not divisible by interval', async () => {
-    const { checker, store, summaries, ai } = createChecker({ count: 1 });
+    const { checker, store, summaries, ai, chatConfig } = createChecker({
+      count: 1,
+    });
 
     const res = await checker.check(chatId);
 
     expect(res).toBeNull();
+    expect(chatConfig.getConfig).toHaveBeenCalledWith(chatId);
     expect(store.getLastMessages).not.toHaveBeenCalled();
     expect(store.clearMessages).not.toHaveBeenCalled();
     expect(summaries.getSummary).not.toHaveBeenCalled();
@@ -120,7 +135,13 @@ describe('DefaultInterestChecker', () => {
       {
         checkInterest: vi.fn().mockResolvedValue(null),
       } as unknown as AIService,
-      1
+      {
+        getConfig: vi
+          .fn()
+          .mockResolvedValue({ chatId, historyLimit: 0, interestInterval: 1 }),
+        setHistoryLimit: vi.fn(),
+        setInterestInterval: vi.fn(),
+      } as unknown as ChatConfigService
     );
 
     await checker.check(chatId);

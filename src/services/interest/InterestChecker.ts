@@ -7,6 +7,10 @@ import {
   ChatMessage,
 } from '../ai/AIService.interface';
 import {
+  CHAT_CONFIG_SERVICE_ID,
+  ChatConfigService,
+} from '../chat/ChatConfigService';
+import {
   INTEREST_MESSAGE_STORE_ID,
   InterestMessageStore,
 } from '../messages/InterestMessageStore';
@@ -32,19 +36,21 @@ export class DefaultInterestChecker implements InterestChecker {
     private interestMessageStore: InterestMessageStore,
     @inject(SUMMARY_SERVICE_ID) private summaries: SummaryService,
     @inject(AI_SERVICE_ID) private ai: AIService,
-    private readonly interval = 25
+    @inject(CHAT_CONFIG_SERVICE_ID)
+    private chatConfig: ChatConfigService
   ) {}
 
   async check(
     chatId: number
   ): Promise<{ messageId: string; message: string; why: string } | null> {
+    const { interestInterval } = await this.chatConfig.getConfig(chatId);
     const count = this.interestMessageStore.getCount(chatId);
-    if (count < this.interval) {
+    if (count < interestInterval) {
       return null;
     }
     const history: ChatMessage[] = this.interestMessageStore.getLastMessages(
       chatId,
-      this.interval
+      interestInterval
     );
     this.interestMessageStore.clearMessages(chatId);
     const summary = (await this.summaries.getSummary(chatId)) ?? '';
