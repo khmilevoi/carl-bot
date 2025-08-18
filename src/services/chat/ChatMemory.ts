@@ -1,7 +1,6 @@
 import { inject, injectable } from 'inversify';
 
 import { ChatMessage } from '../ai/AIService.interface';
-import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
 import { logger } from '../logging/logger';
 import {
   INTEREST_MESSAGE_STORE_ID,
@@ -59,17 +58,13 @@ export class ChatMemory {
 
 @injectable()
 export class ChatMemoryManager {
-  private limit: number;
-
   constructor(
     @inject(MESSAGE_SERVICE_ID) private messages: MessageService,
     @inject(HISTORY_SUMMARIZER_ID) private summarizer: HistorySummarizer,
     @inject(CHAT_RESET_SERVICE_ID) private resetService: ChatResetService,
     @inject(INTEREST_MESSAGE_STORE_ID) private localStore: InterestMessageStore,
-    @inject(ENV_SERVICE_ID) envService: EnvService
-  ) {
-    this.limit = envService.env.CHAT_HISTORY_LIMIT;
-  }
+    private readonly limit = 50
+  ) {}
 
   public get(chatId: number): ChatMemory {
     logger.debug({ chatId }, 'Creating chat memory');

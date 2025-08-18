@@ -11,8 +11,6 @@ const setRequiredEnv = (
   process.env.OPENAI_API_KEY = 'key';
   process.env.DATABASE_URL = 'file:///tmp/test.db';
   process.env.ADMIN_CHAT_ID = '1';
-  process.env.INTEREST_MESSAGE_INTERVAL = '25';
-  process.env.CHAT_HISTORY_LIMIT = '50';
   Object.entries(overrides).forEach(([k, v]) => {
     if (v === undefined) {
       delete process.env[k];
@@ -32,16 +30,13 @@ describe('EnvService', () => {
   });
 
   it('parses environment variables and applies defaults', () => {
-    setRequiredEnv({
-      CHAT_HISTORY_LIMIT: undefined,
-      LOG_LEVEL: undefined,
-    });
+    setRequiredEnv({ LOG_LEVEL: undefined, LOG_PROMPTS: undefined });
 
     const env = new TestEnvService();
 
     expect(env.env.BOT_TOKEN).toBe('token');
-    expect(env.env.CHAT_HISTORY_LIMIT).toBe(50);
     expect(env.env.LOG_LEVEL).toBe('silent');
+    expect(env.env.LOG_PROMPTS).toBe(false);
   });
 
   it('getModels returns correct models', () => {

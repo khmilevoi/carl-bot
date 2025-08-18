@@ -6,7 +6,6 @@ import {
   AIService,
   ChatMessage,
 } from '../ai/AIService.interface';
-import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
 import {
   INTEREST_MESSAGE_STORE_ID,
   InterestMessageStore,
@@ -28,17 +27,13 @@ export const INTEREST_CHECKER_ID = Symbol.for(
 
 @injectable()
 export class DefaultInterestChecker implements InterestChecker {
-  private readonly interval: number;
-
   constructor(
     @inject(INTEREST_MESSAGE_STORE_ID)
     private interestMessageStore: InterestMessageStore,
     @inject(SUMMARY_SERVICE_ID) private summaries: SummaryService,
     @inject(AI_SERVICE_ID) private ai: AIService,
-    @inject(ENV_SERVICE_ID) envService: EnvService
-  ) {
-    this.interval = envService.env.INTEREST_MESSAGE_INTERVAL;
-  }
+    private readonly interval = 25
+  ) {}
 
   async check(
     chatId: number

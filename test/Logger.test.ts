@@ -23,7 +23,6 @@ describe('logger', () => {
       OPENAI_API_KEY: 'key',
       DATABASE_URL: 'file:///tmp/test.db',
       ADMIN_CHAT_ID: '1',
-      INTEREST_MESSAGE_INTERVAL: '1',
     };
     vi.resetModules();
     const { logger } = await import('../src/services/logging/logger');

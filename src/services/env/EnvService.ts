@@ -9,11 +9,10 @@ const envSchema = z.object({
   BOT_TOKEN: z.string().min(1),
   OPENAI_API_KEY: z.string().min(1),
   DATABASE_URL: z.string().min(1),
-  CHAT_HISTORY_LIMIT: z.coerce.number().int().positive().default(50),
   LOG_LEVEL: z.string().default('debug'),
   ADMIN_CHAT_ID: z.coerce.number(),
   NODE_ENV: z.string().default('development'),
-  INTEREST_MESSAGE_INTERVAL: z.coerce.number().int().positive(),
+  LOG_PROMPTS: z.coerce.boolean().default(false),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -106,11 +105,10 @@ export class TestEnvService implements EnvService {
       BOT_TOKEN: process.env.BOT_TOKEN ?? 'test',
       OPENAI_API_KEY: process.env.OPENAI_API_KEY ?? 'test',
       DATABASE_URL: process.env.DATABASE_URL ?? 'file:///tmp/test.db',
-      CHAT_HISTORY_LIMIT: process.env.CHAT_HISTORY_LIMIT ?? '50',
       LOG_LEVEL: process.env.LOG_LEVEL ?? 'silent',
       ADMIN_CHAT_ID: process.env.ADMIN_CHAT_ID ?? '0',
       NODE_ENV: 'test',
-      INTEREST_MESSAGE_INTERVAL: process.env.INTEREST_MESSAGE_INTERVAL ?? '25',
+      LOG_PROMPTS: process.env.LOG_PROMPTS ?? false,
     });
   }
 
