@@ -28,4 +28,16 @@ describe('logger', () => {
     const { logger } = await import('../src/services/logging/logger');
     expect(logger).toBeDefined();
   });
+
+  it('creates child logger with service field', async () => {
+    process.env.NODE_ENV = 'test';
+    vi.resetModules();
+    const { container } = await import('../src/container');
+    const LoggerModule = await import('../src/services/logging/LoggerService');
+    const service = container.get<LoggerModule.LoggerService>(
+      LoggerModule.LOGGER_SERVICE_ID
+    );
+    const child = service.create({});
+    expect(child.bindings()).toHaveProperty('service');
+  });
 });
