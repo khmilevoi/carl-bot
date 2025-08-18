@@ -6,7 +6,7 @@ import { ChatResetService } from '../src/services/chat/ChatResetService.interfac
 import { HistorySummarizer } from '../src/services/chat/HistorySummarizer';
 import { EnvService } from '../src/services/env/EnvService';
 import { MessageService } from '../src/services/messages/MessageService.interface';
-import { LocalMessageStore } from '../src/services/messages/LocalMessageStore';
+import { InterestMessageStore } from '../src/services/messages/InterestMessageStore';
 import { StoredMessage } from '../src/services/messages/StoredMessage.interface';
 
 class FakeHistorySummarizer implements HistorySummarizer {
@@ -57,7 +57,7 @@ class FakeMessageService implements MessageService {
   }
 }
 
-class FakeLocalMessageStore implements LocalMessageStore {
+class FakeInterestMessageStore implements InterestMessageStore {
   addMessage = vi.fn();
   getMessages = vi.fn(() => []);
   getCount = vi.fn(() => 0);
@@ -68,13 +68,13 @@ class FakeLocalMessageStore implements LocalMessageStore {
 describe('ChatMemory', () => {
   let summarizer: FakeHistorySummarizer;
   let messages: FakeMessageService;
-  let localStore: FakeLocalMessageStore;
+  let localStore: FakeInterestMessageStore;
   let memory: ChatMemory;
 
   beforeEach(() => {
     summarizer = new FakeHistorySummarizer();
     messages = new FakeMessageService();
-    localStore = new FakeLocalMessageStore();
+    localStore = new FakeInterestMessageStore();
     memory = new ChatMemory(messages, summarizer, localStore, 1, 2);
   });
 
@@ -153,7 +153,7 @@ describe('ChatMemory', () => {
     ]);
   });
 
-  it('stores messages in LocalMessageStore', async () => {
+  it('stores messages in InterestMessageStore', async () => {
     const msg: StoredMessage = { chatId: 1, role: 'user', content: 'hi' };
     await memory.addMessage(msg);
     expect(localStore.addMessage).toHaveBeenCalledWith({ ...msg, chatId: 1 });
@@ -167,7 +167,7 @@ describe('ChatMemoryManager', () => {
   class DummyEnvService implements EnvService {
     env = { CHAT_HISTORY_LIMIT: 2 } as EnvService['env'];
   }
-  class DummyLocalMessageStore implements LocalMessageStore {
+  class DummyInterestMessageStore implements InterestMessageStore {
     addMessage = vi.fn();
     getMessages = vi.fn(() => []);
     getCount = vi.fn(() => 0);
@@ -180,7 +180,7 @@ describe('ChatMemoryManager', () => {
       new FakeMessageService(),
       new FakeHistorySummarizer(),
       new DummyResetService(),
-      new DummyLocalMessageStore(),
+      new DummyInterestMessageStore(),
       new DummyEnvService()
     );
     const mem = manager.get(5);
@@ -189,7 +189,7 @@ describe('ChatMemoryManager', () => {
 
   it('resets memory using ChatResetService', async () => {
     const reset = new DummyResetService();
-    const local = new DummyLocalMessageStore();
+    const local = new DummyInterestMessageStore();
     const manager = new ChatMemoryManager(
       new FakeMessageService(),
       new FakeHistorySummarizer(),

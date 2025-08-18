@@ -61,9 +61,9 @@ import {
   INTEREST_CHECKER_ID,
 } from './services/interest/InterestChecker';
 import {
-  LOCAL_MESSAGE_STORE_ID,
-  LocalMessageStoreImpl,
-} from './services/messages/LocalMessageStore';
+  INTEREST_MESSAGE_STORE_ID,
+  InterestMessageStoreImpl,
+} from './services/messages/InterestMessageStore';
 import type { MessageContextExtractor } from './services/messages/MessageContextExtractor';
 import {
   DefaultMessageContextExtractor,
@@ -95,8 +95,8 @@ container
   .to(RepositoryMessageService)
   .inSingletonScope();
 container
-  .bind(LOCAL_MESSAGE_STORE_ID)
-  .to(LocalMessageStoreImpl)
+  .bind(INTEREST_MESSAGE_STORE_ID)
+  .to(InterestMessageStoreImpl)
   .inSingletonScope();
 container
   .bind(SUMMARY_SERVICE_ID)

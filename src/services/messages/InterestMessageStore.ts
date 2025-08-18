@@ -1,10 +1,9 @@
-/* eslint-disable import/no-unused-modules */
 import type { ServiceIdentifier } from 'inversify';
 
 import type { ChatMessage } from '../ai/AIService.interface';
 import type { StoredMessage } from './StoredMessage.interface';
 
-export interface LocalMessageStore {
+export interface InterestMessageStore {
   addMessage(msg: StoredMessage): void;
   getMessages(chatId: number): ChatMessage[];
   getCount(chatId: number): number;
@@ -12,11 +11,11 @@ export interface LocalMessageStore {
   clearMessages(chatId: number): void;
 }
 
-export const LOCAL_MESSAGE_STORE_ID = Symbol.for(
-  'LocalMessageStore'
-) as ServiceIdentifier<LocalMessageStore>;
+export const INTEREST_MESSAGE_STORE_ID = Symbol.for(
+  'InterestMessageStore'
+) as ServiceIdentifier<InterestMessageStore>;
 
-export class LocalMessageStoreImpl implements LocalMessageStore {
+export class InterestMessageStoreImpl implements InterestMessageStore {
   private readonly messages = new Map<number, StoredMessage[]>();
 
   addMessage(msg: StoredMessage): void {
