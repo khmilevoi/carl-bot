@@ -89,6 +89,7 @@ describe('TelegramBot', () => {
       requestChatAccess: vi.fn(),
       requestUserAccess: vi.fn(),
       showAdminChats: vi.fn(),
+      showChatSettings: vi.fn(),
       configHistoryLimit: vi.fn(),
       configInterestInterval: vi.fn(),
     });
@@ -96,6 +97,49 @@ describe('TelegramBot', () => {
     if (!menu) throw new Error('route not found');
     const { buttons } = await menu.build({ loadData: async () => undefined });
     expect(buttons.some((b) => b.text === '⚙️ Настройки')).toBe(true);
+  });
+
+  it('shows chat settings with current config', async () => {
+    const memories = new MockChatMemoryManager();
+    const configureSpy = vi
+      .spyOn(
+        TelegramBot.prototype as unknown as Record<string, unknown>,
+        'configure'
+      )
+      .mockImplementation(() => {});
+    const config = new DummyChatConfigService();
+    config.getConfig.mockResolvedValue({
+      chatId: 2,
+      historyLimit: 50,
+      interestInterval: 25,
+    });
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      new DummyApprovalService() as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatRepository() as unknown as ChatRepository,
+      config as unknown as ChatConfigService
+    );
+    configureSpy.mockRestore();
+    const botWithRouter = bot as unknown as {
+      router: { show: ReturnType<typeof vi.fn> };
+      showChatSettings: (ctx: Context) => Promise<void>;
+    };
+    botWithRouter.router = { show: vi.fn() };
+    const ctx = { chat: { id: 2 } } as unknown as Context;
+    await botWithRouter.showChatSettings(ctx);
+    expect(config.getConfig).toHaveBeenCalledWith(2);
+    expect(botWithRouter.router.show).toHaveBeenCalledWith(
+      ctx,
+      'chat_settings',
+      {
+        loadData: expect.any(Function),
+      }
+    );
   });
 
   it('updates history limit on valid input', async () => {
@@ -573,6 +617,12 @@ describe('TelegramBot', () => {
     approvalService.getStatus.mockResolvedValue('approved');
     const actionSpy = vi.spyOn(Telegraf.prototype, 'action');
 
+    const config = new DummyChatConfigService();
+    config.getConfig.mockResolvedValue({
+      chatId: 42,
+      historyLimit: 50,
+      interestInterval: 25,
+    });
     const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
@@ -582,7 +632,7 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      new DummyChatConfigService() as unknown as ChatConfigService
+      config as unknown as ChatConfigService
     );
 
     const call = actionSpy.mock.calls.find(
@@ -622,13 +672,13 @@ describe('TelegramBot', () => {
           [{ text: 'Забанить', callback_data: 'chat_ban:42' }],
           [
             {
-              text: '🕒 Лимит истории',
+              text: '🕒 Лимит истории (50)',
               callback_data: 'admin_chat_history_limit:42',
             },
           ],
           [
             {
-              text: '✨ Интервал интереса',
+              text: '✨ Интервал интереса (25)',
               callback_data: 'admin_chat_interest_interval:42',
             },
           ],
@@ -643,6 +693,12 @@ describe('TelegramBot', () => {
     approvalService.getStatus.mockResolvedValue('approved');
     const actionSpy = vi.spyOn(Telegraf.prototype, 'action');
 
+    const config = new DummyChatConfigService();
+    config.getConfig.mockResolvedValue({
+      chatId: 7,
+      historyLimit: 50,
+      interestInterval: 25,
+    });
     const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
@@ -652,7 +708,7 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      new DummyChatConfigService() as unknown as ChatConfigService
+      config as unknown as ChatConfigService
     );
     await new Promise((resolve) => setImmediate(resolve));
 
@@ -701,6 +757,12 @@ describe('TelegramBot', () => {
       .mockResolvedValueOnce('banned');
     const actionSpy = vi.spyOn(Telegraf.prototype, 'action');
 
+    const config = new DummyChatConfigService();
+    config.getConfig.mockResolvedValue({
+      chatId: 7,
+      historyLimit: 50,
+      interestInterval: 25,
+    });
     const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
@@ -710,7 +772,7 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      new DummyChatConfigService() as unknown as ChatConfigService
+      config as unknown as ChatConfigService
     );
 
     const call = actionSpy.mock.calls.find(
@@ -758,13 +820,13 @@ describe('TelegramBot', () => {
           [{ text: 'Разбанить', callback_data: 'chat_unban:7' }],
           [
             {
-              text: '🕒 Лимит истории',
+              text: '🕒 Лимит истории (50)',
               callback_data: 'admin_chat_history_limit:7',
             },
           ],
           [
             {
-              text: '✨ Интервал интереса',
+              text: '✨ Интервал интереса (25)',
               callback_data: 'admin_chat_interest_interval:7',
             },
           ],
@@ -1176,7 +1238,7 @@ describe('TelegramBot', () => {
     );
   });
 
-  it('shows no access when user lacks permission', async () => {
+  it('shows menu when user lacks permission', async () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
       .spyOn(
@@ -1206,7 +1268,7 @@ describe('TelegramBot', () => {
     botWithRouter.router = { show: vi.fn() };
     const ctx = { chat: { id: 2 }, from: { id: 5 } } as unknown as Context;
     await botWithRouter.showMenu(ctx);
-    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'no_access');
+    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'menu');
   });
 
   it('handles pending and banned chats in text handler', async () => {
@@ -1286,17 +1348,21 @@ describe('TelegramBot', () => {
       new DummyChatConfigService() as unknown as ChatConfigService
     );
     configureSpy.mockRestore();
+    const botWithRouter = bot as unknown as {
+      handleExportData: (ctx: Context) => Promise<void>;
+      router: { show: ReturnType<typeof vi.fn> };
+    };
+    botWithRouter.router = { show: vi.fn() };
     const ctx = {
       chat: { id: 2 },
       from: { id: 3 },
       answerCbQuery: vi.fn(),
     } as unknown as Context;
-    await (
-      bot as unknown as { handleExportData: (ctx: Context) => Promise<void> }
-    ).handleExportData(ctx);
+    await botWithRouter.handleExportData(ctx);
     expect(ctx.answerCbQuery).toHaveBeenCalledWith(
       'Нет доступа или ключ просрочен'
     );
+    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'no_access');
   });
 
   it('launches and stops the bot', async () => {

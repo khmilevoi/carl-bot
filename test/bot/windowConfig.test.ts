@@ -10,6 +10,9 @@ describe('windowConfig', () => {
       requestChatAccess: vi.fn(),
       requestUserAccess: vi.fn(),
       showAdminChats: vi.fn(),
+      showChatSettings: vi.fn(),
+      configHistoryLimit: vi.fn(),
+      configInterestInterval: vi.fn(),
     });
 
     const adminChats = windows.find((w) => w.id === 'admin_chats');

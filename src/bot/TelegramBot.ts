@@ -96,6 +96,7 @@ export class TelegramBot {
         this.router.show(ctx, 'admin_chats', {
           loadData: () => this.getChats(),
         }),
+      showChatSettings: (ctx: Context) => this.showChatSettings(ctx),
       configHistoryLimit: (ctx: Context) => this.handleConfigHistoryLimit(ctx),
       configInterestInterval: (ctx: Context) =>
         this.handleConfigInterestInterval(ctx),
@@ -285,22 +286,18 @@ export class TelegramBot {
       await this.router.show(ctx, 'chat_not_approved');
       return;
     }
-
-    const userId = ctx.from?.id;
-    if (!userId) return;
-    const allowed = await this.admin.hasAccess(chatId, userId);
-    if (!allowed) {
-      await this.router.show(ctx, 'no_access');
-      return;
-    }
-
     await this.router.show(ctx, 'menu');
   }
 
   private async showAdminChat(ctx: Context, chatId: number): Promise<void> {
-    const load = async (): Promise<{ chatId: number; status: string }> => ({
+    const load = async (): Promise<{
+      chatId: number;
+      status: string;
+      config: { historyLimit: number; interestInterval: number };
+    }> => ({
       chatId,
       status: await this.approvalService.getStatus(chatId),
+      config: await this.chatConfig.getConfig(chatId),
     });
     await this.router.show(ctx, 'admin_chat', {
       loadData: load,
@@ -349,6 +346,15 @@ export class TelegramBot {
     await ctx.reply('Запрос отправлен администратору.');
   }
 
+  private async showChatSettings(ctx: Context): Promise<void> {
+    const chatId = ctx.chat?.id;
+    assert(chatId, 'This is not a chat');
+    const config = await this.chatConfig.getConfig(chatId);
+    await this.router.show(ctx, 'chat_settings', {
+      loadData: () => config,
+    });
+  }
+
   private async handleExportData(ctx: Context): Promise<void> {
     const chatId = ctx.chat?.id;
     const userId = ctx.from?.id;
@@ -359,6 +365,7 @@ export class TelegramBot {
       const allowed = await this.admin.hasAccess(chatId, userId);
       if (!allowed) {
         await ctx.answerCbQuery('Нет доступа или ключ просрочен');
+        await this.router.show(ctx, 'no_access');
         return;
       }
     }
