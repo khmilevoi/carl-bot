@@ -1,9 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { AIService, ChatMessage } from '../src/services/ai/AIService.interface';
-import { EnvService } from '../src/services/env/EnvService';
 import { DefaultInterestChecker } from '../src/services/interest/InterestChecker';
-import { InterestMessageStore } from '../src/services/messages/InterestMessageStore';
+import {
+  InterestMessageStore,
+  InterestMessageStoreImpl,
+} from '../src/services/messages/InterestMessageStore';
 import { SummaryService } from '../src/services/summaries/SummaryService.interface';
 
 const interval = 2;
@@ -33,14 +35,12 @@ function createChecker(opts: {
   const ai: AIService = {
     checkInterest: vi.fn().mockResolvedValue(opts.aiResult ?? null),
   } as unknown as AIService;
-  const env: EnvService = {
-    env: {
-      INTEREST_MESSAGE_INTERVAL: interval,
-    } as unknown as EnvService['env'],
-  } as EnvService;
+  const env = {
+    env: { INTEREST_MESSAGE_INTERVAL: interval },
+  } as unknown;
 
   return {
-    checker: new DefaultInterestChecker(store, summaries, ai, env),
+    checker: new DefaultInterestChecker(store, summaries, ai, env as any),
     store,
     summaries,
     ai,
@@ -111,5 +111,23 @@ describe('DefaultInterestChecker', () => {
     const res = await checker.check(chatId);
     expect(res).toEqual(null);
     expect(store.clearMessages).toHaveBeenCalledWith(chatId);
+  });
+
+  it('clears stored messages after checking', async () => {
+    const store = new InterestMessageStoreImpl();
+    store.addMessage({ chatId, role: 'user', content: 'hi', messageId: 1 });
+    const checker = new DefaultInterestChecker(
+      store,
+      {
+        getSummary: vi.fn().mockResolvedValue(''),
+      } as unknown as SummaryService,
+      {
+        checkInterest: vi.fn().mockResolvedValue(null),
+      } as unknown as AIService,
+      { env: { INTEREST_MESSAGE_INTERVAL: 1 } } as any
+    );
+
+    await checker.check(chatId);
+    expect(store.getCount(chatId)).toBe(0);
   });
 });

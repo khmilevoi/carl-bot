@@ -9,7 +9,6 @@ import {
   DefaultTriggerPipeline,
   TriggerPipeline,
 } from '../src/services/chat/TriggerPipeline';
-import { TestEnvService } from '../src/services/env/EnvService';
 import { InterestChecker } from '../src/services/interest/InterestChecker';
 import {
   type Trigger,
@@ -17,7 +16,10 @@ import {
 } from '../src/triggers/Trigger.interface';
 
 describe('TriggerPipeline', () => {
-  const env = new TestEnvService();
+  const env = {
+    getBotName: () => 'bot',
+    getDialogueTimeoutMs: () => 0,
+  } as any;
 
   it('returns result when mention trigger matches', async () => {
     const dialogue: DialogueManager = new DefaultDialogueManager(env);

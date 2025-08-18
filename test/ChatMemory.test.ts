@@ -5,8 +5,11 @@ import { ChatMemory, ChatMemoryManager } from '../src/services/chat/ChatMemory';
 import { ChatResetService } from '../src/services/chat/ChatResetService.interface';
 import { HistorySummarizer } from '../src/services/chat/HistorySummarizer';
 import { EnvService } from '../src/services/env/EnvService';
+import {
+  InterestMessageStore,
+  InterestMessageStoreImpl,
+} from '../src/services/messages/InterestMessageStore';
 import { MessageService } from '../src/services/messages/MessageService.interface';
-import { InterestMessageStore } from '../src/services/messages/InterestMessageStore';
 import { StoredMessage } from '../src/services/messages/StoredMessage.interface';
 
 class FakeHistorySummarizer implements HistorySummarizer {
@@ -14,46 +17,28 @@ class FakeHistorySummarizer implements HistorySummarizer {
   assessUsers = vi.fn(async () => {});
 }
 
-class FakeMessageService implements MessageService {
-  private data = new Map<number, ChatMessage[]>();
-
+class FakeMessageService
+  extends InterestMessageStoreImpl
+  implements MessageService
+{
   async addMessage(message: StoredMessage): Promise<void> {
-    const list = this.data.get(message.chatId) ?? [];
-    const entry: ChatMessage = {
-      role: message.role,
-      content: message.content,
-      chatId: message.chatId,
-    };
-    if (message.username) entry.username = message.username;
-    if (message.fullName) entry.fullName = message.fullName;
-    if (message.replyText) entry.replyText = message.replyText;
-    if (message.replyUsername) entry.replyUsername = message.replyUsername;
-    if (message.quoteText) entry.quoteText = message.quoteText;
-    if (message.userId !== undefined) entry.userId = message.userId;
-    if (message.messageId !== undefined) entry.messageId = message.messageId;
-    list.push(entry);
-    this.data.set(message.chatId, list);
+    super.addMessage(message);
   }
 
   async getMessages(chatId: number): Promise<ChatMessage[]> {
-    const list = this.data.get(chatId) ?? [];
-    return list.map((m) => ({ ...m }));
+    return super.getMessages(chatId);
   }
 
   async getCount(chatId: number): Promise<number> {
-    return (this.data.get(chatId) ?? []).length;
+    return super.getCount(chatId);
   }
 
   async getLastMessages(chatId: number, limit: number): Promise<ChatMessage[]> {
-    const list = this.data.get(chatId) ?? [];
-    return list
-      .slice(-limit)
-      .reverse()
-      .map((m) => ({ ...m }));
+    return super.getLastMessages(chatId, limit).reverse();
   }
 
   async clearMessages(chatId: number): Promise<void> {
-    this.data.set(chatId, []);
+    super.clearMessages(chatId);
   }
 }
 
