@@ -6,6 +6,7 @@ import { ChatResetService } from '../src/services/chat/ChatResetService.interfac
 import { HistorySummarizer } from '../src/services/chat/HistorySummarizer';
 import { EnvService } from '../src/services/env/EnvService';
 import { MessageService } from '../src/services/messages/MessageService.interface';
+import { LocalMessageStore } from '../src/services/messages/LocalMessageStore';
 import { StoredMessage } from '../src/services/messages/StoredMessage.interface';
 
 class FakeHistorySummarizer implements HistorySummarizer {
@@ -56,15 +57,25 @@ class FakeMessageService implements MessageService {
   }
 }
 
+class FakeLocalMessageStore implements LocalMessageStore {
+  addMessage = vi.fn();
+  getMessages = vi.fn(() => []);
+  getCount = vi.fn(() => 0);
+  getLastMessages = vi.fn(() => []);
+  clearMessages = vi.fn();
+}
+
 describe('ChatMemory', () => {
   let summarizer: FakeHistorySummarizer;
   let messages: FakeMessageService;
+  let localStore: FakeLocalMessageStore;
   let memory: ChatMemory;
 
   beforeEach(() => {
     summarizer = new FakeHistorySummarizer();
     messages = new FakeMessageService();
-    memory = new ChatMemory(messages, summarizer, 1, 2);
+    localStore = new FakeLocalMessageStore();
+    memory = new ChatMemory(messages, summarizer, localStore, 1, 2);
   });
 
   it('passes history to summarizer after saving message', async () => {
@@ -141,6 +152,12 @@ describe('ChatMemory', () => {
       { role: 'user', content: 'msg', chatId: 1 },
     ]);
   });
+
+  it('stores messages in LocalMessageStore', async () => {
+    const msg: StoredMessage = { chatId: 1, role: 'user', content: 'hi' };
+    await memory.addMessage(msg);
+    expect(localStore.addMessage).toHaveBeenCalledWith({ ...msg, chatId: 1 });
+  });
 });
 
 describe('ChatMemoryManager', () => {
@@ -150,12 +167,20 @@ describe('ChatMemoryManager', () => {
   class DummyEnvService implements EnvService {
     env = { CHAT_HISTORY_LIMIT: 2 } as EnvService['env'];
   }
+  class DummyLocalMessageStore implements LocalMessageStore {
+    addMessage = vi.fn();
+    getMessages = vi.fn(() => []);
+    getCount = vi.fn(() => 0);
+    getLastMessages = vi.fn(() => []);
+    clearMessages = vi.fn();
+  }
 
   it('creates ChatMemory with limit from env', () => {
     const manager = new ChatMemoryManager(
       new FakeMessageService(),
       new FakeHistorySummarizer(),
       new DummyResetService(),
+      new DummyLocalMessageStore(),
       new DummyEnvService()
     );
     const mem = manager.get(5);
@@ -164,13 +189,16 @@ describe('ChatMemoryManager', () => {
 
   it('resets memory using ChatResetService', async () => {
     const reset = new DummyResetService();
+    const local = new DummyLocalMessageStore();
     const manager = new ChatMemoryManager(
       new FakeMessageService(),
       new FakeHistorySummarizer(),
       reset,
+      local,
       new DummyEnvService()
     );
     await manager.reset(7);
     expect(reset.reset).toHaveBeenCalledWith(7);
+    expect(local.clearMessages).toHaveBeenCalledWith(7);
   });
 });
