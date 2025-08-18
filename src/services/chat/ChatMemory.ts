@@ -12,6 +12,10 @@ import {
 } from '../messages/MessageService.interface';
 import { StoredMessage } from '../messages/StoredMessage.interface';
 import {
+  CHAT_CONFIG_SERVICE_ID,
+  type ChatConfigService,
+} from './ChatConfigService';
+import {
   CHAT_RESET_SERVICE_ID,
   type ChatResetService,
 } from './ChatResetService.interface';
@@ -63,17 +67,18 @@ export class ChatMemoryManager {
     @inject(HISTORY_SUMMARIZER_ID) private summarizer: HistorySummarizer,
     @inject(CHAT_RESET_SERVICE_ID) private resetService: ChatResetService,
     @inject(INTEREST_MESSAGE_STORE_ID) private localStore: InterestMessageStore,
-    private readonly limit = 50
+    @inject(CHAT_CONFIG_SERVICE_ID) private config: ChatConfigService
   ) {}
 
-  public get(chatId: number): ChatMemory {
+  public async get(chatId: number): Promise<ChatMemory> {
     logger.debug({ chatId }, 'Creating chat memory');
+    const { historyLimit } = await this.config.getConfig(chatId);
     return new ChatMemory(
       this.messages,
       this.summarizer,
       this.localStore,
       chatId,
-      this.limit
+      historyLimit
     );
   }
 

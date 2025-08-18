@@ -36,7 +36,7 @@ export class DefaultChatResponder implements ChatResponder {
     chatId: number,
     triggerReason?: TriggerReason
   ): Promise<string> {
-    const memory = this.memories.get(chatId);
+    const memory = await this.memories.get(chatId);
     const history = await memory.getHistory();
     const summary = await this.summaries.getSummary(chatId);
     const answer = await this.ai.ask(history, summary, triggerReason);

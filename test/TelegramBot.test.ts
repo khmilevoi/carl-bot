@@ -27,7 +27,7 @@ class MockChatMemory {
 
 class MockChatMemoryManager {
   memory = new MockChatMemory();
-  get = vi.fn(() => this.memory);
+  get = vi.fn(async () => this.memory);
   reset = vi.fn();
 }
 
