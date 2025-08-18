@@ -60,6 +60,10 @@ import {
   DefaultInterestChecker,
   INTEREST_CHECKER_ID,
 } from './services/interest/InterestChecker';
+import {
+  LOCAL_MESSAGE_STORE_ID,
+  LocalMessageStoreImpl,
+} from './services/messages/LocalMessageStore';
 import type { MessageContextExtractor } from './services/messages/MessageContextExtractor';
 import {
   DefaultMessageContextExtractor,
@@ -89,6 +93,10 @@ container.bind(AI_SERVICE_ID).to(ChatGPTService).inSingletonScope();
 container
   .bind(MESSAGE_SERVICE_ID)
   .to(RepositoryMessageService)
+  .inSingletonScope();
+container
+  .bind(LOCAL_MESSAGE_STORE_ID)
+  .to(LocalMessageStoreImpl)
   .inSingletonScope();
 container
   .bind(SUMMARY_SERVICE_ID)

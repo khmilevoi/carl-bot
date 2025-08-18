@@ -4,6 +4,10 @@ import { ChatMessage } from '../ai/AIService.interface';
 import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
 import { logger } from '../logging/logger';
 import {
+  LOCAL_MESSAGE_STORE_ID,
+  type LocalMessageStore,
+} from '../messages/LocalMessageStore';
+import {
   MESSAGE_SERVICE_ID,
   type MessageService,
 } from '../messages/MessageService.interface';
@@ -19,6 +23,7 @@ export class ChatMemory {
   constructor(
     private messages: MessageService,
     private summarizer: HistorySummarizer,
+    private localStore: LocalMessageStore,
     private chatId: number,
     private limit: number
   ) {}
@@ -29,6 +34,7 @@ export class ChatMemory {
       'Adding message'
     );
     await this.messages.addMessage({ ...message, chatId: this.chatId });
+    this.localStore.addMessage({ ...message, chatId: this.chatId });
 
     // Проверяем лимит после добавления сообщения
     const history = await this.messages.getMessages(this.chatId);
@@ -59,6 +65,7 @@ export class ChatMemoryManager {
     @inject(MESSAGE_SERVICE_ID) private messages: MessageService,
     @inject(HISTORY_SUMMARIZER_ID) private summarizer: HistorySummarizer,
     @inject(CHAT_RESET_SERVICE_ID) private resetService: ChatResetService,
+    @inject(LOCAL_MESSAGE_STORE_ID) private localStore: LocalMessageStore,
     @inject(ENV_SERVICE_ID) envService: EnvService
   ) {
     this.limit = envService.env.CHAT_HISTORY_LIMIT;
@@ -66,11 +73,18 @@ export class ChatMemoryManager {
 
   public get(chatId: number): ChatMemory {
     logger.debug({ chatId }, 'Creating chat memory');
-    return new ChatMemory(this.messages, this.summarizer, chatId, this.limit);
+    return new ChatMemory(
+      this.messages,
+      this.summarizer,
+      this.localStore,
+      chatId,
+      this.limit
+    );
   }
 
   public async reset(chatId: number): Promise<void> {
     logger.debug({ chatId }, 'Resetting chat memory');
     await this.resetService.reset(chatId);
+    this.localStore.clearMessages(chatId);
   }
 }
