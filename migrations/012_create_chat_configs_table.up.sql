@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS chat_configs (
+  chat_id INTEGER PRIMARY KEY,
+  history_limit INTEGER NOT NULL DEFAULT 50,
+  interest_interval INTEGER NOT NULL DEFAULT 25
+);
