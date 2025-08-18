@@ -1,4 +1,3 @@
-import { promises as fs } from 'fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ChatMessage } from '../src/services/ai/AIService';
@@ -58,7 +57,6 @@ describe('ChatGPTService', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
-    delete process.env.LOG_PROMPTS;
   });
 
   it('ask forms messages and respects triggerReason', async () => {
@@ -234,32 +232,5 @@ describe('ChatGPTService', () => {
         },
       ],
     });
-  });
-
-  it('logPrompt writes only when LOG_PROMPTS=true', async () => {
-    openaiCreate.mockResolvedValue({
-      choices: [{ message: { content: 'r' } }],
-    });
-    const appendSpy = vi.spyOn(fs, 'appendFile').mockResolvedValue(undefined);
-
-    const env1 = new TestEnvService();
-    (env1.env as unknown as { LOG_PROMPTS: boolean }).LOG_PROMPTS = false;
-    const service1 = new ChatGPTService(
-      env1,
-      prompts as unknown as PromptService
-    );
-    await service1.ask([]);
-    await new Promise<void>((resolve) => setTimeout(resolve, 0));
-    expect(appendSpy).not.toHaveBeenCalled();
-
-    const env2 = new TestEnvService();
-    (env2.env as unknown as { LOG_PROMPTS: boolean }).LOG_PROMPTS = true;
-    const service2 = new ChatGPTService(
-      env2,
-      prompts as unknown as PromptService
-    );
-    await service2.ask([]);
-    await new Promise<void>((resolve) => setTimeout(resolve, 0));
-    expect(appendSpy).toHaveBeenCalled();
   });
 });

@@ -1,8 +1,6 @@
-import { promises as fs } from 'fs';
 import { inject, injectable } from 'inversify';
 import OpenAI from 'openai';
 import { ChatModel } from 'openai/resources/shared';
-import path from 'path';
 
 import { TriggerReason } from '../../triggers/Trigger.interface';
 import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
@@ -99,7 +97,6 @@ export class ChatGPTService implements AIService {
     });
     logger.debug('Received chat completion response');
     const response = completion.choices[0]?.message?.content ?? '';
-    void this.logPrompt('ask', messages, response);
     return response;
   }
 
@@ -141,7 +138,6 @@ export class ChatGPTService implements AIService {
     });
     logger.debug('Received interest check response');
     const content = completion.choices[0]?.message?.content ?? '';
-    void this.logPrompt('interest', messages, content);
     try {
       return JSON.parse(content) as {
         messageId: string;
@@ -201,7 +197,6 @@ export class ChatGPTService implements AIService {
     });
     logger.debug('Received user attitude assessment response');
     const content = completion.choices[0]?.message?.content ?? '[]';
-    void this.logPrompt('assessUsers', reqMessages, content);
     try {
       return JSON.parse(content) as { username: string; attitude: string }[];
     } catch (err) {
@@ -256,28 +251,6 @@ export class ChatGPTService implements AIService {
     });
     logger.debug('Received summary response');
     const response = completion.choices[0]?.message?.content ?? prev ?? '';
-    void this.logPrompt('summary', messages, response);
     return response;
-  }
-
-  private async logPrompt(
-    type: string,
-    messages: OpenAI.ChatCompletionMessageParam[],
-    response?: string
-  ): Promise<void> {
-    if (!this.envService.env.LOG_PROMPTS) {
-      return;
-    }
-    const filePath = path.join(process.cwd(), 'prompts.log');
-    const entry = `\n[${new Date().toISOString()}] ${type}\nPROMPT:\n${JSON.stringify(
-      messages,
-      null,
-      2
-    )}\n${response ? `RESPONSE:\n${response}\n` : ''}---\n`;
-    try {
-      await fs.appendFile(filePath, entry);
-    } catch (err) {
-      logger.error({ err }, 'Failed to write prompt log');
-    }
   }
 }

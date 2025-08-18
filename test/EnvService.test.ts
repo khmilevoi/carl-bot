@@ -35,7 +35,6 @@ describe('EnvService', () => {
     setRequiredEnv({
       CHAT_HISTORY_LIMIT: undefined,
       LOG_LEVEL: undefined,
-      LOG_PROMPTS: undefined,
     });
 
     const env = new TestEnvService();

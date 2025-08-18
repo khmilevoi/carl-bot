@@ -13,7 +13,6 @@ const envSchema = z.object({
   LOG_LEVEL: z.string().default('debug'),
   ADMIN_CHAT_ID: z.coerce.number(),
   NODE_ENV: z.string().default('development'),
-  LOG_PROMPTS: z.coerce.boolean().default(false),
   INTEREST_MESSAGE_INTERVAL: z.coerce.number().int().positive(),
 });
 
@@ -111,7 +110,6 @@ export class TestEnvService implements EnvService {
       LOG_LEVEL: process.env.LOG_LEVEL ?? 'silent',
       ADMIN_CHAT_ID: process.env.ADMIN_CHAT_ID ?? '0',
       NODE_ENV: 'test',
-      LOG_PROMPTS: process.env.LOG_PROMPTS ?? 'false',
       INTEREST_MESSAGE_INTERVAL: process.env.INTEREST_MESSAGE_INTERVAL ?? '25',
     });
   }
