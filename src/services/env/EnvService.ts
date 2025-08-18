@@ -5,36 +5,17 @@ import { injectable } from 'inversify';
 import { ChatModel } from 'openai/resources/shared';
 import { z } from 'zod';
 
-const envSchema = z
-  .object({
-    BOT_TOKEN: z.string().min(1),
-    OPENAI_API_KEY: z.string().min(1),
-    DATABASE_URL: z.string().min(1),
-    CHAT_HISTORY_LIMIT: z.coerce.number().int().positive().default(50),
-    LOG_LEVEL: z.string().default('debug'),
-    ADMIN_CHAT_ID: z.coerce.number(),
-    NODE_ENV: z.string().default('development'),
-    LOG_PROMPTS: z.coerce.boolean().default(false),
-    INTEREST_MESSAGE_INTERVAL: z.coerce.number().int().positive(),
-  })
-  .superRefine((env, ctx) => {
-    if (env.INTEREST_MESSAGE_INTERVAL >= env.CHAT_HISTORY_LIMIT) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message:
-          'INTEREST_MESSAGE_INTERVAL must be less than CHAT_HISTORY_LIMIT',
-        path: ['INTEREST_MESSAGE_INTERVAL'],
-      });
-    }
-    if (env.CHAT_HISTORY_LIMIT % env.INTEREST_MESSAGE_INTERVAL !== 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message:
-          'CHAT_HISTORY_LIMIT must be divisible by INTEREST_MESSAGE_INTERVAL',
-        path: ['INTEREST_MESSAGE_INTERVAL'],
-      });
-    }
-  });
+const envSchema = z.object({
+  BOT_TOKEN: z.string().min(1),
+  OPENAI_API_KEY: z.string().min(1),
+  DATABASE_URL: z.string().min(1),
+  CHAT_HISTORY_LIMIT: z.coerce.number().int().positive().default(50),
+  LOG_LEVEL: z.string().default('debug'),
+  ADMIN_CHAT_ID: z.coerce.number(),
+  NODE_ENV: z.string().default('development'),
+  LOG_PROMPTS: z.coerce.boolean().default(false),
+  INTEREST_MESSAGE_INTERVAL: z.coerce.number().int().positive(),
+});
 
 export type Env = z.infer<typeof envSchema>;
 

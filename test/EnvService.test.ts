@@ -45,28 +45,6 @@ describe('EnvService', () => {
     expect(env.env.LOG_LEVEL).toBe('silent');
   });
 
-  it('throws when INTEREST_MESSAGE_INTERVAL >= CHAT_HISTORY_LIMIT', () => {
-    setRequiredEnv({
-      CHAT_HISTORY_LIMIT: '50',
-      INTEREST_MESSAGE_INTERVAL: '50',
-    });
-
-    expect(() => new TestEnvService()).toThrow(
-      'INTEREST_MESSAGE_INTERVAL must be less than CHAT_HISTORY_LIMIT'
-    );
-  });
-
-  it('throws when CHAT_HISTORY_LIMIT is not divisible by INTEREST_MESSAGE_INTERVAL', () => {
-    setRequiredEnv({
-      CHAT_HISTORY_LIMIT: '50',
-      INTEREST_MESSAGE_INTERVAL: '30',
-    });
-
-    expect(() => new TestEnvService()).toThrow(
-      'CHAT_HISTORY_LIMIT must be divisible by INTEREST_MESSAGE_INTERVAL'
-    );
-  });
-
   it('getModels returns correct models', () => {
     setRequiredEnv();
     const env = new TestEnvService();
