@@ -20,6 +20,8 @@ import {
 import {
   CHAT_CONFIG_SERVICE_ID,
   ChatConfigService,
+  InvalidHistoryLimitError,
+  InvalidInterestIntervalError,
 } from '../services/chat/ChatConfigService';
 import { ChatMemoryManager } from '../services/chat/ChatMemory';
 import {
@@ -426,7 +428,8 @@ export class TelegramBot {
       } catch (error) {
         logger.error({ error, chatId }, 'Failed to update chat config');
         const message =
-          error instanceof Error && error.message.startsWith('Invalid')
+          error instanceof InvalidHistoryLimitError ||
+          error instanceof InvalidInterestIntervalError
             ? '❌ Введите положительное целое число'
             : '❌ Ошибка при обновлении параметра';
         await ctx.reply(message);

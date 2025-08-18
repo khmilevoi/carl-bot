@@ -12,6 +12,9 @@ export interface ChatConfigService {
   setInterestInterval(chatId: number, interestInterval: number): Promise<void>;
 }
 
+export class InvalidHistoryLimitError extends Error {}
+export class InvalidInterestIntervalError extends Error {}
+
 export const CHAT_CONFIG_SERVICE_ID = Symbol.for(
   'ChatConfigService'
 ) as ServiceIdentifier<ChatConfigService>;
@@ -44,7 +47,7 @@ export class RepositoryChatConfigService implements ChatConfigService {
       historyLimit <= 0 ||
       historyLimit > 50
     ) {
-      throw new Error('Invalid history limit');
+      throw new InvalidHistoryLimitError('Invalid history limit');
     }
     const config = await this.getConfig(chatId);
     await this.repo.upsert({ ...config, historyLimit });
@@ -59,7 +62,7 @@ export class RepositoryChatConfigService implements ChatConfigService {
       interestInterval <= 0 ||
       interestInterval > 50
     ) {
-      throw new Error('Invalid interest interval');
+      throw new InvalidInterestIntervalError('Invalid interest interval');
     }
     const config = await this.getConfig(chatId);
     await this.repo.upsert({ ...config, interestInterval });

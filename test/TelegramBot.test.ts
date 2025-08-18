@@ -13,6 +13,7 @@ import type { ChatResponder } from '../src/services/chat/ChatResponder';
 import type { TriggerPipeline } from '../src/services/chat/TriggerPipeline';
 import type { EnvService } from '../src/services/env/EnvService';
 import type { ChatConfigService } from '../src/services/chat/ChatConfigService';
+import { InvalidInterestIntervalError } from '../src/services/chat/ChatConfigService';
 import type {
   MessageContext,
   MessageContextExtractor,
@@ -190,7 +191,7 @@ describe('TelegramBot', () => {
       reply: vi.fn(),
     } as unknown as Context;
     config.setInterestInterval.mockImplementationOnce(async () => {
-      throw new Error('Invalid interest interval');
+      throw new InvalidInterestIntervalError('Invalid interest interval');
     });
     await (
       bot as unknown as { handleText: (ctx: Context) => Promise<void> }
