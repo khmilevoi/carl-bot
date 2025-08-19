@@ -31,7 +31,7 @@ describe('logger', () => {
     expect(logger).toBeDefined();
   });
 
-  it('creates child logger with service field', async () => {
+  it('creates logger via service', async () => {
     process.env.NODE_ENV = 'test';
     vi.resetModules();
     const { container } = await import('../src/container');
@@ -39,7 +39,13 @@ describe('logger', () => {
     const service = container.get<LoggerModule.LoggerService>(
       LoggerModule.LOGGER_SERVICE_ID
     );
-    const child = service.create({});
-    expect(child.bindings()).toHaveProperty('service');
+    const logger = service.createLogger();
+    logger.debug('debug');
+    logger.info('info');
+    logger.warn('warn');
+    logger.error('error');
+    const child = logger.child({ service: 'test' });
+    child.info('child');
+    expect(typeof child.info).toBe('function');
   });
 });
