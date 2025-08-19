@@ -11,7 +11,8 @@ describe('logger', () => {
   it('creates logger in test env', async () => {
     process.env.NODE_ENV = 'test';
     vi.resetModules();
-    const { logger } = await import('../src/services/logging/logger');
+    const { createPinoLogger } = await import('../src/services/logging/logger');
+    const logger = createPinoLogger();
     expect(logger).toBeDefined();
   });
 
@@ -25,7 +26,8 @@ describe('logger', () => {
       ADMIN_CHAT_ID: '1',
     };
     vi.resetModules();
-    const { logger } = await import('../src/services/logging/logger');
+    const { createPinoLogger } = await import('../src/services/logging/logger');
+    const logger = createPinoLogger();
     expect(logger).toBeDefined();
   });
 

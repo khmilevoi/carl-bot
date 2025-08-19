@@ -2,7 +2,7 @@ import type { ServiceIdentifier } from 'inversify';
 import { injectable } from 'inversify';
 import type { ChildLoggerOptions, Logger as PinoLogger } from 'pino';
 
-import { logger } from './logger';
+import { createPinoLogger } from './logger';
 
 export interface LoggerService {
   create(meta: Record<string, unknown>): PinoLogger;
@@ -21,7 +21,12 @@ const defaultOptions: ChildLoggerOptions = {
 
 @injectable()
 export class PinoLoggerService implements LoggerService {
+  private readonly baseLogger = createPinoLogger();
+
   create(meta: Record<string, unknown>): PinoLogger {
-    return logger.child({ ...defaultBindings, ...meta }, defaultOptions);
+    return this.baseLogger.child(
+      { ...defaultBindings, ...meta },
+      defaultOptions
+    );
   }
 }

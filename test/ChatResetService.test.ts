@@ -3,12 +3,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MessageService } from '../src/services/messages/MessageService.interface';
 import type { SummaryService } from '../src/services/summaries/SummaryService.interface';
 
+const debug = vi.fn();
 vi.mock('../src/services/logging/logger', () => ({
-  logger: { debug: vi.fn() },
+  createPinoLogger: () => ({ debug }),
 }));
 
 import { DefaultChatResetService } from '../src/services/chat/DefaultChatResetService';
-import { logger } from '../src/services/logging/logger';
 
 describe('DefaultChatResetService', () => {
   const messages = {
@@ -31,9 +31,6 @@ describe('DefaultChatResetService', () => {
     await service.reset(chatId);
     expect(messages.clearMessages).toHaveBeenCalledWith(chatId);
     expect(summaries.clearSummary).toHaveBeenCalledWith(chatId);
-    expect(logger.debug).toHaveBeenCalledWith(
-      { chatId },
-      'Resetting chat data'
-    );
+    expect(debug).toHaveBeenCalledWith({ chatId }, 'Resetting chat data');
   });
 });

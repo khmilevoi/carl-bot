@@ -4,15 +4,18 @@ import { DefaultEnvService, TestEnvService } from '../env/EnvService';
 
 const destination = pino.destination({ sync: false });
 
-const envService =
-  process.env.NODE_ENV === 'test'
-    ? new TestEnvService()
-    : new DefaultEnvService();
+export function createPinoLogger(
+  options: pino.LoggerOptions = {}
+): pino.Logger {
+  const envService =
+    process.env.NODE_ENV === 'test'
+      ? new TestEnvService()
+      : new DefaultEnvService();
 
-export const logger = pino(
-  {
+  const baseOptions: pino.LoggerOptions = {
     level: envService.env.LOG_LEVEL,
     transport: { target: 'pino-pretty' },
-  },
-  destination
-);
+  };
+
+  return pino({ ...baseOptions, ...options }, destination);
+}
