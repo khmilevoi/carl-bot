@@ -1,9 +1,16 @@
-/* eslint-disable import/no-unused-modules */
 interface Logger {
-  debug(message: string, meta?: Record<string, unknown>): void;
-  info(message: string, meta?: Record<string, unknown>): void;
-  warn(message: string, meta?: Record<string, unknown>): void;
-  error(message: string, meta?: Record<string, unknown>): void;
+  debug(message: string): void;
+  debug(meta: Record<string, unknown>, message: string): void;
+
+  info(message: string): void;
+  info(meta: Record<string, unknown>, message: string): void;
+
+  warn(message: string): void;
+  warn(meta: Record<string, unknown>, message: string): void;
+
+  error(message: string): void;
+  error(meta: Record<string, unknown>, message: string): void;
+
   child(meta: Record<string, unknown>): Logger;
 }
 

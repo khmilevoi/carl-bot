@@ -6,7 +6,7 @@ import path from 'path';
 
 import { TriggerReason } from '../../triggers/Trigger.interface';
 import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
-import { createPinoLogger } from '../logging/logger';
+import { PinoLogger } from '../logging/PinoLogger';
 import {
   PROMPT_SERVICE_ID,
   PromptService,
@@ -19,7 +19,7 @@ export class ChatGPTService implements AIService {
   private readonly askModel: ChatModel;
   private readonly summaryModel: ChatModel;
   private readonly interestModel: ChatModel;
-  private readonly logger = createPinoLogger();
+  private readonly logger = new PinoLogger();
 
   constructor(
     @inject(ENV_SERVICE_ID) private readonly envService: EnvService,

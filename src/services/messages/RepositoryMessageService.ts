@@ -17,13 +17,13 @@ import {
   type UserRepository,
 } from '../../repositories/interfaces/UserRepository.interface';
 import type { ChatMessage } from '../ai/AIService.interface';
-import { createPinoLogger } from '../logging/logger';
+import { PinoLogger } from '../logging/PinoLogger';
 import { MessageService } from './MessageService.interface';
 import { StoredMessage } from './StoredMessage.interface';
 
 @injectable()
 export class RepositoryMessageService implements MessageService {
-  private readonly logger = createPinoLogger();
+  private readonly logger = new PinoLogger();
   constructor(
     @inject(CHAT_REPOSITORY_ID) private chatRepo: ChatRepository,
     @inject(USER_REPOSITORY_ID) private userRepo: UserRepository,

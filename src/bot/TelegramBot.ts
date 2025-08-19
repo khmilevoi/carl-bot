@@ -33,7 +33,7 @@ import {
   TriggerPipeline,
 } from '../services/chat/TriggerPipeline';
 import { Env, ENV_SERVICE_ID, EnvService } from '../services/env/EnvService';
-import { createPinoLogger } from '../services/logging/logger';
+import { PinoLogger } from '../services/logging/PinoLogger';
 import {
   MESSAGE_CONTEXT_EXTRACTOR_ID,
   MessageContextExtractor,
@@ -71,7 +71,7 @@ export class TelegramBot {
     number,
     { type: 'history' | 'interest'; chatId: number; admin: boolean }
   >();
-  private readonly logger = createPinoLogger();
+  private readonly logger = new PinoLogger();
 
   constructor(
     @inject(ENV_SERVICE_ID) envService: EnvService,

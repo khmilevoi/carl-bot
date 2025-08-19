@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 
 import { ChatMessage } from '../ai/AIService.interface';
-import { createPinoLogger } from '../logging/logger';
+import { PinoLogger } from '../logging/PinoLogger';
 import {
   INTEREST_MESSAGE_STORE_ID,
   type InterestMessageStore,
@@ -23,7 +23,7 @@ import { HISTORY_SUMMARIZER_ID, HistorySummarizer } from './HistorySummarizer';
 
 @injectable()
 export class ChatMemory {
-  private readonly logger = createPinoLogger();
+  private readonly logger = new PinoLogger();
 
   constructor(
     private messages: MessageService,
@@ -64,7 +64,7 @@ export class ChatMemory {
 
 @injectable()
 export class ChatMemoryManager {
-  private readonly logger = createPinoLogger();
+  private readonly logger = new PinoLogger();
 
   constructor(
     @inject(MESSAGE_SERVICE_ID) private messages: MessageService,

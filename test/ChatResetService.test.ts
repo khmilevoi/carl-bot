@@ -4,8 +4,14 @@ import type { MessageService } from '../src/services/messages/MessageService.int
 import type { SummaryService } from '../src/services/summaries/SummaryService.interface';
 
 const debug = vi.fn();
-vi.mock('../src/services/logging/logger', () => ({
-  createPinoLogger: () => ({ debug }),
+vi.mock('../src/services/logging/PinoLogger', () => ({
+  PinoLogger: vi.fn().mockImplementation(() => ({
+    debug,
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    child: vi.fn(),
+  })),
 }));
 
 import { DefaultChatResetService } from '../src/services/chat/DefaultChatResetService';

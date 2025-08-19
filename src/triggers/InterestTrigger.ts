@@ -2,8 +2,8 @@ import type { Context } from 'telegraf';
 
 import type { DialogueManager } from '../services/chat/DialogueManager';
 import type { InterestChecker } from '../services/interest/InterestChecker';
-import { createPinoLogger } from '../services/logging/logger';
-const logger = createPinoLogger();
+import { PinoLogger } from '../services/logging/PinoLogger';
+const logger = new PinoLogger();
 import type {
   Trigger,
   TriggerContext,
