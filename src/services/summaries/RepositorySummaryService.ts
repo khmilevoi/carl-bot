@@ -4,12 +4,12 @@ import {
   SUMMARY_REPOSITORY_ID,
   type SummaryRepository,
 } from '../../repositories/interfaces/SummaryRepository.interface';
-import { createPinoLogger } from '../logging/logger';
+import { PinoLogger } from '../logging/PinoLogger';
 import { SummaryService } from './SummaryService.interface';
 
 @injectable()
 export class RepositorySummaryService implements SummaryService {
-  private readonly logger = createPinoLogger();
+  private readonly logger = new PinoLogger();
   constructor(
     @inject(SUMMARY_REPOSITORY_ID) private summaryRepo: SummaryRepository
   ) {}

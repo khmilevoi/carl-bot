@@ -3,7 +3,7 @@ import { inject, injectable } from 'inversify';
 
 import { createLazy } from '../../utils/lazy';
 import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
-import { createPinoLogger } from '../logging/logger';
+import { PinoLogger } from '../logging/PinoLogger';
 import { PromptService } from './PromptService.interface';
 
 @injectable()
@@ -18,7 +18,7 @@ export class FilePromptService implements PromptService {
   private readonly assessUsersTemplate: () => Promise<string>;
   private readonly priorityRulesSystemTemplate: () => Promise<string>;
   private readonly replyTriggerTemplate: () => Promise<string>;
-  private readonly logger = createPinoLogger();
+  private readonly logger = new PinoLogger();
 
   constructor(@inject(ENV_SERVICE_ID) envService: EnvService) {
     const files = envService.getPromptFiles();

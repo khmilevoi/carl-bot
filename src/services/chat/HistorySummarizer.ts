@@ -10,7 +10,7 @@ import {
   AIService,
   ChatMessage,
 } from '../ai/AIService.interface';
-import { createPinoLogger } from '../logging/logger';
+import { PinoLogger } from '../logging/PinoLogger';
 import {
   MESSAGE_SERVICE_ID,
   MessageService,
@@ -35,7 +35,7 @@ export const HISTORY_SUMMARIZER_ID = Symbol.for(
 
 @injectable()
 export class DefaultHistorySummarizer implements HistorySummarizer {
-  private readonly logger = createPinoLogger();
+  private readonly logger = new PinoLogger();
   constructor(
     @inject(AI_SERVICE_ID) private ai: AIService,
     @inject(SUMMARY_SERVICE_ID) private summaries: SummaryService,

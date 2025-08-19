@@ -1,6 +1,6 @@
 import { inject, injectable } from 'inversify';
 
-import { createPinoLogger } from '../logging/logger';
+import { PinoLogger } from '../logging/PinoLogger';
 import {
   MESSAGE_SERVICE_ID,
   type MessageService,
@@ -13,7 +13,7 @@ import { ChatResetService } from './ChatResetService.interface';
 
 @injectable()
 export class DefaultChatResetService implements ChatResetService {
-  private readonly logger = createPinoLogger();
+  private readonly logger = new PinoLogger();
   constructor(
     @inject(MESSAGE_SERVICE_ID) private messages: MessageService,
     @inject(SUMMARY_SERVICE_ID) private summaries: SummaryService
