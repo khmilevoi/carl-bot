@@ -1,7 +1,11 @@
 import { inject, injectable } from 'inversify';
 
 import { ChatMessage } from '../ai/AIService.interface';
-import { createPinoLogger } from '../logging/logger';
+import type Logger from '../logging/Logger.interface';
+import {
+  LOGGER_SERVICE_ID,
+  type LoggerService,
+} from '../logging/LoggerService';
 import {
   INTEREST_MESSAGE_STORE_ID,
   type InterestMessageStore,
@@ -23,30 +27,35 @@ import { HISTORY_SUMMARIZER_ID, HistorySummarizer } from './HistorySummarizer';
 
 @injectable()
 export class ChatMemory {
-  private readonly logger = createPinoLogger();
+  private readonly logger: Logger;
 
   constructor(
     private messages: MessageService,
     private summarizer: HistorySummarizer,
     private localStore: InterestMessageStore,
     private chatId: number,
-    private limit: number
-  ) {}
+    private limit: number,
+    private loggerService: LoggerService
+  ) {
+    this.logger = this.loggerService.createLogger();
+  }
 
   public async addMessage(message: StoredMessage): Promise<void> {
-    this.logger.debug(
-      { chatId: this.chatId, role: message.role, limit: this.limit },
-      'Adding message'
-    );
+    this.logger.debug('Adding message', {
+      chatId: this.chatId,
+      role: message.role,
+      limit: this.limit,
+    });
     await this.messages.addMessage({ ...message, chatId: this.chatId });
     this.localStore.addMessage({ ...message, chatId: this.chatId });
 
     // Проверяем лимит после добавления сообщения
     const history = await this.messages.getMessages(this.chatId);
-    this.logger.debug(
-      { chatId: this.chatId, historyLength: history.length, limit: this.limit },
-      'Checking history limit after adding message'
-    );
+    this.logger.debug('Checking history limit after adding message', {
+      chatId: this.chatId,
+      historyLength: history.length,
+      limit: this.limit,
+    });
     const summarized = await this.summarizer.summarize(
       this.chatId,
       history,
@@ -64,30 +73,34 @@ export class ChatMemory {
 
 @injectable()
 export class ChatMemoryManager {
-  private readonly logger = createPinoLogger();
+  private readonly logger: Logger;
 
   constructor(
     @inject(MESSAGE_SERVICE_ID) private messages: MessageService,
     @inject(HISTORY_SUMMARIZER_ID) private summarizer: HistorySummarizer,
     @inject(CHAT_RESET_SERVICE_ID) private resetService: ChatResetService,
     @inject(INTEREST_MESSAGE_STORE_ID) private localStore: InterestMessageStore,
-    @inject(CHAT_CONFIG_SERVICE_ID) private config: ChatConfigService
-  ) {}
+    @inject(CHAT_CONFIG_SERVICE_ID) private config: ChatConfigService,
+    @inject(LOGGER_SERVICE_ID) private loggerService: LoggerService
+  ) {
+    this.logger = this.loggerService.createLogger();
+  }
 
   public async get(chatId: number): Promise<ChatMemory> {
-    this.logger.debug({ chatId }, 'Creating chat memory');
+    this.logger.debug('Creating chat memory', { chatId });
     const { historyLimit } = await this.config.getConfig(chatId);
     return new ChatMemory(
       this.messages,
       this.summarizer,
       this.localStore,
       chatId,
-      historyLimit
+      historyLimit,
+      this.loggerService
     );
   }
 
   public async reset(chatId: number): Promise<void> {
-    this.logger.debug({ chatId }, 'Resetting chat memory');
+    this.logger.debug('Resetting chat memory', { chatId });
     await this.resetService.reset(chatId);
     this.localStore.clearMessages(chatId);
   }

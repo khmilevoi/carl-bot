@@ -12,6 +12,18 @@ import {
 } from '../src/services/messages/InterestMessageStore';
 import { MessageService } from '../src/services/messages/MessageService.interface';
 import { StoredMessage } from '../src/services/messages/StoredMessage.interface';
+import type { LoggerService } from '../src/services/logging/LoggerService';
+
+const createLoggerService = (): LoggerService =>
+  ({
+    createLogger: () => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      child: vi.fn(),
+    }),
+  }) as unknown as LoggerService;
 
 class FakeHistorySummarizer implements HistorySummarizer {
   summarize = vi.fn(async () => false);
@@ -61,7 +73,14 @@ describe('ChatMemory', () => {
     summarizer = new FakeHistorySummarizer();
     messages = new FakeMessageService();
     localStore = new FakeInterestMessageStore();
-    memory = new ChatMemory(messages, summarizer, localStore, 1, 2);
+    memory = new ChatMemory(
+      messages,
+      summarizer,
+      localStore,
+      1,
+      2,
+      createLoggerService()
+    );
   });
 
   it('passes history to summarizer after saving message', async () => {
@@ -178,7 +197,8 @@ describe('ChatMemoryManager', () => {
       summarizer,
       new DummyResetService(),
       new DummyInterestMessageStore(),
-      config
+      config,
+      createLoggerService()
     );
     const mem = await manager.get(5);
     await mem.addMessage({ chatId: 5, role: 'user', content: 'hi' });
@@ -198,7 +218,8 @@ describe('ChatMemoryManager', () => {
       new FakeHistorySummarizer(),
       reset,
       local,
-      new DummyChatConfigService(2)
+      new DummyChatConfigService(2),
+      createLoggerService()
     );
     await manager.reset(7);
     expect(reset.reset).toHaveBeenCalledWith(7);

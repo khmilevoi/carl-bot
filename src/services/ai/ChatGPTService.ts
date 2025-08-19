@@ -6,7 +6,11 @@ import path from 'path';
 
 import { TriggerReason } from '../../triggers/Trigger.interface';
 import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
-import { createPinoLogger } from '../logging/logger';
+import type Logger from '../logging/Logger.interface';
+import {
+  LOGGER_SERVICE_ID,
+  type LoggerService,
+} from '../logging/LoggerService';
 import {
   PROMPT_SERVICE_ID,
   PromptService,
@@ -19,11 +23,12 @@ export class ChatGPTService implements AIService {
   private readonly askModel: ChatModel;
   private readonly summaryModel: ChatModel;
   private readonly interestModel: ChatModel;
-  private readonly logger = createPinoLogger();
+  private readonly logger: Logger;
 
   constructor(
     @inject(ENV_SERVICE_ID) private readonly envService: EnvService,
-    @inject(PROMPT_SERVICE_ID) private readonly prompts: PromptService
+    @inject(PROMPT_SERVICE_ID) private readonly prompts: PromptService,
+    @inject(LOGGER_SERVICE_ID) private loggerService: LoggerService
   ) {
     const env = this.envService.env;
     this.openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
@@ -31,6 +36,7 @@ export class ChatGPTService implements AIService {
     this.askModel = models.ask;
     this.summaryModel = models.summary;
     this.interestModel = models.interest;
+    this.logger = this.loggerService.createLogger();
     this.logger.debug('ChatGPTService initialized');
   }
 
@@ -41,10 +47,10 @@ export class ChatGPTService implements AIService {
   ): Promise<string> {
     const persona = await this.prompts.getPersona();
 
-    this.logger.debug(
-      { messages: history.length, summary: !!summary },
-      'Sending chat completion request'
-    );
+    this.logger.debug('Sending chat completion request', {
+      messages: history.length,
+      summary: !!summary,
+    });
 
     const messages: OpenAI.ChatCompletionMessageParam[] = [
       { role: 'system', content: persona },
@@ -132,10 +138,9 @@ export class ChatGPTService implements AIService {
       )
     );
     messages.push(...historyMessages);
-    this.logger.debug(
-      { messages: history.length },
-      'Sending interest check request'
-    );
+    this.logger.debug('Sending interest check request', {
+      messages: history.length,
+    });
     const completion = await this.openai.chat.completions.create({
       model: this.interestModel,
       messages,
@@ -149,7 +154,10 @@ export class ChatGPTService implements AIService {
         why: string;
       } | null;
     } catch (err) {
-      this.logger.error({ err, content }, 'Failed to parse interest response');
+      this.logger.error('Failed to parse interest response', {
+        err,
+        content,
+      });
       return null;
     }
   }
@@ -192,10 +200,9 @@ export class ChatGPTService implements AIService {
       )
     );
     reqMessages.push(...historyMessages);
-    this.logger.debug(
-      { messages: messages.length },
-      'Sending user attitude assessment request'
-    );
+    this.logger.debug('Sending user attitude assessment request', {
+      messages: messages.length,
+    });
     const completion = await this.openai.chat.completions.create({
       model: this.summaryModel,
       messages: reqMessages,
@@ -206,10 +213,10 @@ export class ChatGPTService implements AIService {
     try {
       return JSON.parse(content) as { username: string; attitude: string }[];
     } catch (err) {
-      this.logger.error(
-        { err, content },
-        'Failed to parse assessUsers response'
-      );
+      this.logger.error('Failed to parse assessUsers response', {
+        err,
+        content,
+      });
       return [];
     }
   }
@@ -224,10 +231,10 @@ export class ChatGPTService implements AIService {
         content: await this.prompts.getSummarizationSystemPrompt(),
       },
     ];
-    this.logger.debug(
-      { history: history.length, prevLength: prev?.length ?? 0 },
-      'Sending summarization request'
-    );
+    this.logger.debug('Sending summarization request', {
+      history: history.length,
+      prevLength: prev?.length ?? 0,
+    });
     if (prev) {
       messages.push({
         role: 'user',
@@ -281,7 +288,7 @@ export class ChatGPTService implements AIService {
     try {
       await fs.appendFile(filePath, entry);
     } catch (err) {
-      this.logger.error({ err }, 'Failed to write prompt log');
+      this.logger.error('Failed to write prompt log', { err });
     }
   }
 }

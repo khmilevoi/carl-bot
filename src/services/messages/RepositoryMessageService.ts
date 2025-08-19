@@ -17,25 +17,32 @@ import {
   type UserRepository,
 } from '../../repositories/interfaces/UserRepository.interface';
 import type { ChatMessage } from '../ai/AIService.interface';
-import { createPinoLogger } from '../logging/logger';
+import type Logger from '../logging/Logger.interface';
+import {
+  LOGGER_SERVICE_ID,
+  type LoggerService,
+} from '../logging/LoggerService';
 import { MessageService } from './MessageService.interface';
 import { StoredMessage } from './StoredMessage.interface';
 
 @injectable()
 export class RepositoryMessageService implements MessageService {
-  private readonly logger = createPinoLogger();
+  private readonly logger: Logger;
   constructor(
     @inject(CHAT_REPOSITORY_ID) private chatRepo: ChatRepository,
     @inject(USER_REPOSITORY_ID) private userRepo: UserRepository,
     @inject(MESSAGE_REPOSITORY_ID) private messageRepo: MessageRepository,
-    @inject(CHAT_USER_REPOSITORY_ID) private chatUserRepo: ChatUserRepository
-  ) {}
+    @inject(CHAT_USER_REPOSITORY_ID) private chatUserRepo: ChatUserRepository,
+    @inject(LOGGER_SERVICE_ID) private loggerService: LoggerService
+  ) {
+    this.logger = this.loggerService.createLogger();
+  }
 
   async addMessage(message: StoredMessage): Promise<void> {
-    this.logger.debug(
-      { chatId: message.chatId, role: message.role },
-      'Inserting message into database'
-    );
+    this.logger.debug('Inserting message into database', {
+      chatId: message.chatId,
+      role: message.role,
+    });
     const storedUserId = message.userId ?? 0;
     await this.chatRepo.upsert({
       chatId: message.chatId,
@@ -55,25 +62,25 @@ export class RepositoryMessageService implements MessageService {
   }
 
   async getMessages(chatId: number): Promise<ChatMessage[]> {
-    this.logger.debug({ chatId }, 'Fetching messages from database');
+    this.logger.debug('Fetching messages from database', { chatId });
     return this.messageRepo.findByChatId(chatId);
   }
 
   async getCount(chatId: number): Promise<number> {
-    this.logger.debug({ chatId }, 'Counting messages in database');
+    this.logger.debug('Counting messages in database', { chatId });
     return this.messageRepo.countByChatId(chatId);
   }
 
   async getLastMessages(chatId: number, limit: number): Promise<ChatMessage[]> {
-    this.logger.debug(
-      { chatId, limit },
-      'Fetching last messages from database'
-    );
+    this.logger.debug('Fetching last messages from database', {
+      chatId,
+      limit,
+    });
     return this.messageRepo.findLastByChatId(chatId, limit);
   }
 
   async clearMessages(chatId: number): Promise<void> {
-    this.logger.debug({ chatId }, 'Clearing messages table');
+    this.logger.debug('Clearing messages table', { chatId });
     await this.messageRepo.clearByChatId(chatId);
   }
 }

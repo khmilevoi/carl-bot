@@ -1,5 +1,5 @@
 import type { Context } from 'telegraf';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { DefaultDialogueManager } from '../src/services/chat/DialogueManager';
 import { TestEnvService } from '../src/services/env/EnvService';
@@ -7,6 +7,18 @@ import { MentionTrigger } from '../src/triggers/MentionTrigger';
 import { NameTrigger } from '../src/triggers/NameTrigger';
 import { ReplyTrigger } from '../src/triggers/ReplyTrigger';
 import { TriggerContext } from '../src/triggers/Trigger.interface';
+import type { LoggerService } from '../src/services/logging/LoggerService';
+
+const createLoggerService = (): LoggerService =>
+  ({
+    createLogger: () => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      child: vi.fn(),
+    }),
+  }) as unknown as LoggerService;
 
 describe('MentionTrigger', () => {
   const trigger = new MentionTrigger();
@@ -20,7 +32,7 @@ describe('MentionTrigger', () => {
     const res = await trigger.apply(
       telegrafCtx,
       ctx,
-      new DefaultDialogueManager(new TestEnvService())
+      new DefaultDialogueManager(new TestEnvService(), createLoggerService())
     );
     expect(res).not.toBeNull();
     expect(res?.replyToMessageId).toBeNull();
@@ -37,7 +49,7 @@ describe('MentionTrigger', () => {
     const res = await trigger.apply(
       telegrafCtx,
       ctx,
-      new DefaultDialogueManager(new TestEnvService())
+      new DefaultDialogueManager(new TestEnvService(), createLoggerService())
     );
     expect(res).toBeNull();
     expect(ctx.text).toBe('');
@@ -49,7 +61,7 @@ describe('MentionTrigger', () => {
     const res = await trigger.apply(
       telegrafCtx,
       ctx,
-      new DefaultDialogueManager(new TestEnvService())
+      new DefaultDialogueManager(new TestEnvService(), createLoggerService())
     );
     expect(res).toBeNull();
     expect(ctx.text).toBe('');
@@ -68,7 +80,7 @@ describe('NameTrigger', () => {
     const res = await trigger.apply(
       {} as unknown as Context,
       ctx,
-      new DefaultDialogueManager(new TestEnvService())
+      new DefaultDialogueManager(new TestEnvService(), createLoggerService())
     );
     expect(res).not.toBeNull();
     expect(ctx.text).toBe('how are you?');
@@ -83,7 +95,7 @@ describe('NameTrigger', () => {
     const res = await trigger.apply(
       {} as unknown as Context,
       ctx,
-      new DefaultDialogueManager(new TestEnvService())
+      new DefaultDialogueManager(new TestEnvService(), createLoggerService())
     );
     expect(res).toBeNull();
     expect(ctx.text).toBe('Hello Arkadius');
@@ -102,7 +114,7 @@ describe('ReplyTrigger', () => {
     const res = await trigger.apply(
       telegrafCtx,
       ctx,
-      new DefaultDialogueManager(new TestEnvService())
+      new DefaultDialogueManager(new TestEnvService(), createLoggerService())
     );
     expect(res).not.toBeNull();
   });
@@ -113,7 +125,7 @@ describe('ReplyTrigger', () => {
     const res = await trigger.apply(
       telegrafCtx,
       ctx,
-      new DefaultDialogueManager(new TestEnvService())
+      new DefaultDialogueManager(new TestEnvService(), createLoggerService())
     );
     expect(res).toBeNull();
   });

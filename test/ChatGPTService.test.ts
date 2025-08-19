@@ -5,9 +5,14 @@ import type { ChatMessage } from '../src/services/ai/AIService';
 import type { ChatGPTService as ChatGPTServiceType } from '../src/services/ai/ChatGPTService';
 import { TestEnvService } from '../src/services/env/EnvService';
 import type { PromptService } from '../src/services/prompts/PromptService';
+import type { LoggerService } from '../src/services/logging/LoggerService';
 
 interface ChatGPTServiceConstructor {
-  new (env: TestEnvService, prompts: PromptService): ChatGPTServiceType;
+  new (
+    env: TestEnvService,
+    prompts: PromptService,
+    logger: LoggerService
+  ): ChatGPTServiceType;
 }
 
 describe('ChatGPTService', () => {
@@ -17,6 +22,7 @@ describe('ChatGPTService', () => {
   let prompts: Record<string, unknown>;
   let env: TestEnvService;
   let triggerPrompt: ReturnType<typeof vi.fn>;
+  let loggerService: LoggerService;
 
   beforeEach(async () => {
     vi.resetModules();
@@ -51,8 +57,21 @@ describe('ChatGPTService', () => {
     };
 
     env = new TestEnvService();
+    loggerService = {
+      createLogger: () => ({
+        debug: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        child: vi.fn(),
+      }),
+    } as unknown as LoggerService;
     ({ ChatGPTService } = await import('../src/services/ai/ChatGPTService'));
-    service = new ChatGPTService(env, prompts as unknown as PromptService);
+    service = new ChatGPTService(
+      env,
+      prompts as unknown as PromptService,
+      loggerService
+    );
   });
 
   afterEach(() => {
@@ -239,7 +258,8 @@ describe('ChatGPTService', () => {
     (env1.env as unknown as { LOG_PROMPTS: boolean }).LOG_PROMPTS = false;
     const service1 = new ChatGPTService(
       env1,
-      prompts as unknown as PromptService
+      prompts as unknown as PromptService,
+      loggerService
     );
     await service1.ask([]);
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
@@ -249,7 +269,8 @@ describe('ChatGPTService', () => {
     (env2.env as unknown as { LOG_PROMPTS: boolean }).LOG_PROMPTS = true;
     const service2 = new ChatGPTService(
       env2,
-      prompts as unknown as PromptService
+      prompts as unknown as PromptService,
+      loggerService
     );
     await service2.ask([]);
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
