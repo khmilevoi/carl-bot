@@ -68,8 +68,8 @@ import {
   INTEREST_CHECKER_ID,
 } from './services/interest/InterestChecker';
 import {
-  LOGGER_SERVICE_ID,
-  PinoLoggerService,
+  LOGGER_FACTORY_ID,
+  PinoLoggerFactory,
 } from './services/logging/LoggerService';
 import {
   INTEREST_MESSAGE_STORE_ID,
@@ -97,7 +97,7 @@ container
   .to(EnvServiceImpl)
   .inSingletonScope();
 
-container.bind(LOGGER_SERVICE_ID).to(PinoLoggerService).inSingletonScope();
+container.bind(LOGGER_FACTORY_ID).to(PinoLoggerFactory).inSingletonScope();
 
 container.bind(PROMPT_SERVICE_ID).to(FilePromptService).inSingletonScope();
 

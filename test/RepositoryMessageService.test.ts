@@ -6,7 +6,7 @@ import { type MessageRepository } from '../src/repositories/interfaces/MessageRe
 import { type UserRepository } from '../src/repositories/interfaces/UserRepository.interface';
 import { RepositoryMessageService } from '../src/services/messages/RepositoryMessageService';
 import { type StoredMessage } from '../src/services/messages/StoredMessage.interface';
-import type { LoggerService } from '../src/services/logging/LoggerService';
+import type { LoggerFactory } from '../src/services/logging/LoggerService';
 
 describe('RepositoryMessageService', () => {
   it('links chat and user when adding a message', async () => {
@@ -23,22 +23,22 @@ describe('RepositoryMessageService', () => {
       link: vi.fn(),
     } as unknown as ChatUserRepository;
 
-    const loggerService: LoggerService = {
-      createLogger: () => ({
+    const loggerFactory: LoggerFactory = {
+      create: () => ({
         debug: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),
         error: vi.fn(),
         child: vi.fn(),
       }),
-    } as unknown as LoggerService;
+    } as unknown as LoggerFactory;
 
     const service = new RepositoryMessageService(
       chatRepo,
       userRepo,
       messageRepo,
       chatUserRepo,
-      loggerService
+      loggerFactory
     );
 
     const message: StoredMessage = {
@@ -67,14 +67,14 @@ describe('RepositoryMessageService', () => {
       messageRepo,
       {} as unknown as ChatUserRepository,
       {
-        createLogger: () => ({
+        create: () => ({
           debug: vi.fn(),
           info: vi.fn(),
           warn: vi.fn(),
           error: vi.fn(),
           child: vi.fn(),
         }),
-      } as unknown as LoggerService
+      } as unknown as LoggerFactory
     );
 
     await service.getMessages(1);

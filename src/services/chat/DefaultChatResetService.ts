@@ -2,8 +2,8 @@ import { inject, injectable } from 'inversify';
 
 import type Logger from '../logging/Logger.interface';
 import {
-  LOGGER_SERVICE_ID,
-  type LoggerService,
+  LOGGER_FACTORY_ID,
+  type LoggerFactory,
 } from '../logging/LoggerService';
 import {
   MESSAGE_SERVICE_ID,
@@ -21,9 +21,9 @@ export class DefaultChatResetService implements ChatResetService {
   constructor(
     @inject(MESSAGE_SERVICE_ID) private messages: MessageService,
     @inject(SUMMARY_SERVICE_ID) private summaries: SummaryService,
-    @inject(LOGGER_SERVICE_ID) private loggerService: LoggerService
+    @inject(LOGGER_FACTORY_ID) private loggerFactory: LoggerFactory
   ) {
-    this.logger = this.loggerService.createLogger();
+    this.logger = this.loggerFactory.create('DefaultChatResetService');
   }
 
   async reset(chatId: number): Promise<void> {

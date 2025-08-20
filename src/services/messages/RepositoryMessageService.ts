@@ -19,8 +19,8 @@ import {
 import type { ChatMessage } from '../ai/AIService.interface';
 import type Logger from '../logging/Logger.interface';
 import {
-  LOGGER_SERVICE_ID,
-  type LoggerService,
+  LOGGER_FACTORY_ID,
+  type LoggerFactory,
 } from '../logging/LoggerService';
 import { MessageService } from './MessageService.interface';
 import { StoredMessage } from './StoredMessage.interface';
@@ -33,9 +33,9 @@ export class RepositoryMessageService implements MessageService {
     @inject(USER_REPOSITORY_ID) private userRepo: UserRepository,
     @inject(MESSAGE_REPOSITORY_ID) private messageRepo: MessageRepository,
     @inject(CHAT_USER_REPOSITORY_ID) private chatUserRepo: ChatUserRepository,
-    @inject(LOGGER_SERVICE_ID) private loggerService: LoggerService
+    @inject(LOGGER_FACTORY_ID) private loggerFactory: LoggerFactory
   ) {
-    this.logger = this.loggerService.createLogger();
+    this.logger = this.loggerFactory.create('RepositoryMessageService');
   }
 
   async addMessage(message: StoredMessage): Promise<void> {

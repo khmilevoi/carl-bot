@@ -2,10 +2,10 @@ import http from 'node:http';
 
 import { TelegramBot } from './bot/TelegramBot';
 import { container } from './container';
-import { PinoLoggerService } from './services/logging/LoggerService';
+import { PinoLoggerFactory } from './services/logging/LoggerService';
 
-const loggerService = new PinoLoggerService();
-const logger = loggerService.getLogger();
+const loggerFactory = new PinoLoggerFactory();
+const logger = loggerFactory.create('index');
 const bot = container.get<TelegramBot>(TelegramBot);
 
 logger.info('Starting application');

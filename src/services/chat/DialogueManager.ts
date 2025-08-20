@@ -4,8 +4,8 @@ import { inject, injectable } from 'inversify';
 import { ENV_SERVICE_ID, type EnvService } from '../env/EnvService';
 import type Logger from '../logging/Logger.interface';
 import {
-  LOGGER_SERVICE_ID,
-  type LoggerService,
+  LOGGER_FACTORY_ID,
+  type LoggerFactory,
 } from '../logging/LoggerService';
 
 export interface DialogueManager {
@@ -26,10 +26,10 @@ export class DefaultDialogueManager implements DialogueManager {
 
   constructor(
     @inject(ENV_SERVICE_ID) envService: EnvService,
-    @inject(LOGGER_SERVICE_ID) private loggerService: LoggerService
+    @inject(LOGGER_FACTORY_ID) private loggerFactory: LoggerFactory
   ) {
     this.timeoutMs = envService.getDialogueTimeoutMs();
-    this.logger = this.loggerService.createLogger();
+    this.logger = this.loggerFactory.create('DefaultDialogueManager');
   }
 
   start(chatId: number): void {

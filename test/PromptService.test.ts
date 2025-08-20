@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TestEnvService } from '../src/services/env/EnvService';
 import type { FilePromptService } from '../src/services/prompts/FilePromptService';
-import type { LoggerService } from '../src/services/logging/LoggerService';
+import type { LoggerFactory } from '../src/services/logging/LoggerService';
 
 class TempEnvService extends TestEnvService {
   constructor(private dir: string) {
@@ -90,16 +90,16 @@ describe('FilePromptService', () => {
       '../src/services/prompts/FilePromptService'
     );
     const env = new TempEnvService(dir);
-    const loggerService: LoggerService = {
-      createLogger: () => ({
+    const loggerFactory: LoggerFactory = {
+      create: () => ({
         debug: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),
         error: vi.fn(),
         child: vi.fn(),
       }),
-    } as unknown as LoggerService;
-    service = new FilePromptService(env, loggerService);
+    } as unknown as LoggerFactory;
+    service = new FilePromptService(env, loggerFactory);
   });
 
   afterEach(() => {

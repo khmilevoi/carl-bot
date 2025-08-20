@@ -1,30 +1,27 @@
 import type { ServiceIdentifier } from 'inversify';
 import { injectable } from 'inversify';
+import pino, { type Logger as Pino } from 'pino';
 
 import type Logger from './Logger.interface';
 import { PinoLogger } from './PinoLogger';
 
-export interface LoggerService {
-  createLogger(): Logger;
+export interface LoggerFactory {
+  create(serviceName: string): Logger;
 }
 
-export const LOGGER_SERVICE_ID = Symbol.for(
-  'LoggerService'
-) as ServiceIdentifier<LoggerService>;
+export const LOGGER_FACTORY_ID = Symbol.for(
+  'LoggerFactory'
+) as ServiceIdentifier<LoggerFactory>;
 
 @injectable()
-export class PinoLoggerService implements LoggerService {
-  private readonly logger: Logger;
+export class PinoLoggerFactory implements LoggerFactory {
+  private readonly root: Pino;
 
   constructor() {
-    this.logger = new PinoLogger();
+    this.root = pino();
   }
 
-  createLogger(): Logger {
-    return this.logger;
-  }
-
-  getLogger(): Logger {
-    return this.logger;
+  create(serviceName: string): Logger {
+    return new PinoLogger(this.root.child({ service: serviceName }));
   }
 }

@@ -3,8 +3,8 @@ import { inject, injectable } from 'inversify';
 import { ChatMessage } from '../ai/AIService.interface';
 import type Logger from '../logging/Logger.interface';
 import {
-  LOGGER_SERVICE_ID,
-  type LoggerService,
+  LOGGER_FACTORY_ID,
+  type LoggerFactory,
 } from '../logging/LoggerService';
 import {
   INTEREST_MESSAGE_STORE_ID,
@@ -35,9 +35,9 @@ export class ChatMemory {
     private localStore: InterestMessageStore,
     private chatId: number,
     private limit: number,
-    private loggerService: LoggerService
+    private loggerFactory: LoggerFactory
   ) {
-    this.logger = this.loggerService.createLogger();
+    this.logger = this.loggerFactory.create('ChatMemory');
   }
 
   public async addMessage(message: StoredMessage): Promise<void> {
@@ -87,9 +87,9 @@ export class ChatMemoryManager {
     @inject(CHAT_RESET_SERVICE_ID) private resetService: ChatResetService,
     @inject(INTEREST_MESSAGE_STORE_ID) private localStore: InterestMessageStore,
     @inject(CHAT_CONFIG_SERVICE_ID) private config: ChatConfigService,
-    @inject(LOGGER_SERVICE_ID) private loggerService: LoggerService
+    @inject(LOGGER_FACTORY_ID) private loggerFactory: LoggerFactory
   ) {
-    this.logger = this.loggerService.createLogger();
+    this.logger = this.loggerFactory.create('ChatMemoryManager');
   }
 
   public async get(chatId: number): Promise<ChatMemory> {
@@ -101,7 +101,7 @@ export class ChatMemoryManager {
       this.localStore,
       chatId,
       historyLimit,
-      this.loggerService
+      this.loggerFactory
     );
   }
 

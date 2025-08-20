@@ -11,7 +11,7 @@ import type {
 import { DefaultHistorySummarizer } from '../src/services/chat/HistorySummarizer';
 import type { MessageService } from '../src/services/messages/MessageService.interface';
 import type { SummaryService } from '../src/services/summaries/SummaryService.interface';
-import type { LoggerService } from '../src/services/logging/LoggerService';
+import type { LoggerFactory } from '../src/services/logging/LoggerService';
 
 class MockAIService implements AIService {
   summarize = vi.fn(async () => 'new summary');
@@ -87,15 +87,15 @@ describe('HistorySummarizer', () => {
   let summaries: MockSummaryService;
   let summarizer: DefaultHistorySummarizer;
   let users: MockUserRepository;
-  const loggerService: LoggerService = {
-    createLogger: () => ({
+  const loggerFactory: LoggerFactory = {
+    create: () => ({
       debug: vi.fn(),
       info: vi.fn(),
       warn: vi.fn(),
       error: vi.fn(),
       child: vi.fn(),
     }),
-  } as unknown as LoggerService;
+  } as unknown as LoggerFactory;
 
   beforeEach(() => {
     ai = new MockAIService();
@@ -109,7 +109,7 @@ describe('HistorySummarizer', () => {
       summaries,
       messages,
       users,
-      loggerService
+      loggerFactory
     );
   });
 

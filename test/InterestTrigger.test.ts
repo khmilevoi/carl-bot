@@ -8,7 +8,7 @@ import {
 import { InterestChecker } from '../src/services/interest/InterestChecker';
 import { InterestTrigger } from '../src/triggers/InterestTrigger';
 import { TriggerContext } from '../src/triggers/Trigger.interface';
-import type { LoggerService } from '../src/services/logging/LoggerService';
+import type { LoggerFactory } from '../src/services/logging/LoggerService';
 
 class MockInterestChecker implements InterestChecker {
   public calls = 0;
@@ -35,18 +35,18 @@ class MockInterestChecker implements InterestChecker {
 }
 
 describe('InterestTrigger', () => {
-  const loggerService: LoggerService = {
-    createLogger: () => ({
+  const loggerFactory: LoggerFactory = {
+    create: () => ({
       debug: vi.fn(),
       info: vi.fn(),
       warn: vi.fn(),
       error: vi.fn(),
       child: vi.fn(),
     }),
-  } as unknown as LoggerService;
+  } as unknown as LoggerFactory;
   const dialogue: DialogueManager = new DefaultDialogueManager(
     { getDialogueTimeoutMs: () => 0 } as any,
-    loggerService
+    loggerFactory
   );
   const baseCtx: TriggerContext = { text: '', replyText: '', chatId: 1 };
 
@@ -106,7 +106,7 @@ describe('InterestTrigger', () => {
     const trigger = new InterestTrigger(checker);
     const activeDialogue: DialogueManager = new DefaultDialogueManager(
       { getDialogueTimeoutMs: () => 0 } as any,
-      loggerService
+      loggerFactory
     );
     activeDialogue.start(baseCtx.chatId);
     const res = await trigger.apply(

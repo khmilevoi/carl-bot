@@ -6,7 +6,7 @@ import sqlite3 from 'sqlite3';
 import { container } from './container';
 import type { EnvService } from './services/env/EnvService';
 import { ENV_SERVICE_ID } from './services/env/EnvService';
-import { PinoLoggerService } from './services/logging/LoggerService';
+import { PinoLoggerFactory } from './services/logging/LoggerService';
 import { parseDatabaseUrl } from './utils/database';
 
 interface Migration {
@@ -18,8 +18,8 @@ interface Migration {
 const envService = container.get<EnvService>(ENV_SERVICE_ID);
 const env = envService.env;
 const filename = parseDatabaseUrl(env.DATABASE_URL);
-const loggerService = new PinoLoggerService();
-const logger = loggerService.getLogger();
+const loggerFactory = new PinoLoggerFactory();
+const logger = loggerFactory.create('migrate');
 
 function loadMigrations(dir = envService.getMigrationsDir()): Migration[] {
   logger.info({ dir }, 'Loading migrations from directory');
