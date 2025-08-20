@@ -14,27 +14,27 @@ import {
   type Trigger,
   TriggerContext,
 } from '../src/triggers/Trigger.interface';
-import type { LoggerService } from '../src/services/logging/LoggerService';
+import type { LoggerFactory } from '../src/services/logging/LoggerService';
 
 describe('TriggerPipeline', () => {
   const env = {
     getBotName: () => 'bot',
     getDialogueTimeoutMs: () => 0,
   } as any;
-  const loggerService: LoggerService = {
-    createLogger: () => ({
+  const loggerFactory: LoggerFactory = {
+    create: () => ({
       debug: vi.fn(),
       info: vi.fn(),
       warn: vi.fn(),
       error: vi.fn(),
       child: vi.fn(),
     }),
-  } as unknown as LoggerService;
+  } as unknown as LoggerFactory;
 
   it('returns result when mention trigger matches', async () => {
     const dialogue: DialogueManager = new DefaultDialogueManager(
       env,
-      loggerService
+      loggerFactory
     );
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
       env,
@@ -64,7 +64,7 @@ describe('TriggerPipeline', () => {
     };
     const dialogue: DialogueManager = new DefaultDialogueManager(
       env,
-      loggerService
+      loggerFactory
     );
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
       env,
@@ -95,7 +95,7 @@ describe('TriggerPipeline', () => {
     };
     const dialogue: DialogueManager = new DefaultDialogueManager(
       env,
-      loggerService
+      loggerFactory
     );
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
       env,
@@ -128,7 +128,7 @@ describe('TriggerPipeline', () => {
     };
     const dialogue: DialogueManager = new DefaultDialogueManager(
       env,
-      loggerService
+      loggerFactory
     );
     const pipeline = new DefaultTriggerPipeline(
       env,
@@ -160,7 +160,7 @@ describe('TriggerPipeline', () => {
     };
     const dialogue: DialogueManager = new DefaultDialogueManager(
       env,
-      loggerService
+      loggerFactory
     );
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
       env,
@@ -189,7 +189,7 @@ describe('TriggerPipeline', () => {
     };
     const dialogue: DialogueManager = new DefaultDialogueManager(
       env,
-      loggerService
+      loggerFactory
     );
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
       env,
@@ -217,7 +217,7 @@ describe('TriggerPipeline', () => {
     };
     const dialogue: DialogueManager = new DefaultDialogueManager(
       env,
-      loggerService
+      loggerFactory
     );
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
       env,

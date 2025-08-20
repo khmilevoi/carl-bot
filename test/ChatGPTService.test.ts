@@ -5,13 +5,13 @@ import type { ChatMessage } from '../src/services/ai/AIService';
 import type { ChatGPTService as ChatGPTServiceType } from '../src/services/ai/ChatGPTService';
 import { TestEnvService } from '../src/services/env/EnvService';
 import type { PromptService } from '../src/services/prompts/PromptService';
-import type { LoggerService } from '../src/services/logging/LoggerService';
+import type { LoggerFactory } from '../src/services/logging/LoggerService';
 
 interface ChatGPTServiceConstructor {
   new (
     env: TestEnvService,
     prompts: PromptService,
-    logger: LoggerService
+    logger: LoggerFactory
   ): ChatGPTServiceType;
 }
 
@@ -22,7 +22,7 @@ describe('ChatGPTService', () => {
   let prompts: Record<string, unknown>;
   let env: TestEnvService;
   let triggerPrompt: ReturnType<typeof vi.fn>;
-  let loggerService: LoggerService;
+  let loggerFactory: LoggerFactory;
 
   beforeEach(async () => {
     vi.resetModules();
@@ -57,20 +57,20 @@ describe('ChatGPTService', () => {
     };
 
     env = new TestEnvService();
-    loggerService = {
-      createLogger: () => ({
+    loggerFactory = {
+      create: () => ({
         debug: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),
         error: vi.fn(),
         child: vi.fn(),
       }),
-    } as unknown as LoggerService;
+    } as unknown as LoggerFactory;
     ({ ChatGPTService } = await import('../src/services/ai/ChatGPTService'));
     service = new ChatGPTService(
       env,
       prompts as unknown as PromptService,
-      loggerService
+      loggerFactory
     );
   });
 
@@ -259,7 +259,7 @@ describe('ChatGPTService', () => {
     const service1 = new ChatGPTService(
       env1,
       prompts as unknown as PromptService,
-      loggerService
+      loggerFactory
     );
     await service1.ask([]);
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
@@ -270,7 +270,7 @@ describe('ChatGPTService', () => {
     const service2 = new ChatGPTService(
       env2,
       prompts as unknown as PromptService,
-      loggerService
+      loggerFactory
     );
     await service2.ask([]);
     await new Promise<void>((resolve) => setTimeout(resolve, 0));

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { MessageService } from '../src/services/messages/MessageService.interface';
 import type { SummaryService } from '../src/services/summaries/SummaryService.interface';
-import type { LoggerService } from '../src/services/logging/LoggerService';
+import type { LoggerFactory } from '../src/services/logging/LoggerService';
 import { DefaultChatResetService } from '../src/services/chat/DefaultChatResetService';
 
 describe('DefaultChatResetService', () => {
@@ -22,13 +22,13 @@ describe('DefaultChatResetService', () => {
     error: vi.fn(),
     child: vi.fn(),
   };
-  const loggerService: LoggerService = {
-    createLogger: () => logger,
-  } as unknown as LoggerService;
+  const loggerFactory: LoggerFactory = {
+    create: () => logger,
+  } as unknown as LoggerFactory;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    service = new DefaultChatResetService(messages, summaries, loggerService);
+    service = new DefaultChatResetService(messages, summaries, loggerFactory);
   });
 
   it('clears messages, summary and logs reset', async () => {

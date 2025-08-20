@@ -6,8 +6,8 @@ import {
 } from '../../repositories/interfaces/SummaryRepository.interface';
 import type Logger from '../logging/Logger.interface';
 import {
-  LOGGER_SERVICE_ID,
-  type LoggerService,
+  LOGGER_FACTORY_ID,
+  type LoggerFactory,
 } from '../logging/LoggerService';
 import { SummaryService } from './SummaryService.interface';
 
@@ -16,9 +16,9 @@ export class RepositorySummaryService implements SummaryService {
   private readonly logger: Logger;
   constructor(
     @inject(SUMMARY_REPOSITORY_ID) private summaryRepo: SummaryRepository,
-    @inject(LOGGER_SERVICE_ID) private loggerService: LoggerService
+    @inject(LOGGER_FACTORY_ID) private loggerFactory: LoggerFactory
   ) {
-    this.logger = this.loggerService.createLogger();
+    this.logger = this.loggerFactory.create('RepositorySummaryService');
   }
 
   async getSummary(chatId: number): Promise<string> {

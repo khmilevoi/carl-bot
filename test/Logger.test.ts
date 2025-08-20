@@ -19,10 +19,10 @@ describe('logger', () => {
     vi.resetModules();
     const { container } = await import('../src/container');
     const LoggerModule = await import('../src/services/logging/LoggerService');
-    const service = container.get<LoggerModule.LoggerService>(
-      LoggerModule.LOGGER_SERVICE_ID
+    const factory = container.get<LoggerModule.LoggerFactory>(
+      LoggerModule.LOGGER_FACTORY_ID
     );
-    const logger = service.createLogger();
+    const logger = factory.create('LoggerTest');
     logger.debug('debug');
     logger.info('info');
     logger.warn('warn');

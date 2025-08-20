@@ -8,8 +8,8 @@ import { TriggerReason } from '../../triggers/Trigger.interface';
 import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
 import type Logger from '../logging/Logger.interface';
 import {
-  LOGGER_SERVICE_ID,
-  type LoggerService,
+  LOGGER_FACTORY_ID,
+  type LoggerFactory,
 } from '../logging/LoggerService';
 import {
   PROMPT_SERVICE_ID,
@@ -28,7 +28,7 @@ export class ChatGPTService implements AIService {
   constructor(
     @inject(ENV_SERVICE_ID) private readonly envService: EnvService,
     @inject(PROMPT_SERVICE_ID) private readonly prompts: PromptService,
-    @inject(LOGGER_SERVICE_ID) private loggerService: LoggerService
+    @inject(LOGGER_FACTORY_ID) private loggerFactory: LoggerFactory
   ) {
     const env = this.envService.env;
     this.openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
@@ -36,7 +36,7 @@ export class ChatGPTService implements AIService {
     this.askModel = models.ask;
     this.summaryModel = models.summary;
     this.interestModel = models.interest;
-    this.logger = this.loggerService.createLogger();
+    this.logger = this.loggerFactory.create('ChatGPTService');
     this.logger.debug('ChatGPTService initialized');
   }
 
