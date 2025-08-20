@@ -47,10 +47,13 @@ export class ChatGPTService implements AIService {
   ): Promise<string> {
     const persona = await this.prompts.getPersona();
 
-    this.logger.debug('Sending chat completion request', {
-      messages: history.length,
-      summary: !!summary,
-    });
+    this.logger.debug(
+      {
+        messages: history.length,
+        summary: !!summary,
+      },
+      'Sending chat completion request'
+    );
 
     const messages: OpenAI.ChatCompletionMessageParam[] = [
       { role: 'system', content: persona },
@@ -138,9 +141,12 @@ export class ChatGPTService implements AIService {
       )
     );
     messages.push(...historyMessages);
-    this.logger.debug('Sending interest check request', {
-      messages: history.length,
-    });
+    this.logger.debug(
+      {
+        messages: history.length,
+      },
+      'Sending interest check request'
+    );
     const completion = await this.openai.chat.completions.create({
       model: this.interestModel,
       messages,
@@ -154,10 +160,13 @@ export class ChatGPTService implements AIService {
         why: string;
       } | null;
     } catch (err) {
-      this.logger.error('Failed to parse interest response', {
-        err,
-        content,
-      });
+      this.logger.error(
+        {
+          err,
+          content,
+        },
+        'Failed to parse interest response'
+      );
       return null;
     }
   }
@@ -200,9 +209,12 @@ export class ChatGPTService implements AIService {
       )
     );
     reqMessages.push(...historyMessages);
-    this.logger.debug('Sending user attitude assessment request', {
-      messages: messages.length,
-    });
+    this.logger.debug(
+      {
+        messages: messages.length,
+      },
+      'Sending user attitude assessment request'
+    );
     const completion = await this.openai.chat.completions.create({
       model: this.summaryModel,
       messages: reqMessages,
@@ -213,10 +225,13 @@ export class ChatGPTService implements AIService {
     try {
       return JSON.parse(content) as { username: string; attitude: string }[];
     } catch (err) {
-      this.logger.error('Failed to parse assessUsers response', {
-        err,
-        content,
-      });
+      this.logger.error(
+        {
+          err,
+          content,
+        },
+        'Failed to parse assessUsers response'
+      );
       return [];
     }
   }
@@ -231,10 +246,13 @@ export class ChatGPTService implements AIService {
         content: await this.prompts.getSummarizationSystemPrompt(),
       },
     ];
-    this.logger.debug('Sending summarization request', {
-      history: history.length,
-      prevLength: prev?.length ?? 0,
-    });
+    this.logger.debug(
+      {
+        history: history.length,
+        prevLength: prev?.length ?? 0,
+      },
+      'Sending summarization request'
+    );
     if (prev) {
       messages.push({
         role: 'user',
@@ -288,7 +306,7 @@ export class ChatGPTService implements AIService {
     try {
       await fs.appendFile(filePath, entry);
     } catch (err) {
-      this.logger.error('Failed to write prompt log', { err });
+      this.logger.error({ err }, 'Failed to write prompt log');
     }
   }
 }

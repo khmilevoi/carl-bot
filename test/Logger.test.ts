@@ -8,26 +8,9 @@ describe('logger', () => {
     vi.resetModules();
   });
 
-  it('creates logger in test env', async () => {
-    process.env.NODE_ENV = 'test';
-    vi.resetModules();
-    const { createPinoLogger } = await import('../src/services/logging/logger');
-    const logger = createPinoLogger();
-    expect(logger).toBeDefined();
-  });
-
-  it('creates logger in non-test env', async () => {
-    process.env = {
-      ...OLD_ENV,
-      NODE_ENV: 'production',
-      BOT_TOKEN: 'token',
-      OPENAI_API_KEY: 'key',
-      DATABASE_URL: 'file:///tmp/test.db',
-      ADMIN_CHAT_ID: '1',
-    };
-    vi.resetModules();
-    const { createPinoLogger } = await import('../src/services/logging/logger');
-    const logger = createPinoLogger();
+  it('creates logger instance', async () => {
+    const { PinoLogger } = await import('../src/services/logging/PinoLogger');
+    const logger = new PinoLogger();
     expect(logger).toBeDefined();
   });
 

@@ -55,51 +55,69 @@ export class DefaultHistorySummarizer implements HistorySummarizer {
     history: ChatMessage[],
     limit: number
   ): Promise<boolean> {
-    this.logger.debug('Checking if summarization is needed', {
-      chatId,
-      historyLength: history.length,
-      limit,
-    });
-
-    if (history.length <= limit) {
-      this.logger.debug('No summarization needed', {
+    this.logger.debug(
+      {
         chatId,
         historyLength: history.length,
         limit,
-      });
+      },
+      'Checking if summarization is needed'
+    );
+
+    if (history.length <= limit) {
+      this.logger.debug(
+        {
+          chatId,
+          historyLength: history.length,
+          limit,
+        },
+        'No summarization needed'
+      );
       return false;
     }
 
-    this.logger.debug('Summarizing chat history', {
-      chatId,
-      historyLength: history.length,
-      limit,
-    });
+    this.logger.debug(
+      {
+        chatId,
+        historyLength: history.length,
+        limit,
+      },
+      'Summarizing chat history'
+    );
     const summary = await this.summaries.getSummary(chatId);
-    this.logger.debug('Retrieved existing summary', {
-      chatId,
-      summaryLength: summary.length,
-    });
+    this.logger.debug(
+      {
+        chatId,
+        summaryLength: summary.length,
+      },
+      'Retrieved existing summary'
+    );
 
     const newSummary = await this.ai.summarize(history, summary);
-    this.logger.debug('Generated new summary', {
-      chatId,
-      newSummaryLength: newSummary.length,
-    });
+    this.logger.debug(
+      {
+        chatId,
+        newSummaryLength: newSummary.length,
+      },
+      'Generated new summary'
+    );
 
     await this.summaries.setSummary(chatId, newSummary);
-    this.logger.debug('Stored new summary', { chatId });
+    this.logger.debug({ chatId }, 'Stored new summary');
 
     await this.messages.clearMessages(chatId);
-    this.logger.debug('Cleared messages after summarization', { chatId });
+    this.logger.debug({ chatId }, 'Cleared messages after summarization');
     return true;
   }
 
   async assessUsers(chatId: number, history: ChatMessage[]): Promise<void> {
-    this.logger.debug('Assessing user attitudes', {
-      chatId,
-      historyLength: history.length,
-    });
+    this.logger.debug(
+      {
+        chatId,
+        historyLength: history.length,
+      },
+      'Assessing user attitudes'
+    );
     const prevAttitudes: { username: string; attitude: string }[] = [];
     const seen = new Set<number>();
     for (const m of history) {
@@ -118,10 +136,13 @@ export class DefaultHistorySummarizer implements HistorySummarizer {
     }
 
     const assessments = await this.ai.assessUsers(history, prevAttitudes);
-    this.logger.debug('Assessed user attitudes', {
-      chatId,
-      assessments: assessments.length,
-    });
+    this.logger.debug(
+      {
+        chatId,
+        assessments: assessments.length,
+      },
+      'Assessed user attitudes'
+    );
 
     for (const { username, attitude } of assessments) {
       const userMsg = history.find(

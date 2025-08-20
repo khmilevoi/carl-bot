@@ -36,8 +36,11 @@ describe('DefaultChatResetService', () => {
     await service.reset(chatId);
     expect(messages.clearMessages).toHaveBeenCalledWith(chatId);
     expect(summaries.clearSummary).toHaveBeenCalledWith(chatId);
-    expect(logger.debug).toHaveBeenCalledWith('Resetting chat data', {
-      chatId,
-    });
+    expect(logger.debug).toHaveBeenCalledWith(
+      {
+        chatId,
+      },
+      'Resetting chat data'
+    );
   });
 });

@@ -41,21 +41,27 @@ export class ChatMemory {
   }
 
   public async addMessage(message: StoredMessage): Promise<void> {
-    this.logger.debug('Adding message', {
-      chatId: this.chatId,
-      role: message.role,
-      limit: this.limit,
-    });
+    this.logger.debug(
+      {
+        chatId: this.chatId,
+        role: message.role,
+        limit: this.limit,
+      },
+      'Adding message'
+    );
     await this.messages.addMessage({ ...message, chatId: this.chatId });
     this.localStore.addMessage({ ...message, chatId: this.chatId });
 
     // Проверяем лимит после добавления сообщения
     const history = await this.messages.getMessages(this.chatId);
-    this.logger.debug('Checking history limit after adding message', {
-      chatId: this.chatId,
-      historyLength: history.length,
-      limit: this.limit,
-    });
+    this.logger.debug(
+      {
+        chatId: this.chatId,
+        historyLength: history.length,
+        limit: this.limit,
+      },
+      'Checking history limit after adding message'
+    );
     const summarized = await this.summarizer.summarize(
       this.chatId,
       history,
@@ -87,7 +93,7 @@ export class ChatMemoryManager {
   }
 
   public async get(chatId: number): Promise<ChatMemory> {
-    this.logger.debug('Creating chat memory', { chatId });
+    this.logger.debug({ chatId }, 'Creating chat memory');
     const { historyLimit } = await this.config.getConfig(chatId);
     return new ChatMemory(
       this.messages,
@@ -100,7 +106,7 @@ export class ChatMemoryManager {
   }
 
   public async reset(chatId: number): Promise<void> {
-    this.logger.debug('Resetting chat memory', { chatId });
+    this.logger.debug({ chatId }, 'Resetting chat memory');
     await this.resetService.reset(chatId);
     this.localStore.clearMessages(chatId);
   }

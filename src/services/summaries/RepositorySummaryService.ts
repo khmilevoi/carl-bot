@@ -22,17 +22,17 @@ export class RepositorySummaryService implements SummaryService {
   }
 
   async getSummary(chatId: number): Promise<string> {
-    this.logger.debug('Fetching summary', { chatId });
+    this.logger.debug({ chatId }, 'Fetching summary');
     return this.summaryRepo.findById(chatId);
   }
 
   async setSummary(chatId: number, summary: string): Promise<void> {
-    this.logger.debug('Storing summary', { chatId });
+    this.logger.debug({ chatId }, 'Storing summary');
     await this.summaryRepo.upsert(chatId, summary);
   }
 
   async clearSummary(chatId: number): Promise<void> {
-    this.logger.debug('Clearing summary', { chatId });
+    this.logger.debug({ chatId }, 'Clearing summary');
     await this.summaryRepo.clearByChatId(chatId);
   }
 }

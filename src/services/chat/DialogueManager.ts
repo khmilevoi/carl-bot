@@ -33,12 +33,12 @@ export class DefaultDialogueManager implements DialogueManager {
   }
 
   start(chatId: number): void {
-    this.logger.debug('Starting dialogue', { chatId });
+    this.logger.debug({ chatId }, 'Starting dialogue');
     this.setTimer(chatId);
   }
 
   extend(chatId: number): void {
-    this.logger.debug('Extending dialogue', { chatId });
+    this.logger.debug({ chatId }, 'Extending dialogue');
     this.setTimer(chatId);
   }
 
@@ -53,7 +53,7 @@ export class DefaultDialogueManager implements DialogueManager {
     }
     const timer = setTimeout(() => {
       this.timers.delete(chatId);
-      this.logger.debug('Dialogue timed out', { chatId });
+      this.logger.debug({ chatId }, 'Dialogue timed out');
     }, this.timeoutMs);
     this.timers.set(chatId, timer);
   }

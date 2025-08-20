@@ -39,10 +39,13 @@ export class RepositoryMessageService implements MessageService {
   }
 
   async addMessage(message: StoredMessage): Promise<void> {
-    this.logger.debug('Inserting message into database', {
-      chatId: message.chatId,
-      role: message.role,
-    });
+    this.logger.debug(
+      {
+        chatId: message.chatId,
+        role: message.role,
+      },
+      'Inserting message into database'
+    );
     const storedUserId = message.userId ?? 0;
     await this.chatRepo.upsert({
       chatId: message.chatId,
@@ -62,25 +65,28 @@ export class RepositoryMessageService implements MessageService {
   }
 
   async getMessages(chatId: number): Promise<ChatMessage[]> {
-    this.logger.debug('Fetching messages from database', { chatId });
+    this.logger.debug({ chatId }, 'Fetching messages from database');
     return this.messageRepo.findByChatId(chatId);
   }
 
   async getCount(chatId: number): Promise<number> {
-    this.logger.debug('Counting messages in database', { chatId });
+    this.logger.debug({ chatId }, 'Counting messages in database');
     return this.messageRepo.countByChatId(chatId);
   }
 
   async getLastMessages(chatId: number, limit: number): Promise<ChatMessage[]> {
-    this.logger.debug('Fetching last messages from database', {
-      chatId,
-      limit,
-    });
+    this.logger.debug(
+      {
+        chatId,
+        limit,
+      },
+      'Fetching last messages from database'
+    );
     return this.messageRepo.findLastByChatId(chatId, limit);
   }
 
   async clearMessages(chatId: number): Promise<void> {
-    this.logger.debug('Clearing messages table', { chatId });
+    this.logger.debug({ chatId }, 'Clearing messages table');
     await this.messageRepo.clearByChatId(chatId);
   }
 }
