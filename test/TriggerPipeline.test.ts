@@ -14,15 +14,28 @@ import {
   type Trigger,
   TriggerContext,
 } from '../src/triggers/Trigger.interface';
+import type { LoggerService } from '../src/services/logging/LoggerService';
 
 describe('TriggerPipeline', () => {
   const env = {
     getBotName: () => 'bot',
     getDialogueTimeoutMs: () => 0,
   } as any;
+  const loggerService: LoggerService = {
+    createLogger: () => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      child: vi.fn(),
+    }),
+  } as unknown as LoggerService;
 
   it('returns result when mention trigger matches', async () => {
-    const dialogue: DialogueManager = new DefaultDialogueManager(env);
+    const dialogue: DialogueManager = new DefaultDialogueManager(
+      env,
+      loggerService
+    );
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
       env,
       {
@@ -49,7 +62,10 @@ describe('TriggerPipeline', () => {
     const interestChecker: InterestChecker = {
       check: vi.fn().mockResolvedValue(null),
     };
-    const dialogue: DialogueManager = new DefaultDialogueManager(env);
+    const dialogue: DialogueManager = new DefaultDialogueManager(
+      env,
+      loggerService
+    );
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
       env,
       interestChecker,
@@ -77,7 +93,10 @@ describe('TriggerPipeline', () => {
         return result;
       },
     };
-    const dialogue: DialogueManager = new DefaultDialogueManager(env);
+    const dialogue: DialogueManager = new DefaultDialogueManager(
+      env,
+      loggerService
+    );
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
       env,
       interestChecker,
@@ -107,7 +126,10 @@ describe('TriggerPipeline', () => {
         .fn()
         .mockResolvedValue({ messageId: '1', message: 'hi', why: 'because' }),
     };
-    const dialogue: DialogueManager = new DefaultDialogueManager(env);
+    const dialogue: DialogueManager = new DefaultDialogueManager(
+      env,
+      loggerService
+    );
     const pipeline = new DefaultTriggerPipeline(
       env,
       interestChecker,
@@ -136,7 +158,10 @@ describe('TriggerPipeline', () => {
     const interestChecker: InterestChecker = {
       check: vi.fn().mockRejectedValue(new Error('fail')),
     };
-    const dialogue: DialogueManager = new DefaultDialogueManager(env);
+    const dialogue: DialogueManager = new DefaultDialogueManager(
+      env,
+      loggerService
+    );
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
       env,
       interestChecker,
@@ -162,7 +187,10 @@ describe('TriggerPipeline', () => {
         why: 'because',
       }),
     };
-    const dialogue: DialogueManager = new DefaultDialogueManager(env);
+    const dialogue: DialogueManager = new DefaultDialogueManager(
+      env,
+      loggerService
+    );
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
       env,
       interestChecker,
@@ -187,7 +215,10 @@ describe('TriggerPipeline', () => {
     const interestChecker: InterestChecker = {
       check: vi.fn().mockResolvedValue(null),
     };
-    const dialogue: DialogueManager = new DefaultDialogueManager(env);
+    const dialogue: DialogueManager = new DefaultDialogueManager(
+      env,
+      loggerService
+    );
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
       env,
       interestChecker,

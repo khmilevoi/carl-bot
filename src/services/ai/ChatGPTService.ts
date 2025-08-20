@@ -6,7 +6,11 @@ import path from 'path';
 
 import { TriggerReason } from '../../triggers/Trigger.interface';
 import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
-import { PinoLogger } from '../logging/PinoLogger';
+import type Logger from '../logging/Logger.interface';
+import {
+  LOGGER_SERVICE_ID,
+  type LoggerService,
+} from '../logging/LoggerService';
 import {
   PROMPT_SERVICE_ID,
   PromptService,
@@ -19,11 +23,12 @@ export class ChatGPTService implements AIService {
   private readonly askModel: ChatModel;
   private readonly summaryModel: ChatModel;
   private readonly interestModel: ChatModel;
-  private readonly logger = new PinoLogger();
+  private readonly logger: Logger;
 
   constructor(
     @inject(ENV_SERVICE_ID) private readonly envService: EnvService,
-    @inject(PROMPT_SERVICE_ID) private readonly prompts: PromptService
+    @inject(PROMPT_SERVICE_ID) private readonly prompts: PromptService,
+    @inject(LOGGER_SERVICE_ID) private loggerService: LoggerService
   ) {
     const env = this.envService.env;
     this.openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
@@ -31,6 +36,7 @@ export class ChatGPTService implements AIService {
     this.askModel = models.ask;
     this.summaryModel = models.summary;
     this.interestModel = models.interest;
+    this.logger = this.loggerService.createLogger();
     this.logger.debug('ChatGPTService initialized');
   }
 
@@ -42,7 +48,10 @@ export class ChatGPTService implements AIService {
     const persona = await this.prompts.getPersona();
 
     this.logger.debug(
-      { messages: history.length, summary: !!summary },
+      {
+        messages: history.length,
+        summary: !!summary,
+      },
       'Sending chat completion request'
     );
 
@@ -133,7 +142,9 @@ export class ChatGPTService implements AIService {
     );
     messages.push(...historyMessages);
     this.logger.debug(
-      { messages: history.length },
+      {
+        messages: history.length,
+      },
       'Sending interest check request'
     );
     const completion = await this.openai.chat.completions.create({
@@ -149,7 +160,13 @@ export class ChatGPTService implements AIService {
         why: string;
       } | null;
     } catch (err) {
-      this.logger.error({ err, content }, 'Failed to parse interest response');
+      this.logger.error(
+        {
+          err,
+          content,
+        },
+        'Failed to parse interest response'
+      );
       return null;
     }
   }
@@ -193,7 +210,9 @@ export class ChatGPTService implements AIService {
     );
     reqMessages.push(...historyMessages);
     this.logger.debug(
-      { messages: messages.length },
+      {
+        messages: messages.length,
+      },
       'Sending user attitude assessment request'
     );
     const completion = await this.openai.chat.completions.create({
@@ -207,7 +226,10 @@ export class ChatGPTService implements AIService {
       return JSON.parse(content) as { username: string; attitude: string }[];
     } catch (err) {
       this.logger.error(
-        { err, content },
+        {
+          err,
+          content,
+        },
         'Failed to parse assessUsers response'
       );
       return [];
@@ -225,7 +247,10 @@ export class ChatGPTService implements AIService {
       },
     ];
     this.logger.debug(
-      { history: history.length, prevLength: prev?.length ?? 0 },
+      {
+        history: history.length,
+        prevLength: prev?.length ?? 0,
+      },
       'Sending summarization request'
     );
     if (prev) {

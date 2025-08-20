@@ -2,18 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { MessageService } from '../src/services/messages/MessageService.interface';
 import type { SummaryService } from '../src/services/summaries/SummaryService.interface';
-
-const debug = vi.fn();
-vi.mock('../src/services/logging/PinoLogger', () => ({
-  PinoLogger: vi.fn().mockImplementation(() => ({
-    debug,
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    child: vi.fn(),
-  })),
-}));
-
+import type { LoggerService } from '../src/services/logging/LoggerService';
 import { DefaultChatResetService } from '../src/services/chat/DefaultChatResetService';
 
 describe('DefaultChatResetService', () => {
@@ -26,10 +15,20 @@ describe('DefaultChatResetService', () => {
   } as unknown as SummaryService;
 
   let service: DefaultChatResetService;
+  const logger = {
+    debug: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    child: vi.fn(),
+  };
+  const loggerService: LoggerService = {
+    createLogger: () => logger,
+  } as unknown as LoggerService;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    service = new DefaultChatResetService(messages, summaries);
+    service = new DefaultChatResetService(messages, summaries, loggerService);
   });
 
   it('clears messages, summary and logs reset', async () => {
@@ -37,6 +36,11 @@ describe('DefaultChatResetService', () => {
     await service.reset(chatId);
     expect(messages.clearMessages).toHaveBeenCalledWith(chatId);
     expect(summaries.clearSummary).toHaveBeenCalledWith(chatId);
-    expect(debug).toHaveBeenCalledWith({ chatId }, 'Resetting chat data');
+    expect(logger.debug).toHaveBeenCalledWith(
+      {
+        chatId,
+      },
+      'Resetting chat data'
+    );
   });
 });

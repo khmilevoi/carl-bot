@@ -17,23 +17,33 @@ import {
   type UserRepository,
 } from '../../repositories/interfaces/UserRepository.interface';
 import type { ChatMessage } from '../ai/AIService.interface';
-import { PinoLogger } from '../logging/PinoLogger';
+import type Logger from '../logging/Logger.interface';
+import {
+  LOGGER_SERVICE_ID,
+  type LoggerService,
+} from '../logging/LoggerService';
 import { MessageService } from './MessageService.interface';
 import { StoredMessage } from './StoredMessage.interface';
 
 @injectable()
 export class RepositoryMessageService implements MessageService {
-  private readonly logger = new PinoLogger();
+  private readonly logger: Logger;
   constructor(
     @inject(CHAT_REPOSITORY_ID) private chatRepo: ChatRepository,
     @inject(USER_REPOSITORY_ID) private userRepo: UserRepository,
     @inject(MESSAGE_REPOSITORY_ID) private messageRepo: MessageRepository,
-    @inject(CHAT_USER_REPOSITORY_ID) private chatUserRepo: ChatUserRepository
-  ) {}
+    @inject(CHAT_USER_REPOSITORY_ID) private chatUserRepo: ChatUserRepository,
+    @inject(LOGGER_SERVICE_ID) private loggerService: LoggerService
+  ) {
+    this.logger = this.loggerService.createLogger();
+  }
 
   async addMessage(message: StoredMessage): Promise<void> {
     this.logger.debug(
-      { chatId: message.chatId, role: message.role },
+      {
+        chatId: message.chatId,
+        role: message.role,
+      },
       'Inserting message into database'
     );
     const storedUserId = message.userId ?? 0;
@@ -66,7 +76,10 @@ export class RepositoryMessageService implements MessageService {
 
   async getLastMessages(chatId: number, limit: number): Promise<ChatMessage[]> {
     this.logger.debug(
-      { chatId, limit },
+      {
+        chatId,
+        limit,
+      },
       'Fetching last messages from database'
     );
     return this.messageRepo.findLastByChatId(chatId, limit);

@@ -4,15 +4,22 @@ import {
   SUMMARY_REPOSITORY_ID,
   type SummaryRepository,
 } from '../../repositories/interfaces/SummaryRepository.interface';
-import { PinoLogger } from '../logging/PinoLogger';
+import type Logger from '../logging/Logger.interface';
+import {
+  LOGGER_SERVICE_ID,
+  type LoggerService,
+} from '../logging/LoggerService';
 import { SummaryService } from './SummaryService.interface';
 
 @injectable()
 export class RepositorySummaryService implements SummaryService {
-  private readonly logger = new PinoLogger();
+  private readonly logger: Logger;
   constructor(
-    @inject(SUMMARY_REPOSITORY_ID) private summaryRepo: SummaryRepository
-  ) {}
+    @inject(SUMMARY_REPOSITORY_ID) private summaryRepo: SummaryRepository,
+    @inject(LOGGER_SERVICE_ID) private loggerService: LoggerService
+  ) {
+    this.logger = this.loggerService.createLogger();
+  }
 
   async getSummary(chatId: number): Promise<string> {
     this.logger.debug({ chatId }, 'Fetching summary');

@@ -1,5 +1,5 @@
 import type { Context } from 'telegraf';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   DefaultDialogueManager,
@@ -8,6 +8,7 @@ import {
 import { InterestChecker } from '../src/services/interest/InterestChecker';
 import { InterestTrigger } from '../src/triggers/InterestTrigger';
 import { TriggerContext } from '../src/triggers/Trigger.interface';
+import type { LoggerService } from '../src/services/logging/LoggerService';
 
 class MockInterestChecker implements InterestChecker {
   public calls = 0;
@@ -34,9 +35,19 @@ class MockInterestChecker implements InterestChecker {
 }
 
 describe('InterestTrigger', () => {
-  const dialogue: DialogueManager = new DefaultDialogueManager({
-    getDialogueTimeoutMs: () => 0,
-  } as any);
+  const loggerService: LoggerService = {
+    createLogger: () => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      child: vi.fn(),
+    }),
+  } as unknown as LoggerService;
+  const dialogue: DialogueManager = new DefaultDialogueManager(
+    { getDialogueTimeoutMs: () => 0 } as any,
+    loggerService
+  );
   const baseCtx: TriggerContext = { text: '', replyText: '', chatId: 1 };
 
   it('returns null when message count is below threshold', async () => {
@@ -93,9 +104,10 @@ describe('InterestTrigger', () => {
       why: 'because',
     });
     const trigger = new InterestTrigger(checker);
-    const activeDialogue: DialogueManager = new DefaultDialogueManager({
-      getDialogueTimeoutMs: () => 0,
-    } as any);
+    const activeDialogue: DialogueManager = new DefaultDialogueManager(
+      { getDialogueTimeoutMs: () => 0 } as any,
+      loggerService
+    );
     activeDialogue.start(baseCtx.chatId);
     const res = await trigger.apply(
       {} as unknown as Context,

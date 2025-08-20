@@ -2,7 +2,11 @@ import type { ServiceIdentifier } from 'inversify';
 import { inject, injectable } from 'inversify';
 
 import { ENV_SERVICE_ID, type EnvService } from '../env/EnvService';
-import { PinoLogger } from '../logging/PinoLogger';
+import type Logger from '../logging/Logger.interface';
+import {
+  LOGGER_SERVICE_ID,
+  type LoggerService,
+} from '../logging/LoggerService';
 
 export interface DialogueManager {
   start(chatId: number): void;
@@ -18,10 +22,14 @@ export const DIALOGUE_MANAGER_ID = Symbol.for(
 export class DefaultDialogueManager implements DialogueManager {
   private timers = new Map<number, NodeJS.Timeout>();
   private timeoutMs: number;
-  private readonly logger = new PinoLogger();
+  private readonly logger: Logger;
 
-  constructor(@inject(ENV_SERVICE_ID) envService: EnvService) {
+  constructor(
+    @inject(ENV_SERVICE_ID) envService: EnvService,
+    @inject(LOGGER_SERVICE_ID) private loggerService: LoggerService
+  ) {
     this.timeoutMs = envService.getDialogueTimeoutMs();
+    this.logger = this.loggerService.createLogger();
   }
 
   start(chatId: number): void {

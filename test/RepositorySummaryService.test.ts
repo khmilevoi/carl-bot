@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { type SummaryRepository } from '../src/repositories/interfaces/SummaryRepository.interface';
 import { RepositorySummaryService } from '../src/services/summaries/RepositorySummaryService';
+import type { LoggerService } from '../src/services/logging/LoggerService';
 
 describe('RepositorySummaryService', () => {
   it('getSummary calls findById', async () => {
@@ -11,7 +12,15 @@ describe('RepositorySummaryService', () => {
       clearByChatId: vi.fn(),
     } as unknown as SummaryRepository;
 
-    const service = new RepositorySummaryService(summaryRepo);
+    const service = new RepositorySummaryService(summaryRepo, {
+      createLogger: () => ({
+        debug: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        child: vi.fn(),
+      }),
+    } as unknown as LoggerService);
 
     await service.getSummary(123);
 
@@ -25,7 +34,15 @@ describe('RepositorySummaryService', () => {
       clearByChatId: vi.fn(),
     } as unknown as SummaryRepository;
 
-    const service = new RepositorySummaryService(summaryRepo);
+    const service = new RepositorySummaryService(summaryRepo, {
+      createLogger: () => ({
+        debug: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        child: vi.fn(),
+      }),
+    } as unknown as LoggerService);
 
     await service.setSummary(123, 'summary');
 
@@ -39,7 +56,15 @@ describe('RepositorySummaryService', () => {
       clearByChatId: vi.fn(),
     } as unknown as SummaryRepository;
 
-    const service = new RepositorySummaryService(summaryRepo);
+    const service = new RepositorySummaryService(summaryRepo, {
+      createLogger: () => ({
+        debug: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        child: vi.fn(),
+      }),
+    } as unknown as LoggerService);
 
     await service.clearSummary(123);
 
