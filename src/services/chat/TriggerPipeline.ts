@@ -15,6 +15,7 @@ import {
   INTEREST_CHECKER_ID,
   InterestChecker,
 } from '../interest/InterestChecker';
+import type Logger from '../logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
@@ -38,6 +39,7 @@ export class DefaultTriggerPipeline implements TriggerPipeline {
   private replyTrigger: ReplyTrigger;
   private nameTrigger: NameTrigger;
   private interestTrigger: InterestTrigger;
+  private readonly logger: Logger;
 
   constructor(
     @inject(ENV_SERVICE_ID) envService: EnvService,
@@ -45,6 +47,7 @@ export class DefaultTriggerPipeline implements TriggerPipeline {
     @inject(DIALOGUE_MANAGER_ID) private dialogue: DialogueManager,
     @inject(LOGGER_FACTORY_ID) loggerFactory: LoggerFactory
   ) {
+    this.logger = loggerFactory.create('DefaultTriggerPipeline');
     this.nameTrigger = new NameTrigger(envService.getBotName(), loggerFactory);
     this.interestTrigger = new InterestTrigger(interestChecker, loggerFactory);
     this.mentionTrigger = new MentionTrigger(loggerFactory);
@@ -57,22 +60,45 @@ export class DefaultTriggerPipeline implements TriggerPipeline {
   ): Promise<TriggerResult | null> {
     const chatId = context.chatId;
     const inDialogue = this.dialogue.isActive(chatId);
+    let matchedTrigger: string | null = null;
     let result: TriggerResult | null = await this.mentionTrigger.apply(
       ctx,
       context,
       this.dialogue
     );
-    result ??= await this.replyTrigger.apply(ctx, context, this.dialogue);
-    result ??= await this.nameTrigger.apply(ctx, context, this.dialogue);
-    result ??= await this.interestTrigger.apply(ctx, context, this.dialogue);
+    if (result) {
+      matchedTrigger = 'MentionTrigger';
+    } else {
+      result = await this.replyTrigger.apply(ctx, context, this.dialogue);
+      if (result) {
+        matchedTrigger = 'ReplyTrigger';
+      } else {
+        result = await this.nameTrigger.apply(ctx, context, this.dialogue);
+        if (result) {
+          matchedTrigger = 'NameTrigger';
+        } else {
+          result = await this.interestTrigger.apply(
+            ctx,
+            context,
+            this.dialogue
+          );
+          if (result) {
+            matchedTrigger = 'InterestTrigger';
+          }
+        }
+      }
+    }
 
-    const matched = !!result;
+    const matched = matchedTrigger !== null;
     if (matched) {
       if (inDialogue) {
         this.dialogue.extend(chatId);
       } else {
         this.dialogue.start(chatId);
       }
+      this.logger.debug({ chatId, trigger: matchedTrigger }, 'Trigger matched');
+    } else {
+      this.logger.debug({ chatId }, 'No trigger matched');
     }
 
     return result;
