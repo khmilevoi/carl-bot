@@ -14,6 +14,23 @@ import { SQLiteSummaryRepository } from '../src/repositories/sqlite/SQLiteSummar
 import { SQLiteUserRepository } from '../src/repositories/sqlite/SQLiteUserRepository';
 import { TestEnvService } from '../src/services/env/EnvService';
 import { parseDatabaseUrl } from '../src/utils/database';
+import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
+
+const createLoggerFactory = (): LoggerFactory =>
+  ({
+    create: () => {
+      const logger = {
+        debug() {},
+        info() {},
+        warn() {},
+        error() {},
+        child() {
+          return logger;
+        },
+      };
+      return logger;
+    },
+  }) as unknown as LoggerFactory;
 
 let chatRepo: SQLiteChatRepository;
 let userRepo: SQLiteUserRepository;
@@ -74,7 +91,7 @@ beforeEach(async () => {
       );
     `);
   await db.close();
-  const provider = new SQLiteDbProviderImpl(env);
+  const provider = new SQLiteDbProviderImpl(env, createLoggerFactory());
   chatRepo = new SQLiteChatRepository(provider);
   userRepo = new SQLiteUserRepository(provider);
   messageRepo = new SQLiteMessageRepository(provider);
