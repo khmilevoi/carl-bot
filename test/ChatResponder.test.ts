@@ -1,5 +1,5 @@
 import type { Context } from 'telegraf';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type {
   AIService,
@@ -12,6 +12,7 @@ import {
 } from '../src/services/chat/ChatResponder';
 import type { SummaryService } from '../src/services/summaries/SummaryService.interface';
 import { TriggerReason } from '../src/triggers/Trigger.interface';
+import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
 
 class MockAIService implements AIService {
   history: ChatMessage[] | undefined;
@@ -68,6 +69,17 @@ class MockSummaryService implements SummaryService {
   async setSummary(): Promise<void> {}
 }
 
+const createLoggerFactory = (): LoggerFactory =>
+  ({
+    create: () => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      child: vi.fn(),
+    }),
+  }) as unknown as LoggerFactory;
+
 describe('ChatResponder', () => {
   it('generates answer and stores assistant message', async () => {
     const ai = new MockAIService();
@@ -76,7 +88,8 @@ describe('ChatResponder', () => {
     const responder: ChatResponder = new DefaultChatResponder(
       ai,
       memories,
-      summaries
+      summaries,
+      createLoggerFactory()
     );
 
     const mem1 = await memories.get(1);
@@ -102,7 +115,8 @@ describe('ChatResponder', () => {
     const responder: ChatResponder = new DefaultChatResponder(
       ai,
       memories,
-      summaries
+      summaries,
+      createLoggerFactory()
     );
 
     const mem2 = await memories.get(1);
@@ -120,7 +134,8 @@ describe('ChatResponder', () => {
     const responder: ChatResponder = new DefaultChatResponder(
       ai,
       memories,
-      summaries
+      summaries,
+      createLoggerFactory()
     );
     const ctx = { me: 'bot', chat: { id: 1 } } as unknown as Context;
 

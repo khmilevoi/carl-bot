@@ -4,6 +4,11 @@ import { Context } from 'telegraf';
 
 import { TriggerReason } from '../../triggers/Trigger.interface';
 import { AI_SERVICE_ID, AIService } from '../ai/AIService.interface';
+import type Logger from '../logging/Logger.interface';
+import {
+  LOGGER_FACTORY_ID,
+  type LoggerFactory,
+} from '../logging/LoggerFactory';
 import { MessageFactory } from '../messages/MessageFactory';
 import {
   SUMMARY_SERVICE_ID,
@@ -25,11 +30,16 @@ export const CHAT_RESPONDER_ID = Symbol.for(
 
 @injectable()
 export class DefaultChatResponder implements ChatResponder {
+  private readonly logger: Logger;
+
   constructor(
     @inject(AI_SERVICE_ID) private ai: AIService,
     @inject(ChatMemoryManager) private memories: ChatMemoryManager,
-    @inject(SUMMARY_SERVICE_ID) private summaries: SummaryService
-  ) {}
+    @inject(SUMMARY_SERVICE_ID) private summaries: SummaryService,
+    @inject(LOGGER_FACTORY_ID) private loggerFactory: LoggerFactory
+  ) {
+    this.logger = this.loggerFactory.create('DefaultChatResponder');
+  }
 
   async generate(
     ctx: Context,
@@ -39,7 +49,18 @@ export class DefaultChatResponder implements ChatResponder {
     const memory = await this.memories.get(chatId);
     const history = await memory.getHistory();
     const summary = await this.summaries.getSummary(chatId);
+    const start = Date.now();
     const answer = await this.ai.ask(history, summary, triggerReason);
+    const responseTimeMs = Date.now() - start;
+    this.logger.debug(
+      {
+        chatId,
+        historyLength: history.length,
+        hasSummary: Boolean(summary),
+        responseTimeMs,
+      },
+      'Generated chat response'
+    );
     await memory.addMessage(MessageFactory.fromAssistant(ctx, answer));
     return answer;
   }
