@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { type SummaryRepository } from '../src/repositories/interfaces/SummaryRepository.interface';
+import { type SummaryRepository } from '../src/domain/repositories/SummaryRepository.interface';
 import { RepositorySummaryService } from '../src/services/summaries/RepositorySummaryService';
 import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
 

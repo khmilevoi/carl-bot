@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { TelegramBot } from '../src/bot/TelegramBot';
 import * as TelegramBotModule from '../src/bot/TelegramBot';
 import { createWindows } from '../src/bot/windowConfig';
-import type { ChatRepository } from '../src/repositories/interfaces/ChatRepository.interface';
+import type { ChatRepository } from '../src/domain/repositories/ChatRepository.interface';
 import type { AdminService } from '../src/services/admin/AdminService.interface';
 import type { ChatApprovalService } from '../src/services/chat/ChatApprovalService';
 import type { ChatMemoryManager } from '../src/services/chat/ChatMemory';

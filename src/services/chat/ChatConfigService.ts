@@ -1,10 +1,10 @@
 import { inject, injectable, type ServiceIdentifier } from 'inversify';
 
+import type { ChatConfigEntity } from '../../domain/entities/ChatConfigEntity';
 import {
   CHAT_CONFIG_REPOSITORY_ID,
-  type ChatConfigEntity,
   type ChatConfigRepository,
-} from '../../repositories/interfaces/ChatConfigRepository.interface';
+} from '../../domain/repositories/ChatConfigRepository.interface';
 
 export interface ChatConfigService {
   getConfig(chatId: number): Promise<ChatConfigEntity>;

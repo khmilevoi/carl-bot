@@ -3,18 +3,18 @@ import 'reflect-metadata';
 import { Container } from 'inversify';
 
 import { TelegramBot } from './bot/TelegramBot';
+import { ACCESS_KEY_REPOSITORY_ID } from './domain/repositories/AccessKeyRepository.interface';
+import { CHAT_ACCESS_REPOSITORY_ID } from './domain/repositories/ChatAccessRepository.interface';
+import { CHAT_CONFIG_REPOSITORY_ID } from './domain/repositories/ChatConfigRepository.interface';
+import { CHAT_REPOSITORY_ID } from './domain/repositories/ChatRepository.interface';
+import { CHAT_USER_REPOSITORY_ID } from './domain/repositories/ChatUserRepository.interface';
+import { MESSAGE_REPOSITORY_ID } from './domain/repositories/MessageRepository.interface';
+import { SUMMARY_REPOSITORY_ID } from './domain/repositories/SummaryRepository.interface';
+import { USER_REPOSITORY_ID } from './domain/repositories/UserRepository.interface';
 import {
   DB_PROVIDER_ID,
   SQLiteDbProviderImpl,
 } from './repositories/DbProvider';
-import { ACCESS_KEY_REPOSITORY_ID } from './repositories/interfaces/AccessKeyRepository.interface';
-import { CHAT_ACCESS_REPOSITORY_ID } from './repositories/interfaces/ChatAccessRepository.interface';
-import { CHAT_CONFIG_REPOSITORY_ID } from './repositories/interfaces/ChatConfigRepository.interface';
-import { CHAT_REPOSITORY_ID } from './repositories/interfaces/ChatRepository.interface';
-import { CHAT_USER_REPOSITORY_ID } from './repositories/interfaces/ChatUserRepository.interface';
-import { MESSAGE_REPOSITORY_ID } from './repositories/interfaces/MessageRepository.interface';
-import { SUMMARY_REPOSITORY_ID } from './repositories/interfaces/SummaryRepository.interface';
-import { USER_REPOSITORY_ID } from './repositories/interfaces/UserRepository.interface';
 import { SQLiteAccessKeyRepository } from './repositories/sqlite/SQLiteAccessKeyRepository';
 import { SQLiteChatAccessRepository } from './repositories/sqlite/SQLiteChatAccessRepository';
 import { SQLiteChatConfigRepository } from './repositories/sqlite/SQLiteChatConfigRepository';

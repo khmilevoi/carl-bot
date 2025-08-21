@@ -4,7 +4,7 @@ import { inject, injectable } from 'inversify';
 import {
   USER_REPOSITORY_ID,
   UserRepository,
-} from '../../repositories/interfaces/UserRepository.interface';
+} from '../../domain/repositories/UserRepository.interface';
 import {
   AI_SERVICE_ID,
   AIService,

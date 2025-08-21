@@ -5,7 +5,7 @@ import { ChatMemory, ChatMemoryManager } from '../src/services/chat/ChatMemory';
 import { ChatResetService } from '../src/services/chat/ChatResetService.interface';
 import { HistorySummarizer } from '../src/services/chat/HistorySummarizer';
 import type { ChatConfigService } from '../src/services/chat/ChatConfigService';
-import type { ChatConfigEntity } from '../src/repositories/interfaces/ChatConfigRepository.interface';
+import type { ChatConfigEntity } from '../src/domain/entities/ChatConfigEntity';
 import {
   InterestMessageStore,
   InterestMessageStoreImpl,

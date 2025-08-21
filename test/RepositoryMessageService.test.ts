@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { type ChatRepository } from '../src/repositories/interfaces/ChatRepository.interface';
-import { type ChatUserRepository } from '../src/repositories/interfaces/ChatUserRepository.interface';
-import { type MessageRepository } from '../src/repositories/interfaces/MessageRepository.interface';
-import { type UserRepository } from '../src/repositories/interfaces/UserRepository.interface';
+import { type ChatRepository } from '../src/domain/repositories/ChatRepository.interface';
+import { type ChatUserRepository } from '../src/domain/repositories/ChatUserRepository.interface';
+import { type MessageRepository } from '../src/domain/repositories/MessageRepository.interface';
+import { type UserRepository } from '../src/domain/repositories/UserRepository.interface';
 import { RepositoryMessageService } from '../src/services/messages/RepositoryMessageService';
 import { type StoredMessage } from '../src/services/messages/StoredMessage.interface';
 import type { LoggerFactory } from '../src/services/logging/LoggerFactory';

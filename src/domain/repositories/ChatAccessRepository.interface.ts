@@ -1,13 +1,9 @@
 import type { ServiceIdentifier } from 'inversify';
 
-export type ChatStatus = 'pending' | 'approved' | 'banned';
-
-export interface ChatAccessEntity {
-  chatId: number;
-  status: ChatStatus;
-  requestedAt?: number;
-  approvedAt?: number;
-}
+import type {
+  ChatAccessEntity,
+  ChatStatus,
+} from '../entities/ChatAccessEntity';
 
 export interface ChatAccessRepository {
   get(chatId: number): Promise<ChatAccessEntity | undefined>;

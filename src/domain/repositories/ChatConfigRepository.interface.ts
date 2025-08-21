@@ -1,10 +1,6 @@
 import type { ServiceIdentifier } from 'inversify';
 
-export interface ChatConfigEntity {
-  chatId: number;
-  historyLimit: number;
-  interestInterval: number;
-}
+import type { ChatConfigEntity } from '../entities/ChatConfigEntity';
 
 export interface ChatConfigRepository {
   upsert(config: ChatConfigEntity): Promise<void>;
