@@ -17,7 +17,7 @@ export class MentionTrigger implements Trigger {
   async apply(
     ctx: Context,
     context: TriggerContext,
-    _dialogue: DialogueManager
+    dialogue: DialogueManager
   ): Promise<TriggerResult | null> {
     const msg = ctx.message as Record<string, unknown> | undefined;
     const text = typeof msg?.text === 'string' ? msg.text : '';
@@ -25,9 +25,21 @@ export class MentionTrigger implements Trigger {
       typeof (ctx as unknown as Record<string, unknown>).me === 'string'
         ? (ctx as unknown as { me: string }).me
         : '';
-    if (text.includes(`@${me}`)) {
-      context.text = text.replace(`@${me}`, '').trim();
-      this.logger.debug({ chatId: context.chatId }, 'Mention trigger matched');
+    const mention = `@${me}`;
+    const index = text.indexOf(mention);
+    if (index !== -1) {
+      const snippet = text.slice(
+        Math.max(0, index - 20),
+        Math.min(text.length, index + mention.length + 20)
+      );
+      context.text = text.replace(mention, '').trim();
+      const dialogueState = dialogue.isActive(context.chatId)
+        ? 'active'
+        : 'inactive';
+      this.logger.debug(
+        { chatId: context.chatId, snippet, dialogueState },
+        'Mention trigger matched'
+      );
       return { replyToMessageId: null, reason: null };
     }
     return null;
