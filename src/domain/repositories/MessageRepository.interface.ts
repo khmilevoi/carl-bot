@@ -1,7 +1,7 @@
 import type { ServiceIdentifier } from 'inversify';
 
-import type { ChatMessage } from '../../services/ai/AIService.interface';
-import type { StoredMessage } from '../../services/messages/StoredMessage.interface';
+import type { ChatMessage } from '../../application/interfaces/ai/AIService.interface';
+import type { StoredMessage } from '../../application/interfaces/messages/StoredMessage.interface';
 
 export interface MessageRepository {
   insert(message: StoredMessage): Promise<void>;

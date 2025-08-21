@@ -2,6 +2,69 @@ import 'reflect-metadata';
 
 import { Container } from 'inversify';
 
+import { ADMIN_SERVICE_ID } from './application/interfaces/admin/AdminService.interface';
+import { AI_SERVICE_ID } from './application/interfaces/ai/AIService.interface';
+import { CHAT_RESET_SERVICE_ID } from './application/interfaces/chat/ChatResetService.interface';
+import { MESSAGE_SERVICE_ID } from './application/interfaces/messages/MessageService.interface';
+import { PROMPT_SERVICE_ID } from './application/interfaces/prompts/PromptService.interface';
+import { SUMMARY_SERVICE_ID } from './application/interfaces/summaries/SummaryService.interface';
+import { AdminServiceImpl } from './application/use-cases/admin/AdminServiceImpl';
+import { ChatGPTService } from './application/use-cases/ai/ChatGPTService';
+import {
+  CHAT_APPROVAL_SERVICE_ID,
+  DefaultChatApprovalService,
+} from './application/use-cases/chat/ChatApprovalService';
+import {
+  CHAT_CONFIG_SERVICE_ID,
+  type ChatConfigService,
+  RepositoryChatConfigService,
+} from './application/use-cases/chat/ChatConfigService';
+import { ChatMemoryManager } from './application/use-cases/chat/ChatMemory';
+import type { ChatResponder } from './application/use-cases/chat/ChatResponder';
+import {
+  CHAT_RESPONDER_ID,
+  DefaultChatResponder,
+} from './application/use-cases/chat/ChatResponder';
+import { DefaultChatResetService } from './application/use-cases/chat/DefaultChatResetService';
+import {
+  DefaultDialogueManager,
+  DIALOGUE_MANAGER_ID,
+} from './application/use-cases/chat/DialogueManager';
+import {
+  DefaultHistorySummarizer,
+  HISTORY_SUMMARIZER_ID,
+} from './application/use-cases/chat/HistorySummarizer';
+import type { TriggerPipeline } from './application/use-cases/chat/TriggerPipeline';
+import {
+  DefaultTriggerPipeline,
+  TRIGGER_PIPELINE_ID,
+} from './application/use-cases/chat/TriggerPipeline';
+import type { EnvService } from './application/use-cases/env/EnvService';
+import {
+  DefaultEnvService,
+  ENV_SERVICE_ID,
+  TestEnvService,
+} from './application/use-cases/env/EnvService';
+import {
+  DefaultInterestChecker,
+  INTEREST_CHECKER_ID,
+} from './application/use-cases/interest/InterestChecker';
+import {
+  LOGGER_FACTORY_ID,
+  PinoLoggerFactory,
+} from './application/use-cases/logging/LoggerFactory';
+import {
+  INTEREST_MESSAGE_STORE_ID,
+  InterestMessageStoreImpl,
+} from './application/use-cases/messages/InterestMessageStore';
+import type { MessageContextExtractor } from './application/use-cases/messages/MessageContextExtractor';
+import {
+  DefaultMessageContextExtractor,
+  MESSAGE_CONTEXT_EXTRACTOR_ID,
+} from './application/use-cases/messages/MessageContextExtractor';
+import { RepositoryMessageService } from './application/use-cases/messages/RepositoryMessageService';
+import { FilePromptService } from './application/use-cases/prompts/FilePromptService';
+import { RepositorySummaryService } from './application/use-cases/summaries/RepositorySummaryService';
 import { TelegramBot } from './bot/TelegramBot';
 import { ACCESS_KEY_REPOSITORY_ID } from './domain/repositories/AccessKeyRepository.interface';
 import { CHAT_ACCESS_REPOSITORY_ID } from './domain/repositories/ChatAccessRepository.interface';
@@ -23,69 +86,6 @@ import { SQLiteChatUserRepository } from './repositories/sqlite/SQLiteChatUserRe
 import { SQLiteMessageRepository } from './repositories/sqlite/SQLiteMessageRepository';
 import { SQLiteSummaryRepository } from './repositories/sqlite/SQLiteSummaryRepository';
 import { SQLiteUserRepository } from './repositories/sqlite/SQLiteUserRepository';
-import { ADMIN_SERVICE_ID } from './services/admin/AdminService.interface';
-import { AdminServiceImpl } from './services/admin/AdminServiceImpl';
-import { AI_SERVICE_ID } from './services/ai/AIService.interface';
-import { ChatGPTService } from './services/ai/ChatGPTService';
-import {
-  CHAT_APPROVAL_SERVICE_ID,
-  DefaultChatApprovalService,
-} from './services/chat/ChatApprovalService';
-import {
-  CHAT_CONFIG_SERVICE_ID,
-  type ChatConfigService,
-  RepositoryChatConfigService,
-} from './services/chat/ChatConfigService';
-import { ChatMemoryManager } from './services/chat/ChatMemory';
-import { CHAT_RESET_SERVICE_ID } from './services/chat/ChatResetService.interface';
-import type { ChatResponder } from './services/chat/ChatResponder';
-import {
-  CHAT_RESPONDER_ID,
-  DefaultChatResponder,
-} from './services/chat/ChatResponder';
-import { DefaultChatResetService } from './services/chat/DefaultChatResetService';
-import {
-  DefaultDialogueManager,
-  DIALOGUE_MANAGER_ID,
-} from './services/chat/DialogueManager';
-import {
-  DefaultHistorySummarizer,
-  HISTORY_SUMMARIZER_ID,
-} from './services/chat/HistorySummarizer';
-import type { TriggerPipeline } from './services/chat/TriggerPipeline';
-import {
-  DefaultTriggerPipeline,
-  TRIGGER_PIPELINE_ID,
-} from './services/chat/TriggerPipeline';
-import type { EnvService } from './services/env/EnvService';
-import {
-  DefaultEnvService,
-  ENV_SERVICE_ID,
-  TestEnvService,
-} from './services/env/EnvService';
-import {
-  DefaultInterestChecker,
-  INTEREST_CHECKER_ID,
-} from './services/interest/InterestChecker';
-import {
-  LOGGER_FACTORY_ID,
-  PinoLoggerFactory,
-} from './services/logging/LoggerFactory';
-import {
-  INTEREST_MESSAGE_STORE_ID,
-  InterestMessageStoreImpl,
-} from './services/messages/InterestMessageStore';
-import type { MessageContextExtractor } from './services/messages/MessageContextExtractor';
-import {
-  DefaultMessageContextExtractor,
-  MESSAGE_CONTEXT_EXTRACTOR_ID,
-} from './services/messages/MessageContextExtractor';
-import { MESSAGE_SERVICE_ID } from './services/messages/MessageService.interface';
-import { RepositoryMessageService } from './services/messages/RepositoryMessageService';
-import { FilePromptService } from './services/prompts/FilePromptService';
-import { PROMPT_SERVICE_ID } from './services/prompts/PromptService.interface';
-import { RepositorySummaryService } from './services/summaries/RepositorySummaryService';
-import { SUMMARY_SERVICE_ID } from './services/summaries/SummaryService.interface';
 
 export const container = new Container();
 

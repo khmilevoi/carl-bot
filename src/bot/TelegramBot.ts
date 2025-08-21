@@ -5,44 +5,48 @@ import { Context, Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
 
 import {
-  CHAT_REPOSITORY_ID,
-  type ChatRepository,
-} from '../domain/repositories/ChatRepository.interface';
-import { registerRoutes } from '../infrastructure/telegramRouter';
-import {
   ADMIN_SERVICE_ID,
   AdminService,
-} from '../services/admin/AdminService.interface';
+} from '../application/interfaces/admin/AdminService.interface';
+import type { Logger } from '../application/interfaces/logging/Logger.interface';
 import {
   CHAT_APPROVAL_SERVICE_ID,
   ChatApprovalService,
-} from '../services/chat/ChatApprovalService';
+} from '../application/use-cases/chat/ChatApprovalService';
 import {
   CHAT_CONFIG_SERVICE_ID,
   ChatConfigService,
   InvalidHistoryLimitError,
   InvalidInterestIntervalError,
-} from '../services/chat/ChatConfigService';
-import { ChatMemoryManager } from '../services/chat/ChatMemory';
+} from '../application/use-cases/chat/ChatConfigService';
+import { ChatMemoryManager } from '../application/use-cases/chat/ChatMemory';
 import {
   CHAT_RESPONDER_ID,
   ChatResponder,
-} from '../services/chat/ChatResponder';
+} from '../application/use-cases/chat/ChatResponder';
 import {
   TRIGGER_PIPELINE_ID,
   TriggerPipeline,
-} from '../services/chat/TriggerPipeline';
-import { Env, ENV_SERVICE_ID, EnvService } from '../services/env/EnvService';
-import type { Logger } from '../services/logging/Logger.interface';
+} from '../application/use-cases/chat/TriggerPipeline';
+import {
+  Env,
+  ENV_SERVICE_ID,
+  EnvService,
+} from '../application/use-cases/env/EnvService';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '../services/logging/LoggerFactory';
+} from '../application/use-cases/logging/LoggerFactory';
 import {
   MESSAGE_CONTEXT_EXTRACTOR_ID,
   MessageContextExtractor,
-} from '../services/messages/MessageContextExtractor';
-import { MessageFactory } from '../services/messages/MessageFactory';
+} from '../application/use-cases/messages/MessageContextExtractor';
+import { MessageFactory } from '../application/use-cases/messages/MessageFactory';
+import {
+  CHAT_REPOSITORY_ID,
+  type ChatRepository,
+} from '../domain/repositories/ChatRepository.interface';
+import { registerRoutes } from '../infrastructure/telegramRouter';
 import { TriggerContext } from '../triggers/Trigger.interface';
 import { createWindows, type WindowId } from './windowConfig';
 

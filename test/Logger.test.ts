@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { EnvService } from '../src/services/env/EnvService';
+import type { EnvService } from '../src/application/use-cases/env/EnvService';
 
 describe('logger', () => {
   const OLD_ENV = { ...process.env };
@@ -10,7 +10,9 @@ describe('logger', () => {
   });
 
   it('creates logger instance', async () => {
-    const { PinoLogger } = await import('../src/services/logging/PinoLogger');
+    const { PinoLogger } = await import(
+      '../src/application/use-cases/logging/PinoLogger'
+    );
     const logger = new PinoLogger();
     expect(logger).toBeDefined();
   });
@@ -19,7 +21,9 @@ describe('logger', () => {
     process.env.NODE_ENV = 'test';
     vi.resetModules();
     const { container } = await import('../src/container');
-    const LoggerModule = await import('../src/services/logging/LoggerFactory');
+    const LoggerModule = await import(
+      '../src/application/use-cases/logging/LoggerFactory'
+    );
     const factory = container.get<LoggerModule.LoggerFactory>(
       LoggerModule.LOGGER_FACTORY_ID
     );
@@ -35,7 +39,9 @@ describe('logger', () => {
 
   it('child logger respects EnvService log level', async () => {
     process.env.LOG_LEVEL = 'info';
-    const { PinoLogger } = await import('../src/services/logging/PinoLogger');
+    const { PinoLogger } = await import(
+      '../src/application/use-cases/logging/PinoLogger'
+    );
     const envService = { env: { LOG_LEVEL: 'error' } } as unknown as EnvService;
     const logger = new PinoLogger(envService);
     const child = logger.child({ service: 'test' });

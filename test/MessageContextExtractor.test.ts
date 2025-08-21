@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DefaultMessageContextExtractor,
   MessageContextExtractor,
-} from '../src/services/messages/MessageContextExtractor';
+} from '../src/application/use-cases/messages/MessageContextExtractor';
 
 describe('MessageContextExtractor', () => {
   const extractor: MessageContextExtractor =

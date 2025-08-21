@@ -1,8 +1,8 @@
 import type { Context } from 'telegraf';
 
-import type { DialogueManager } from '../services/chat/DialogueManager';
-import type { Logger } from '../services/logging/Logger.interface';
-import { type LoggerFactory } from '../services/logging/LoggerFactory';
+import type { Logger } from '../application/interfaces/logging/Logger.interface';
+import type { DialogueManager } from '../application/use-cases/chat/DialogueManager';
+import { type LoggerFactory } from '../application/use-cases/logging/LoggerFactory';
 import type {
   Trigger,
   TriggerContext,

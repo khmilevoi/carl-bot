@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { MessageService } from '../src/services/messages/MessageService.interface';
-import type { SummaryService } from '../src/services/summaries/SummaryService.interface';
-import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
-import { DefaultChatResetService } from '../src/services/chat/DefaultChatResetService';
+import type { MessageService } from '../src/application/interfaces/messages/MessageService.interface';
+import type { SummaryService } from '../src/application/interfaces/summaries/SummaryService.interface';
+import type { LoggerFactory } from '../src/application/use-cases/logging/LoggerFactory';
+import { DefaultChatResetService } from '../src/application/use-cases/chat/DefaultChatResetService';
 
 describe('DefaultChatResetService', () => {
   const messages = {

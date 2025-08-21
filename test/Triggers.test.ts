@@ -1,13 +1,13 @@
 import type { Context } from 'telegraf';
 import { describe, expect, it, vi } from 'vitest';
 
-import { DefaultDialogueManager } from '../src/services/chat/DialogueManager';
-import { TestEnvService } from '../src/services/env/EnvService';
+import { DefaultDialogueManager } from '../src/application/use-cases/chat/DialogueManager';
+import { TestEnvService } from '../src/application/use-cases/env/EnvService';
 import { MentionTrigger } from '../src/triggers/MentionTrigger';
 import { NameTrigger } from '../src/triggers/NameTrigger';
 import { ReplyTrigger } from '../src/triggers/ReplyTrigger';
 import { TriggerContext } from '../src/triggers/Trigger.interface';
-import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
+import type { LoggerFactory } from '../src/application/use-cases/logging/LoggerFactory';
 
 const createLoggerFactory = (): LoggerFactory =>
   ({

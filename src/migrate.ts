@@ -3,10 +3,10 @@ import { join } from 'path';
 import { type Database, open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 
+import type { EnvService } from './application/use-cases/env/EnvService';
+import { ENV_SERVICE_ID } from './application/use-cases/env/EnvService';
+import { PinoLoggerFactory } from './application/use-cases/logging/LoggerFactory';
 import { container } from './container';
-import type { EnvService } from './services/env/EnvService';
-import { ENV_SERVICE_ID } from './services/env/EnvService';
-import { PinoLoggerFactory } from './services/logging/LoggerFactory';
 import { parseDatabaseUrl } from './utils/database';
 
 interface Migration {

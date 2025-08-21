@@ -12,9 +12,9 @@ import { SQLiteChatUserRepository } from '../src/repositories/sqlite/SQLiteChatU
 import { SQLiteMessageRepository } from '../src/repositories/sqlite/SQLiteMessageRepository';
 import { SQLiteSummaryRepository } from '../src/repositories/sqlite/SQLiteSummaryRepository';
 import { SQLiteUserRepository } from '../src/repositories/sqlite/SQLiteUserRepository';
-import { TestEnvService } from '../src/services/env/EnvService';
+import { TestEnvService } from '../src/application/use-cases/env/EnvService';
 import { parseDatabaseUrl } from '../src/utils/database';
-import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
+import type { LoggerFactory } from '../src/application/use-cases/logging/LoggerFactory';
 
 const createLoggerFactory = (): LoggerFactory =>
   ({
