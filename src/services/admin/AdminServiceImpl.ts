@@ -33,10 +33,17 @@ import {
   CHAT_CONFIG_SERVICE_ID,
   type ChatConfigService,
 } from '../chat/ChatConfigService';
+import type Logger from '../logging/Logger.interface';
+import {
+  LOGGER_FACTORY_ID,
+  type LoggerFactory,
+} from '../logging/LoggerFactory';
 import { AdminService } from './AdminService.interface';
 
 @injectable()
 export class AdminServiceImpl implements AdminService {
+  private readonly logger: Logger;
+
   constructor(
     @inject(DB_PROVIDER_ID) private dbProvider: SQLiteDbProvider,
     @inject(ACCESS_KEY_REPOSITORY_ID)
@@ -45,8 +52,11 @@ export class AdminServiceImpl implements AdminService {
     @inject(SUMMARY_REPOSITORY_ID) private summaryRepo: SummaryRepository,
     @inject(CHAT_USER_REPOSITORY_ID) private chatUserRepo: ChatUserRepository,
     @inject(USER_REPOSITORY_ID) private userRepo: UserRepository,
-    @inject(CHAT_CONFIG_SERVICE_ID) private chatConfig: ChatConfigService
-  ) {}
+    @inject(CHAT_CONFIG_SERVICE_ID) private chatConfig: ChatConfigService,
+    @inject(LOGGER_FACTORY_ID) private loggerFactory: LoggerFactory
+  ) {
+    this.logger = this.loggerFactory.create('AdminServiceImpl');
+  }
 
   async createAccessKey(
     chatId: number,
@@ -61,6 +71,7 @@ export class AdminServiceImpl implements AdminService {
       accessKey: key,
       expiresAt,
     });
+    this.logger.info({ chatId, userId, expiresAt }, 'Created access key');
     return new Date(expiresAt);
   }
 
@@ -75,11 +86,16 @@ export class AdminServiceImpl implements AdminService {
     const tableNames = await this.dbProvider.listTables();
     const files: { filename: string; buffer: Buffer }[] = [];
     for (const name of tableNames) {
-      const buffer = await this.exportTable(db, name);
-      if (buffer && buffer.length > 0) {
-        files.push({ filename: `${name}.csv`, buffer });
+      try {
+        const buffer = await this.exportTable(db, name);
+        if (buffer && buffer.length > 0) {
+          files.push({ filename: `${name}.csv`, buffer });
+        }
+      } catch (error) {
+        this.logger.error({ table: name, error }, 'Failed to export table');
       }
     }
+    this.logger.info({ count: files.length }, 'Exported tables');
     return files;
   }
 
@@ -137,47 +153,54 @@ export class AdminServiceImpl implements AdminService {
         files.push({ filename: 'users.csv', buffer: Buffer.from(csv) });
       }
     }
-
+    this.logger.info({ chatId, count: files.length }, 'Exported chat data');
     return files;
   }
 
   async setHistoryLimit(chatId: number, value: number): Promise<void> {
     await this.chatConfig.setHistoryLimit(chatId, value);
+    this.logger.info({ chatId, value }, 'Updated history limit');
   }
 
   async setInterestInterval(chatId: number, value: number): Promise<void> {
     await this.chatConfig.setInterestInterval(chatId, value);
+    this.logger.info({ chatId, value }, 'Updated interest interval');
   }
 
   private async exportTable(
     db: Database,
     table: string
   ): Promise<Buffer | null> {
-    const chunkSize = 100;
-    let offset = 0;
-    let header: string | undefined;
-    const lines: string[] = [];
-    while (true) {
-      const rows: Record<string, unknown>[] = await db.all(
-        `SELECT * FROM ${table} LIMIT ? OFFSET ?`,
-        chunkSize,
-        offset
-      );
-      if (rows.length === 0) break;
-      header ??= Object.keys(rows[0]).join(',');
-      for (const row of rows) {
-        const line = Object.keys(row)
-          .map((k) => JSON.stringify(row[k] ?? ''))
-          .join(',');
-        lines.push(line);
+    try {
+      const chunkSize = 100;
+      let offset = 0;
+      let header: string | undefined;
+      const lines: string[] = [];
+      while (true) {
+        const rows: Record<string, unknown>[] = await db.all(
+          `SELECT * FROM ${table} LIMIT ? OFFSET ?`,
+          chunkSize,
+          offset
+        );
+        if (rows.length === 0) break;
+        header ??= Object.keys(rows[0]).join(',');
+        for (const row of rows) {
+          const line = Object.keys(row)
+            .map((k) => JSON.stringify(row[k] ?? ''))
+            .join(',');
+          lines.push(line);
+        }
+        offset += rows.length;
+        await new Promise<void>((resolve) => setImmediate(resolve));
       }
-      offset += rows.length;
-      await new Promise<void>((resolve) => setImmediate(resolve));
-    }
-    if (!header) {
+      if (!header) {
+        return null;
+      }
+      const csv = header + '\n' + lines.join('\n');
+      return Buffer.from(csv);
+    } catch (error) {
+      this.logger.error({ table, error }, 'Failed to generate CSV');
       return null;
     }
-    const csv = header + '\n' + lines.join('\n');
-    return Buffer.from(csv);
   }
 }

@@ -8,6 +8,25 @@ import type { MessageRepository } from '../src/repositories/interfaces/MessageRe
 import type { SummaryRepository } from '../src/repositories/interfaces/SummaryRepository.interface';
 import type { UserRepository } from '../src/repositories/interfaces/UserRepository.interface';
 import { AdminServiceImpl } from '../src/services/admin/AdminServiceImpl';
+import type { ChatConfigService } from '../src/services/chat/ChatConfigService';
+import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
+
+const createLoggerFactory = (): LoggerFactory =>
+  ({
+    create: vi.fn(() => ({
+      info: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+      warn: vi.fn(),
+      child: vi.fn(() => ({
+        info: vi.fn(),
+        error: vi.fn(),
+        debug: vi.fn(),
+        warn: vi.fn(),
+        child: vi.fn(),
+      })),
+    })),
+  }) as unknown as LoggerFactory;
 
 describe('AdminServiceImpl', () => {
   it('creates access key and returns expiry date', async () => {
@@ -22,7 +41,9 @@ describe('AdminServiceImpl', () => {
       {} as unknown as MessageRepository,
       {} as unknown as SummaryRepository,
       {} as unknown as ChatUserRepository,
-      {} as unknown as UserRepository
+      {} as unknown as UserRepository,
+      {} as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     const expires = await admin.createAccessKey(1, 2, 1000);
     expect(accessRepo.upsertKey).toHaveBeenCalledWith({
@@ -45,7 +66,9 @@ describe('AdminServiceImpl', () => {
       {} as unknown as MessageRepository,
       {} as unknown as SummaryRepository,
       {} as unknown as ChatUserRepository,
-      {} as unknown as UserRepository
+      {} as unknown as UserRepository,
+      {} as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     expect(await admin.hasAccess(1, 2)).toBe(true);
     expect(accessRepo.deleteExpired).toHaveBeenCalled();
@@ -69,7 +92,9 @@ describe('AdminServiceImpl', () => {
       {} as unknown as MessageRepository,
       {} as unknown as SummaryRepository,
       {} as unknown as ChatUserRepository,
-      {} as unknown as UserRepository
+      {} as unknown as UserRepository,
+      {} as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     const files = await admin.exportTables();
     expect(files).toEqual([{ filename: 't.csv', buffer: expect.any(Buffer) }]);
@@ -111,7 +136,9 @@ describe('AdminServiceImpl', () => {
       messageRepo as unknown as MessageRepository,
       summaryRepo as unknown as SummaryRepository,
       chatUserRepo as unknown as ChatUserRepository,
-      userRepo as unknown as UserRepository
+      userRepo as unknown as UserRepository,
+      {} as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     const files = await admin.exportChatData(123);
     expect(files.map((f) => f.filename).sort()).toEqual([
