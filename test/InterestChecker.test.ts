@@ -8,9 +8,21 @@ import {
   InterestMessageStoreImpl,
 } from '../src/services/messages/InterestMessageStore';
 import { SummaryService } from '../src/services/summaries/SummaryService.interface';
+import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
 
 const interval = 2;
 const chatId = 1;
+
+const createLoggerFactory = (): LoggerFactory =>
+  ({
+    create: () => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      child: vi.fn(),
+    }),
+  }) as unknown as LoggerFactory;
 
 function createChecker(opts: {
   count: number;
@@ -125,7 +137,7 @@ describe('DefaultInterestChecker', () => {
   });
 
   it('clears stored messages after checking', async () => {
-    const store = new InterestMessageStoreImpl();
+    const store = new InterestMessageStoreImpl(createLoggerFactory());
     store.addMessage({ chatId, role: 'user', content: 'hi', messageId: 1 });
     const checker = new DefaultInterestChecker(
       store,
