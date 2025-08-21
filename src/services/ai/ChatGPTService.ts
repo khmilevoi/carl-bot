@@ -6,7 +6,7 @@ import path from 'path';
 
 import { TriggerReason } from '../../triggers/Trigger.interface';
 import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
-import type Logger from '../logging/Logger.interface';
+import type { Logger } from '../logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,

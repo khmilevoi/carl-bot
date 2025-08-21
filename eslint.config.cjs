@@ -84,6 +84,7 @@ module.exports = [
           ],
         },
       ],
+      'import/no-default-export': 'error',
     },
     settings: {
       'import/extensions': ['.js', '.ts'],

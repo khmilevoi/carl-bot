@@ -1,7 +1,7 @@
 import { inject, injectable, type ServiceIdentifier } from 'inversify';
 
 import type { ChatMessage } from '../ai/AIService.interface';
-import type Logger from '../logging/Logger.interface';
+import type { Logger } from '../logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,

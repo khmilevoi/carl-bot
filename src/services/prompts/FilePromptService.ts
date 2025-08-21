@@ -3,7 +3,7 @@ import { inject, injectable } from 'inversify';
 
 import { createLazy } from '../../utils/lazy';
 import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
-import type Logger from '../logging/Logger.interface';
+import type { Logger } from '../logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,

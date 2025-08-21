@@ -3,7 +3,7 @@ import { inject, injectable } from 'inversify';
 import pino, { type LevelWithSilent, type Logger as Pino } from 'pino';
 
 import { ENV_SERVICE_ID, type EnvService } from '../env/EnvService';
-import type Logger from './Logger.interface';
+import type { Logger } from './Logger.interface';
 import { PinoLogger } from './PinoLogger';
 
 export interface LoggerFactory {

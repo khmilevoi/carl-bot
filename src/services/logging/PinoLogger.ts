@@ -1,7 +1,7 @@
 import pino, { type LevelWithSilent, type Logger as Pino } from 'pino';
 
 import type { EnvService } from '../env/EnvService';
-import type Logger from './Logger.interface';
+import type { Logger } from './Logger.interface';
 
 function resolveLogLevel(envService?: EnvService): LevelWithSilent {
   return (

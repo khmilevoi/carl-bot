@@ -1,7 +1,7 @@
 import type { Context } from 'telegraf';
 
 import type { DialogueManager } from '../services/chat/DialogueManager';
-import type Logger from '../services/logging/Logger.interface';
+import type { Logger } from '../services/logging/Logger.interface';
 import { type LoggerFactory } from '../services/logging/LoggerFactory';
 import type {
   Trigger,

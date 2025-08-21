@@ -1,4 +1,4 @@
-interface Logger {
+export interface Logger {
   debug(message: string): void;
   debug(meta: Record<string, unknown>, message: string): void;
 
@@ -13,5 +13,3 @@ interface Logger {
 
   child(meta: Record<string, unknown>): Logger;
 }
-
-export default Logger;
