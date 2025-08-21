@@ -31,7 +31,7 @@ export class ChatGPTService implements AIService {
     @inject(LOGGER_FACTORY_ID) private loggerFactory: LoggerFactory
   ) {
     const env = this.envService.env;
-    this.openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+    this.openai = new OpenAI({ apiKey: env.OPENAI_KEY });
     const models = this.envService.getModels();
     this.askModel = models.ask;
     this.summaryModel = models.summary;

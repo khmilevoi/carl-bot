@@ -45,7 +45,7 @@
 2. Создайте `.env` с токенами Telegram и OpenAI и при необходимости настройте дополнительные параметры:
    ```
    BOT_TOKEN=your-telegram-token
-   OPENAI_API_KEY=your-openai-key
+   OPENAI_KEY=your-openai-key
    ADMIN_CHAT_ID=123456         # ID чата администратора для выдачи ключей
    LOG_PROMPTS=false            # логировать запросы и ответы в prompts.log
    ```

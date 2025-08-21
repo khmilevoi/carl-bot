@@ -1,9 +1,8 @@
-/* eslint-disable import/no-unused-modules */
 import assert from 'node:assert';
 
 import type { Context, Telegraf } from 'telegraf';
 
-export interface ButtonApi<RouteId extends string = string> {
+interface ButtonApi<RouteId extends string = string> {
   text: string;
   callback: string;
   target?: RouteId;

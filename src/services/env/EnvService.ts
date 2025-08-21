@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 const envSchema = z.object({
   BOT_TOKEN: z.string().min(1),
-  OPENAI_API_KEY: z.string().min(1),
+  OPENAI_KEY: z.string().min(1),
   DATABASE_URL: z.string().min(1),
   LOG_LEVEL: z.string().default('debug'),
   ADMIN_CHAT_ID: z.coerce.number(),
@@ -103,7 +103,7 @@ export class TestEnvService implements EnvService {
   constructor() {
     this.env = envSchema.parse({
       BOT_TOKEN: process.env.BOT_TOKEN ?? 'test',
-      OPENAI_API_KEY: process.env.OPENAI_API_KEY ?? 'test',
+      OPENAI_KEY: process.env.OPENAI_KEY ?? 'test',
       DATABASE_URL: process.env.DATABASE_URL ?? 'file:///tmp/test.db',
       LOG_LEVEL: process.env.LOG_LEVEL ?? 'silent',
       ADMIN_CHAT_ID: process.env.ADMIN_CHAT_ID ?? '0',
