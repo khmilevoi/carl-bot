@@ -18,9 +18,14 @@ export const DIALOGUE_MANAGER_ID = Symbol.for(
   'DialogueManager'
 ) as ServiceIdentifier<DialogueManager>;
 
+interface TimerData {
+  timeout: NodeJS.Timeout;
+  expiresAt: number;
+}
+
 @injectable()
 export class DefaultDialogueManager implements DialogueManager {
-  private timers = new Map<number, NodeJS.Timeout>();
+  private timers = new Map<number, TimerData>();
   private timeoutMs: number;
   private readonly logger: Logger;
 
@@ -38,7 +43,9 @@ export class DefaultDialogueManager implements DialogueManager {
   }
 
   extend(chatId: number): void {
-    this.logger.debug({ chatId }, 'Extending dialogue');
+    const existing = this.timers.get(chatId);
+    const remainingMs = existing ? existing.expiresAt - Date.now() : 0;
+    this.logger.debug({ chatId, remainingMs }, 'Extending dialogue');
     this.setTimer(chatId);
   }
 
@@ -49,12 +56,22 @@ export class DefaultDialogueManager implements DialogueManager {
   private setTimer(chatId: number): void {
     const existing = this.timers.get(chatId);
     if (existing) {
-      clearTimeout(existing);
+      const remainingMs = existing.expiresAt - Date.now();
+      this.logger.debug({ chatId, remainingMs }, 'Resetting dialogue timer');
+      clearTimeout(existing.timeout);
+    } else {
+      this.logger.debug(
+        { chatId, timeoutMs: this.timeoutMs },
+        'Setting dialogue timer'
+      );
     }
     const timer = setTimeout(() => {
       this.timers.delete(chatId);
-      this.logger.debug({ chatId }, 'Dialogue timed out');
+      this.logger.debug({ chatId }, 'Dialogue timed out; timer cleared');
     }, this.timeoutMs);
-    this.timers.set(chatId, timer);
+    this.timers.set(chatId, {
+      timeout: timer,
+      expiresAt: Date.now() + this.timeoutMs,
+    });
   }
 }
