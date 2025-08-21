@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { EnvService } from '../src/services/env/EnvService';
 
 describe('logger', () => {
   const OLD_ENV = { ...process.env };
@@ -30,5 +31,14 @@ describe('logger', () => {
     const child = logger.child({ service: 'test' });
     child.info('child');
     expect(typeof child.info).toBe('function');
+  });
+
+  it('child logger respects EnvService log level', async () => {
+    process.env.LOG_LEVEL = 'info';
+    const { PinoLogger } = await import('../src/services/logging/PinoLogger');
+    const envService = { env: { LOG_LEVEL: 'error' } } as unknown as EnvService;
+    const logger = new PinoLogger(envService);
+    const child = logger.child({ service: 'test' });
+    expect((child as any).logger.level).toBe('error');
   });
 });
