@@ -102,15 +102,34 @@ export class ChatGPTService implements AIService {
       )
     );
     messages.push(...historyMessages);
-
-    const completion = await this.openai.chat.completions.create({
-      model: this.askModel,
-      messages,
-    });
-    this.logger.debug('Received chat completion response');
-    const response = completion.choices[0]?.message?.content ?? '';
-    void this.logPrompt('ask', messages, response);
-    return response;
+    const start = Date.now();
+    try {
+      const completion = await this.openai.chat.completions.create({
+        model: this.askModel,
+        messages,
+      });
+      const elapsedMs = Date.now() - start;
+      this.logger.debug(
+        {
+          model: completion.model,
+          promptTokens: completion.usage?.prompt_tokens,
+          completionTokens: completion.usage?.completion_tokens,
+          totalTokens: completion.usage?.total_tokens,
+          elapsedMs,
+        },
+        'Received chat completion response'
+      );
+      const response = completion.choices[0]?.message?.content ?? '';
+      void this.logPrompt('ask', messages, response);
+      return response;
+    } catch (err) {
+      const elapsedMs = Date.now() - start;
+      this.logger.error(
+        { err, model: this.askModel, messages: messages.length, elapsedMs },
+        'Chat completion request failed'
+      );
+      throw err;
+    }
   }
 
   public async checkInterest(
@@ -147,27 +166,52 @@ export class ChatGPTService implements AIService {
       },
       'Sending interest check request'
     );
-    const completion = await this.openai.chat.completions.create({
-      model: this.interestModel,
-      messages,
-    });
-    this.logger.debug('Received interest check response');
-    const content = completion.choices[0]?.message?.content ?? '';
-    void this.logPrompt('interest', messages, content);
+    const start = Date.now();
     try {
-      return JSON.parse(content) as {
-        messageId: string;
-        why: string;
-      } | null;
+      const completion = await this.openai.chat.completions.create({
+        model: this.interestModel,
+        messages,
+      });
+      const elapsedMs = Date.now() - start;
+      this.logger.debug(
+        {
+          model: completion.model,
+          promptTokens: completion.usage?.prompt_tokens,
+          completionTokens: completion.usage?.completion_tokens,
+          totalTokens: completion.usage?.total_tokens,
+          elapsedMs,
+        },
+        'Received interest check response'
+      );
+      const content = completion.choices[0]?.message?.content ?? '';
+      void this.logPrompt('interest', messages, content);
+      try {
+        return JSON.parse(content) as {
+          messageId: string;
+          why: string;
+        } | null;
+      } catch (err) {
+        this.logger.error(
+          {
+            err,
+            content,
+          },
+          'Failed to parse interest response'
+        );
+        return null;
+      }
     } catch (err) {
+      const elapsedMs = Date.now() - start;
       this.logger.error(
         {
           err,
-          content,
+          model: this.interestModel,
+          messages: messages.length,
+          elapsedMs,
         },
-        'Failed to parse interest response'
+        'Interest check request failed'
       );
-      return null;
+      throw err;
     }
   }
 
@@ -215,24 +259,49 @@ export class ChatGPTService implements AIService {
       },
       'Sending user attitude assessment request'
     );
-    const completion = await this.openai.chat.completions.create({
-      model: this.summaryModel,
-      messages: reqMessages,
-    });
-    this.logger.debug('Received user attitude assessment response');
-    const content = completion.choices[0]?.message?.content ?? '[]';
-    void this.logPrompt('assessUsers', reqMessages, content);
+    const start = Date.now();
     try {
-      return JSON.parse(content) as { username: string; attitude: string }[];
+      const completion = await this.openai.chat.completions.create({
+        model: this.summaryModel,
+        messages: reqMessages,
+      });
+      const elapsedMs = Date.now() - start;
+      this.logger.debug(
+        {
+          model: completion.model,
+          promptTokens: completion.usage?.prompt_tokens,
+          completionTokens: completion.usage?.completion_tokens,
+          totalTokens: completion.usage?.total_tokens,
+          elapsedMs,
+        },
+        'Received user attitude assessment response'
+      );
+      const content = completion.choices[0]?.message?.content ?? '[]';
+      void this.logPrompt('assessUsers', reqMessages, content);
+      try {
+        return JSON.parse(content) as { username: string; attitude: string }[];
+      } catch (err) {
+        this.logger.error(
+          {
+            err,
+            content,
+          },
+          'Failed to parse assessUsers response'
+        );
+        return [];
+      }
     } catch (err) {
+      const elapsedMs = Date.now() - start;
       this.logger.error(
         {
           err,
-          content,
+          model: this.summaryModel,
+          messages: reqMessages.length,
+          elapsedMs,
         },
-        'Failed to parse assessUsers response'
+        'User attitude assessment request failed'
       );
-      return [];
+      throw err;
     }
   }
 
@@ -279,14 +348,34 @@ export class ChatGPTService implements AIService {
       role: 'user',
       content: `История диалога:\n${historyText}`,
     });
-    const completion = await this.openai.chat.completions.create({
-      model: this.summaryModel,
-      messages,
-    });
-    this.logger.debug('Received summary response');
-    const response = completion.choices[0]?.message?.content ?? prev ?? '';
-    void this.logPrompt('summary', messages, response);
-    return response;
+    const start = Date.now();
+    try {
+      const completion = await this.openai.chat.completions.create({
+        model: this.summaryModel,
+        messages,
+      });
+      const elapsedMs = Date.now() - start;
+      this.logger.debug(
+        {
+          model: completion.model,
+          promptTokens: completion.usage?.prompt_tokens,
+          completionTokens: completion.usage?.completion_tokens,
+          totalTokens: completion.usage?.total_tokens,
+          elapsedMs,
+        },
+        'Received summary response'
+      );
+      const response = completion.choices[0]?.message?.content ?? prev ?? '';
+      void this.logPrompt('summary', messages, response);
+      return response;
+    } catch (err) {
+      const elapsedMs = Date.now() - start;
+      this.logger.error(
+        { err, model: this.summaryModel, messages: messages.length, elapsedMs },
+        'Summarization request failed'
+      );
+      throw err;
+    }
   }
 
   private async logPrompt(
