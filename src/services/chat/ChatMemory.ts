@@ -5,7 +5,7 @@ import type Logger from '../logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '../logging/LoggerService';
+} from '../logging/LoggerFactory';
 import {
   INTEREST_MESSAGE_STORE_ID,
   type InterestMessageStore,

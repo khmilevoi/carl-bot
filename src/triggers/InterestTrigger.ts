@@ -2,8 +2,8 @@ import type { Context } from 'telegraf';
 
 import type { DialogueManager } from '../services/chat/DialogueManager';
 import type { InterestChecker } from '../services/interest/InterestChecker';
-import { PinoLogger } from '../services/logging/PinoLogger';
-const logger = new PinoLogger();
+import type Logger from '../services/logging/Logger.interface';
+import { type LoggerFactory } from '../services/logging/LoggerFactory';
 import type {
   Trigger,
   TriggerContext,
@@ -11,7 +11,13 @@ import type {
 } from './Trigger.interface';
 
 export class InterestTrigger implements Trigger {
-  constructor(private checker: InterestChecker) {}
+  private readonly logger: Logger;
+  constructor(
+    private checker: InterestChecker,
+    loggerFactory: LoggerFactory
+  ) {
+    this.logger = loggerFactory.create('InterestTrigger');
+  }
 
   async apply(
     _ctx: Context,
@@ -24,7 +30,7 @@ export class InterestTrigger implements Trigger {
 
     const result = await this.checker.check(chatId);
     if (result) {
-      logger.debug({ chatId }, 'Interest trigger matched');
+      this.logger.debug({ chatId }, 'Interest trigger matched');
       return {
         replyToMessageId: result.messageId ? Number(result.messageId) : null,
         reason: { message: result.message, why: result.why },

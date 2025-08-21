@@ -7,7 +7,7 @@ import { MentionTrigger } from '../src/triggers/MentionTrigger';
 import { NameTrigger } from '../src/triggers/NameTrigger';
 import { ReplyTrigger } from '../src/triggers/ReplyTrigger';
 import { TriggerContext } from '../src/triggers/Trigger.interface';
-import type { LoggerFactory } from '../src/services/logging/LoggerService';
+import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
 
 const createLoggerFactory = (): LoggerFactory =>
   ({
@@ -21,7 +21,7 @@ const createLoggerFactory = (): LoggerFactory =>
   }) as unknown as LoggerFactory;
 
 describe('MentionTrigger', () => {
-  const trigger = new MentionTrigger();
+  const trigger = new MentionTrigger(createLoggerFactory());
 
   it('removes bot mention and returns result', async () => {
     const ctx: TriggerContext = { text: '', replyText: '', chatId: 1 };
@@ -69,7 +69,7 @@ describe('MentionTrigger', () => {
 });
 
 describe('NameTrigger', () => {
-  const trigger = new NameTrigger('Arkadius');
+  const trigger = new NameTrigger('Arkadius', createLoggerFactory());
 
   it('recognizes name at start of text', async () => {
     const ctx: TriggerContext = {
@@ -103,7 +103,7 @@ describe('NameTrigger', () => {
 });
 
 describe('ReplyTrigger', () => {
-  const trigger = new ReplyTrigger();
+  const trigger = new ReplyTrigger(createLoggerFactory());
 
   it('matches when message replies to bot', async () => {
     const ctx: TriggerContext = { text: '', replyText: '', chatId: 1 };

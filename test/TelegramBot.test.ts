@@ -21,6 +21,18 @@ import type {
   MessageContext,
   MessageContextExtractor,
 } from '../src/services/messages/MessageContextExtractor';
+import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
+
+const createLoggerFactory = (): LoggerFactory =>
+  ({
+    create: () => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      child: vi.fn(),
+    }),
+  }) as unknown as LoggerFactory;
 
 class MockEnvService {
   env = { BOT_TOKEN: 'token', ADMIN_CHAT_ID: 1 } as EnvService['env'];
@@ -122,7 +134,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      config as unknown as ChatConfigService
+      config as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     configureSpy.mockRestore();
     const botWithRouter = bot as unknown as {
@@ -154,7 +167,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      config as unknown as ChatConfigService
+      config as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     const showSpy = vi
       .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
@@ -189,7 +203,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      config as unknown as ChatConfigService
+      config as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     const showSpy = vi
       .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
@@ -224,7 +239,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      config as unknown as ChatConfigService
+      config as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     const showSpy = vi
       .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
@@ -264,7 +280,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      config as unknown as ChatConfigService
+      config as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     const showSpy = vi
       .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
@@ -304,7 +321,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      new DummyChatConfigService() as unknown as ChatConfigService
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     const showSpy = vi
       .spyOn(
@@ -353,7 +371,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      new DummyChatConfigService() as unknown as ChatConfigService
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     const showSpy = vi
       .spyOn(
@@ -402,7 +421,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      new DummyChatConfigService() as unknown as ChatConfigService
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     const showSpy = vi
       .spyOn(
@@ -456,7 +476,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      new DummyChatConfigService() as unknown as ChatConfigService
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     const showSpy = vi
       .spyOn(
@@ -522,7 +543,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      new DummyChatConfigService() as unknown as ChatConfigService
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     configureSpy.mockRestore();
 
@@ -571,7 +593,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       chatRepo as unknown as ChatRepository,
-      new DummyChatConfigService() as unknown as ChatConfigService
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     await new Promise((resolve) => setImmediate(resolve));
     const call = actionSpy.mock.calls.find(
@@ -632,7 +655,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      config as unknown as ChatConfigService
+      config as unknown as ChatConfigService,
+      createLoggerFactory()
     );
 
     const call = actionSpy.mock.calls.find(
@@ -708,7 +732,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      config as unknown as ChatConfigService
+      config as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     await new Promise((resolve) => setImmediate(resolve));
 
@@ -772,7 +797,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      config as unknown as ChatConfigService
+      config as unknown as ChatConfigService,
+      createLoggerFactory()
     );
 
     const call = actionSpy.mock.calls.find(
@@ -855,7 +881,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      new DummyChatConfigService() as unknown as ChatConfigService
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     configureSpy.mockRestore();
 
@@ -899,7 +926,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      new DummyChatConfigService() as unknown as ChatConfigService
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     configureSpy.mockRestore();
 
@@ -946,7 +974,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      new DummyChatConfigService() as unknown as ChatConfigService
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
     );
 
     const call = actionSpy.mock.calls.find(
@@ -1003,7 +1032,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      new DummyChatConfigService() as unknown as ChatConfigService
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     configureSpy.mockRestore();
 
@@ -1054,7 +1084,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      new DummyChatConfigService() as unknown as ChatConfigService
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     configureSpy.mockRestore();
 
@@ -1099,7 +1130,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      new DummyChatConfigService() as unknown as ChatConfigService
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     configureSpy.mockRestore();
 
@@ -1143,7 +1175,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      new DummyChatConfigService() as unknown as ChatConfigService
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     configureSpy.mockRestore();
 
@@ -1185,7 +1218,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      new DummyChatConfigService() as unknown as ChatConfigService
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     configureSpy.mockRestore();
     const botWithRouter = bot as unknown as {
@@ -1217,7 +1251,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      new DummyChatConfigService() as unknown as ChatConfigService
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     configureSpy.mockRestore();
     const botWithRouter = bot as unknown as {
@@ -1258,7 +1293,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      new DummyChatConfigService() as unknown as ChatConfigService
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     configureSpy.mockRestore();
     const botWithRouter = bot as unknown as {
@@ -1292,7 +1328,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      new DummyChatConfigService() as unknown as ChatConfigService
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     configureSpy.mockRestore();
     const sendRequest = vi
@@ -1345,7 +1382,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      new DummyChatConfigService() as unknown as ChatConfigService
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     configureSpy.mockRestore();
     const botWithRouter = bot as unknown as {
@@ -1382,7 +1420,8 @@ describe('TelegramBot', () => {
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatRepository() as unknown as ChatRepository,
-      new DummyChatConfigService() as unknown as ChatConfigService
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
     );
     configureSpy.mockRestore();
     const deleteWebhook = vi

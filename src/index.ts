@@ -2,7 +2,7 @@ import http from 'node:http';
 
 import { TelegramBot } from './bot/TelegramBot';
 import { container } from './container';
-import { PinoLoggerFactory } from './services/logging/LoggerService';
+import { PinoLoggerFactory } from './services/logging/LoggerFactory';
 
 const loggerFactory = new PinoLoggerFactory();
 const logger = loggerFactory.create('index');

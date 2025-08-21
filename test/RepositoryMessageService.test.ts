@@ -6,7 +6,7 @@ import { type MessageRepository } from '../src/repositories/interfaces/MessageRe
 import { type UserRepository } from '../src/repositories/interfaces/UserRepository.interface';
 import { RepositoryMessageService } from '../src/services/messages/RepositoryMessageService';
 import { type StoredMessage } from '../src/services/messages/StoredMessage.interface';
-import type { LoggerFactory } from '../src/services/logging/LoggerService';
+import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
 
 describe('RepositoryMessageService', () => {
   it('links chat and user when adding a message', async () => {

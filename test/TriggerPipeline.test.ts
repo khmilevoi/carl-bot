@@ -14,7 +14,7 @@ import {
   type Trigger,
   TriggerContext,
 } from '../src/triggers/Trigger.interface';
-import type { LoggerFactory } from '../src/services/logging/LoggerService';
+import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
 
 describe('TriggerPipeline', () => {
   const env = {
@@ -43,7 +43,8 @@ describe('TriggerPipeline', () => {
           return null;
         },
       },
-      dialogue
+      dialogue,
+      loggerFactory
     );
     const ctx = {
       message: { text: 'hi @bot' },
@@ -69,7 +70,8 @@ describe('TriggerPipeline', () => {
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
       env,
       interestChecker,
-      dialogue
+      dialogue,
+      loggerFactory
     );
     const ctx = {
       message: { text: 'hi @bot' },
@@ -100,7 +102,8 @@ describe('TriggerPipeline', () => {
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
       env,
       interestChecker,
-      dialogue
+      dialogue,
+      loggerFactory
     );
     const ctx = {
       message: { text: 'hello there' },
@@ -133,7 +136,8 @@ describe('TriggerPipeline', () => {
     const pipeline = new DefaultTriggerPipeline(
       env,
       interestChecker,
-      dialogue
+      dialogue,
+      loggerFactory
     ) as DefaultTriggerPipeline & {
       mentionTrigger: Trigger;
       replyTrigger: Trigger;
@@ -165,7 +169,8 @@ describe('TriggerPipeline', () => {
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
       env,
       interestChecker,
-      dialogue
+      dialogue,
+      loggerFactory
     );
     const ctx = {
       message: { text: 'hello there' },
@@ -194,7 +199,8 @@ describe('TriggerPipeline', () => {
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
       env,
       interestChecker,
-      dialogue
+      dialogue,
+      loggerFactory
     );
     dialogue.start(1);
     const ctx = {
@@ -222,7 +228,8 @@ describe('TriggerPipeline', () => {
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
       env,
       interestChecker,
-      dialogue
+      dialogue,
+      loggerFactory
     );
     const ctx = {
       message: { text: 'hello there' },

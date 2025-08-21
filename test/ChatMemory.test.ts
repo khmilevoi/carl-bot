@@ -12,7 +12,7 @@ import {
 } from '../src/services/messages/InterestMessageStore';
 import { MessageService } from '../src/services/messages/MessageService.interface';
 import { StoredMessage } from '../src/services/messages/StoredMessage.interface';
-import type { LoggerFactory } from '../src/services/logging/LoggerService';
+import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
 
 const createLoggerFactory = (): LoggerFactory =>
   ({
