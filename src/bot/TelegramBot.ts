@@ -8,39 +8,39 @@ import {
   ADMIN_SERVICE_ID,
   AdminService,
 } from '../application/interfaces/admin/AdminService.interface';
-import type { Logger } from '../application/interfaces/logging/Logger.interface';
 import {
   CHAT_APPROVAL_SERVICE_ID,
   ChatApprovalService,
-} from '../application/use-cases/chat/ChatApprovalService';
+} from '../application/interfaces/chat/ChatApprovalService.interface';
 import {
   CHAT_CONFIG_SERVICE_ID,
   ChatConfigService,
   InvalidHistoryLimitError,
   InvalidInterestIntervalError,
-} from '../application/use-cases/chat/ChatConfigService';
-import { ChatMemoryManager } from '../application/use-cases/chat/ChatMemory';
+} from '../application/interfaces/chat/ChatConfigService.interface';
 import {
   CHAT_RESPONDER_ID,
   ChatResponder,
-} from '../application/use-cases/chat/ChatResponder';
+} from '../application/interfaces/chat/ChatResponder.interface';
 import {
   TRIGGER_PIPELINE_ID,
   TriggerPipeline,
-} from '../application/use-cases/chat/TriggerPipeline';
+} from '../application/interfaces/chat/TriggerPipeline.interface';
 import {
   Env,
   ENV_SERVICE_ID,
   EnvService,
-} from '../application/use-cases/env/EnvService';
+} from '../application/interfaces/env/EnvService.interface';
+import type { Logger } from '../application/interfaces/logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '../application/use-cases/logging/LoggerFactory';
+} from '../application/interfaces/logging/LoggerFactory.interface';
 import {
   MESSAGE_CONTEXT_EXTRACTOR_ID,
   MessageContextExtractor,
-} from '../application/use-cases/messages/MessageContextExtractor';
+} from '../application/interfaces/messages/MessageContextExtractor.interface';
+import { ChatMemoryManager } from '../application/use-cases/chat/ChatMemory';
 import { MessageFactory } from '../application/use-cases/messages/MessageFactory';
 import {
   CHAT_REPOSITORY_ID,

@@ -1,23 +1,15 @@
-import { inject, injectable, type ServiceIdentifier } from 'inversify';
+import { inject, injectable } from 'inversify';
 
 import type { ChatConfigEntity } from '../../../domain/entities/ChatConfigEntity';
 import {
   CHAT_CONFIG_REPOSITORY_ID,
   type ChatConfigRepository,
 } from '../../../domain/repositories/ChatConfigRepository.interface';
-
-export interface ChatConfigService {
-  getConfig(chatId: number): Promise<ChatConfigEntity>;
-  setHistoryLimit(chatId: number, historyLimit: number): Promise<void>;
-  setInterestInterval(chatId: number, interestInterval: number): Promise<void>;
-}
-
-export class InvalidHistoryLimitError extends Error {}
-export class InvalidInterestIntervalError extends Error {}
-
-export const CHAT_CONFIG_SERVICE_ID = Symbol.for(
-  'ChatConfigService'
-) as ServiceIdentifier<ChatConfigService>;
+import {
+  type ChatConfigService,
+  InvalidHistoryLimitError,
+  InvalidInterestIntervalError,
+} from '../../interfaces/chat/ChatConfigService.interface';
 
 const DEFAULT_HISTORY_LIMIT = 50;
 const DEFAULT_INTEREST_INTERVAL = 25;

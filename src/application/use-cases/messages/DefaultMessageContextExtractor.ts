@@ -1,23 +1,11 @@
-import type { ServiceIdentifier } from 'inversify';
 import { injectable } from 'inversify';
 import { Context } from 'telegraf';
 import type { Message } from 'telegraf/typings/core/types/typegram';
 
-export interface MessageContext {
-  replyText?: string;
-  replyUsername?: string;
-  quoteText?: string;
-  username: string;
-  fullName: string;
-}
-
-export interface MessageContextExtractor {
-  extract(ctx: Context): MessageContext;
-}
-
-export const MESSAGE_CONTEXT_EXTRACTOR_ID = Symbol.for(
-  'MessageContextExtractor'
-) as ServiceIdentifier<MessageContextExtractor>;
+import {
+  type MessageContext,
+  type MessageContextExtractor,
+} from '../../interfaces/messages/MessageContextExtractor.interface';
 
 @injectable()
 export class DefaultMessageContextExtractor implements MessageContextExtractor {

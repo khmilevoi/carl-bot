@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ChatAccessRepository } from '../src/domain/repositories/ChatAccessRepository.interface';
-import { DefaultChatApprovalService } from '../src/application/use-cases/chat/ChatApprovalService';
-import type { EnvService } from '../src/application/use-cases/env/EnvService';
-import type { LoggerFactory } from '../src/application/use-cases/logging/LoggerFactory';
+import { DefaultChatApprovalService } from '../src/application/use-cases/chat/DefaultChatApprovalService';
+import type { EnvService } from '../src/application/interfaces/env/EnvService.interface';
+import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
 
 const sendMessage = vi.fn();
 

@@ -1,4 +1,3 @@
-import type { ServiceIdentifier } from 'inversify';
 import { inject, injectable } from 'inversify';
 import { Context } from 'telegraf';
 
@@ -7,29 +6,18 @@ import {
   AI_SERVICE_ID,
   AIService,
 } from '../../interfaces/ai/AIService.interface';
+import { type ChatResponder } from '../../interfaces/chat/ChatResponder.interface';
 import type { Logger } from '../../interfaces/logging/Logger.interface';
+import {
+  LOGGER_FACTORY_ID,
+  type LoggerFactory,
+} from '../../interfaces/logging/LoggerFactory.interface';
 import {
   SUMMARY_SERVICE_ID,
   SummaryService,
 } from '../../interfaces/summaries/SummaryService.interface';
-import {
-  LOGGER_FACTORY_ID,
-  type LoggerFactory,
-} from '../logging/LoggerFactory';
 import { MessageFactory } from '../messages/MessageFactory';
 import { ChatMemoryManager } from './ChatMemory';
-
-export interface ChatResponder {
-  generate(
-    ctx: Context,
-    chatId: number,
-    triggerReason?: TriggerReason
-  ): Promise<string>;
-}
-
-export const CHAT_RESPONDER_ID = Symbol.for(
-  'ChatResponder'
-) as ServiceIdentifier<ChatResponder>;
 
 @injectable()
 export class DefaultChatResponder implements ChatResponder {

@@ -3,9 +3,9 @@ import { join } from 'path';
 import { type Database, open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 
-import type { EnvService } from './application/use-cases/env/EnvService';
-import { ENV_SERVICE_ID } from './application/use-cases/env/EnvService';
-import { PinoLoggerFactory } from './application/use-cases/logging/LoggerFactory';
+import type { EnvService } from './application/interfaces/env/EnvService.interface';
+import { ENV_SERVICE_ID } from './application/interfaces/env/EnvService.interface';
+import { PinoLoggerFactory } from './application/use-cases/logging/PinoLoggerFactory';
 import { container } from './container';
 import { parseDatabaseUrl } from './utils/database';
 

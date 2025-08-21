@@ -1,9 +1,9 @@
 import type { Context } from 'telegraf';
 
+import type { DialogueManager } from '../application/interfaces/chat/DialogueManager.interface';
+import type { InterestChecker } from '../application/interfaces/interest/InterestChecker.interface';
 import type { Logger } from '../application/interfaces/logging/Logger.interface';
-import type { DialogueManager } from '../application/use-cases/chat/DialogueManager';
-import type { InterestChecker } from '../application/use-cases/interest/InterestChecker';
-import { type LoggerFactory } from '../application/use-cases/logging/LoggerFactory';
+import { type LoggerFactory } from '../application/interfaces/logging/LoggerFactory.interface';
 import type {
   Trigger,
   TriggerContext,

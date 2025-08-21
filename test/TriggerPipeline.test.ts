@@ -1,20 +1,16 @@
 import type { Context } from 'telegraf';
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  DefaultDialogueManager,
-  type DialogueManager,
-} from '../src/application/use-cases/chat/DialogueManager';
-import {
-  DefaultTriggerPipeline,
-  TriggerPipeline,
-} from '../src/application/use-cases/chat/TriggerPipeline';
-import { InterestChecker } from '../src/application/use-cases/interest/InterestChecker';
+import { DefaultDialogueManager } from '../src/application/use-cases/chat/DefaultDialogueManager';
+import { DialogueManager } from '../src/application/interfaces/chat/DialogueManager.interface';
+import { DefaultTriggerPipeline } from '../src/application/use-cases/chat/DefaultTriggerPipeline';
+import { TriggerPipeline } from '../src/application/interfaces/chat/TriggerPipeline.interface';
+import { InterestChecker } from '../src/application/interfaces/interest/InterestChecker.interface';
 import {
   type Trigger,
   TriggerContext,
 } from '../src/triggers/Trigger.interface';
-import type { LoggerFactory } from '../src/application/use-cases/logging/LoggerFactory';
+import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
 
 describe('TriggerPipeline', () => {
   const env = {

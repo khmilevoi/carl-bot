@@ -1,8 +1,8 @@
 import http from 'node:http';
 
-import type { EnvService } from './application/use-cases/env/EnvService';
-import { ENV_SERVICE_ID } from './application/use-cases/env/EnvService';
-import { PinoLoggerFactory } from './application/use-cases/logging/LoggerFactory';
+import type { EnvService } from './application/interfaces/env/EnvService.interface';
+import { ENV_SERVICE_ID } from './application/interfaces/env/EnvService.interface';
+import { PinoLoggerFactory } from './application/use-cases/logging/PinoLoggerFactory';
 import { TelegramBot } from './bot/TelegramBot';
 import { container } from './container';
 

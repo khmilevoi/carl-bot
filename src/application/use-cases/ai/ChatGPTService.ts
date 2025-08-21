@@ -9,16 +9,19 @@ import {
   AIService,
   ChatMessage,
 } from '../../interfaces/ai/AIService.interface';
+import {
+  ENV_SERVICE_ID,
+  EnvService,
+} from '../../interfaces/env/EnvService.interface';
 import type { Logger } from '../../interfaces/logging/Logger.interface';
+import {
+  LOGGER_FACTORY_ID,
+  type LoggerFactory,
+} from '../../interfaces/logging/LoggerFactory.interface';
 import {
   PROMPT_SERVICE_ID,
   PromptService,
 } from '../../interfaces/prompts/PromptService.interface';
-import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
-import {
-  LOGGER_FACTORY_ID,
-  type LoggerFactory,
-} from '../logging/LoggerFactory';
 
 @injectable()
 export class ChatGPTService implements AIService {

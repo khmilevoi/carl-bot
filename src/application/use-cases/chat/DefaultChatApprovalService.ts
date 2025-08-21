@@ -1,4 +1,4 @@
-import { inject, injectable, type ServiceIdentifier } from 'inversify';
+import { inject, injectable } from 'inversify';
 
 import type {
   ChatAccessEntity,
@@ -8,25 +8,17 @@ import {
   CHAT_ACCESS_REPOSITORY_ID,
   type ChatAccessRepository,
 } from '../../../domain/repositories/ChatAccessRepository.interface';
+import { type ChatApprovalService } from '../../interfaces/chat/ChatApprovalService.interface';
+import {
+  type Env,
+  ENV_SERVICE_ID,
+  type EnvService,
+} from '../../interfaces/env/EnvService.interface';
 import type { Logger } from '../../interfaces/logging/Logger.interface';
-import { type Env, ENV_SERVICE_ID, type EnvService } from '../env/EnvService';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '../logging/LoggerFactory';
-
-export interface ChatApprovalService {
-  pending(chatId: number): Promise<void>;
-  approve(chatId: number): Promise<void>;
-  ban(chatId: number): Promise<void>;
-  unban(chatId: number): Promise<void>;
-  getStatus(chatId: number): Promise<ChatStatus>;
-  listAll(): Promise<ChatAccessEntity[]>;
-}
-
-export const CHAT_APPROVAL_SERVICE_ID = Symbol.for(
-  'ChatApprovalService'
-) as ServiceIdentifier<ChatApprovalService>;
+} from '../../interfaces/logging/LoggerFactory.interface';
 
 @injectable()
 export class DefaultChatApprovalService implements ChatApprovalService {

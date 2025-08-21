@@ -6,16 +6,16 @@ import {
   ChatMemoryManager,
 } from '../src/application/use-cases/chat/ChatMemory';
 import { ChatResetService } from '../src/application/interfaces/chat/ChatResetService.interface';
-import { HistorySummarizer } from '../src/application/use-cases/chat/HistorySummarizer';
-import type { ChatConfigService } from '../src/application/use-cases/chat/ChatConfigService';
+import { HistorySummarizer } from '../src/application/interfaces/chat/HistorySummarizer.interface';
+import type { ChatConfigService } from '../src/application/interfaces/chat/ChatConfigService.interface';
 import type { ChatConfigEntity } from '../src/domain/entities/ChatConfigEntity';
 import {
   InterestMessageStore,
-  InterestMessageStoreImpl,
-} from '../src/application/use-cases/messages/InterestMessageStore';
+  InMemoryInterestMessageStore,
+} from '../src/application/use-cases/messages/InMemoryInterestMessageStore';
 import { MessageService } from '../src/application/interfaces/messages/MessageService.interface';
 import { StoredMessage } from '../src/application/interfaces/messages/StoredMessage.interface';
-import type { LoggerFactory } from '../src/application/use-cases/logging/LoggerFactory';
+import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
 
 const createLoggerFactory = (): LoggerFactory =>
   ({
@@ -34,7 +34,7 @@ class FakeHistorySummarizer implements HistorySummarizer {
 }
 
 class FakeMessageService
-  extends InterestMessageStoreImpl
+  extends InMemoryInterestMessageStore
   implements MessageService
 {
   constructor() {

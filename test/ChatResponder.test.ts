@@ -6,13 +6,11 @@ import type {
   ChatMessage,
 } from '../src/application/interfaces/ai/AIService.interface';
 import type { ChatMemoryManager } from '../src/application/use-cases/chat/ChatMemory';
-import {
-  ChatResponder,
-  DefaultChatResponder,
-} from '../src/application/use-cases/chat/ChatResponder';
+import { ChatResponder } from '../src/application/interfaces/chat/ChatResponder.interface';
+import { DefaultChatResponder } from '../src/application/use-cases/chat/DefaultChatResponder';
 import type { SummaryService } from '../src/application/interfaces/summaries/SummaryService.interface';
 import { TriggerReason } from '../src/triggers/Trigger.interface';
-import type { LoggerFactory } from '../src/application/use-cases/logging/LoggerFactory';
+import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
 
 class MockAIService implements AIService {
   history: ChatMessage[] | undefined;

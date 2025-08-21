@@ -4,15 +4,15 @@ import type { Database } from 'sqlite';
 import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 
-import type { Logger } from '../application/interfaces/logging/Logger.interface';
 import {
   ENV_SERVICE_ID,
   EnvService,
-} from '../application/use-cases/env/EnvService';
+} from '../application/interfaces/env/EnvService.interface';
+import type { Logger } from '../application/interfaces/logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '../application/use-cases/logging/LoggerFactory';
+} from '../application/interfaces/logging/LoggerFactory.interface';
 import { parseDatabaseUrl } from '../utils/database';
 
 export interface DbProvider<T = unknown> {

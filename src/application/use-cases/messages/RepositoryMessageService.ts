@@ -18,12 +18,12 @@ import {
 } from '../../../domain/repositories/UserRepository.interface';
 import type { ChatMessage } from '../../interfaces/ai/AIService.interface';
 import type { Logger } from '../../interfaces/logging/Logger.interface';
-import { MessageService } from '../../interfaces/messages/MessageService.interface';
-import { StoredMessage } from '../../interfaces/messages/StoredMessage.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '../logging/LoggerFactory';
+} from '../../interfaces/logging/LoggerFactory.interface';
+import { MessageService } from '../../interfaces/messages/MessageService.interface';
+import { StoredMessage } from '../../interfaces/messages/StoredMessage.interface';
 
 @injectable()
 export class RepositoryMessageService implements MessageService {

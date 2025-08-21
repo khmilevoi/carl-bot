@@ -1,11 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  DefaultDialogueManager,
-  type DialogueManager,
-} from '../src/application/use-cases/chat/DialogueManager';
-import { TestEnvService } from '../src/application/use-cases/env/EnvService';
-import type { LoggerFactory } from '../src/application/use-cases/logging/LoggerFactory';
+import { DefaultDialogueManager } from '../src/application/use-cases/chat/DefaultDialogueManager';
+import { DialogueManager } from '../src/application/interfaces/chat/DialogueManager.interface';
+import { TestEnvService } from '../src/application/use-cases/env/TestEnvService';
+import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
 
 describe('DialogueManager', () => {
   beforeEach(() => {

@@ -1,4 +1,3 @@
-import type { ServiceIdentifier } from 'inversify';
 import { inject, injectable } from 'inversify';
 
 import {
@@ -10,7 +9,12 @@ import {
   AIService,
   ChatMessage,
 } from '../../interfaces/ai/AIService.interface';
+import { type HistorySummarizer } from '../../interfaces/chat/HistorySummarizer.interface';
 import type { Logger } from '../../interfaces/logging/Logger.interface';
+import {
+  LOGGER_FACTORY_ID,
+  type LoggerFactory,
+} from '../../interfaces/logging/LoggerFactory.interface';
 import {
   MESSAGE_SERVICE_ID,
   MessageService,
@@ -19,23 +23,6 @@ import {
   SUMMARY_SERVICE_ID,
   SummaryService,
 } from '../../interfaces/summaries/SummaryService.interface';
-import {
-  LOGGER_FACTORY_ID,
-  type LoggerFactory,
-} from '../logging/LoggerFactory';
-
-export interface HistorySummarizer {
-  summarize(
-    chatId: number,
-    history: ChatMessage[],
-    limit: number
-  ): Promise<boolean>;
-  assessUsers(chatId: number, history: ChatMessage[]): Promise<void>;
-}
-
-export const HISTORY_SUMMARIZER_ID = Symbol.for(
-  'HistorySummarizer'
-) as ServiceIdentifier<HistorySummarizer>;
 
 @injectable()
 export class DefaultHistorySummarizer implements HistorySummarizer {

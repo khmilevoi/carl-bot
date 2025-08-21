@@ -1,10 +1,8 @@
 import type { Context } from 'telegraf';
 import { describe, expect, it } from 'vitest';
 
-import {
-  DefaultMessageContextExtractor,
-  MessageContextExtractor,
-} from '../src/application/use-cases/messages/MessageContextExtractor';
+import { DefaultMessageContextExtractor } from '../src/application/use-cases/messages/DefaultMessageContextExtractor';
+import { MessageContextExtractor } from '../src/application/interfaces/messages/MessageContextExtractor.interface';
 
 describe('MessageContextExtractor', () => {
   const extractor: MessageContextExtractor =

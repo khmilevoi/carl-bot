@@ -1,4 +1,3 @@
-import type { ServiceIdentifier } from 'inversify';
 import { inject, injectable } from 'inversify';
 
 import {
@@ -6,33 +5,24 @@ import {
   AIService,
   ChatMessage,
 } from '../../interfaces/ai/AIService.interface';
+import {
+  CHAT_CONFIG_SERVICE_ID,
+  type ChatConfigService,
+} from '../../interfaces/chat/ChatConfigService.interface';
+import { type InterestChecker } from '../../interfaces/interest/InterestChecker.interface';
 import type { Logger } from '../../interfaces/logging/Logger.interface';
+import {
+  LOGGER_FACTORY_ID,
+  type LoggerFactory,
+} from '../../interfaces/logging/LoggerFactory.interface';
+import {
+  INTEREST_MESSAGE_STORE_ID,
+  InterestMessageStore,
+} from '../../interfaces/messages/InterestMessageStore.interface';
 import {
   SUMMARY_SERVICE_ID,
   SummaryService,
 } from '../../interfaces/summaries/SummaryService.interface';
-import {
-  CHAT_CONFIG_SERVICE_ID,
-  ChatConfigService,
-} from '../chat/ChatConfigService';
-import {
-  LOGGER_FACTORY_ID,
-  type LoggerFactory,
-} from '../logging/LoggerFactory';
-import {
-  INTEREST_MESSAGE_STORE_ID,
-  InterestMessageStore,
-} from '../messages/InterestMessageStore';
-
-export interface InterestChecker {
-  check(
-    chatId: number
-  ): Promise<{ messageId: string; message: string; why: string } | null>;
-}
-
-export const INTEREST_CHECKER_ID = Symbol.for(
-  'InterestChecker'
-) as ServiceIdentifier<InterestChecker>;
 
 @injectable()
 export class DefaultInterestChecker implements InterestChecker {

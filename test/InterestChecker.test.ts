@@ -4,14 +4,14 @@ import {
   AIService,
   ChatMessage,
 } from '../src/application/interfaces/ai/AIService.interface';
-import { DefaultInterestChecker } from '../src/application/use-cases/interest/InterestChecker';
-import { ChatConfigService } from '../src/application/use-cases/chat/ChatConfigService';
+import { DefaultInterestChecker } from '../src/application/use-cases/interest/DefaultInterestChecker';
+import { ChatConfigService } from '../src/application/interfaces/chat/ChatConfigService.interface';
 import {
   InterestMessageStore,
-  InterestMessageStoreImpl,
-} from '../src/application/use-cases/messages/InterestMessageStore';
+  InMemoryInterestMessageStore,
+} from '../src/application/use-cases/messages/InMemoryInterestMessageStore';
 import { SummaryService } from '../src/application/interfaces/summaries/SummaryService.interface';
-import type { LoggerFactory } from '../src/application/use-cases/logging/LoggerFactory';
+import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
 
 const interval = 2;
 const chatId = 1;
@@ -146,7 +146,7 @@ describe('DefaultInterestChecker', () => {
   });
 
   it('clears stored messages after checking', async () => {
-    const store = new InterestMessageStoreImpl(createLoggerFactory());
+    const store = new InMemoryInterestMessageStore(createLoggerFactory());
     store.addMessage({ chatId, role: 'user', content: 'hi', messageId: 1 });
     const checker = new DefaultInterestChecker(
       store,
