@@ -70,6 +70,17 @@ export class ChatMemory {
     if (summarized) {
       await this.summarizer.assessUsers(this.chatId, history);
     }
+    const localStoreCount = this.localStore.getCount(this.chatId);
+    const removedCount = summarized ? history.length : 0;
+    this.logger.debug(
+      {
+        chatId: this.chatId,
+        summarized,
+        removedCount,
+        localStoreCount,
+      },
+      'Summarization result'
+    );
   }
 
   public getHistory(): Promise<ChatMessage[]> {
