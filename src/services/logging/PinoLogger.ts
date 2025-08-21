@@ -19,8 +19,10 @@ function resolveLogLevel(envService?: EnvService): LevelWithSilent {
  */
 export class PinoLogger implements Logger {
   private readonly logger: Pino;
+  private readonly envService?: EnvService;
 
   constructor(envService?: EnvService, logger?: Pino) {
+    this.envService = envService;
     const level = resolveLogLevel(envService);
     this.logger = logger ?? pino({ level });
     // Ensure provided loggers also respect the resolved level
@@ -69,6 +71,6 @@ export class PinoLogger implements Logger {
 
   child(meta: Record<string, unknown>): Logger {
     const childLogger = this.logger.child(meta);
-    return new PinoLogger(undefined, childLogger);
+    return new PinoLogger(this.envService, childLogger);
   }
 }
