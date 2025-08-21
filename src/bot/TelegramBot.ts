@@ -33,7 +33,7 @@ import {
   TriggerPipeline,
 } from '../services/chat/TriggerPipeline';
 import { Env, ENV_SERVICE_ID, EnvService } from '../services/env/EnvService';
-import type Logger from '../services/logging/Logger.interface';
+import type { Logger } from '../services/logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,

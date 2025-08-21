@@ -2,7 +2,7 @@ import type { ServiceIdentifier } from 'inversify';
 import { inject, injectable } from 'inversify';
 
 import { ENV_SERVICE_ID, type EnvService } from '../env/EnvService';
-import type Logger from '../logging/Logger.interface';
+import type { Logger } from '../logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,

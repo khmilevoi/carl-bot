@@ -5,7 +5,7 @@ import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 
 import { ENV_SERVICE_ID, EnvService } from '../services/env/EnvService';
-import type Logger from '../services/logging/Logger.interface';
+import type { Logger } from '../services/logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,

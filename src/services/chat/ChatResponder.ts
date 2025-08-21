@@ -4,7 +4,7 @@ import { Context } from 'telegraf';
 
 import { TriggerReason } from '../../triggers/Trigger.interface';
 import { AI_SERVICE_ID, AIService } from '../ai/AIService.interface';
-import type Logger from '../logging/Logger.interface';
+import type { Logger } from '../logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
