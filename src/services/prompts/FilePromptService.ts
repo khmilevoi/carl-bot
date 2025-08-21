@@ -30,36 +30,35 @@ export class FilePromptService implements PromptService {
   ) {
     const files = envService.getPromptFiles();
     this.logger = this.loggerFactory.create('FilePromptService');
-    this.persona = createLazy(async () => {
-      this.logger.debug('Loading persona file');
-      return readFile(files.persona, 'utf-8');
-    });
+    this.persona = createLazy(() =>
+      this.loadTemplate('persona', files.persona)
+    );
     this.askSummaryTemplate = createLazy(() =>
-      readFile(files.askSummary, 'utf-8')
+      this.loadTemplate('askSummary', files.askSummary)
     );
     this.summarizationSystemTemplate = createLazy(() =>
-      readFile(files.summarizationSystem, 'utf-8')
+      this.loadTemplate('summarizationSystem', files.summarizationSystem)
     );
     this.previousSummaryTemplate = createLazy(() =>
-      readFile(files.previousSummary, 'utf-8')
+      this.loadTemplate('previousSummary', files.previousSummary)
     );
     this.checkInterestTemplate = createLazy(() =>
-      readFile(files.checkInterest, 'utf-8')
+      this.loadTemplate('checkInterest', files.checkInterest)
     );
     this.userPromptTemplate = createLazy(() =>
-      readFile(files.userPrompt, 'utf-8')
+      this.loadTemplate('userPrompt', files.userPrompt)
     );
     this.userPromptSystemTemplate = createLazy(() =>
-      readFile(files.userPromptSystem, 'utf-8')
+      this.loadTemplate('userPromptSystem', files.userPromptSystem)
     );
     this.priorityRulesSystemTemplate = createLazy(() =>
-      readFile(files.priorityRulesSystem, 'utf-8')
+      this.loadTemplate('priorityRulesSystem', files.priorityRulesSystem)
     );
     this.assessUsersTemplate = createLazy(() =>
-      readFile(files.assessUsers, 'utf-8')
+      this.loadTemplate('assessUsers', files.assessUsers)
     );
     this.replyTriggerTemplate = createLazy(() =>
-      readFile(files.replyTrigger, 'utf-8')
+      this.loadTemplate('replyTrigger', files.replyTrigger)
     );
   }
 
@@ -130,5 +129,13 @@ export class FilePromptService implements PromptService {
       .replace('{{triggerMessage}}', triggerMessage);
 
     return prompt;
+  }
+
+  private async loadTemplate(name: string, path: string): Promise<string> {
+    const content = await readFile(path, 'utf-8');
+    this.logger.debug(
+      `Loaded ${name} template from ${path} (${Buffer.byteLength(content)} bytes)`
+    );
+    return content;
   }
 }
