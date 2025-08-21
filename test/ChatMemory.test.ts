@@ -1,18 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ChatMessage } from '../src/services/ai/AIService.interface';
-import { ChatMemory, ChatMemoryManager } from '../src/services/chat/ChatMemory';
-import { ChatResetService } from '../src/services/chat/ChatResetService.interface';
-import { HistorySummarizer } from '../src/services/chat/HistorySummarizer';
-import type { ChatConfigService } from '../src/services/chat/ChatConfigService';
+import { ChatMessage } from '../src/application/interfaces/ai/AIService.interface';
+import {
+  ChatMemory,
+  ChatMemoryManager,
+} from '../src/application/use-cases/chat/ChatMemory';
+import { ChatResetService } from '../src/application/interfaces/chat/ChatResetService.interface';
+import { HistorySummarizer } from '../src/application/use-cases/chat/HistorySummarizer';
+import type { ChatConfigService } from '../src/application/use-cases/chat/ChatConfigService';
 import type { ChatConfigEntity } from '../src/domain/entities/ChatConfigEntity';
 import {
   InterestMessageStore,
   InterestMessageStoreImpl,
-} from '../src/services/messages/InterestMessageStore';
-import { MessageService } from '../src/services/messages/MessageService.interface';
-import { StoredMessage } from '../src/services/messages/StoredMessage.interface';
-import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
+} from '../src/application/use-cases/messages/InterestMessageStore';
+import { MessageService } from '../src/application/interfaces/messages/MessageService.interface';
+import { StoredMessage } from '../src/application/interfaces/messages/StoredMessage.interface';
+import type { LoggerFactory } from '../src/application/use-cases/logging/LoggerFactory';
 
 const createLoggerFactory = (): LoggerFactory =>
   ({

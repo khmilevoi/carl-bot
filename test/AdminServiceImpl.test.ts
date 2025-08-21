@@ -7,9 +7,9 @@ import type { ChatUserRepository } from '../src/domain/repositories/ChatUserRepo
 import type { MessageRepository } from '../src/domain/repositories/MessageRepository.interface';
 import type { SummaryRepository } from '../src/domain/repositories/SummaryRepository.interface';
 import type { UserRepository } from '../src/domain/repositories/UserRepository.interface';
-import { AdminServiceImpl } from '../src/services/admin/AdminServiceImpl';
-import type { ChatConfigService } from '../src/services/chat/ChatConfigService';
-import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
+import { AdminServiceImpl } from '../src/application/use-cases/admin/AdminServiceImpl';
+import type { ChatConfigService } from '../src/application/use-cases/chat/ChatConfigService';
+import type { LoggerFactory } from '../src/application/use-cases/logging/LoggerFactory';
 
 const createLoggerFactory = (): LoggerFactory =>
   ({

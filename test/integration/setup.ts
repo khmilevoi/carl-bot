@@ -13,7 +13,7 @@ import {
   type AIService,
   AI_SERVICE_ID,
   type ChatMessage,
-} from '../../src/services/ai/AIService.interface';
+} from '../../src/application/interfaces/ai/AIService.interface';
 import type { TriggerReason } from '../../src/triggers/Trigger.interface';
 import type { Context, Telegram } from 'telegraf';
 

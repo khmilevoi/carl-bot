@@ -6,22 +6,22 @@ import { TelegramBot } from '../src/bot/TelegramBot';
 import * as TelegramBotModule from '../src/bot/TelegramBot';
 import { createWindows } from '../src/bot/windowConfig';
 import type { ChatRepository } from '../src/domain/repositories/ChatRepository.interface';
-import type { AdminService } from '../src/services/admin/AdminService.interface';
-import type { ChatApprovalService } from '../src/services/chat/ChatApprovalService';
-import type { ChatMemoryManager } from '../src/services/chat/ChatMemory';
-import type { ChatResponder } from '../src/services/chat/ChatResponder';
-import type { TriggerPipeline } from '../src/services/chat/TriggerPipeline';
-import type { EnvService } from '../src/services/env/EnvService';
-import type { ChatConfigService } from '../src/services/chat/ChatConfigService';
+import type { AdminService } from '../src/application/interfaces/admin/AdminService.interface';
+import type { ChatApprovalService } from '../src/application/use-cases/chat/ChatApprovalService';
+import type { ChatMemoryManager } from '../src/application/use-cases/chat/ChatMemory';
+import type { ChatResponder } from '../src/application/use-cases/chat/ChatResponder';
+import type { TriggerPipeline } from '../src/application/use-cases/chat/TriggerPipeline';
+import type { EnvService } from '../src/application/use-cases/env/EnvService';
+import type { ChatConfigService } from '../src/application/use-cases/chat/ChatConfigService';
 import {
   InvalidInterestIntervalError,
   InvalidHistoryLimitError,
-} from '../src/services/chat/ChatConfigService';
+} from '../src/application/use-cases/chat/ChatConfigService';
 import type {
   MessageContext,
   MessageContextExtractor,
-} from '../src/services/messages/MessageContextExtractor';
-import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
+} from '../src/application/use-cases/messages/MessageContextExtractor';
+import type { LoggerFactory } from '../src/application/use-cases/logging/LoggerFactory';
 
 const createLoggerFactory = (): LoggerFactory =>
   ({

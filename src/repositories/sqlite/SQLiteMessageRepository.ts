@@ -1,9 +1,9 @@
 import { inject, injectable } from 'inversify';
 import type { Database } from 'sqlite';
 
+import type { ChatMessage } from '../../application/interfaces/ai/AIService.interface';
+import type { StoredMessage } from '../../application/interfaces/messages/StoredMessage.interface';
 import type { MessageRepository } from '../../domain/repositories/MessageRepository.interface';
-import type { ChatMessage } from '../../services/ai/AIService.interface';
-import type { StoredMessage } from '../../services/messages/StoredMessage.interface';
 import { DB_PROVIDER_ID, type SQLiteDbProvider } from '../DbProvider';
 
 @injectable()

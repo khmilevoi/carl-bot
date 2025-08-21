@@ -4,11 +4,11 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   DefaultDialogueManager,
   type DialogueManager,
-} from '../src/services/chat/DialogueManager';
-import { InterestChecker } from '../src/services/interest/InterestChecker';
+} from '../src/application/use-cases/chat/DialogueManager';
+import { InterestChecker } from '../src/application/use-cases/interest/InterestChecker';
 import { InterestTrigger } from '../src/triggers/InterestTrigger';
 import { TriggerContext } from '../src/triggers/Trigger.interface';
-import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
+import type { LoggerFactory } from '../src/application/use-cases/logging/LoggerFactory';
 
 class MockInterestChecker implements InterestChecker {
   public calls = 0;

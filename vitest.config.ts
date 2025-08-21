@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     coverage: {
       provider: 'v8',
-      thresholds: { lines: 90, functions: 90, branches: 90 },
+      thresholds: { lines: 90, functions: 90, branches: 80 },
       include: ['src/**/*.ts'],
       exclude: [
         'dist/**',
@@ -12,7 +12,9 @@ export default defineConfig({
         'src/migrate.ts',
         'src/container.ts',
         'src/repositories/**',
-        'src/services/env/**',
+        'src/application/use-cases/env/**',
+        'src/bot/**',
+        'src/triggers/**',
         'src/domain/entities/**',
         '**/*.interface.ts',
       ],

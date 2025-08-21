@@ -4,17 +4,17 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   DefaultDialogueManager,
   type DialogueManager,
-} from '../src/services/chat/DialogueManager';
+} from '../src/application/use-cases/chat/DialogueManager';
 import {
   DefaultTriggerPipeline,
   TriggerPipeline,
-} from '../src/services/chat/TriggerPipeline';
-import { InterestChecker } from '../src/services/interest/InterestChecker';
+} from '../src/application/use-cases/chat/TriggerPipeline';
+import { InterestChecker } from '../src/application/use-cases/interest/InterestChecker';
 import {
   type Trigger,
   TriggerContext,
 } from '../src/triggers/Trigger.interface';
-import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
+import type { LoggerFactory } from '../src/application/use-cases/logging/LoggerFactory';
 
 describe('TriggerPipeline', () => {
   const env = {

@@ -4,15 +4,15 @@ import { describe, expect, it, vi } from 'vitest';
 import type {
   AIService,
   ChatMessage,
-} from '../src/services/ai/AIService.interface';
-import type { ChatMemoryManager } from '../src/services/chat/ChatMemory';
+} from '../src/application/interfaces/ai/AIService.interface';
+import type { ChatMemoryManager } from '../src/application/use-cases/chat/ChatMemory';
 import {
   ChatResponder,
   DefaultChatResponder,
-} from '../src/services/chat/ChatResponder';
-import type { SummaryService } from '../src/services/summaries/SummaryService.interface';
+} from '../src/application/use-cases/chat/ChatResponder';
+import type { SummaryService } from '../src/application/interfaces/summaries/SummaryService.interface';
 import { TriggerReason } from '../src/triggers/Trigger.interface';
-import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
+import type { LoggerFactory } from '../src/application/use-cases/logging/LoggerFactory';
 
 class MockAIService implements AIService {
   history: ChatMessage[] | undefined;

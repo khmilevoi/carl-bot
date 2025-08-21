@@ -1,14 +1,17 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { AIService, ChatMessage } from '../src/services/ai/AIService.interface';
-import { DefaultInterestChecker } from '../src/services/interest/InterestChecker';
-import { ChatConfigService } from '../src/services/chat/ChatConfigService';
+import {
+  AIService,
+  ChatMessage,
+} from '../src/application/interfaces/ai/AIService.interface';
+import { DefaultInterestChecker } from '../src/application/use-cases/interest/InterestChecker';
+import { ChatConfigService } from '../src/application/use-cases/chat/ChatConfigService';
 import {
   InterestMessageStore,
   InterestMessageStoreImpl,
-} from '../src/services/messages/InterestMessageStore';
-import { SummaryService } from '../src/services/summaries/SummaryService.interface';
-import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
+} from '../src/application/use-cases/messages/InterestMessageStore';
+import { SummaryService } from '../src/application/interfaces/summaries/SummaryService.interface';
+import type { LoggerFactory } from '../src/application/use-cases/logging/LoggerFactory';
 
 const interval = 2;
 const chatId = 1;

@@ -92,8 +92,8 @@ npm run lint:fix
 
 - `src/index.ts` — точка входа приложения.
 - `src/bot/TelegramBot.ts` — логика бота и обработка сообщений.
-- `src/services/ai/ChatGPTService.ts` — взаимодействие c OpenAI.
-- `src/services/chat/ChatMemory.ts` — хранение истории и её суммаризация.
+- `src/application/use-cases/ai/ChatGPTService.ts` — взаимодействие c OpenAI.
+- `src/application/use-cases/chat/ChatMemory.ts` — хранение истории и её суммаризация.
 - `dist/` — собранные файлы.
 - Сервисы определяются через интерфейсы и Symbol-ключи Inversify; реализации
   привязываются в `src/container.ts`.
