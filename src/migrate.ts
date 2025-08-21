@@ -18,7 +18,7 @@ interface Migration {
 const envService = container.get<EnvService>(ENV_SERVICE_ID);
 const env = envService.env;
 const filename = parseDatabaseUrl(env.DATABASE_URL);
-const loggerFactory = new PinoLoggerFactory();
+const loggerFactory = new PinoLoggerFactory(envService);
 const logger = loggerFactory.create('migrate');
 
 function loadMigrations(dir = envService.getMigrationsDir()): Migration[] {

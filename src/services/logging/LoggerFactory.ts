@@ -1,7 +1,8 @@
 import type { ServiceIdentifier } from 'inversify';
-import { injectable } from 'inversify';
-import pino, { type Logger as Pino } from 'pino';
+import { inject, injectable } from 'inversify';
+import pino, { type LevelWithSilent, type Logger as Pino } from 'pino';
 
+import { ENV_SERVICE_ID, type EnvService } from '../env/EnvService';
 import type Logger from './Logger.interface';
 import { PinoLogger } from './PinoLogger';
 
@@ -17,11 +18,18 @@ export const LOGGER_FACTORY_ID = Symbol.for(
 export class PinoLoggerFactory implements LoggerFactory {
   private readonly root: Pino;
 
-  constructor() {
-    this.root = pino();
+  constructor(@inject(ENV_SERVICE_ID) private readonly envService: EnvService) {
+    const level: LevelWithSilent =
+      (this.envService.env.LOG_LEVEL as LevelWithSilent | undefined) ??
+      (process.env.LOG_LEVEL as LevelWithSilent | undefined) ??
+      'info';
+    this.root = pino({ level });
   }
 
   create(serviceName: string): Logger {
-    return new PinoLogger(this.root.child({ service: serviceName }));
+    return new PinoLogger(
+      this.envService,
+      this.root.child({ service: serviceName })
+    );
   }
 }

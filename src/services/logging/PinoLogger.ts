@@ -1,9 +1,31 @@
-import pino, { type Logger as Pino } from 'pino';
+import pino, { type LevelWithSilent, type Logger as Pino } from 'pino';
 
+import type { EnvService } from '../env/EnvService';
 import type Logger from './Logger.interface';
 
+function resolveLogLevel(envService?: EnvService): LevelWithSilent {
+  return (
+    (envService?.env.LOG_LEVEL as LevelWithSilent | undefined) ??
+    (process.env.LOG_LEVEL as LevelWithSilent | undefined) ??
+    'info'
+  );
+}
+
+/**
+ * Logger implementation backed by Pino.
+ *
+ * The log level is taken from {@link EnvService.env.LOG_LEVEL} or
+ * `process.env.LOG_LEVEL`. When neither is provided, it defaults to `info`.
+ */
 export class PinoLogger implements Logger {
-  constructor(private readonly logger: Pino = pino()) {}
+  private readonly logger: Pino;
+
+  constructor(envService?: EnvService, logger?: Pino) {
+    const level = resolveLogLevel(envService);
+    this.logger = logger ?? pino({ level });
+    // Ensure provided loggers also respect the resolved level
+    this.logger.level = level;
+  }
 
   debug(message: string): void;
   debug(meta: Record<string, unknown>, message: string): void;
@@ -47,6 +69,6 @@ export class PinoLogger implements Logger {
 
   child(meta: Record<string, unknown>): Logger {
     const childLogger = this.logger.child(meta);
-    return new PinoLogger(childLogger);
+    return new PinoLogger(undefined, childLogger);
   }
 }
