@@ -15,6 +15,10 @@ export class NameTrigger implements Trigger {
   constructor(name: string, loggerFactory: LoggerFactory) {
     this.pattern = new RegExp(`^${name}[,:\\s]`, 'i');
     this.logger = loggerFactory.create('NameTrigger');
+    this.logger.debug(
+      { pattern: this.pattern },
+      'Compiled name trigger pattern'
+    );
   }
   async apply(
     ctx: Context,
@@ -27,6 +31,10 @@ export class NameTrigger implements Trigger {
       this.logger.debug({ chatId: context.chatId }, 'Name trigger matched');
       return { replyToMessageId: null, reason: null };
     }
+    this.logger.debug(
+      { chatId: context.chatId, pattern: this.pattern, text },
+      'Name trigger not matched'
+    );
     return null;
   }
 }
