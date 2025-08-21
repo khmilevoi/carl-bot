@@ -66,6 +66,39 @@ describe('MentionTrigger', () => {
     expect(res).toBeNull();
     expect(ctx.text).toBe('');
   });
+
+  it('logs snippet and dialogue state', async () => {
+    const debug = vi.fn();
+    const loggerFactory = {
+      create: () => ({
+        debug,
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        child: vi.fn(),
+      }),
+    } as unknown as LoggerFactory;
+    const triggerWithLogger = new MentionTrigger(loggerFactory);
+    const ctx: TriggerContext = { text: '', replyText: '', chatId: 1 };
+    const telegrafCtx = {
+      message: { text: 'hello there @bot how are you doing?' },
+      me: 'bot',
+    } as unknown as Context;
+    const dialogue = new DefaultDialogueManager(
+      new TestEnvService(),
+      createLoggerFactory()
+    );
+    dialogue.start(1);
+    await triggerWithLogger.apply(telegrafCtx, ctx, dialogue);
+    expect(debug).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chatId: 1,
+        snippet: expect.stringContaining('@bot'),
+        dialogueState: 'active',
+      }),
+      'Mention trigger matched'
+    );
+  });
 });
 
 describe('NameTrigger', () => {
