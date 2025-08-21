@@ -59,7 +59,13 @@ function createChecker(opts: {
     setInterestInterval: vi.fn(),
   } as unknown as ChatConfigService;
   return {
-    checker: new DefaultInterestChecker(store, summaries, ai, chatConfig),
+    checker: new DefaultInterestChecker(
+      store,
+      summaries,
+      ai,
+      chatConfig,
+      createLoggerFactory()
+    ),
     store,
     summaries,
     ai,
@@ -153,7 +159,8 @@ describe('DefaultInterestChecker', () => {
           .mockResolvedValue({ chatId, historyLimit: 0, interestInterval: 1 }),
         setHistoryLimit: vi.fn(),
         setInterestInterval: vi.fn(),
-      } as unknown as ChatConfigService
+      } as unknown as ChatConfigService,
+      createLoggerFactory()
     );
 
     await checker.check(chatId);
