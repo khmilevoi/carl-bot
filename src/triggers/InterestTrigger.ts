@@ -25,6 +25,10 @@ export class InterestTrigger implements Trigger {
     dialogue: DialogueManager
   ): Promise<TriggerResult | null> {
     if (dialogue.isActive(chatId)) {
+      this.logger.debug(
+        { chatId },
+        'Interest trigger suppressed because dialogue is active'
+      );
       return null;
     }
 
@@ -36,6 +40,10 @@ export class InterestTrigger implements Trigger {
         reason: { message: result.message, why: result.why },
       };
     }
+    this.logger.debug(
+      { chatId },
+      'Interest trigger suppressed because interest check returned null'
+    );
     return null;
   }
 }
