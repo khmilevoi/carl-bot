@@ -18,7 +18,7 @@ describe('logger', () => {
     process.env.NODE_ENV = 'test';
     vi.resetModules();
     const { container } = await import('../src/container');
-    const LoggerModule = await import('../src/services/logging/LoggerService');
+    const LoggerModule = await import('../src/services/logging/LoggerFactory');
     const factory = container.get<LoggerModule.LoggerFactory>(
       LoggerModule.LOGGER_FACTORY_ID
     );

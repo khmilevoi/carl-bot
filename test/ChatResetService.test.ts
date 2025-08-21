@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { MessageService } from '../src/services/messages/MessageService.interface';
 import type { SummaryService } from '../src/services/summaries/SummaryService.interface';
-import type { LoggerFactory } from '../src/services/logging/LoggerService';
+import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
 import { DefaultChatResetService } from '../src/services/chat/DefaultChatResetService';
 
 describe('DefaultChatResetService', () => {

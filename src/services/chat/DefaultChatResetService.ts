@@ -4,7 +4,7 @@ import type Logger from '../logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '../logging/LoggerService';
+} from '../logging/LoggerFactory';
 import {
   MESSAGE_SERVICE_ID,
   type MessageService,

@@ -1,8 +1,8 @@
 import type { Context } from 'telegraf';
 
 import type { DialogueManager } from '../services/chat/DialogueManager';
-import { PinoLogger } from '../services/logging/PinoLogger';
-const logger = new PinoLogger();
+import type Logger from '../services/logging/Logger.interface';
+import { type LoggerFactory } from '../services/logging/LoggerFactory';
 import type {
   Trigger,
   TriggerContext,
@@ -10,6 +10,10 @@ import type {
 } from './Trigger.interface';
 
 export class MentionTrigger implements Trigger {
+  private readonly logger: Logger;
+  constructor(loggerFactory: LoggerFactory) {
+    this.logger = loggerFactory.create('MentionTrigger');
+  }
   async apply(
     ctx: Context,
     context: TriggerContext,
@@ -23,7 +27,7 @@ export class MentionTrigger implements Trigger {
         : '';
     if (text.includes(`@${me}`)) {
       context.text = text.replace(`@${me}`, '').trim();
-      logger.debug({ chatId: context.chatId }, 'Mention trigger matched');
+      this.logger.debug({ chatId: context.chatId }, 'Mention trigger matched');
       return { replyToMessageId: null, reason: null };
     }
     return null;

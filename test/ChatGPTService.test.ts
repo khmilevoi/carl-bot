@@ -5,7 +5,7 @@ import type { ChatMessage } from '../src/services/ai/AIService';
 import type { ChatGPTService as ChatGPTServiceType } from '../src/services/ai/ChatGPTService';
 import { TestEnvService } from '../src/services/env/EnvService';
 import type { PromptService } from '../src/services/prompts/PromptService';
-import type { LoggerFactory } from '../src/services/logging/LoggerService';
+import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
 
 interface ChatGPTServiceConstructor {
   new (

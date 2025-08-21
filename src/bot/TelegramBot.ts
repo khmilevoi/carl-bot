@@ -33,7 +33,11 @@ import {
   TriggerPipeline,
 } from '../services/chat/TriggerPipeline';
 import { Env, ENV_SERVICE_ID, EnvService } from '../services/env/EnvService';
-import { PinoLogger } from '../services/logging/PinoLogger';
+import type Logger from '../services/logging/Logger.interface';
+import {
+  LOGGER_FACTORY_ID,
+  type LoggerFactory,
+} from '../services/logging/LoggerFactory';
 import {
   MESSAGE_CONTEXT_EXTRACTOR_ID,
   MessageContextExtractor,
@@ -71,7 +75,7 @@ export class TelegramBot {
     number,
     { type: 'history' | 'interest'; chatId: number; admin: boolean }
   >();
-  private readonly logger = new PinoLogger();
+  private readonly logger: Logger;
 
   constructor(
     @inject(ENV_SERVICE_ID) envService: EnvService,
@@ -84,10 +88,12 @@ export class TelegramBot {
     @inject(TRIGGER_PIPELINE_ID) private pipeline: TriggerPipeline,
     @inject(CHAT_RESPONDER_ID) private responder: ChatResponder,
     @inject(CHAT_REPOSITORY_ID) private chatRepo: ChatRepository,
-    @inject(CHAT_CONFIG_SERVICE_ID) private chatConfig: ChatConfigService
+    @inject(CHAT_CONFIG_SERVICE_ID) private chatConfig: ChatConfigService,
+    @inject(LOGGER_FACTORY_ID) loggerFactory: LoggerFactory
   ) {
     this.env = envService.env;
     this.bot = new Telegraf(this.env.BOT_TOKEN);
+    this.logger = loggerFactory.create('TelegramBot');
     const actions = {
       exportData: (ctx: Context) => this.handleExportData(ctx),
       resetMemory: (ctx: Context) => this.handleResetMemory(ctx),

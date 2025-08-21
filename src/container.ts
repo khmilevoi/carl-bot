@@ -70,7 +70,7 @@ import {
 import {
   LOGGER_FACTORY_ID,
   PinoLoggerFactory,
-} from './services/logging/LoggerService';
+} from './services/logging/LoggerFactory';
 import {
   INTEREST_MESSAGE_STORE_ID,
   InterestMessageStoreImpl,

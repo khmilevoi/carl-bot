@@ -5,7 +5,7 @@ import {
   type DialogueManager,
 } from '../src/services/chat/DialogueManager';
 import { TestEnvService } from '../src/services/env/EnvService';
-import type { LoggerFactory } from '../src/services/logging/LoggerService';
+import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
 
 describe('DialogueManager', () => {
   beforeEach(() => {

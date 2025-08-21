@@ -11,7 +11,7 @@ import type {
 import { DefaultHistorySummarizer } from '../src/services/chat/HistorySummarizer';
 import type { MessageService } from '../src/services/messages/MessageService.interface';
 import type { SummaryService } from '../src/services/summaries/SummaryService.interface';
-import type { LoggerFactory } from '../src/services/logging/LoggerService';
+import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
 
 class MockAIService implements AIService {
   summarize = vi.fn(async () => 'new summary');

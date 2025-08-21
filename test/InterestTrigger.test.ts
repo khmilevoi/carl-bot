@@ -8,7 +8,7 @@ import {
 import { InterestChecker } from '../src/services/interest/InterestChecker';
 import { InterestTrigger } from '../src/triggers/InterestTrigger';
 import { TriggerContext } from '../src/triggers/Trigger.interface';
-import type { LoggerFactory } from '../src/services/logging/LoggerService';
+import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
 
 class MockInterestChecker implements InterestChecker {
   public calls = 0;
@@ -56,7 +56,8 @@ describe('InterestTrigger', () => {
         messageId: '1',
         message: 'hi',
         why: 'because',
-      })
+      }),
+      loggerFactory
     );
     const res = await trigger.apply(
       {} as unknown as Context,
@@ -72,7 +73,8 @@ describe('InterestTrigger', () => {
         messageId: '1',
         message: 'hi',
         why: 'because',
-      })
+      }),
+      loggerFactory
     );
     await trigger.apply({} as unknown as Context, baseCtx, dialogue);
     const res = await trigger.apply(
@@ -87,7 +89,10 @@ describe('InterestTrigger', () => {
   });
 
   it('returns null when checker reports not interested', async () => {
-    const trigger = new InterestTrigger(new MockInterestChecker(2, null));
+    const trigger = new InterestTrigger(
+      new MockInterestChecker(2, null),
+      loggerFactory
+    );
     await trigger.apply({} as unknown as Context, baseCtx, dialogue);
     const res = await trigger.apply(
       {} as unknown as Context,
@@ -103,7 +108,7 @@ describe('InterestTrigger', () => {
       message: 'hi',
       why: 'because',
     });
-    const trigger = new InterestTrigger(checker);
+    const trigger = new InterestTrigger(checker, loggerFactory);
     const activeDialogue: DialogueManager = new DefaultDialogueManager(
       { getDialogueTimeoutMs: () => 0 } as any,
       loggerFactory

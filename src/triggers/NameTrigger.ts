@@ -1,8 +1,8 @@
 import type { Context } from 'telegraf';
 
 import type { DialogueManager } from '../services/chat/DialogueManager';
-import { PinoLogger } from '../services/logging/PinoLogger';
-const logger = new PinoLogger();
+import type Logger from '../services/logging/Logger.interface';
+import { type LoggerFactory } from '../services/logging/LoggerFactory';
 import type {
   Trigger,
   TriggerContext,
@@ -11,8 +11,10 @@ import type {
 
 export class NameTrigger implements Trigger {
   private pattern: RegExp;
-  constructor(name: string) {
+  private readonly logger: Logger;
+  constructor(name: string, loggerFactory: LoggerFactory) {
     this.pattern = new RegExp(`^${name}[,:\\s]`, 'i');
+    this.logger = loggerFactory.create('NameTrigger');
   }
   async apply(
     ctx: Context,
@@ -22,7 +24,7 @@ export class NameTrigger implements Trigger {
     const text = context.text;
     if (this.pattern.test(text)) {
       context.text = text.replace(this.pattern, '').trim();
-      logger.debug({ chatId: context.chatId }, 'Name trigger matched');
+      this.logger.debug({ chatId: context.chatId }, 'Name trigger matched');
       return { replyToMessageId: null, reason: null };
     }
     return null;
