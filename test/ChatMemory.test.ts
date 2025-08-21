@@ -34,6 +34,10 @@ class FakeMessageService
   extends InterestMessageStoreImpl
   implements MessageService
 {
+  constructor() {
+    super(createLoggerFactory());
+  }
+
   async addMessage(message: StoredMessage): Promise<void> {
     super.addMessage(message);
   }
