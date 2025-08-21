@@ -2,9 +2,12 @@ import http from 'node:http';
 
 import { TelegramBot } from './bot/TelegramBot';
 import { container } from './container';
+import type { EnvService } from './services/env/EnvService';
+import { ENV_SERVICE_ID } from './services/env/EnvService';
 import { PinoLoggerFactory } from './services/logging/LoggerFactory';
 
-const loggerFactory = new PinoLoggerFactory();
+const envService = container.get<EnvService>(ENV_SERVICE_ID);
+const loggerFactory = new PinoLoggerFactory(envService);
 const logger = loggerFactory.create('index');
 const bot = container.get<TelegramBot>(TelegramBot);
 
