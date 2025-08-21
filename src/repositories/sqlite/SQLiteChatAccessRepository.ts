@@ -1,12 +1,12 @@
 import { inject, injectable } from 'inversify';
 import type { Database } from 'sqlite';
 
+import type {
+  ChatAccessEntity,
+  ChatStatus,
+} from '../../domain/entities/ChatAccessEntity';
+import type { ChatAccessRepository } from '../../domain/repositories/ChatAccessRepository.interface';
 import { DB_PROVIDER_ID, type SQLiteDbProvider } from '../DbProvider';
-import {
-  type ChatAccessEntity,
-  type ChatAccessRepository,
-  type ChatStatus,
-} from '../interfaces/ChatAccessRepository.interface';
 
 @injectable()
 export class SQLiteChatAccessRepository implements ChatAccessRepository {

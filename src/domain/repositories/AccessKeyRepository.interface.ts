@@ -1,11 +1,6 @@
 import type { ServiceIdentifier } from 'inversify';
 
-export interface AccessKeyEntity {
-  chatId: number;
-  userId: number;
-  accessKey: string;
-  expiresAt: number;
-}
+import type { AccessKeyEntity } from '../entities/AccessKeyEntity';
 
 export interface AccessKeyRepository {
   upsertKey(entry: AccessKeyEntity): Promise<void>;

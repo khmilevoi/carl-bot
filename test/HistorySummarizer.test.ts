@@ -1,9 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type {
-  UserEntity,
-  UserRepository,
-} from '../src/repositories/interfaces/UserRepository.interface';
+import type { UserRepository } from '../src/domain/repositories/UserRepository.interface';
+import type { UserEntity } from '../src/domain/entities/UserEntity';
 import type {
   AIService,
   ChatMessage,

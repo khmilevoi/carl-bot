@@ -4,11 +4,11 @@ import { inject, injectable } from 'inversify';
 import { Context, Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
 
-import { registerRoutes } from '../infrastructure/telegramRouter';
 import {
   CHAT_REPOSITORY_ID,
   type ChatRepository,
-} from '../repositories/interfaces/ChatRepository.interface';
+} from '../domain/repositories/ChatRepository.interface';
+import { registerRoutes } from '../infrastructure/telegramRouter';
 import {
   ADMIN_SERVICE_ID,
   AdminService,

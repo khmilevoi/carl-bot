@@ -1,11 +1,13 @@
 import { inject, injectable, type ServiceIdentifier } from 'inversify';
 
+import type {
+  ChatAccessEntity,
+  ChatStatus,
+} from '../../domain/entities/ChatAccessEntity';
 import {
   CHAT_ACCESS_REPOSITORY_ID,
-  type ChatAccessEntity,
   type ChatAccessRepository,
-  type ChatStatus,
-} from '../../repositories/interfaces/ChatAccessRepository.interface';
+} from '../../domain/repositories/ChatAccessRepository.interface';
 import { type Env, ENV_SERVICE_ID, type EnvService } from '../env/EnvService';
 import type Logger from '../logging/Logger.interface';
 import {

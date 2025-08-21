@@ -3,31 +3,31 @@ import { randomBytes } from 'node:crypto';
 import { inject, injectable } from 'inversify';
 import type { Database } from 'sqlite';
 
+import type { UserEntity } from '../../domain/entities/UserEntity';
+import {
+  ACCESS_KEY_REPOSITORY_ID,
+  type AccessKeyRepository,
+} from '../../domain/repositories/AccessKeyRepository.interface';
+import {
+  CHAT_USER_REPOSITORY_ID,
+  type ChatUserRepository,
+} from '../../domain/repositories/ChatUserRepository.interface';
+import {
+  MESSAGE_REPOSITORY_ID,
+  type MessageRepository,
+} from '../../domain/repositories/MessageRepository.interface';
+import {
+  SUMMARY_REPOSITORY_ID,
+  type SummaryRepository,
+} from '../../domain/repositories/SummaryRepository.interface';
+import {
+  USER_REPOSITORY_ID,
+  type UserRepository,
+} from '../../domain/repositories/UserRepository.interface';
 import {
   DB_PROVIDER_ID,
   type SQLiteDbProvider,
 } from '../../repositories/DbProvider';
-import {
-  ACCESS_KEY_REPOSITORY_ID,
-  type AccessKeyRepository,
-} from '../../repositories/interfaces/AccessKeyRepository.interface';
-import {
-  CHAT_USER_REPOSITORY_ID,
-  type ChatUserRepository,
-} from '../../repositories/interfaces/ChatUserRepository.interface';
-import {
-  MESSAGE_REPOSITORY_ID,
-  type MessageRepository,
-} from '../../repositories/interfaces/MessageRepository.interface';
-import {
-  SUMMARY_REPOSITORY_ID,
-  type SummaryRepository,
-} from '../../repositories/interfaces/SummaryRepository.interface';
-import {
-  USER_REPOSITORY_ID,
-  type UserEntity,
-  type UserRepository,
-} from '../../repositories/interfaces/UserRepository.interface';
 import type { ChatMessage } from '../ai/AIService.interface';
 import {
   CHAT_CONFIG_SERVICE_ID,

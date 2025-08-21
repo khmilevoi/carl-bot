@@ -14,6 +14,7 @@ export default defineConfig({
         'src/container.ts',
         'src/repositories/**',
         'src/services/env/**',
+        'src/domain/entities/**',
         '**/*.interface.ts',
       ],
     },

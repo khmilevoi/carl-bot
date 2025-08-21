@@ -1,12 +1,6 @@
 import type { ServiceIdentifier } from 'inversify';
 
-export interface UserEntity {
-  id: number;
-  username?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
-  attitude?: string | null;
-}
+import type { UserEntity } from '../entities/UserEntity';
 
 export interface UserRepository {
   upsert(user: UserEntity): Promise<void>;

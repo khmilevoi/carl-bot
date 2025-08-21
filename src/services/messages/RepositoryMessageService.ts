@@ -3,19 +3,19 @@ import { inject, injectable } from 'inversify';
 import {
   CHAT_REPOSITORY_ID,
   type ChatRepository,
-} from '../../repositories/interfaces/ChatRepository.interface';
+} from '../../domain/repositories/ChatRepository.interface';
 import {
   CHAT_USER_REPOSITORY_ID,
   type ChatUserRepository,
-} from '../../repositories/interfaces/ChatUserRepository.interface';
+} from '../../domain/repositories/ChatUserRepository.interface';
 import {
   MESSAGE_REPOSITORY_ID,
   type MessageRepository,
-} from '../../repositories/interfaces/MessageRepository.interface';
+} from '../../domain/repositories/MessageRepository.interface';
 import {
   USER_REPOSITORY_ID,
   type UserRepository,
-} from '../../repositories/interfaces/UserRepository.interface';
+} from '../../domain/repositories/UserRepository.interface';
 import type { ChatMessage } from '../ai/AIService.interface';
 import type Logger from '../logging/Logger.interface';
 import {
