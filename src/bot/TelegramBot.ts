@@ -146,8 +146,26 @@ export class TelegramBot {
   }
 
   private configure(): void {
-    this.bot.start((ctx) => this.showMenu(ctx));
-    this.bot.command('menu', (ctx) => this.showMenu(ctx));
+    this.bot.start(async (ctx) => {
+      try {
+        await this.showMenu(ctx);
+      } catch (error) {
+        this.logger.error(
+          { error, chatId: ctx.chat?.id, userId: ctx.from?.id },
+          'Failed to handle /start'
+        );
+      }
+    });
+    this.bot.command('menu', async (ctx) => {
+      try {
+        await this.showMenu(ctx);
+      } catch (error) {
+        this.logger.error(
+          { error, chatId: ctx.chat?.id, userId: ctx.from?.id },
+          'Failed to handle /menu'
+        );
+      }
+    });
 
     this.bot.telegram
       .setMyCommands([{ command: 'menu', description: 'Показать меню' }])
@@ -157,13 +175,20 @@ export class TelegramBot {
       const chatId = ctx.chat?.id;
       assert(chatId, 'This is not a chat');
       this.logger.info({ chatId }, 'Bot added to chat');
-      const status = await this.approvalService.getStatus(chatId);
-      if (status !== 'approved') {
-        this.logger.info(
-          { chatId, status },
-          'Chat not approved, showing request access button'
+      try {
+        const status = await this.approvalService.getStatus(chatId);
+        if (status !== 'approved') {
+          this.logger.info(
+            { chatId, status },
+            'Chat not approved, showing request access button'
+          );
+          await this.router.show(ctx, 'chat_not_approved');
+        }
+      } catch (error) {
+        this.logger.error(
+          { error, chatId },
+          'Failed to handle my_chat_member event'
         );
-        await this.router.show(ctx, 'chat_not_approved');
       }
     });
 
@@ -176,9 +201,16 @@ export class TelegramBot {
         return;
       }
       const chatId = Number(ctx.match[1]);
-      await ctx.deleteMessage().catch(() => {});
-      await ctx.answerCbQuery();
-      await this.showAdminChat(ctx, chatId);
+      try {
+        await ctx.deleteMessage().catch(() => {});
+        await ctx.answerCbQuery();
+        await this.showAdminChat(ctx, chatId);
+      } catch (error) {
+        this.logger.error(
+          { error, chatId, adminChatId },
+          'Failed to show admin chat'
+        );
+      }
     });
 
     this.bot.action(/^admin_chat_history_limit:(\S+)$/, async (ctx) => {
@@ -188,8 +220,15 @@ export class TelegramBot {
         return;
       }
       const chatId = Number(ctx.match[1]);
-      await ctx.answerCbQuery();
-      await this.handleAdminConfigHistoryLimit(ctx, chatId);
+      try {
+        await ctx.answerCbQuery();
+        await this.handleAdminConfigHistoryLimit(ctx, chatId);
+      } catch (error) {
+        this.logger.error(
+          { error, chatId, adminChatId },
+          'Failed to handle admin history limit'
+        );
+      }
     });
 
     this.bot.action(/^admin_chat_interest_interval:(\S+)$/, async (ctx) => {
@@ -199,8 +238,15 @@ export class TelegramBot {
         return;
       }
       const chatId = Number(ctx.match[1]);
-      await ctx.answerCbQuery();
-      await this.handleAdminConfigInterestInterval(ctx, chatId);
+      try {
+        await ctx.answerCbQuery();
+        await this.handleAdminConfigInterestInterval(ctx, chatId);
+      } catch (error) {
+        this.logger.error(
+          { error, chatId, adminChatId },
+          'Failed to handle admin interest interval'
+        );
+      }
     });
 
     this.bot.action(/^chat_approve:(\S+)$/, async (ctx) => {
@@ -215,10 +261,15 @@ export class TelegramBot {
       }
       const chatId = Number(ctx.match[1]);
       this.logger.info({ chatId, adminChatId }, 'Approving chat access');
-      await this.approvalService.approve(chatId);
-      await ctx.answerCbQuery('Чат одобрен');
-      await ctx.telegram.sendMessage(chatId, 'Доступ разрешён');
-      this.logger.info({ chatId }, 'Chat access approved successfully');
+      try {
+        await this.approvalService.approve(chatId);
+        await ctx.answerCbQuery('Чат одобрен');
+        await ctx.telegram.sendMessage(chatId, 'Доступ разрешён');
+        this.logger.info({ chatId }, 'Chat access approved successfully');
+      } catch (error) {
+        this.logger.error({ error, chatId }, 'Failed to approve chat access');
+        await ctx.answerCbQuery('Ошибка при одобрении чата');
+      }
     });
 
     this.bot.action(/^chat_ban:(\S+)$/, async (ctx) => {
@@ -233,12 +284,17 @@ export class TelegramBot {
       }
       const chatId = Number(ctx.match[1]);
       this.logger.info({ chatId, adminChatId }, 'Banning chat access');
-      await this.approvalService.ban(chatId);
-      await ctx.answerCbQuery('Чат забанен');
-      await ctx.telegram.sendMessage(chatId, 'Доступ запрещён');
-      await ctx.deleteMessage().catch(() => {});
-      await this.showAdminChat(ctx, chatId);
-      this.logger.info({ chatId }, 'Chat access banned successfully');
+      try {
+        await this.approvalService.ban(chatId);
+        await ctx.answerCbQuery('Чат забанен');
+        await ctx.telegram.sendMessage(chatId, 'Доступ запрещён');
+        await ctx.deleteMessage().catch(() => {});
+        await this.showAdminChat(ctx, chatId);
+        this.logger.info({ chatId }, 'Chat access banned successfully');
+      } catch (error) {
+        this.logger.error({ error, chatId }, 'Failed to ban chat access');
+        await ctx.answerCbQuery('Ошибка при блокировке чата');
+      }
     });
 
     this.bot.action(/^chat_unban:(\S+)$/, async (ctx) => {
@@ -248,11 +304,16 @@ export class TelegramBot {
         return;
       }
       const chatId = Number(ctx.match[1]);
-      await this.approvalService.unban(chatId);
-      await ctx.answerCbQuery('Чат разбанен');
-      await ctx.telegram.sendMessage(chatId, 'Доступ разрешён');
-      await ctx.deleteMessage().catch(() => {});
-      await this.showAdminChat(ctx, chatId);
+      try {
+        await this.approvalService.unban(chatId);
+        await ctx.answerCbQuery('Чат разбанен');
+        await ctx.telegram.sendMessage(chatId, 'Доступ разрешён');
+        await ctx.deleteMessage().catch(() => {});
+        await this.showAdminChat(ctx, chatId);
+      } catch (error) {
+        this.logger.error({ error, chatId }, 'Failed to unban chat');
+        await ctx.answerCbQuery('Ошибка при разбане чата');
+      }
     });
 
     this.bot.action(/^user_approve:(\S+):(\S+)$/, async (ctx) => {
@@ -263,36 +324,59 @@ export class TelegramBot {
       }
       const chatId = Number(ctx.match[1]);
       const userId = Number(ctx.match[2]);
-      const expiresAt = await this.admin.createAccessKey(chatId, userId);
-      await ctx.answerCbQuery('Доступ одобрен');
-      await ctx.reply(`Одобрено для чата ${chatId} и пользователя ${userId}`);
-      await ctx.telegram.sendMessage(
-        chatId,
-        `Доступ к данным разрешен для пользователя ${userId} до ${expiresAt.toISOString()}. Используйте меню для экспорта и сброса`
-      );
+      try {
+        const expiresAt = await this.admin.createAccessKey(chatId, userId);
+        await ctx.answerCbQuery('Доступ одобрен');
+        await ctx.reply(`Одобрено для чата ${chatId} и пользователя ${userId}`);
+        await ctx.telegram.sendMessage(
+          chatId,
+          `Доступ к данным разрешен для пользователя ${userId} до ${expiresAt.toISOString()}. Используйте меню для экспорта и сброса`
+        );
+      } catch (error) {
+        this.logger.error(
+          { error, chatId, userId },
+          'Failed to approve user access'
+        );
+        await ctx.answerCbQuery('Ошибка при одобрении доступа');
+      }
     });
 
-    this.bot.on(message('text'), (ctx) => this.handleText(ctx));
+    this.bot.on(message('text'), async (ctx) => {
+      try {
+        await this.handleText(ctx);
+      } catch (error) {
+        this.logger.error(
+          { error, chatId: ctx.chat?.id, userId: ctx.from?.id },
+          'Failed to handle text message'
+        );
+      }
+    });
   }
 
   private async showMenu(ctx: Context): Promise<void> {
     const chatId = ctx.chat?.id;
+    const userId = ctx.from?.id;
     assert(chatId, 'This is not a chat');
+    this.logger.info({ chatId, userId }, 'Menu requested');
 
     if (chatId === this.env.ADMIN_CHAT_ID) {
+      this.logger.info({ chatId, userId }, 'Showing admin menu');
       await this.router.show(ctx, 'admin_menu');
       return;
     }
 
     const status = await this.approvalService.getStatus(chatId);
     if (status === 'banned') {
+      this.logger.warn({ chatId, userId }, 'Chat is banned');
       await ctx.reply('Доступ к боту запрещён.');
       return;
     }
     if (status !== 'approved') {
+      this.logger.info({ chatId, userId, status }, 'Chat not approved');
       await this.router.show(ctx, 'chat_not_approved');
       return;
     }
+    this.logger.info({ chatId, userId }, 'Showing user menu');
     await this.router.show(ctx, 'menu');
   }
 
@@ -367,10 +451,12 @@ export class TelegramBot {
     const userId = ctx.from?.id;
     assert(chatId, 'This is not a chat');
     assert(userId, 'No user id');
+    this.logger.info({ chatId, userId }, 'Export data requested');
 
     if (chatId !== this.env.ADMIN_CHAT_ID) {
       const allowed = await this.admin.hasAccess(chatId, userId);
       if (!allowed) {
+        this.logger.warn({ chatId, userId }, 'Export data access denied');
         await ctx.answerCbQuery('Нет доступа или ключ просрочен');
         await this.router.show(ctx, 'no_access');
         return;
@@ -385,6 +471,7 @@ export class TelegramBot {
           ? await this.admin.exportTables()
           : await this.admin.exportChatData(chatId);
       if (files.length === 0) {
+        this.logger.info({ chatId, userId }, 'No data to export');
         await ctx.reply('Нет данных для экспорта');
         return;
       }
@@ -402,21 +489,28 @@ export class TelegramBot {
       }
 
       await ctx.reply('✅ Загрузка данных завершена!');
+      this.logger.info(
+        { chatId, userId, tables: files.length },
+        'Data export completed'
+      );
     } catch (error) {
-      this.logger.error({ error, chatId }, 'Failed to export data');
+      this.logger.error({ error, chatId, userId }, 'Failed to export data');
       await ctx.reply('❌ Ошибка при загрузке данных. Попробуйте позже.');
     }
   }
 
   private async handleConfigHistoryLimit(ctx: Context): Promise<void> {
     const chatId = ctx.chat?.id;
+    const userId = ctx.from?.id;
     assert(chatId, 'This is not a chat');
+    this.logger.info({ chatId, userId }, 'Config history limit requested');
     this.awaitingConfig.set(chatId, {
       type: 'history',
       chatId,
       admin: false,
     });
     await this.router.show(ctx, 'chat_history_limit');
+    this.logger.info({ chatId, userId }, 'Prompted for history limit');
   }
 
   private async handleConfigInterestInterval(ctx: Context): Promise<void> {
