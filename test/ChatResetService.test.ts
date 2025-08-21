@@ -8,10 +8,12 @@ import { DefaultChatResetService } from '../src/services/chat/DefaultChatResetSe
 describe('DefaultChatResetService', () => {
   const messages = {
     clearMessages: vi.fn().mockResolvedValue(undefined),
+    getCount: vi.fn().mockResolvedValue(5),
   } as unknown as MessageService;
 
   const summaries = {
     clearSummary: vi.fn().mockResolvedValue(undefined),
+    getSummary: vi.fn().mockResolvedValue('foo'),
   } as unknown as SummaryService;
 
   let service: DefaultChatResetService;
@@ -34,6 +36,8 @@ describe('DefaultChatResetService', () => {
   it('clears messages, summary and logs reset', async () => {
     const chatId = 123;
     await service.reset(chatId);
+    expect(messages.getCount).toHaveBeenCalledWith(chatId);
+    expect(summaries.getSummary).toHaveBeenCalledWith(chatId);
     expect(messages.clearMessages).toHaveBeenCalledWith(chatId);
     expect(summaries.clearSummary).toHaveBeenCalledWith(chatId);
     expect(logger.debug).toHaveBeenCalledWith(
@@ -41,6 +45,14 @@ describe('DefaultChatResetService', () => {
         chatId,
       },
       'Resetting chat data'
+    );
+    expect(logger.info).toHaveBeenCalledWith(
+      {
+        chatId,
+        messagesCleared: 5,
+        summariesCleared: 1,
+      },
+      'Cleared chat data'
     );
   });
 });

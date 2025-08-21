@@ -28,7 +28,24 @@ export class DefaultChatResetService implements ChatResetService {
 
   async reset(chatId: number): Promise<void> {
     this.logger.debug({ chatId }, 'Resetting chat data');
-    await this.messages.clearMessages(chatId);
-    await this.summaries.clearSummary(chatId);
+
+    const [messageCount, summary] = await Promise.all([
+      this.messages.getCount(chatId),
+      this.summaries.getSummary(chatId),
+    ]);
+
+    await Promise.all([
+      this.messages.clearMessages(chatId),
+      this.summaries.clearSummary(chatId),
+    ]);
+
+    this.logger.info(
+      {
+        chatId,
+        messagesCleared: messageCount,
+        summariesCleared: summary ? 1 : 0,
+      },
+      'Cleared chat data'
+    );
   }
 }
