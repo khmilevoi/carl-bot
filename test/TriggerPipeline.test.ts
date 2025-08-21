@@ -246,4 +246,103 @@ describe('TriggerPipeline', () => {
     expect(res).toBeNull();
     expect(extendSpy).not.toHaveBeenCalled();
   });
+
+  it('logs which trigger fired when a trigger matches', async () => {
+    const pipelineLogger = {
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      child: vi.fn(),
+    };
+    const otherLogger = {
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      child: vi.fn(),
+    };
+    const loggerFactory: LoggerFactory = {
+      create: vi
+        .fn()
+        .mockReturnValueOnce(otherLogger) // dialogue manager
+        .mockReturnValueOnce(pipelineLogger) // trigger pipeline
+        .mockReturnValue(otherLogger), // triggers
+    } as unknown as LoggerFactory;
+    const dialogue: DialogueManager = new DefaultDialogueManager(
+      env,
+      loggerFactory
+    );
+    const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
+      env,
+      { check: vi.fn().mockResolvedValue(null) },
+      dialogue,
+      loggerFactory
+    );
+    const ctx = {
+      message: { text: 'hi @bot' },
+      me: 'bot',
+    } as unknown as Context;
+    const context: TriggerContext = {
+      text: 'hi @bot',
+      replyText: '',
+      chatId: 1,
+    };
+    await pipeline.shouldRespond(ctx, context);
+    expect(pipelineLogger.debug).toHaveBeenCalledWith(
+      { chatId: 1, trigger: 'MentionTrigger' },
+      'Trigger matched'
+    );
+  });
+
+  it('logs when no triggers match', async () => {
+    const pipelineLogger = {
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      child: vi.fn(),
+    };
+    const otherLogger = {
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      child: vi.fn(),
+    };
+    const loggerFactory: LoggerFactory = {
+      create: vi
+        .fn()
+        .mockReturnValueOnce(otherLogger) // dialogue manager
+        .mockReturnValueOnce(pipelineLogger) // trigger pipeline
+        .mockReturnValue(otherLogger), // triggers
+    } as unknown as LoggerFactory;
+    const interestChecker: InterestChecker = {
+      check: vi.fn().mockResolvedValue(null),
+    };
+    const dialogue: DialogueManager = new DefaultDialogueManager(
+      env,
+      loggerFactory
+    );
+    const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
+      env,
+      interestChecker,
+      dialogue,
+      loggerFactory
+    );
+    const ctx = {
+      message: { text: 'hello there' },
+      me: 'bot',
+    } as unknown as Context;
+    const context: TriggerContext = {
+      text: 'hello there',
+      replyText: '',
+      chatId: 1,
+    };
+    await pipeline.shouldRespond(ctx, context);
+    expect(pipelineLogger.debug).toHaveBeenCalledWith(
+      { chatId: 1 },
+      'No trigger matched'
+    );
+  });
 });
