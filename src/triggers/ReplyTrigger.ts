@@ -20,12 +20,22 @@ export class ReplyTrigger implements Trigger {
     _dialogue: DialogueManager
   ): Promise<TriggerResult | null> {
     const msg = ctx.message as
-      | { reply_to_message?: { from?: { username?: string } } }
+      | {
+          message_id?: number;
+          reply_to_message?: { from?: { username?: string } };
+        }
       | undefined;
     const reply = msg?.reply_to_message;
 
     if (reply?.from?.username === ctx.me) {
-      this.logger.debug({ chatId: context.chatId }, 'Reply trigger matched');
+      this.logger.debug(
+        {
+          chatId: context.chatId,
+          messageId: msg?.message_id,
+          username: ctx.from?.username,
+        },
+        'Reply trigger matched'
+      );
       return { replyToMessageId: null, reason: null };
     }
     return null;
