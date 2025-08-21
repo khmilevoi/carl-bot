@@ -5,11 +5,11 @@ import {
   type SummaryRepository,
 } from '../../../domain/repositories/SummaryRepository.interface';
 import type { Logger } from '../../interfaces/logging/Logger.interface';
-import { SummaryService } from '../../interfaces/summaries/SummaryService.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '../logging/LoggerFactory';
+} from '../../interfaces/logging/LoggerFactory.interface';
+import { SummaryService } from '../../interfaces/summaries/SummaryService.interface';
 
 @injectable()
 export class RepositorySummaryService implements SummaryService {

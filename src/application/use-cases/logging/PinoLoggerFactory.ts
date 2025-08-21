@@ -1,18 +1,13 @@
-import type { ServiceIdentifier } from 'inversify';
 import { inject, injectable } from 'inversify';
 import pino, { type LevelWithSilent, type Logger as Pino } from 'pino';
 
+import {
+  ENV_SERVICE_ID,
+  type EnvService,
+} from '../../interfaces/env/EnvService.interface';
 import type { Logger } from '../../interfaces/logging/Logger.interface';
-import { ENV_SERVICE_ID, type EnvService } from '../env/EnvService';
+import { type LoggerFactory } from '../../interfaces/logging/LoggerFactory.interface';
 import { PinoLogger } from './PinoLogger';
-
-export interface LoggerFactory {
-  create(serviceName: string): Logger;
-}
-
-export const LOGGER_FACTORY_ID = Symbol.for(
-  'LoggerFactory'
-) as ServiceIdentifier<LoggerFactory>;
 
 @injectable()
 export class PinoLoggerFactory implements LoggerFactory {

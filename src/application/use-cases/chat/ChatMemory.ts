@@ -2,28 +2,31 @@ import { inject, injectable } from 'inversify';
 
 import { ChatMessage } from '../../interfaces/ai/AIService.interface';
 import {
+  CHAT_CONFIG_SERVICE_ID,
+  type ChatConfigService,
+} from '../../interfaces/chat/ChatConfigService.interface';
+import {
   CHAT_RESET_SERVICE_ID,
   type ChatResetService,
 } from '../../interfaces/chat/ChatResetService.interface';
+import {
+  HISTORY_SUMMARIZER_ID,
+  type HistorySummarizer,
+} from '../../interfaces/chat/HistorySummarizer.interface';
 import type { Logger } from '../../interfaces/logging/Logger.interface';
+import {
+  LOGGER_FACTORY_ID,
+  type LoggerFactory,
+} from '../../interfaces/logging/LoggerFactory.interface';
+import {
+  INTEREST_MESSAGE_STORE_ID,
+  type InterestMessageStore,
+} from '../../interfaces/messages/InterestMessageStore.interface';
 import {
   MESSAGE_SERVICE_ID,
   type MessageService,
 } from '../../interfaces/messages/MessageService.interface';
 import { StoredMessage } from '../../interfaces/messages/StoredMessage.interface';
-import {
-  LOGGER_FACTORY_ID,
-  type LoggerFactory,
-} from '../logging/LoggerFactory';
-import {
-  INTEREST_MESSAGE_STORE_ID,
-  type InterestMessageStore,
-} from '../messages/InterestMessageStore';
-import {
-  CHAT_CONFIG_SERVICE_ID,
-  type ChatConfigService,
-} from './ChatConfigService';
-import { HISTORY_SUMMARIZER_ID, HistorySummarizer } from './HistorySummarizer';
 
 @injectable()
 export class ChatMemory {

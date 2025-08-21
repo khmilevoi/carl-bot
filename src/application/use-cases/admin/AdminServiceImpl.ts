@@ -30,15 +30,15 @@ import {
 } from '../../../repositories/DbProvider';
 import { AdminService } from '../../interfaces/admin/AdminService.interface';
 import type { ChatMessage } from '../../interfaces/ai/AIService.interface';
-import type { Logger } from '../../interfaces/logging/Logger.interface';
 import {
   CHAT_CONFIG_SERVICE_ID,
   type ChatConfigService,
-} from '../chat/ChatConfigService';
+} from '../../interfaces/chat/ChatConfigService.interface';
+import type { Logger } from '../../interfaces/logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '../logging/LoggerFactory';
+} from '../../interfaces/logging/LoggerFactory.interface';
 
 @injectable()
 export class AdminServiceImpl implements AdminService {

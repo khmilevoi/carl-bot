@@ -1,4 +1,3 @@
-import type { ServiceIdentifier } from 'inversify';
 import { inject, injectable } from 'inversify';
 import { Context } from 'telegraf';
 
@@ -10,28 +9,24 @@ import {
   TriggerContext,
   TriggerResult,
 } from '../../../triggers/Trigger.interface';
-import type { Logger } from '../../interfaces/logging/Logger.interface';
-import { ENV_SERVICE_ID, EnvService } from '../env/EnvService';
+import {
+  DIALOGUE_MANAGER_ID,
+  type DialogueManager,
+} from '../../interfaces/chat/DialogueManager.interface';
+import { type TriggerPipeline } from '../../interfaces/chat/TriggerPipeline.interface';
+import {
+  ENV_SERVICE_ID,
+  EnvService,
+} from '../../interfaces/env/EnvService.interface';
 import {
   INTEREST_CHECKER_ID,
   InterestChecker,
-} from '../interest/InterestChecker';
+} from '../../interfaces/interest/InterestChecker.interface';
+import type { Logger } from '../../interfaces/logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '../logging/LoggerFactory';
-import { DIALOGUE_MANAGER_ID, type DialogueManager } from './DialogueManager';
-
-export interface TriggerPipeline {
-  shouldRespond(
-    ctx: Context,
-    context: TriggerContext
-  ): Promise<TriggerResult | null>;
-}
-
-export const TRIGGER_PIPELINE_ID = Symbol.for(
-  'TriggerPipeline'
-) as ServiceIdentifier<TriggerPipeline>;
+} from '../../interfaces/logging/LoggerFactory.interface';
 
 @injectable()
 export class DefaultTriggerPipeline implements TriggerPipeline {

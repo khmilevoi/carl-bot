@@ -1,27 +1,16 @@
-import { inject, injectable, type ServiceIdentifier } from 'inversify';
+import { inject, injectable } from 'inversify';
 
 import type { ChatMessage } from '../../interfaces/ai/AIService.interface';
 import type { Logger } from '../../interfaces/logging/Logger.interface';
-import type { StoredMessage } from '../../interfaces/messages/StoredMessage.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '../logging/LoggerFactory';
-
-export interface InterestMessageStore {
-  addMessage(msg: StoredMessage): void;
-  getMessages(chatId: number): ChatMessage[];
-  getCount(chatId: number): number;
-  getLastMessages(chatId: number, limit: number): ChatMessage[];
-  clearMessages(chatId: number): void;
-}
-
-export const INTEREST_MESSAGE_STORE_ID = Symbol.for(
-  'InterestMessageStore'
-) as ServiceIdentifier<InterestMessageStore>;
+} from '../../interfaces/logging/LoggerFactory.interface';
+import { type InterestMessageStore } from '../../interfaces/messages/InterestMessageStore.interface';
+import type { StoredMessage } from '../../interfaces/messages/StoredMessage.interface';
 
 @injectable()
-export class InterestMessageStoreImpl implements InterestMessageStore {
+export class InMemoryInterestMessageStore implements InterestMessageStore {
   private readonly logger: Logger;
   private readonly messages = new Map<number, StoredMessage[]>();
 

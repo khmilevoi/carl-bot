@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ChatMessage } from '../src/application/interfaces/ai/AIService.interface';
 import type { ChatGPTService as ChatGPTServiceType } from '../src/application/use-cases/ai/ChatGPTService';
-import { TestEnvService } from '../src/application/use-cases/env/EnvService';
+import { TestEnvService } from '../src/application/use-cases/env/TestEnvService';
 import type { PromptService } from '../src/application/interfaces/prompts/PromptService.interface';
-import type { LoggerFactory } from '../src/application/use-cases/logging/LoggerFactory';
+import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
 
 interface ChatGPTServiceConstructor {
   new (

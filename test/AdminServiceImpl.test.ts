@@ -8,8 +8,8 @@ import type { MessageRepository } from '../src/domain/repositories/MessageReposi
 import type { SummaryRepository } from '../src/domain/repositories/SummaryRepository.interface';
 import type { UserRepository } from '../src/domain/repositories/UserRepository.interface';
 import { AdminServiceImpl } from '../src/application/use-cases/admin/AdminServiceImpl';
-import type { ChatConfigService } from '../src/application/use-cases/chat/ChatConfigService';
-import type { LoggerFactory } from '../src/application/use-cases/logging/LoggerFactory';
+import type { ChatConfigService } from '../src/application/interfaces/chat/ChatConfigService.interface';
+import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
 
 const createLoggerFactory = (): LoggerFactory =>
   ({

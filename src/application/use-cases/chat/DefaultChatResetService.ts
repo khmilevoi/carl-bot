@@ -3,6 +3,10 @@ import { inject, injectable } from 'inversify';
 import { ChatResetService } from '../../interfaces/chat/ChatResetService.interface';
 import type { Logger } from '../../interfaces/logging/Logger.interface';
 import {
+  LOGGER_FACTORY_ID,
+  type LoggerFactory,
+} from '../../interfaces/logging/LoggerFactory.interface';
+import {
   MESSAGE_SERVICE_ID,
   type MessageService,
 } from '../../interfaces/messages/MessageService.interface';
@@ -10,10 +14,6 @@ import {
   SUMMARY_SERVICE_ID,
   type SummaryService,
 } from '../../interfaces/summaries/SummaryService.interface';
-import {
-  LOGGER_FACTORY_ID,
-  type LoggerFactory,
-} from '../logging/LoggerFactory';
 
 @injectable()
 export class DefaultChatResetService implements ChatResetService {

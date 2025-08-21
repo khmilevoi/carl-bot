@@ -6,10 +6,10 @@ import type {
   AIService,
   ChatMessage,
 } from '../src/application/interfaces/ai/AIService.interface';
-import { DefaultHistorySummarizer } from '../src/application/use-cases/chat/HistorySummarizer';
+import { DefaultHistorySummarizer } from '../src/application/use-cases/chat/DefaultHistorySummarizer';
 import type { MessageService } from '../src/application/interfaces/messages/MessageService.interface';
 import type { SummaryService } from '../src/application/interfaces/summaries/SummaryService.interface';
-import type { LoggerFactory } from '../src/application/use-cases/logging/LoggerFactory';
+import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
 
 class MockAIService implements AIService {
   summarize = vi.fn(async () => 'new summary');

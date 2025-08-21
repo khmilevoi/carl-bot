@@ -1,22 +1,15 @@
-import type { ServiceIdentifier } from 'inversify';
 import { inject, injectable } from 'inversify';
 
+import { type DialogueManager } from '../../interfaces/chat/DialogueManager.interface';
+import {
+  ENV_SERVICE_ID,
+  type EnvService,
+} from '../../interfaces/env/EnvService.interface';
 import type { Logger } from '../../interfaces/logging/Logger.interface';
-import { ENV_SERVICE_ID, type EnvService } from '../env/EnvService';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '../logging/LoggerFactory';
-
-export interface DialogueManager {
-  start(chatId: number): void;
-  extend(chatId: number): void;
-  isActive(chatId: number): boolean;
-}
-
-export const DIALOGUE_MANAGER_ID = Symbol.for(
-  'DialogueManager'
-) as ServiceIdentifier<DialogueManager>;
+} from '../../interfaces/logging/LoggerFactory.interface';
 
 interface TimerData {
   timeout: NodeJS.Timeout;

@@ -1,6 +1,6 @@
 import type { Context } from 'telegraf';
 
-import type { DialogueManager } from '../application/use-cases/chat/DialogueManager';
+import type { DialogueManager } from '../application/interfaces/chat/DialogueManager.interface';
 
 export interface TriggerContext {
   text: string;

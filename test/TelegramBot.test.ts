@@ -7,21 +7,21 @@ import * as TelegramBotModule from '../src/bot/TelegramBot';
 import { createWindows } from '../src/bot/windowConfig';
 import type { ChatRepository } from '../src/domain/repositories/ChatRepository.interface';
 import type { AdminService } from '../src/application/interfaces/admin/AdminService.interface';
-import type { ChatApprovalService } from '../src/application/use-cases/chat/ChatApprovalService';
+import type { ChatApprovalService } from '../src/application/interfaces/chat/ChatApprovalService.interface';
 import type { ChatMemoryManager } from '../src/application/use-cases/chat/ChatMemory';
-import type { ChatResponder } from '../src/application/use-cases/chat/ChatResponder';
-import type { TriggerPipeline } from '../src/application/use-cases/chat/TriggerPipeline';
-import type { EnvService } from '../src/application/use-cases/env/EnvService';
-import type { ChatConfigService } from '../src/application/use-cases/chat/ChatConfigService';
+import type { ChatResponder } from '../src/application/interfaces/chat/ChatResponder.interface';
+import type { TriggerPipeline } from '../src/application/interfaces/chat/TriggerPipeline.interface';
+import type { EnvService } from '../src/application/interfaces/env/EnvService.interface';
+import type { ChatConfigService } from '../src/application/interfaces/chat/ChatConfigService.interface';
 import {
   InvalidInterestIntervalError,
   InvalidHistoryLimitError,
-} from '../src/application/use-cases/chat/ChatConfigService';
+} from '../src/application/interfaces/chat/ChatConfigService.interface';
 import type {
   MessageContext,
   MessageContextExtractor,
-} from '../src/application/use-cases/messages/MessageContextExtractor';
-import type { LoggerFactory } from '../src/application/use-cases/logging/LoggerFactory';
+} from '../src/application/interfaces/messages/MessageContextExtractor.interface';
+import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
 
 const createLoggerFactory = (): LoggerFactory =>
   ({

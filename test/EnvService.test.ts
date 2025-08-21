@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { TestEnvService } from '../src/application/use-cases/env/EnvService';
+import { TestEnvService } from '../src/application/use-cases/env/TestEnvService';
 
 const OLD_ENV = { ...process.env };
 

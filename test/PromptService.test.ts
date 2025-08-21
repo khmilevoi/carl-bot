@@ -4,9 +4,9 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { TestEnvService } from '../src/application/use-cases/env/EnvService';
+import { TestEnvService } from '../src/application/use-cases/env/TestEnvService';
 import type { FilePromptService } from '../src/application/use-cases/prompts/FilePromptService';
-import type { LoggerFactory } from '../src/application/use-cases/logging/LoggerFactory';
+import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
 
 class TempEnvService extends TestEnvService {
   constructor(private dir: string) {
