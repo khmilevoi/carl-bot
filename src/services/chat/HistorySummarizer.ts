@@ -102,11 +102,18 @@ export class DefaultHistorySummarizer implements HistorySummarizer {
       'Generated new summary'
     );
 
+    const messagesDeleted = history.length;
     await this.summaries.setSummary(chatId, newSummary);
-    this.logger.debug({ chatId }, 'Stored new summary');
-
     await this.messages.clearMessages(chatId);
-    this.logger.debug({ chatId }, 'Cleared messages after summarization');
+    this.logger.debug(
+      {
+        chatId,
+        oldSummaryLength: summary.length,
+        newSummaryLength: newSummary.length,
+        messagesDeleted,
+      },
+      'Stored new summary and cleared messages'
+    );
     return true;
   }
 
