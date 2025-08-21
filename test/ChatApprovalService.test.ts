@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ChatAccessRepository } from '../src/repositories/interfaces/ChatAccessRepository.interface';
 import { DefaultChatApprovalService } from '../src/services/chat/ChatApprovalService';
 import type { EnvService } from '../src/services/env/EnvService';
+import type { LoggerFactory } from '../src/services/logging/LoggerFactory';
 
 const sendMessage = vi.fn();
 
@@ -25,11 +26,21 @@ describe('DefaultChatApprovalService', () => {
     },
   } as unknown as EnvService;
 
+  const loggerFactory: LoggerFactory = {
+    create: () => ({
+      debug: vi.fn(),
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      child: vi.fn(),
+    }),
+  } as unknown as LoggerFactory;
+
   let service: DefaultChatApprovalService;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    service = new DefaultChatApprovalService(repo, envService);
+    service = new DefaultChatApprovalService(repo, envService, loggerFactory);
   });
 
   it('sends approval request and sets status to pending', async () => {
