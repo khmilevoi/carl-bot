@@ -14,6 +14,9 @@ export default defineConfig({
     rspack: {
       target: 'node',
       externalsPresets: { node: true },
+      externals: {
+        sqlite3: 'commonjs sqlite3',
+      },
     },
     swc: {
       jsc: {
