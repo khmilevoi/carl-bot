@@ -5,40 +5,37 @@ import type { Context } from 'telegraf';
 import { Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
 
-import type { AdminService } from '@/application/interfaces/admin/AdminService.interface';
-import { ADMIN_SERVICE_ID } from '@/application/interfaces/admin/AdminService.interface';
-import type { ChatApprovalService } from '@/application/interfaces/chat/ChatApprovalService.interface';
-import { CHAT_APPROVAL_SERVICE_ID } from '@/application/interfaces/chat/ChatApprovalService.interface';
+import type { AdminService } from '@/application/interfaces/admin/AdminService';
+import { ADMIN_SERVICE_ID } from '@/application/interfaces/admin/AdminService';
+import type { ChatApprovalService } from '@/application/interfaces/chat/ChatApprovalService';
+import { CHAT_APPROVAL_SERVICE_ID } from '@/application/interfaces/chat/ChatApprovalService';
+import type { ChatConfigService } from '@/application/interfaces/chat/ChatConfigService';
+import { CHAT_CONFIG_SERVICE_ID } from '@/application/interfaces/chat/ChatConfigService';
 import {
   InvalidHistoryLimitError,
   InvalidInterestIntervalError,
 } from '@/application/interfaces/chat/ChatConfigService.errors';
-import type { ChatConfigService } from '@/application/interfaces/chat/ChatConfigService.interface';
-import { CHAT_CONFIG_SERVICE_ID } from '@/application/interfaces/chat/ChatConfigService.interface';
 import {
   CHAT_INFO_SERVICE_ID,
   type ChatInfoService,
-} from '@/application/interfaces/chat/ChatInfoService.interface';
-import type { ChatMemoryManager } from '@/application/interfaces/chat/ChatMemoryManager.interface';
-import { CHAT_MEMORY_MANAGER_ID } from '@/application/interfaces/chat/ChatMemoryManager.interface';
-import type { ChatResponder } from '@/application/interfaces/chat/ChatResponder.interface';
-import { CHAT_RESPONDER_ID } from '@/application/interfaces/chat/ChatResponder.interface';
-import type { TriggerPipeline } from '@/application/interfaces/chat/TriggerPipeline.interface';
-import { TRIGGER_PIPELINE_ID } from '@/application/interfaces/chat/TriggerPipeline.interface';
-import type {
-  Env,
-  EnvService,
-} from '@/application/interfaces/env/EnvService.interface';
-import { ENV_SERVICE_ID } from '@/application/interfaces/env/EnvService.interface';
-import type { Logger } from '@/application/interfaces/logging/Logger.interface';
+} from '@/application/interfaces/chat/ChatInfoService';
+import type { ChatMemoryManager } from '@/application/interfaces/chat/ChatMemoryManager';
+import { CHAT_MEMORY_MANAGER_ID } from '@/application/interfaces/chat/ChatMemoryManager';
+import type { ChatResponder } from '@/application/interfaces/chat/ChatResponder';
+import { CHAT_RESPONDER_ID } from '@/application/interfaces/chat/ChatResponder';
+import type { TriggerPipeline } from '@/application/interfaces/chat/TriggerPipeline';
+import { TRIGGER_PIPELINE_ID } from '@/application/interfaces/chat/TriggerPipeline';
+import type { Env, EnvService } from '@/application/interfaces/env/EnvService';
+import { ENV_SERVICE_ID } from '@/application/interfaces/env/EnvService';
+import type { Logger } from '@/application/interfaces/logging/Logger';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '@/application/interfaces/logging/LoggerFactory.interface';
-import type { MessageContextExtractor } from '@/application/interfaces/messages/MessageContextExtractor.interface';
-import { MESSAGE_CONTEXT_EXTRACTOR_ID } from '@/application/interfaces/messages/MessageContextExtractor.interface';
+} from '@/application/interfaces/logging/LoggerFactory';
+import type { MessageContextExtractor } from '@/application/interfaces/messages/MessageContextExtractor';
+import { MESSAGE_CONTEXT_EXTRACTOR_ID } from '@/application/interfaces/messages/MessageContextExtractor';
 import { MessageFactory } from '@/application/use-cases/messages/MessageFactory';
-import type { TriggerContext } from '@/domain/triggers/Trigger.interface';
+import type { TriggerContext } from '@/domain/triggers/Trigger';
 
 import { registerRoutes } from './telegramRouter';
 import { createWindows, type WindowId } from './windowConfig';

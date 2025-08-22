@@ -2,20 +2,17 @@ import type { Context } from 'telegraf';
 import { describe, expect, it, vi } from 'vitest';
 
 import { DefaultDialogueManager } from '../src/application/use-cases/chat/DefaultDialogueManager';
-import type { DialogueManager } from '../src/application/interfaces/chat/DialogueManager.interface';
+import type { DialogueManager } from '../src/application/interfaces/chat/DialogueManager';
 import { DefaultTriggerPipeline } from '../src/application/use-cases/chat/DefaultTriggerPipeline';
-import type { TriggerPipeline } from '../src/application/interfaces/chat/TriggerPipeline.interface';
-import type { InterestChecker } from '../src/application/interfaces/interest/InterestChecker.interface';
-import type {
-  Trigger,
-  TriggerContext,
-} from '../src/domain/triggers/Trigger.interface';
+import type { TriggerPipeline } from '../src/application/interfaces/chat/TriggerPipeline';
+import type { InterestChecker } from '../src/application/interfaces/interest/InterestChecker';
+import type { Trigger, TriggerContext } from '../src/domain/triggers/Trigger';
 import { MentionTrigger } from '../src/view/telegram/triggers/MentionTrigger';
 import { ReplyTrigger } from '../src/view/telegram/triggers/ReplyTrigger';
 import { NameTrigger } from '../src/view/telegram/triggers/NameTrigger';
 import { InterestTrigger } from '../src/view/telegram/triggers/InterestTrigger';
-import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
-import type { EnvService } from '../src/application/interfaces/env/EnvService.interface';
+import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory';
+import type { EnvService } from '../src/application/interfaces/env/EnvService';
 
 describe('TriggerPipeline', () => {
   const env = {

@@ -1,7 +1,7 @@
 import type { Context } from 'telegraf';
 import { describe, expect, it } from 'vitest';
 
-import type { MessageContext } from '../src/application/interfaces/messages/MessageContextExtractor.interface';
+import type { MessageContext } from '../src/application/interfaces/messages/MessageContextExtractor';
 import { MessageFactory } from '../src/application/use-cases/messages/MessageFactory';
 
 describe('MessageFactory', () => {

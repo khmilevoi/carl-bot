@@ -3,39 +3,39 @@ import { type Container } from 'inversify';
 import {
   ACCESS_KEY_REPOSITORY_ID,
   type AccessKeyRepository,
-} from '../domain/repositories/AccessKeyRepository.interface';
+} from '../domain/repositories/AccessKeyRepository';
 import {
   CHAT_ACCESS_REPOSITORY_ID,
   type ChatAccessRepository,
-} from '../domain/repositories/ChatAccessRepository.interface';
+} from '../domain/repositories/ChatAccessRepository';
 import {
   CHAT_CONFIG_REPOSITORY_ID,
   type ChatConfigRepository,
-} from '../domain/repositories/ChatConfigRepository.interface';
+} from '../domain/repositories/ChatConfigRepository';
 import {
   CHAT_REPOSITORY_ID,
   type ChatRepository,
-} from '../domain/repositories/ChatRepository.interface';
+} from '../domain/repositories/ChatRepository';
 import {
   CHAT_USER_REPOSITORY_ID,
   type ChatUserRepository,
-} from '../domain/repositories/ChatUserRepository.interface';
+} from '../domain/repositories/ChatUserRepository';
 import {
   DB_PROVIDER_ID,
   type DbProvider,
-} from '../domain/repositories/DbProvider.interface';
+} from '../domain/repositories/DbProvider';
 import {
   MESSAGE_REPOSITORY_ID,
   type MessageRepository,
-} from '../domain/repositories/MessageRepository.interface';
+} from '../domain/repositories/MessageRepository';
 import {
   SUMMARY_REPOSITORY_ID,
   type SummaryRepository,
-} from '../domain/repositories/SummaryRepository.interface';
+} from '../domain/repositories/SummaryRepository';
 import {
   USER_REPOSITORY_ID,
   type UserRepository,
-} from '../domain/repositories/UserRepository.interface';
+} from '../domain/repositories/UserRepository';
 import { SQLiteDbProviderImpl } from '../infrastructure/persistence/sqlite/DbProvider';
 import { SQLiteAccessKeyRepository } from '../infrastructure/persistence/sqlite/SQLiteAccessKeyRepository';
 import { SQLiteChatAccessRepository } from '../infrastructure/persistence/sqlite/SQLiteChatAccessRepository';

@@ -1,20 +1,20 @@
 import { inject, injectable } from 'inversify';
 import type { Context } from 'telegraf';
 
-import type { AIService } from '@/application/interfaces/ai/AIService.interface';
-import { AI_SERVICE_ID } from '@/application/interfaces/ai/AIService.interface';
-import type { ChatMemoryManager } from '@/application/interfaces/chat/ChatMemoryManager.interface';
-import { CHAT_MEMORY_MANAGER_ID } from '@/application/interfaces/chat/ChatMemoryManager.interface';
-import { type ChatResponder } from '@/application/interfaces/chat/ChatResponder.interface';
-import type { Logger } from '@/application/interfaces/logging/Logger.interface';
+import type { AIService } from '@/application/interfaces/ai/AIService';
+import { AI_SERVICE_ID } from '@/application/interfaces/ai/AIService';
+import type { ChatMemoryManager } from '@/application/interfaces/chat/ChatMemoryManager';
+import { CHAT_MEMORY_MANAGER_ID } from '@/application/interfaces/chat/ChatMemoryManager';
+import { type ChatResponder } from '@/application/interfaces/chat/ChatResponder';
+import type { Logger } from '@/application/interfaces/logging/Logger';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '@/application/interfaces/logging/LoggerFactory.interface';
-import type { SummaryService } from '@/application/interfaces/summaries/SummaryService.interface';
-import { SUMMARY_SERVICE_ID } from '@/application/interfaces/summaries/SummaryService.interface';
+} from '@/application/interfaces/logging/LoggerFactory';
+import type { SummaryService } from '@/application/interfaces/summaries/SummaryService';
+import { SUMMARY_SERVICE_ID } from '@/application/interfaces/summaries/SummaryService';
 import { MessageFactory } from '@/application/use-cases/messages/MessageFactory';
-import type { TriggerReason } from '@/domain/triggers/Trigger.interface';
+import type { TriggerReason } from '@/domain/triggers/Trigger';
 
 @injectable()
 export class DefaultChatResponder implements ChatResponder {

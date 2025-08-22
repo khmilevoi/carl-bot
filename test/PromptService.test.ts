@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TestEnvService } from '../src/infrastructure/config/TestEnvService';
 import type { FilePromptService } from '../src/infrastructure/external/FilePromptService';
-import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
+import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory';
 
 class TempEnvService extends TestEnvService {
   constructor(private dir: string) {

@@ -4,21 +4,21 @@ import type { Context } from 'telegraf';
 import {
   DIALOGUE_MANAGER_ID,
   type DialogueManager,
-} from '@/application/interfaces/chat/DialogueManager.interface';
+} from '@/application/interfaces/chat/DialogueManager';
 import {
   INTEREST_CHECKER_ID,
   type InterestChecker,
-} from '@/application/interfaces/interest/InterestChecker.interface';
-import type { Logger } from '@/application/interfaces/logging/Logger.interface';
+} from '@/application/interfaces/interest/InterestChecker';
+import type { Logger } from '@/application/interfaces/logging/Logger';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '@/application/interfaces/logging/LoggerFactory.interface';
+} from '@/application/interfaces/logging/LoggerFactory';
 import type {
   Trigger,
   TriggerContext,
   TriggerResult,
-} from '@/domain/triggers/Trigger.interface';
+} from '@/domain/triggers/Trigger';
 
 @injectable()
 export class InterestTrigger implements Trigger<Context> {

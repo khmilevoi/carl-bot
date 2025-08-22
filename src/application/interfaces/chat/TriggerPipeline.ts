@@ -1,10 +1,7 @@
 import type { ServiceIdentifier } from 'inversify';
 import type { Context } from 'telegraf';
 
-import type {
-  TriggerContext,
-  TriggerResult,
-} from '@/domain/triggers/Trigger.interface';
+import type { TriggerContext, TriggerResult } from '@/domain/triggers/Trigger';
 
 export interface TriggerPipeline {
   shouldRespond(

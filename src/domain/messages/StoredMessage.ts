@@ -1,4 +1,4 @@
-import type { ChatMessage } from './ChatMessage.interface';
+import type { ChatMessage } from './ChatMessage';
 
 export interface StoredMessage extends ChatMessage {
   chatId: number;

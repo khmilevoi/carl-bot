@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { EnvService } from '../src/application/interfaces/env/EnvService.interface';
+import type { EnvService } from '../src/application/interfaces/env/EnvService';
 
 describe('logger', () => {
   const OLD_ENV = { ...process.env };
@@ -22,7 +22,7 @@ describe('logger', () => {
     vi.resetModules();
     const { container } = await import('../src/container');
     const LoggerModule = await import(
-      '../src/application/interfaces/logging/LoggerFactory.interface'
+      '../src/application/interfaces/logging/LoggerFactory'
     );
     const factory = container.get<LoggerModule.LoggerFactory>(
       LoggerModule.LOGGER_FACTORY_ID

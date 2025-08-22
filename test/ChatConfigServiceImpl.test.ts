@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { RepositoryChatConfigService } from '../src/application/use-cases/chat/RepositoryChatConfigService';
 import type { ChatConfigEntity } from '../src/domain/entities/ChatConfigEntity';
-import type { ChatConfigRepository } from '../src/domain/repositories/ChatConfigRepository.interface';
+import type { ChatConfigRepository } from '../src/domain/repositories/ChatConfigRepository';
 
 describe('RepositoryChatConfigService', () => {
   it('creates default config when missing', async () => {

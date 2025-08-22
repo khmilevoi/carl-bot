@@ -1,14 +1,14 @@
 import { readFile } from 'fs/promises';
 import { inject, injectable } from 'inversify';
 
-import type { EnvService } from '@/application/interfaces/env/EnvService.interface';
-import { ENV_SERVICE_ID } from '@/application/interfaces/env/EnvService.interface';
-import type { Logger } from '@/application/interfaces/logging/Logger.interface';
+import type { EnvService } from '@/application/interfaces/env/EnvService';
+import { ENV_SERVICE_ID } from '@/application/interfaces/env/EnvService';
+import type { Logger } from '@/application/interfaces/logging/Logger';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '@/application/interfaces/logging/LoggerFactory.interface';
-import type { PromptService } from '@/application/interfaces/prompts/PromptService.interface';
+} from '@/application/interfaces/logging/LoggerFactory';
+import type { PromptService } from '@/application/interfaces/prompts/PromptService';
 import { createLazy } from '@/utils/lazy';
 
 @injectable()

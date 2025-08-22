@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { type SummaryRepository } from '../src/domain/repositories/SummaryRepository.interface';
+import { type SummaryRepository } from '../src/domain/repositories/SummaryRepository';
 import { RepositorySummaryService } from '../src/application/use-cases/summaries/RepositorySummaryService';
-import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
+import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory';
 
 describe('RepositorySummaryService', () => {
   it('getSummary calls findById', async () => {

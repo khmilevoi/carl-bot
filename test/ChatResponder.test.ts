@@ -1,14 +1,14 @@
 import type { Context } from 'telegraf';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { AIService } from '../src/application/interfaces/ai/AIService.interface';
-import type { ChatMessage } from '../src/domain/messages/ChatMessage.interface';
-import type { ChatMemoryManager } from '../src/application/interfaces/chat/ChatMemoryManager.interface';
-import { ChatResponder } from '../src/application/interfaces/chat/ChatResponder.interface';
+import type { AIService } from '../src/application/interfaces/ai/AIService';
+import type { ChatMessage } from '../src/domain/messages/ChatMessage';
+import type { ChatMemoryManager } from '../src/application/interfaces/chat/ChatMemoryManager';
+import { ChatResponder } from '../src/application/interfaces/chat/ChatResponder';
 import { DefaultChatResponder } from '../src/application/use-cases/chat/DefaultChatResponder';
-import type { SummaryService } from '../src/application/interfaces/summaries/SummaryService.interface';
-import { TriggerReason } from '../src/domain/triggers/Trigger.interface';
-import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
+import type { SummaryService } from '../src/application/interfaces/summaries/SummaryService';
+import { TriggerReason } from '../src/domain/triggers/Trigger';
+import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory';
 
 class MockAIService implements AIService {
   history: ChatMessage[] | undefined;

@@ -1,11 +1,11 @@
 import { inject, injectable } from 'inversify';
 
 import type { AccessKeyEntity } from '@/domain/entities/AccessKeyEntity';
-import type { AccessKeyRepository } from '@/domain/repositories/AccessKeyRepository.interface';
+import type { AccessKeyRepository } from '@/domain/repositories/AccessKeyRepository';
 import {
   DB_PROVIDER_ID,
   type DbProvider,
-} from '@/domain/repositories/DbProvider.interface';
+} from '@/domain/repositories/DbProvider';
 
 @injectable()
 export class SQLiteAccessKeyRepository implements AccessKeyRepository {

@@ -4,8 +4,8 @@ import { UserEntity } from '@/domain/entities/UserEntity';
 import {
   DB_PROVIDER_ID,
   type DbProvider,
-} from '@/domain/repositories/DbProvider.interface';
-import type { UserRepository } from '@/domain/repositories/UserRepository.interface';
+} from '@/domain/repositories/DbProvider';
+import type { UserRepository } from '@/domain/repositories/UserRepository';
 
 @injectable()
 export class SQLiteUserRepository implements UserRepository {

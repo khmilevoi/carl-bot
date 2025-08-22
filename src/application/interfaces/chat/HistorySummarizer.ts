@@ -1,6 +1,6 @@
 import type { ServiceIdentifier } from 'inversify';
 
-import type { ChatMessage } from '@/domain/messages/ChatMessage.interface';
+import type { ChatMessage } from '@/domain/messages/ChatMessage';
 
 export interface HistorySummarizer {
   summarize(

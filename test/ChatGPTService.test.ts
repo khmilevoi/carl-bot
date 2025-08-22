@@ -1,11 +1,11 @@
 import { promises as fs } from 'fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ChatMessage } from '../src/domain/messages/ChatMessage.interface';
+import type { ChatMessage } from '../src/domain/messages/ChatMessage';
 import type { ChatGPTService as ChatGPTServiceType } from '../src/infrastructure/external/ChatGPTService';
 import { TestEnvService } from '../src/infrastructure/config/TestEnvService';
-import type { PromptService } from '../src/application/interfaces/prompts/PromptService.interface';
-import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
+import type { PromptService } from '../src/application/interfaces/prompts/PromptService';
+import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory';
 
 interface ChatGPTServiceConstructor {
   new (

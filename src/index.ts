@@ -3,7 +3,7 @@ import http from 'node:http';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from './application/interfaces/logging/LoggerFactory.interface';
+} from './application/interfaces/logging/LoggerFactory';
 import { container } from './container';
 import { TelegramBot } from './view/telegram/TelegramBot';
 

@@ -1,15 +1,15 @@
 import { inject, injectable } from 'inversify';
 
+import { type ChatConfigService } from '@/application/interfaces/chat/ChatConfigService';
 import {
   InvalidHistoryLimitError,
   InvalidInterestIntervalError,
 } from '@/application/interfaces/chat/ChatConfigService.errors';
-import { type ChatConfigService } from '@/application/interfaces/chat/ChatConfigService.interface';
 import type { ChatConfigEntity } from '@/domain/entities/ChatConfigEntity';
 import {
   CHAT_CONFIG_REPOSITORY_ID,
   type ChatConfigRepository,
-} from '@/domain/repositories/ChatConfigRepository.interface';
+} from '@/domain/repositories/ChatConfigRepository';
 
 const DEFAULT_HISTORY_LIMIT = 50;
 const DEFAULT_INTEREST_INTERVAL = 25;

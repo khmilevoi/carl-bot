@@ -9,9 +9,9 @@ import pino, {
 import {
   ENV_SERVICE_ID,
   type EnvService,
-} from '@/application/interfaces/env/EnvService.interface';
-import type { Logger } from '@/application/interfaces/logging/Logger.interface';
-import { type LoggerFactory } from '@/application/interfaces/logging/LoggerFactory.interface';
+} from '@/application/interfaces/env/EnvService';
+import type { Logger } from '@/application/interfaces/logging/Logger';
+import { type LoggerFactory } from '@/application/interfaces/logging/LoggerFactory';
 
 import { PinoLogger } from './PinoLogger';
 
@@ -27,8 +27,11 @@ export class PinoLoggerFactory implements LoggerFactory {
     const isProd =
       this.envService.env.NODE_ENV === 'production' ||
       process.env.NODE_ENV === 'production';
+    const isTest =
+      this.envService.env.NODE_ENV === 'test' ||
+      process.env.NODE_ENV === 'test';
     const options: LoggerOptions = { level };
-    if (!isProd) {
+    if (!isProd && !isTest) {
       options.transport = {
         target: 'pino-pretty',
         options: { colorize: true },
