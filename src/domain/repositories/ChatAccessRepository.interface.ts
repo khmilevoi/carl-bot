@@ -3,7 +3,7 @@ import type { ServiceIdentifier } from 'inversify';
 import type {
   ChatAccessEntity,
   ChatStatus,
-} from '../entities/ChatAccessEntity';
+} from '@/domain/entities/ChatAccessEntity';
 
 export interface ChatAccessRepository {
   get(chatId: number): Promise<ChatAccessEntity | undefined>;

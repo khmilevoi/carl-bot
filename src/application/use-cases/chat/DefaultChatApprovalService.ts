@@ -1,24 +1,24 @@
 import { inject, injectable } from 'inversify';
 
-import type {
-  ChatAccessEntity,
-  ChatStatus,
-} from '../../../domain/entities/ChatAccessEntity';
-import {
-  CHAT_ACCESS_REPOSITORY_ID,
-  type ChatAccessRepository,
-} from '../../../domain/repositories/ChatAccessRepository.interface';
-import { type ChatApprovalService } from '../../interfaces/chat/ChatApprovalService.interface';
+import { type ChatApprovalService } from '@/application/interfaces/chat/ChatApprovalService.interface';
 import {
   type Env,
   ENV_SERVICE_ID,
   type EnvService,
-} from '../../interfaces/env/EnvService.interface';
-import type { Logger } from '../../interfaces/logging/Logger.interface';
+} from '@/application/interfaces/env/EnvService.interface';
+import type { Logger } from '@/application/interfaces/logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '../../interfaces/logging/LoggerFactory.interface';
+} from '@/application/interfaces/logging/LoggerFactory.interface';
+import type {
+  ChatAccessEntity,
+  ChatStatus,
+} from '@/domain/entities/ChatAccessEntity';
+import {
+  CHAT_ACCESS_REPOSITORY_ID,
+  type ChatAccessRepository,
+} from '@/domain/repositories/ChatAccessRepository.interface';
 
 @injectable()
 export class DefaultChatApprovalService implements ChatApprovalService {

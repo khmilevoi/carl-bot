@@ -2,43 +2,43 @@ import { randomBytes } from 'node:crypto';
 
 import { inject, injectable } from 'inversify';
 
-import type { UserEntity } from '../../../domain/entities/UserEntity';
-import type { ChatMessage } from '../../../domain/messages/ChatMessage.interface';
+import type { AdminService } from '@/application/interfaces/admin/AdminService.interface';
+import {
+  CHAT_CONFIG_SERVICE_ID,
+  type ChatConfigService,
+} from '@/application/interfaces/chat/ChatConfigService.interface';
+import type { Logger } from '@/application/interfaces/logging/Logger.interface';
+import {
+  LOGGER_FACTORY_ID,
+  type LoggerFactory,
+} from '@/application/interfaces/logging/LoggerFactory.interface';
+import type { UserEntity } from '@/domain/entities/UserEntity';
+import type { ChatMessage } from '@/domain/messages/ChatMessage.interface';
 import {
   ACCESS_KEY_REPOSITORY_ID,
   type AccessKeyRepository,
-} from '../../../domain/repositories/AccessKeyRepository.interface';
+} from '@/domain/repositories/AccessKeyRepository.interface';
 import {
   CHAT_USER_REPOSITORY_ID,
   type ChatUserRepository,
-} from '../../../domain/repositories/ChatUserRepository.interface';
+} from '@/domain/repositories/ChatUserRepository.interface';
 import {
   DB_PROVIDER_ID,
   type DbProvider,
   type SqlDatabase,
-} from '../../../domain/repositories/DbProvider.interface';
+} from '@/domain/repositories/DbProvider.interface';
 import {
   MESSAGE_REPOSITORY_ID,
   type MessageRepository,
-} from '../../../domain/repositories/MessageRepository.interface';
+} from '@/domain/repositories/MessageRepository.interface';
 import {
   SUMMARY_REPOSITORY_ID,
   type SummaryRepository,
-} from '../../../domain/repositories/SummaryRepository.interface';
+} from '@/domain/repositories/SummaryRepository.interface';
 import {
   USER_REPOSITORY_ID,
   type UserRepository,
-} from '../../../domain/repositories/UserRepository.interface';
-import type { AdminService } from '../../interfaces/admin/AdminService.interface';
-import {
-  CHAT_CONFIG_SERVICE_ID,
-  type ChatConfigService,
-} from '../../interfaces/chat/ChatConfigService.interface';
-import type { Logger } from '../../interfaces/logging/Logger.interface';
-import {
-  LOGGER_FACTORY_ID,
-  type LoggerFactory,
-} from '../../interfaces/logging/LoggerFactory.interface';
+} from '@/domain/repositories/UserRepository.interface';
 
 @injectable()
 export class AdminServiceImpl implements AdminService {

@@ -2,18 +2,18 @@ import { inject, injectable } from 'inversify';
 import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 
-import type { EnvService } from '../../../application/interfaces/env/EnvService.interface';
-import { ENV_SERVICE_ID } from '../../../application/interfaces/env/EnvService.interface';
-import type { Logger } from '../../../application/interfaces/logging/Logger.interface';
+import type { EnvService } from '@/application/interfaces/env/EnvService.interface';
+import { ENV_SERVICE_ID } from '@/application/interfaces/env/EnvService.interface';
+import type { Logger } from '@/application/interfaces/logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '../../../application/interfaces/logging/LoggerFactory.interface';
+} from '@/application/interfaces/logging/LoggerFactory.interface';
 import {
   type DbProvider,
   type SqlDatabase,
-} from '../../../domain/repositories/DbProvider.interface';
-import { parseDatabaseUrl } from '../../../utils/database';
+} from '@/domain/repositories/DbProvider.interface';
+import { parseDatabaseUrl } from '@/utils/database';
 
 export type SQLiteDbProvider = DbProvider;
 

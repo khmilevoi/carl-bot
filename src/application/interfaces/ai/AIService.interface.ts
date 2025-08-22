@@ -1,5 +1,5 @@
-import type { ChatMessage } from '../../../domain/messages/ChatMessage.interface';
-import type { TriggerReason } from '../../../domain/triggers/Trigger.interface';
+import type { ChatMessage } from '@/domain/messages/ChatMessage.interface';
+import type { TriggerReason } from '@/domain/triggers/Trigger.interface';
 
 export interface AIService {
   ask(

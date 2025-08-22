@@ -5,7 +5,7 @@ import type { Message } from 'telegraf/typings/core/types/typegram';
 import {
   type MessageContext,
   type MessageContextExtractor,
-} from '../../interfaces/messages/MessageContextExtractor.interface';
+} from '@/application/interfaces/messages/MessageContextExtractor.interface';
 
 @injectable()
 export class DefaultMessageContextExtractor implements MessageContextExtractor {

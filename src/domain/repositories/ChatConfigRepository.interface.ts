@@ -1,6 +1,6 @@
 import type { ServiceIdentifier } from 'inversify';
 
-import type { ChatConfigEntity } from '../entities/ChatConfigEntity';
+import type { ChatConfigEntity } from '@/domain/entities/ChatConfigEntity';
 
 export interface ChatConfigRepository {
   upsert(config: ChatConfigEntity): Promise<void>;

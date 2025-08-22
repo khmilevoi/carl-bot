@@ -1,7 +1,7 @@
 import type { ServiceIdentifier } from 'inversify';
 import type { Context } from 'telegraf';
 
-import type { TriggerReason } from '../../../domain/triggers/Trigger.interface';
+import type { TriggerReason } from '@/domain/triggers/Trigger.interface';
 
 export interface ChatResponder {
   generate(

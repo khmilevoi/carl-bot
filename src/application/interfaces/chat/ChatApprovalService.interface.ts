@@ -3,7 +3,7 @@ import type { ServiceIdentifier } from 'inversify';
 import type {
   ChatAccessEntity,
   ChatStatus,
-} from '../../../domain/entities/ChatAccessEntity';
+} from '@/domain/entities/ChatAccessEntity';
 
 export interface ChatApprovalService {
   pending(chatId: number): Promise<void>;

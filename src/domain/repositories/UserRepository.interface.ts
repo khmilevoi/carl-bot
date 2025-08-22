@@ -1,6 +1,6 @@
 import type { ServiceIdentifier } from 'inversify';
 
-import type { UserEntity } from '../entities/UserEntity';
+import type { UserEntity } from '@/domain/entities/UserEntity';
 
 export interface UserRepository {
   upsert(user: UserEntity): Promise<void>;
