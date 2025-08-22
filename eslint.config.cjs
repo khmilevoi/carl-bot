@@ -119,6 +119,7 @@ module.exports = [
       'eslint.config.cjs',
       'test/**',
       'vitest.config.ts',
+      'rsbuild.config.ts',
     ],
   },
 ];
