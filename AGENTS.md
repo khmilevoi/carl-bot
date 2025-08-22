@@ -27,6 +27,7 @@
   - `npm run format` – verify formatting
   - `npm run format:fix` – format files
 - `npm run prepare` – set up Git hooks
+- Never skip Husky pre-commit hooks (avoid using `--no-verify`)
 - `npm run migration:up` – apply database migrations
 - `npm run migration:down` – revert the last migration
 - Do not commit `node_modules` or `package-lock.json`.
