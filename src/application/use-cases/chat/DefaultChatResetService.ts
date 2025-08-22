@@ -1,6 +1,6 @@
 import { inject, injectable } from 'inversify';
 
-import { ChatResetService } from '../../interfaces/chat/ChatResetService.interface';
+import type { ChatResetService } from '../../interfaces/chat/ChatResetService.interface';
 import type { Logger } from '../../interfaces/logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,

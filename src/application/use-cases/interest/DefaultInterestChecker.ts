@@ -1,10 +1,8 @@
 import { inject, injectable } from 'inversify';
 
 import type { ChatMessage } from '../../../domain/messages/ChatMessage.interface';
-import {
-  AI_SERVICE_ID,
-  AIService,
-} from '../../interfaces/ai/AIService.interface';
+import type { AIService } from '../../interfaces/ai/AIService.interface';
+import { AI_SERVICE_ID } from '../../interfaces/ai/AIService.interface';
 import {
   CHAT_CONFIG_SERVICE_ID,
   type ChatConfigService,
@@ -15,14 +13,10 @@ import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
 } from '../../interfaces/logging/LoggerFactory.interface';
-import {
-  INTEREST_MESSAGE_STORE_ID,
-  InterestMessageStore,
-} from '../../interfaces/messages/InterestMessageStore.interface';
-import {
-  SUMMARY_SERVICE_ID,
-  SummaryService,
-} from '../../interfaces/summaries/SummaryService.interface';
+import type { InterestMessageStore } from '../../interfaces/messages/InterestMessageStore.interface';
+import { INTEREST_MESSAGE_STORE_ID } from '../../interfaces/messages/InterestMessageStore.interface';
+import type { SummaryService } from '../../interfaces/summaries/SummaryService.interface';
+import { SUMMARY_SERVICE_ID } from '../../interfaces/summaries/SummaryService.interface';
 
 @injectable()
 export class DefaultInterestChecker implements InterestChecker {

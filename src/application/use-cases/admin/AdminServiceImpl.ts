@@ -29,7 +29,7 @@ import {
   USER_REPOSITORY_ID,
   type UserRepository,
 } from '../../../domain/repositories/UserRepository.interface';
-import { AdminService } from '../../interfaces/admin/AdminService.interface';
+import type { AdminService } from '../../interfaces/admin/AdminService.interface';
 import {
   CHAT_CONFIG_SERVICE_ID,
   type ChatConfigService,

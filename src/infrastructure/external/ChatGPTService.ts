@@ -1,25 +1,21 @@
 import { promises as fs } from 'fs';
 import { inject, injectable } from 'inversify';
 import OpenAI from 'openai';
-import { ChatModel } from 'openai/resources/shared';
+import type { ChatModel } from 'openai/resources/shared';
 import path from 'path';
 
-import { AIService } from '../../application/interfaces/ai/AIService.interface';
-import {
-  ENV_SERVICE_ID,
-  EnvService,
-} from '../../application/interfaces/env/EnvService.interface';
+import type { AIService } from '../../application/interfaces/ai/AIService.interface';
+import type { EnvService } from '../../application/interfaces/env/EnvService.interface';
+import { ENV_SERVICE_ID } from '../../application/interfaces/env/EnvService.interface';
 import type { Logger } from '../../application/interfaces/logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
 } from '../../application/interfaces/logging/LoggerFactory.interface';
-import {
-  PROMPT_SERVICE_ID,
-  PromptService,
-} from '../../application/interfaces/prompts/PromptService.interface';
+import type { PromptService } from '../../application/interfaces/prompts/PromptService.interface';
+import { PROMPT_SERVICE_ID } from '../../application/interfaces/prompts/PromptService.interface';
 import type { ChatMessage } from '../../domain/messages/ChatMessage.interface';
-import { TriggerReason } from '../../domain/triggers/Trigger.interface';
+import type { TriggerReason } from '../../domain/triggers/Trigger.interface';
 
 @injectable()
 export class ChatGPTService implements AIService {

@@ -1,57 +1,44 @@
 import assert from 'node:assert';
 
 import { inject, injectable } from 'inversify';
-import { Context, Telegraf } from 'telegraf';
+import type { Context } from 'telegraf';
+import { Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
 
-import {
-  ADMIN_SERVICE_ID,
-  AdminService,
-} from '../../application/interfaces/admin/AdminService.interface';
-import {
-  CHAT_APPROVAL_SERVICE_ID,
-  ChatApprovalService,
-} from '../../application/interfaces/chat/ChatApprovalService.interface';
+import type { AdminService } from '../../application/interfaces/admin/AdminService.interface';
+import { ADMIN_SERVICE_ID } from '../../application/interfaces/admin/AdminService.interface';
+import type { ChatApprovalService } from '../../application/interfaces/chat/ChatApprovalService.interface';
+import { CHAT_APPROVAL_SERVICE_ID } from '../../application/interfaces/chat/ChatApprovalService.interface';
 import {
   InvalidHistoryLimitError,
   InvalidInterestIntervalError,
 } from '../../application/interfaces/chat/ChatConfigService.errors';
-import {
-  CHAT_CONFIG_SERVICE_ID,
-  ChatConfigService,
-} from '../../application/interfaces/chat/ChatConfigService.interface';
-import {
-  CHAT_MEMORY_MANAGER_ID,
-  ChatMemoryManager,
-} from '../../application/interfaces/chat/ChatMemoryManager.interface';
-import {
-  CHAT_RESPONDER_ID,
-  ChatResponder,
-} from '../../application/interfaces/chat/ChatResponder.interface';
-import {
-  TRIGGER_PIPELINE_ID,
-  TriggerPipeline,
-} from '../../application/interfaces/chat/TriggerPipeline.interface';
-import {
+import type { ChatConfigService } from '../../application/interfaces/chat/ChatConfigService.interface';
+import { CHAT_CONFIG_SERVICE_ID } from '../../application/interfaces/chat/ChatConfigService.interface';
+import type { ChatMemoryManager } from '../../application/interfaces/chat/ChatMemoryManager.interface';
+import { CHAT_MEMORY_MANAGER_ID } from '../../application/interfaces/chat/ChatMemoryManager.interface';
+import type { ChatResponder } from '../../application/interfaces/chat/ChatResponder.interface';
+import { CHAT_RESPONDER_ID } from '../../application/interfaces/chat/ChatResponder.interface';
+import type { TriggerPipeline } from '../../application/interfaces/chat/TriggerPipeline.interface';
+import { TRIGGER_PIPELINE_ID } from '../../application/interfaces/chat/TriggerPipeline.interface';
+import type {
   Env,
-  ENV_SERVICE_ID,
   EnvService,
 } from '../../application/interfaces/env/EnvService.interface';
+import { ENV_SERVICE_ID } from '../../application/interfaces/env/EnvService.interface';
 import type { Logger } from '../../application/interfaces/logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
 } from '../../application/interfaces/logging/LoggerFactory.interface';
-import {
-  MESSAGE_CONTEXT_EXTRACTOR_ID,
-  MessageContextExtractor,
-} from '../../application/interfaces/messages/MessageContextExtractor.interface';
+import type { MessageContextExtractor } from '../../application/interfaces/messages/MessageContextExtractor.interface';
+import { MESSAGE_CONTEXT_EXTRACTOR_ID } from '../../application/interfaces/messages/MessageContextExtractor.interface';
 import { MessageFactory } from '../../application/use-cases/messages/MessageFactory';
 import {
   CHAT_REPOSITORY_ID,
   type ChatRepository,
 } from '../../domain/repositories/ChatRepository.interface';
-import { TriggerContext } from '../../domain/triggers/Trigger.interface';
+import type { TriggerContext } from '../../domain/triggers/Trigger.interface';
 import { registerRoutes } from './telegramRouter';
 import { createWindows, type WindowId } from './windowConfig';
 

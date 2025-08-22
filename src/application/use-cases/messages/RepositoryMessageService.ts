@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 
 import type { ChatMessage } from '../../../domain/messages/ChatMessage.interface';
-import { StoredMessage } from '../../../domain/messages/StoredMessage.interface';
+import type { StoredMessage } from '../../../domain/messages/StoredMessage.interface';
 import {
   CHAT_REPOSITORY_ID,
   type ChatRepository,
@@ -23,7 +23,7 @@ import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
 } from '../../interfaces/logging/LoggerFactory.interface';
-import { MessageService } from '../../interfaces/messages/MessageService.interface';
+import type { MessageService } from '../../interfaces/messages/MessageService.interface';
 
 @injectable()
 export class RepositoryMessageService implements MessageService {
