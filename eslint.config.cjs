@@ -108,6 +108,7 @@ module.exports = [
         node: {
           extensions: ['.js', '.ts'],
         },
+        typescript: { project: './tsconfig.json' },
       },
     },
   },
