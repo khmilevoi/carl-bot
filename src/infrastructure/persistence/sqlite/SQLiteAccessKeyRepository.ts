@@ -5,12 +5,17 @@ import type { AccessKeyRepository } from '@/domain/repositories/AccessKeyReposit
 import {
   DB_PROVIDER_ID,
   type DbProvider,
-  type SqlDatabase,
 } from '@/domain/repositories/DbProvider.interface';
+import { BaseSQLiteRepository } from '@/infrastructure/persistence/sqlite/BaseSQLiteRepository';
 
 @injectable()
-export class SQLiteAccessKeyRepository implements AccessKeyRepository {
-  constructor(@inject(DB_PROVIDER_ID) private dbProvider: DbProvider) {}
+export class SQLiteAccessKeyRepository
+  extends BaseSQLiteRepository
+  implements AccessKeyRepository
+{
+  constructor(@inject(DB_PROVIDER_ID) dbProvider: DbProvider) {
+    super(dbProvider);
+  }
   async upsertKey({
     chatId,
     userId,
@@ -55,9 +60,5 @@ export class SQLiteAccessKeyRepository implements AccessKeyRepository {
   async deleteExpired(now: number): Promise<void> {
     const db = await this.db();
     await db.run('DELETE FROM access_keys WHERE expires_at <= ?', now);
-  }
-
-  private async db(): Promise<SqlDatabase> {
-    return this.dbProvider.get();
   }
 }

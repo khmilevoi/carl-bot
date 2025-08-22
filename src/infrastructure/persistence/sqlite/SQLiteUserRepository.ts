@@ -4,13 +4,18 @@ import type { UserEntity } from '@/domain/entities/UserEntity';
 import {
   DB_PROVIDER_ID,
   type DbProvider,
-  type SqlDatabase,
 } from '@/domain/repositories/DbProvider.interface';
 import type { UserRepository } from '@/domain/repositories/UserRepository.interface';
+import { BaseSQLiteRepository } from '@/infrastructure/persistence/sqlite/BaseSQLiteRepository';
 
 @injectable()
-export class SQLiteUserRepository implements UserRepository {
-  constructor(@inject(DB_PROVIDER_ID) private dbProvider: DbProvider) {}
+export class SQLiteUserRepository
+  extends BaseSQLiteRepository
+  implements UserRepository
+{
+  constructor(@inject(DB_PROVIDER_ID) dbProvider: DbProvider) {
+    super(dbProvider);
+  }
   async upsert({
     id,
     username,
@@ -59,9 +64,5 @@ export class SQLiteUserRepository implements UserRepository {
       attitude,
       userId
     );
-  }
-
-  private async db(): Promise<SqlDatabase> {
-    return this.dbProvider.get();
   }
 }

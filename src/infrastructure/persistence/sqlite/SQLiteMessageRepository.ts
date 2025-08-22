@@ -5,13 +5,18 @@ import type { StoredMessage } from '@/domain/messages/StoredMessage.interface';
 import {
   DB_PROVIDER_ID,
   type DbProvider,
-  type SqlDatabase,
 } from '@/domain/repositories/DbProvider.interface';
 import type { MessageRepository } from '@/domain/repositories/MessageRepository.interface';
+import { BaseSQLiteRepository } from '@/infrastructure/persistence/sqlite/BaseSQLiteRepository';
 
 @injectable()
-export class SQLiteMessageRepository implements MessageRepository {
-  constructor(@inject(DB_PROVIDER_ID) private dbProvider: DbProvider) {}
+export class SQLiteMessageRepository
+  extends BaseSQLiteRepository
+  implements MessageRepository
+{
+  constructor(@inject(DB_PROVIDER_ID) dbProvider: DbProvider) {
+    super(dbProvider);
+  }
   async insert({
     chatId,
     messageId,
@@ -132,9 +137,5 @@ export class SQLiteMessageRepository implements MessageRepository {
   async clearByChatId(chatId: number): Promise<void> {
     const db = await this.db();
     await db.run('DELETE FROM messages WHERE chat_id = ?', chatId);
-  }
-
-  private async db(): Promise<SqlDatabase> {
-    return this.dbProvider.get();
   }
 }

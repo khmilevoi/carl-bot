@@ -8,12 +8,17 @@ import type { ChatAccessRepository } from '@/domain/repositories/ChatAccessRepos
 import {
   DB_PROVIDER_ID,
   type DbProvider,
-  type SqlDatabase,
 } from '@/domain/repositories/DbProvider.interface';
+import { BaseSQLiteRepository } from '@/infrastructure/persistence/sqlite/BaseSQLiteRepository';
 
 @injectable()
-export class SQLiteChatAccessRepository implements ChatAccessRepository {
-  constructor(@inject(DB_PROVIDER_ID) private dbProvider: DbProvider) {}
+export class SQLiteChatAccessRepository
+  extends BaseSQLiteRepository
+  implements ChatAccessRepository
+{
+  constructor(@inject(DB_PROVIDER_ID) dbProvider: DbProvider) {
+    super(dbProvider);
+  }
   async get(chatId: number): Promise<ChatAccessEntity | undefined> {
     const db = await this.db();
     const row = await db.get<{
@@ -82,9 +87,5 @@ export class SQLiteChatAccessRepository implements ChatAccessRepository {
       requestedAt: row.requested_at ?? undefined,
       approvedAt: row.approved_at ?? undefined,
     }));
-  }
-
-  private async db(): Promise<SqlDatabase> {
-    return this.dbProvider.get();
   }
 }

@@ -5,12 +5,17 @@ import type { ChatRepository } from '@/domain/repositories/ChatRepository.interf
 import {
   DB_PROVIDER_ID,
   type DbProvider,
-  type SqlDatabase,
 } from '@/domain/repositories/DbProvider.interface';
+import { BaseSQLiteRepository } from '@/infrastructure/persistence/sqlite/BaseSQLiteRepository';
 
 @injectable()
-export class SQLiteChatRepository implements ChatRepository {
-  constructor(@inject(DB_PROVIDER_ID) private dbProvider: DbProvider) {}
+export class SQLiteChatRepository
+  extends BaseSQLiteRepository
+  implements ChatRepository
+{
+  constructor(@inject(DB_PROVIDER_ID) dbProvider: DbProvider) {
+    super(dbProvider);
+  }
   async upsert({ chatId, title }: ChatEntity): Promise<void> {
     const db = await this.db();
     await db.run(
@@ -27,9 +32,5 @@ export class SQLiteChatRepository implements ChatRepository {
       chatId
     );
     return row ? { chatId: row.chat_id, title: row.title } : undefined;
-  }
-
-  private async db(): Promise<SqlDatabase> {
-    return this.dbProvider.get();
   }
 }

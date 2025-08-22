@@ -4,12 +4,17 @@ import type { ChatUserRepository } from '@/domain/repositories/ChatUserRepositor
 import {
   DB_PROVIDER_ID,
   type DbProvider,
-  type SqlDatabase,
 } from '@/domain/repositories/DbProvider.interface';
+import { BaseSQLiteRepository } from '@/infrastructure/persistence/sqlite/BaseSQLiteRepository';
 
 @injectable()
-export class SQLiteChatUserRepository implements ChatUserRepository {
-  constructor(@inject(DB_PROVIDER_ID) private dbProvider: DbProvider) {}
+export class SQLiteChatUserRepository
+  extends BaseSQLiteRepository
+  implements ChatUserRepository
+{
+  constructor(@inject(DB_PROVIDER_ID) dbProvider: DbProvider) {
+    super(dbProvider);
+  }
   async link(chatId: number, userId: number): Promise<void> {
     const db = await this.db();
     await db.run(
@@ -25,9 +30,5 @@ export class SQLiteChatUserRepository implements ChatUserRepository {
       user_id: number;
     }>('SELECT user_id FROM chat_users WHERE chat_id = ?', chatId);
     return (rows ?? []).map((row) => row.user_id);
-  }
-
-  private async db(): Promise<SqlDatabase> {
-    return this.dbProvider.get();
   }
 }

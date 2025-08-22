@@ -5,12 +5,17 @@ import type { ChatConfigRepository } from '@/domain/repositories/ChatConfigRepos
 import {
   DB_PROVIDER_ID,
   type DbProvider,
-  type SqlDatabase,
 } from '@/domain/repositories/DbProvider.interface';
+import { BaseSQLiteRepository } from '@/infrastructure/persistence/sqlite/BaseSQLiteRepository';
 
 @injectable()
-export class SQLiteChatConfigRepository implements ChatConfigRepository {
-  constructor(@inject(DB_PROVIDER_ID) private dbProvider: DbProvider) {}
+export class SQLiteChatConfigRepository
+  extends BaseSQLiteRepository
+  implements ChatConfigRepository
+{
+  constructor(@inject(DB_PROVIDER_ID) dbProvider: DbProvider) {
+    super(dbProvider);
+  }
 
   async upsert({
     chatId,
@@ -43,9 +48,5 @@ export class SQLiteChatConfigRepository implements ChatConfigRepository {
           interestInterval: row.interest_interval,
         }
       : undefined;
-  }
-
-  private async db(): Promise<SqlDatabase> {
-    return this.dbProvider.get();
   }
 }

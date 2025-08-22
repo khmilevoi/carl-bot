@@ -3,13 +3,18 @@ import { inject, injectable } from 'inversify';
 import {
   DB_PROVIDER_ID,
   type DbProvider,
-  type SqlDatabase,
 } from '@/domain/repositories/DbProvider.interface';
 import type { SummaryRepository } from '@/domain/repositories/SummaryRepository.interface';
+import { BaseSQLiteRepository } from '@/infrastructure/persistence/sqlite/BaseSQLiteRepository';
 
 @injectable()
-export class SQLiteSummaryRepository implements SummaryRepository {
-  constructor(@inject(DB_PROVIDER_ID) private dbProvider: DbProvider) {}
+export class SQLiteSummaryRepository
+  extends BaseSQLiteRepository
+  implements SummaryRepository
+{
+  constructor(@inject(DB_PROVIDER_ID) dbProvider: DbProvider) {
+    super(dbProvider);
+  }
   async upsert(chatId: number, summary: string): Promise<void> {
     const db = await this.db();
     await db.run(
@@ -31,9 +36,5 @@ export class SQLiteSummaryRepository implements SummaryRepository {
   async clearByChatId(chatId: number): Promise<void> {
     const db = await this.db();
     await db.run('DELETE FROM summaries WHERE chat_id = ?', chatId);
-  }
-
-  private async db(): Promise<SqlDatabase> {
-    return this.dbProvider.get();
   }
 }
