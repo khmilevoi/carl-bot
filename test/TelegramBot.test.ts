@@ -1403,6 +1403,216 @@ describe('TelegramBot', () => {
     expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'no_access');
   });
 
+  it('handleAwaitingConfig updates history limit', async () => {
+    const memories = new MockChatMemoryManager();
+    const config = new DummyChatConfigService();
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      new DummyApprovalService() as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatInfoService() as unknown as ChatInfoService,
+      config as unknown as ChatConfigService,
+      createLoggerFactory()
+    );
+    const showSpy = vi
+      .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
+      .mockResolvedValue(undefined);
+    const ctx = {
+      chat: { id: 10 },
+      message: { text: '7' },
+      reply: vi.fn(),
+    } as unknown as Context;
+    await (
+      bot as unknown as {
+        handleAwaitingConfig: (
+          ctx: Context,
+          awaiting: {
+            type: 'history' | 'interest';
+            chatId: number;
+            admin: boolean;
+          }
+        ) => Promise<void>;
+      }
+    ).handleAwaitingConfig(ctx, { type: 'history', chatId: 10, admin: false });
+    expect(config.setHistoryLimit).toHaveBeenCalledWith(10, 7);
+    expect(ctx.reply).toHaveBeenCalledWith('✅ Лимит истории обновлён');
+    expect(showSpy).toHaveBeenCalledWith(ctx, 'menu');
+  });
+
+  it('checkChatStatus handles pending chat', async () => {
+    const memories = new MockChatMemoryManager();
+    const approval = new DummyApprovalService();
+    approval.getStatus.mockResolvedValue('pending');
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      approval as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatInfoService() as unknown as ChatInfoService,
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
+    );
+    const sendSpy = vi
+      .spyOn(
+        bot as unknown as {
+          sendChatApprovalRequest: (
+            chatId: number,
+            title?: string
+          ) => Promise<void>;
+        },
+        'sendChatApprovalRequest'
+      )
+      .mockResolvedValue();
+    const ctx = { chat: { id: 5 } } as unknown as Context;
+    const result = await (
+      bot as unknown as {
+        checkChatStatus: (ctx: Context, chatId: number) => Promise<boolean>;
+      }
+    ).checkChatStatus(ctx, 5);
+    expect(result).toBe(false);
+    expect(sendSpy).toHaveBeenCalledWith(5, undefined);
+  });
+
+  it('checkChatStatus handles banned chat', async () => {
+    const memories = new MockChatMemoryManager();
+    const approval = new DummyApprovalService();
+    approval.getStatus.mockResolvedValue('banned');
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      approval as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatInfoService() as unknown as ChatInfoService,
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
+    );
+    const sendSpy = vi.spyOn(
+      bot as unknown as {
+        sendChatApprovalRequest: (
+          chatId: number,
+          title?: string
+        ) => Promise<void>;
+      },
+      'sendChatApprovalRequest'
+    );
+    const ctx = { chat: { id: 6 } } as unknown as Context;
+    const result = await (
+      bot as unknown as {
+        checkChatStatus: (ctx: Context, chatId: number) => Promise<boolean>;
+      }
+    ).checkChatStatus(ctx, 6);
+    expect(result).toBe(false);
+    expect(sendSpy).not.toHaveBeenCalled();
+  });
+
+  it('checkChatStatus allows approved chat', async () => {
+    const memories = new MockChatMemoryManager();
+    const approval = new DummyApprovalService();
+    approval.getStatus.mockResolvedValue('approved');
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      approval as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatInfoService() as unknown as ChatInfoService,
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
+    );
+    const ctx = { chat: { id: 7 } } as unknown as Context;
+    const result = await (
+      bot as unknown as {
+        checkChatStatus: (ctx: Context, chatId: number) => Promise<boolean>;
+      }
+    ).checkChatStatus(ctx, 7);
+    expect(result).toBe(true);
+  });
+
+  it('prepareAndSendResponse does nothing without trigger', async () => {
+    const memories = new MockChatMemoryManager();
+    const pipeline = new DummyPipeline();
+    pipeline.shouldRespond.mockResolvedValue(null);
+    const responder = new DummyResponder();
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      new DummyApprovalService() as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      pipeline as unknown as TriggerPipeline,
+      responder as unknown as ChatResponder,
+      new DummyChatInfoService() as unknown as ChatInfoService,
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
+    );
+    const ctx = {
+      chat: { id: 1 },
+      message: { text: 'hi', message_id: 2 },
+      reply: vi.fn(),
+      sendChatAction: vi.fn().mockResolvedValue(undefined),
+      telegram: { sendChatAction: vi.fn().mockResolvedValue(undefined) },
+    } as unknown as Context;
+    await (
+      bot as unknown as {
+        prepareAndSendResponse: (ctx: Context, chatId: number) => Promise<void>;
+      }
+    ).prepareAndSendResponse(ctx, 1);
+    expect(memories.memory.addMessage).toHaveBeenCalled();
+    expect(responder.generate).not.toHaveBeenCalled();
+    expect(ctx.reply).not.toHaveBeenCalled();
+  });
+
+  it('prepareAndSendResponse replies when trigger matches', async () => {
+    const memories = new MockChatMemoryManager();
+    const pipeline = new DummyPipeline();
+    pipeline.shouldRespond.mockResolvedValue({
+      replyToMessageId: 2,
+      reason: 'r',
+    });
+    const responder = new DummyResponder();
+    responder.generate.mockResolvedValue('answer');
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      new DummyApprovalService() as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      pipeline as unknown as TriggerPipeline,
+      responder as unknown as ChatResponder,
+      new DummyChatInfoService() as unknown as ChatInfoService,
+      new DummyChatConfigService() as unknown as ChatConfigService,
+      createLoggerFactory()
+    );
+    const ctx = {
+      chat: { id: 1 },
+      message: { text: 'hi', message_id: 2 },
+      reply: vi.fn(),
+      sendChatAction: vi.fn().mockResolvedValue(undefined),
+      telegram: { sendChatAction: vi.fn().mockResolvedValue(undefined) },
+    } as unknown as Context;
+    await (
+      bot as unknown as {
+        prepareAndSendResponse: (ctx: Context, chatId: number) => Promise<void>;
+      }
+    ).prepareAndSendResponse(ctx, 1);
+    expect(responder.generate).toHaveBeenCalledWith(ctx, 1, 'r');
+    expect(ctx.reply).toHaveBeenCalledWith('answer', {
+      reply_parameters: { message_id: 2 },
+    });
+  });
+
   it('launches and stops the bot', async () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
