@@ -354,25 +354,6 @@ export class TelegramBot {
     const chatId = ctx.chat?.id;
     const userId = ctx.from?.id;
     assert(chatId, 'This is not a chat');
-    this.logger.info({ chatId, userId }, 'Menu requested');
-
-    if (chatId === this.env.ADMIN_CHAT_ID) {
-      this.logger.info({ chatId, userId }, 'Showing admin menu');
-      await this.router.show(ctx, 'admin_menu');
-      return;
-    }
-
-    const status = await this.approvalService.getStatus(chatId);
-    if (status === 'banned') {
-      this.logger.warn({ chatId, userId }, 'Chat is banned');
-      await ctx.reply('Доступ к боту запрещён.');
-      return;
-    }
-    if (status !== 'approved') {
-      this.logger.info({ chatId, userId, status }, 'Chat not approved');
-      await this.router.show(ctx, 'chat_not_approved');
-      return;
-    }
     this.logger.info({ chatId, userId }, 'Showing user menu');
     await this.router.show(ctx, 'menu');
   }
@@ -650,14 +631,12 @@ export class TelegramBot {
     chatId: number
   ): Promise<boolean> {
     const status = await this.approvalService.getStatus(chatId);
-    if (status === 'pending') {
-      const title =
-        ctx.chat && 'title' in ctx.chat ? ctx.chat.title : undefined;
-      await this.sendChatApprovalRequest(chatId, title);
-      return false;
-    }
     if (status === 'banned') {
       this.logger.warn({ chatId }, 'Message from banned chat ignored');
+      return false;
+    }
+    if (status !== 'approved') {
+       await this.router.show(ctx, 'chat_not_approved');
       return false;
     }
     return true;
