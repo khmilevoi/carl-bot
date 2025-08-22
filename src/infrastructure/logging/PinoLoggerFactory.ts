@@ -1,5 +1,10 @@
 import { inject, injectable } from 'inversify';
-import pino, { type LevelWithSilent, type Logger as Pino } from 'pino';
+import pino, {
+  type LevelWithSilent,
+  type Logger as Pino,
+  type LoggerOptions,
+  type TransportSingleOptions,
+} from 'pino';
 
 import {
   ENV_SERVICE_ID,
@@ -19,7 +24,17 @@ export class PinoLoggerFactory implements LoggerFactory {
       (this.envService.env.LOG_LEVEL as LevelWithSilent | undefined) ??
       (process.env.LOG_LEVEL as LevelWithSilent | undefined) ??
       'info';
-    this.root = pino({ level });
+    const isProd =
+      this.envService.env.NODE_ENV === 'production' ||
+      process.env.NODE_ENV === 'production';
+    const options: LoggerOptions = { level };
+    if (!isProd) {
+      options.transport = {
+        target: 'pino-pretty',
+        options: { colorize: true },
+      } satisfies TransportSingleOptions;
+    }
+    this.root = pino(options);
   }
 
   create(serviceName: string): Logger {
