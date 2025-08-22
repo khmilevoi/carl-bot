@@ -2,10 +2,8 @@ import { inject, injectable } from 'inversify';
 import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 
-import {
-  ENV_SERVICE_ID,
-  EnvService,
-} from '../../../application/interfaces/env/EnvService.interface';
+import type { EnvService } from '../../../application/interfaces/env/EnvService.interface';
+import { ENV_SERVICE_ID } from '../../../application/interfaces/env/EnvService.interface';
 import type { Logger } from '../../../application/interfaces/logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,

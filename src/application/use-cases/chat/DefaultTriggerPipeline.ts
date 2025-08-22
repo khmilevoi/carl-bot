@@ -1,11 +1,13 @@
 import { inject, injectable, multiInject } from 'inversify';
 import type { Context } from 'telegraf';
 
+import type {
+  TriggerContext,
+  TriggerResult,
+} from '../../../domain/triggers/Trigger.interface';
 import {
   type Trigger,
   TRIGGER_ID,
-  TriggerContext,
-  TriggerResult,
 } from '../../../domain/triggers/Trigger.interface';
 import {
   DIALOGUE_MANAGER_ID,

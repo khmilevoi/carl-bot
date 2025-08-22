@@ -1,5 +1,5 @@
 import { injectable } from 'inversify';
-import { Context } from 'telegraf';
+import type { Context } from 'telegraf';
 import type { Message } from 'telegraf/typings/core/types/typegram';
 
 import {

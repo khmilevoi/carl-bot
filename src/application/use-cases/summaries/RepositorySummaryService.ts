@@ -9,7 +9,7 @@ import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
 } from '../../interfaces/logging/LoggerFactory.interface';
-import { SummaryService } from '../../interfaces/summaries/SummaryService.interface';
+import type { SummaryService } from '../../interfaces/summaries/SummaryService.interface';
 
 @injectable()
 export class RepositorySummaryService implements SummaryService {

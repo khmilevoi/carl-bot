@@ -1,7 +1,7 @@
 import { injectable } from 'inversify';
-import { ChatModel } from 'openai/resources/shared';
+import type { ChatModel } from 'openai/resources/shared';
 
-import {
+import type {
   Env,
   EnvService,
 } from '../../application/interfaces/env/EnvService.interface';

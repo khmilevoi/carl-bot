@@ -120,6 +120,7 @@ module.exports = [
       'test/**',
       'vitest.config.ts',
       'rsbuild.config.ts',
+      'scripts/**',
     ],
   },
 ];

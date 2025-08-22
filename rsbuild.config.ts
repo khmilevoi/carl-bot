@@ -1,17 +1,34 @@
 /* eslint-disable import/no-unused-modules */
 import { defineConfig } from '@rsbuild/core';
-import { pluginNode } from '@rsbuild/plugin-node';
 import path from 'path';
 
-export const rsbuildConfig = defineConfig({
-  plugins: [pluginNode()],
-  target: 'node',
+export default defineConfig({
   source: {
     entry: {
       index: './src/index.ts',
+      migrate: './src/migrate.ts',
+    },
+    decorators: { version: 'legacy' },
+  },
+  tools: {
+    rspack: {
+      target: 'node',
+      externalsPresets: { node: true },
+    },
+    swc: {
+      jsc: {
+        parser: {
+          syntax: 'typescript',
+          decorators: true,
+        },
+        transform: {
+          decoratorMetadata: false,
+        },
+      },
     },
   },
   output: {
+    target: 'node',
     distPath: {
       root: 'dist',
     },

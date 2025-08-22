@@ -1,28 +1,20 @@
 import { inject, injectable } from 'inversify';
 
 import type { ChatMessage } from '../../../domain/messages/ChatMessage.interface';
-import {
-  USER_REPOSITORY_ID,
-  UserRepository,
-} from '../../../domain/repositories/UserRepository.interface';
-import {
-  AI_SERVICE_ID,
-  AIService,
-} from '../../interfaces/ai/AIService.interface';
+import type { UserRepository } from '../../../domain/repositories/UserRepository.interface';
+import { USER_REPOSITORY_ID } from '../../../domain/repositories/UserRepository.interface';
+import type { AIService } from '../../interfaces/ai/AIService.interface';
+import { AI_SERVICE_ID } from '../../interfaces/ai/AIService.interface';
 import { type HistorySummarizer } from '../../interfaces/chat/HistorySummarizer.interface';
 import type { Logger } from '../../interfaces/logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
 } from '../../interfaces/logging/LoggerFactory.interface';
-import {
-  MESSAGE_SERVICE_ID,
-  MessageService,
-} from '../../interfaces/messages/MessageService.interface';
-import {
-  SUMMARY_SERVICE_ID,
-  SummaryService,
-} from '../../interfaces/summaries/SummaryService.interface';
+import type { MessageService } from '../../interfaces/messages/MessageService.interface';
+import { MESSAGE_SERVICE_ID } from '../../interfaces/messages/MessageService.interface';
+import type { SummaryService } from '../../interfaces/summaries/SummaryService.interface';
+import { SUMMARY_SERVICE_ID } from '../../interfaces/summaries/SummaryService.interface';
 
 @injectable()
 export class DefaultHistorySummarizer implements HistorySummarizer {

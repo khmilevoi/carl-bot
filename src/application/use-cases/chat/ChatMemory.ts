@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 
 import type { ChatMessage } from '../../../domain/messages/ChatMessage.interface';
-import { StoredMessage } from '../../../domain/messages/StoredMessage.interface';
+import type { StoredMessage } from '../../../domain/messages/StoredMessage.interface';
 import {
   CHAT_CONFIG_SERVICE_ID,
   type ChatConfigService,
