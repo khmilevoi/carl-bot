@@ -75,6 +75,16 @@ import { SQLiteChatUserRepository } from './repositories/sqlite/SQLiteChatUserRe
 import { SQLiteMessageRepository } from './repositories/sqlite/SQLiteMessageRepository';
 import { SQLiteSummaryRepository } from './repositories/sqlite/SQLiteSummaryRepository';
 import { SQLiteUserRepository } from './repositories/sqlite/SQLiteUserRepository';
+import { InterestTrigger } from './triggers/InterestTrigger';
+import { MentionTrigger } from './triggers/MentionTrigger';
+import { NameTrigger } from './triggers/NameTrigger';
+import { ReplyTrigger } from './triggers/ReplyTrigger';
+import {
+  INTEREST_TRIGGER_ID,
+  MENTION_TRIGGER_ID,
+  NAME_TRIGGER_ID,
+  REPLY_TRIGGER_ID,
+} from './triggers/Trigger.interface';
 
 export const container = new Container();
 
@@ -125,6 +135,44 @@ container
 container
   .bind(INTEREST_CHECKER_ID)
   .to(DefaultInterestChecker)
+  .inSingletonScope();
+
+container
+  .bind(INTEREST_TRIGGER_ID)
+  .toDynamicValue((ctx) => {
+    const c = (ctx as unknown as { container: Container }).container;
+    return new InterestTrigger(
+      c.get(INTEREST_CHECKER_ID),
+      c.get(LOGGER_FACTORY_ID)
+    );
+  })
+  .inSingletonScope();
+
+container
+  .bind(MENTION_TRIGGER_ID)
+  .toDynamicValue((ctx) => {
+    const c = (ctx as unknown as { container: Container }).container;
+    return new MentionTrigger(c.get(LOGGER_FACTORY_ID));
+  })
+  .inSingletonScope();
+
+container
+  .bind(REPLY_TRIGGER_ID)
+  .toDynamicValue((ctx) => {
+    const c = (ctx as unknown as { container: Container }).container;
+    return new ReplyTrigger(c.get(LOGGER_FACTORY_ID));
+  })
+  .inSingletonScope();
+
+container
+  .bind(NAME_TRIGGER_ID)
+  .toDynamicValue((ctx) => {
+    const c = (ctx as unknown as { container: Container }).container;
+    return new NameTrigger(
+      c.get<EnvService>(ENV_SERVICE_ID).getBotName(),
+      c.get(LOGGER_FACTORY_ID)
+    );
+  })
   .inSingletonScope();
 
 container.bind(ADMIN_SERVICE_ID).to(AdminServiceImpl).inSingletonScope();

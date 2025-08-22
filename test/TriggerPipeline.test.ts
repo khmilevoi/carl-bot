@@ -6,10 +6,11 @@ import { DialogueManager } from '../src/application/interfaces/chat/DialogueMana
 import { DefaultTriggerPipeline } from '../src/application/use-cases/chat/DefaultTriggerPipeline';
 import { TriggerPipeline } from '../src/application/interfaces/chat/TriggerPipeline.interface';
 import { InterestChecker } from '../src/application/interfaces/interest/InterestChecker.interface';
-import {
-  type Trigger,
-  TriggerContext,
-} from '../src/triggers/Trigger.interface';
+import { TriggerContext } from '../src/triggers/Trigger.interface';
+import { InterestTrigger } from '../src/triggers/InterestTrigger';
+import { MentionTrigger } from '../src/triggers/MentionTrigger';
+import { NameTrigger } from '../src/triggers/NameTrigger';
+import { ReplyTrigger } from '../src/triggers/ReplyTrigger';
 import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
 
 describe('TriggerPipeline', () => {
@@ -33,13 +34,18 @@ describe('TriggerPipeline', () => {
       loggerFactory
     );
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
-      env,
-      {
-        async check() {
-          return null;
-        },
-      },
       dialogue,
+      new MentionTrigger(loggerFactory),
+      new ReplyTrigger(loggerFactory),
+      new NameTrigger(env.getBotName(), loggerFactory),
+      new InterestTrigger(
+        {
+          async check() {
+            return null;
+          },
+        },
+        loggerFactory
+      ),
       loggerFactory
     );
     const ctx = {
@@ -64,9 +70,11 @@ describe('TriggerPipeline', () => {
       loggerFactory
     );
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
-      env,
-      interestChecker,
       dialogue,
+      new MentionTrigger(loggerFactory),
+      new ReplyTrigger(loggerFactory),
+      new NameTrigger(env.getBotName(), loggerFactory),
+      new InterestTrigger(interestChecker, loggerFactory),
       loggerFactory
     );
     const ctx = {
@@ -96,9 +104,11 @@ describe('TriggerPipeline', () => {
       loggerFactory
     );
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
-      env,
-      interestChecker,
       dialogue,
+      new MentionTrigger(loggerFactory),
+      new ReplyTrigger(loggerFactory),
+      new NameTrigger(env.getBotName(), loggerFactory),
+      new InterestTrigger(interestChecker, loggerFactory),
       loggerFactory
     );
     const ctx = {
@@ -129,17 +139,14 @@ describe('TriggerPipeline', () => {
       env,
       loggerFactory
     );
-    const pipeline = new DefaultTriggerPipeline(
-      env,
-      interestChecker,
+    const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
       dialogue,
+      { apply: vi.fn().mockResolvedValue(null) },
+      { apply: vi.fn().mockResolvedValue(null) },
+      new NameTrigger(env.getBotName(), loggerFactory),
+      new InterestTrigger(interestChecker, loggerFactory),
       loggerFactory
-    ) as DefaultTriggerPipeline & {
-      mentionTrigger: Trigger;
-      replyTrigger: Trigger;
-    };
-    pipeline.mentionTrigger = { apply: vi.fn().mockResolvedValue(null) };
-    pipeline.replyTrigger = { apply: vi.fn().mockResolvedValue(null) };
+    );
     const ctx = {
       message: { text: 'hi @bot', reply_to_message: { message_id: 2 } },
       me: 'bot',
@@ -149,7 +156,7 @@ describe('TriggerPipeline', () => {
       replyText: 'original',
       chatId: 1,
     };
-    const res = await (pipeline as TriggerPipeline).shouldRespond(ctx, context);
+    const res = await pipeline.shouldRespond(ctx, context);
     expect(res).not.toBeNull();
     expect(interestChecker.check).toHaveBeenCalled();
   });
@@ -163,9 +170,11 @@ describe('TriggerPipeline', () => {
       loggerFactory
     );
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
-      env,
-      interestChecker,
       dialogue,
+      new MentionTrigger(loggerFactory),
+      new ReplyTrigger(loggerFactory),
+      new NameTrigger(env.getBotName(), loggerFactory),
+      new InterestTrigger(interestChecker, loggerFactory),
       loggerFactory
     );
     const ctx = {
@@ -193,9 +202,11 @@ describe('TriggerPipeline', () => {
       loggerFactory
     );
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
-      env,
-      interestChecker,
       dialogue,
+      new MentionTrigger(loggerFactory),
+      new ReplyTrigger(loggerFactory),
+      new NameTrigger(env.getBotName(), loggerFactory),
+      new InterestTrigger(interestChecker, loggerFactory),
       loggerFactory
     );
     dialogue.start(1);
@@ -222,9 +233,11 @@ describe('TriggerPipeline', () => {
       loggerFactory
     );
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
-      env,
-      interestChecker,
       dialogue,
+      new MentionTrigger(loggerFactory),
+      new ReplyTrigger(loggerFactory),
+      new NameTrigger(env.getBotName(), loggerFactory),
+      new InterestTrigger(interestChecker, loggerFactory),
       loggerFactory
     );
     const ctx = {
@@ -258,22 +271,26 @@ describe('TriggerPipeline', () => {
       error: vi.fn(),
       child: vi.fn(),
     };
-    const loggerFactory: LoggerFactory = {
-      create: vi
-        .fn()
-        .mockReturnValueOnce(otherLogger) // dialogue manager
-        .mockReturnValueOnce(pipelineLogger) // trigger pipeline
-        .mockReturnValue(otherLogger), // triggers
-    } as unknown as LoggerFactory;
+    const triggerLoggerFactory: LoggerFactory = {
+      create: () => otherLogger,
+    } as any;
+    const pipelineLoggerFactory: LoggerFactory = {
+      create: () => pipelineLogger,
+    } as any;
     const dialogue: DialogueManager = new DefaultDialogueManager(
       env,
-      loggerFactory
+      triggerLoggerFactory
     );
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
-      env,
-      { check: vi.fn().mockResolvedValue(null) },
       dialogue,
-      loggerFactory
+      new MentionTrigger(triggerLoggerFactory),
+      new ReplyTrigger(triggerLoggerFactory),
+      new NameTrigger(env.getBotName(), triggerLoggerFactory),
+      new InterestTrigger(
+        { check: vi.fn().mockResolvedValue(null) },
+        triggerLoggerFactory
+      ),
+      pipelineLoggerFactory
     );
     const ctx = {
       message: { text: 'hi @bot' },
@@ -306,25 +323,26 @@ describe('TriggerPipeline', () => {
       error: vi.fn(),
       child: vi.fn(),
     };
-    const loggerFactory: LoggerFactory = {
-      create: vi
-        .fn()
-        .mockReturnValueOnce(otherLogger) // dialogue manager
-        .mockReturnValueOnce(pipelineLogger) // trigger pipeline
-        .mockReturnValue(otherLogger), // triggers
-    } as unknown as LoggerFactory;
+    const triggerLoggerFactory: LoggerFactory = {
+      create: () => otherLogger,
+    } as any;
+    const pipelineLoggerFactory: LoggerFactory = {
+      create: () => pipelineLogger,
+    } as any;
     const interestChecker: InterestChecker = {
       check: vi.fn().mockResolvedValue(null),
     };
     const dialogue: DialogueManager = new DefaultDialogueManager(
       env,
-      loggerFactory
+      triggerLoggerFactory
     );
     const pipeline: TriggerPipeline = new DefaultTriggerPipeline(
-      env,
-      interestChecker,
       dialogue,
-      loggerFactory
+      new MentionTrigger(triggerLoggerFactory),
+      new ReplyTrigger(triggerLoggerFactory),
+      new NameTrigger(env.getBotName(), triggerLoggerFactory),
+      new InterestTrigger(interestChecker, triggerLoggerFactory),
+      pipelineLoggerFactory
     );
     const ctx = {
       message: { text: 'hello there' },

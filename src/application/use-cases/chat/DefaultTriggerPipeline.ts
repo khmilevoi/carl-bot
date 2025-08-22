@@ -1,11 +1,12 @@
 import { inject, injectable } from 'inversify';
 import { Context } from 'telegraf';
 
-import { InterestTrigger } from '../../../triggers/InterestTrigger';
-import { MentionTrigger } from '../../../triggers/MentionTrigger';
-import { NameTrigger } from '../../../triggers/NameTrigger';
-import { ReplyTrigger } from '../../../triggers/ReplyTrigger';
 import {
+  INTEREST_TRIGGER_ID,
+  MENTION_TRIGGER_ID,
+  NAME_TRIGGER_ID,
+  REPLY_TRIGGER_ID,
+  Trigger,
   TriggerContext,
   TriggerResult,
 } from '../../../triggers/Trigger.interface';
@@ -14,14 +15,6 @@ import {
   type DialogueManager,
 } from '../../interfaces/chat/DialogueManager.interface';
 import { type TriggerPipeline } from '../../interfaces/chat/TriggerPipeline.interface';
-import {
-  ENV_SERVICE_ID,
-  EnvService,
-} from '../../interfaces/env/EnvService.interface';
-import {
-  INTEREST_CHECKER_ID,
-  InterestChecker,
-} from '../../interfaces/interest/InterestChecker.interface';
 import type { Logger } from '../../interfaces/logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
@@ -30,23 +23,25 @@ import {
 
 @injectable()
 export class DefaultTriggerPipeline implements TriggerPipeline {
-  private mentionTrigger: MentionTrigger;
-  private replyTrigger: ReplyTrigger;
-  private nameTrigger: NameTrigger;
-  private interestTrigger: InterestTrigger;
+  private mentionTrigger: Trigger;
+  private replyTrigger: Trigger;
+  private nameTrigger: Trigger;
+  private interestTrigger: Trigger;
   private readonly logger: Logger;
 
   constructor(
-    @inject(ENV_SERVICE_ID) envService: EnvService,
-    @inject(INTEREST_CHECKER_ID) interestChecker: InterestChecker,
     @inject(DIALOGUE_MANAGER_ID) private dialogue: DialogueManager,
+    @inject(MENTION_TRIGGER_ID) mentionTrigger: Trigger,
+    @inject(REPLY_TRIGGER_ID) replyTrigger: Trigger,
+    @inject(NAME_TRIGGER_ID) nameTrigger: Trigger,
+    @inject(INTEREST_TRIGGER_ID) interestTrigger: Trigger,
     @inject(LOGGER_FACTORY_ID) loggerFactory: LoggerFactory
   ) {
     this.logger = loggerFactory.create('DefaultTriggerPipeline');
-    this.nameTrigger = new NameTrigger(envService.getBotName(), loggerFactory);
-    this.interestTrigger = new InterestTrigger(interestChecker, loggerFactory);
-    this.mentionTrigger = new MentionTrigger(loggerFactory);
-    this.replyTrigger = new ReplyTrigger(loggerFactory);
+    this.nameTrigger = nameTrigger;
+    this.interestTrigger = interestTrigger;
+    this.mentionTrigger = mentionTrigger;
+    this.replyTrigger = replyTrigger;
   }
 
   async shouldRespond(
