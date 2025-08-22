@@ -17,7 +17,7 @@ import type {
 } from '../../../domain/triggers/Trigger.interface';
 
 @injectable()
-export class MentionTrigger implements Trigger {
+export class MentionTrigger implements Trigger<Context> {
   private readonly logger: Logger;
   constructor(
     @inject(DIALOGUE_MANAGER_ID) private dialogue: DialogueManager,

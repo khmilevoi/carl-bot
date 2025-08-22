@@ -21,7 +21,7 @@ import type {
 } from '../../../domain/triggers/Trigger.interface';
 
 @injectable()
-export class InterestTrigger implements Trigger {
+export class InterestTrigger implements Trigger<Context> {
   private readonly logger: Logger;
   constructor(
     @inject(INTEREST_CHECKER_ID) private checker: InterestChecker,

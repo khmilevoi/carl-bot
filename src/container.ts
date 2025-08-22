@@ -1,6 +1,7 @@
 import 'reflect-metadata';
 
 import { Container } from 'inversify';
+import type { Context } from 'telegraf';
 
 import {
   ADMIN_SERVICE_ID,
@@ -260,10 +261,19 @@ container
   .to(DefaultMessageContextExtractor)
   .inSingletonScope();
 
-container.bind<Trigger>(TRIGGER_ID).to(MentionTrigger).inSingletonScope();
-container.bind<Trigger>(TRIGGER_ID).to(ReplyTrigger).inSingletonScope();
-container.bind<Trigger>(TRIGGER_ID).to(NameTrigger).inSingletonScope();
-container.bind<Trigger>(TRIGGER_ID).to(InterestTrigger).inSingletonScope();
+container
+  .bind<Trigger<Context>>(TRIGGER_ID)
+  .to(MentionTrigger)
+  .inSingletonScope();
+container
+  .bind<Trigger<Context>>(TRIGGER_ID)
+  .to(ReplyTrigger)
+  .inSingletonScope();
+container.bind<Trigger<Context>>(TRIGGER_ID).to(NameTrigger).inSingletonScope();
+container
+  .bind<Trigger<Context>>(TRIGGER_ID)
+  .to(InterestTrigger)
+  .inSingletonScope();
 
 container
   .bind<TriggerPipeline>(TRIGGER_PIPELINE_ID)

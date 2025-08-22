@@ -1,5 +1,4 @@
 import type { ServiceIdentifier } from 'inversify';
-import type { Context } from 'telegraf';
 
 export interface TriggerContext {
   text: string;
@@ -17,8 +16,10 @@ export interface TriggerResult {
   reason: TriggerReason | null;
 }
 
-export interface Trigger {
-  apply(ctx: Context, context: TriggerContext): Promise<TriggerResult | null>;
+export interface Trigger<TCtx = unknown> {
+  apply(ctx: TCtx, context: TriggerContext): Promise<TriggerResult | null>;
 }
 
-export const TRIGGER_ID = Symbol.for('Trigger') as ServiceIdentifier<Trigger>;
+export const TRIGGER_ID = Symbol.for('Trigger') as ServiceIdentifier<
+  Trigger<unknown>
+>;

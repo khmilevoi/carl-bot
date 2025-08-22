@@ -13,7 +13,7 @@ import type {
 } from '../../../domain/triggers/Trigger.interface';
 
 @injectable()
-export class ReplyTrigger implements Trigger {
+export class ReplyTrigger implements Trigger<Context> {
   private readonly logger: Logger;
   constructor(@inject(LOGGER_FACTORY_ID) loggerFactory: LoggerFactory) {
     this.logger = loggerFactory.create('ReplyTrigger');

@@ -17,7 +17,7 @@ import type {
 } from '../../../domain/triggers/Trigger.interface';
 
 @injectable()
-export class NameTrigger implements Trigger {
+export class NameTrigger implements Trigger<Context> {
   private pattern: RegExp;
   private readonly logger: Logger;
   constructor(
