@@ -91,13 +91,13 @@ module.exports = [
           zones: [
             {
               target: ['src/domain'],
-              from: ['src/application', 'src/infrastructure', 'src/interface'],
+              from: ['src/application', 'src/infrastructure', 'src/view'],
             },
             {
               target: ['src/application'],
-              from: ['src/infrastructure', 'src/interface'],
+              from: ['src/infrastructure', 'src/view'],
             },
-            { target: ['src/infrastructure'], from: ['src/interface'] },
+            { target: ['src/infrastructure'], from: ['src/view'] },
           ],
         },
       ],
