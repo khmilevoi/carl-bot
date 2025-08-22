@@ -1,6 +1,6 @@
 import { inject, injectable } from 'inversify';
 
-import type { UserEntity } from '@/domain/entities/UserEntity';
+import { UserEntity } from '@/domain/entities/UserEntity';
 import {
   DB_PROVIDER_ID,
   type DbProvider,
@@ -12,21 +12,15 @@ export class SQLiteUserRepository implements UserRepository {
   constructor(
     @inject(DB_PROVIDER_ID) private readonly dbProvider: DbProvider
   ) {}
-  async upsert({
-    id,
-    username,
-    firstName,
-    lastName,
-    attitude,
-  }: UserEntity): Promise<void> {
+  async upsert(user: UserEntity): Promise<void> {
     const db = await this.dbProvider.get();
     await db.run(
       'INSERT INTO users (id, username, first_name, last_name, attitude) VALUES (?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET username=excluded.username, first_name=excluded.first_name, last_name=excluded.last_name, attitude=excluded.attitude',
-      id,
-      username ?? null,
-      firstName ?? null,
-      lastName ?? null,
-      attitude ?? null
+      user.id,
+      user.username ?? null,
+      user.firstName ?? null,
+      user.lastName ?? null,
+      user.attitude ?? null
     );
   }
 
@@ -43,22 +37,13 @@ export class SQLiteUserRepository implements UserRepository {
       id
     );
     return row
-      ? {
-          id: row.id,
-          username: row.username,
-          firstName: row.first_name,
-          lastName: row.last_name,
-          attitude: row.attitude,
-        }
+      ? new UserEntity(
+          row.id,
+          row.username,
+          row.first_name,
+          row.last_name,
+          row.attitude
+        )
       : undefined;
-  }
-
-  async setAttitude(userId: number, attitude: string): Promise<void> {
-    const db = await this.dbProvider.get();
-    await db.run(
-      'UPDATE users SET attitude = ? WHERE id = ?',
-      attitude,
-      userId
-    );
   }
 }

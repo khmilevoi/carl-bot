@@ -12,6 +12,7 @@ import type { MessageService } from '@/application/interfaces/messages/MessageSe
 import { MESSAGE_SERVICE_ID } from '@/application/interfaces/messages/MessageService.interface';
 import type { SummaryService } from '@/application/interfaces/summaries/SummaryService.interface';
 import { SUMMARY_SERVICE_ID } from '@/application/interfaces/summaries/SummaryService.interface';
+import { UserEntity } from '@/domain/entities/UserEntity';
 import type { ChatMessage } from '@/domain/messages/ChatMessage.interface';
 import type { UserRepository } from '@/domain/repositories/UserRepository.interface';
 import { USER_REPOSITORY_ID } from '@/domain/repositories/UserRepository.interface';
@@ -134,8 +135,16 @@ export class DefaultHistorySummarizer implements HistorySummarizer {
       const userMsg = history.find(
         (m) => m.username === username && m.userId !== undefined
       );
-      if (userMsg?.userId !== undefined && attitude.trim() !== '') {
-        await this.users.setAttitude(userMsg.userId, attitude);
+      if (userMsg?.userId !== undefined) {
+        const user =
+          (await this.users.findById(userMsg.userId)) ??
+          new UserEntity(userMsg.userId, userMsg.username ?? null);
+        try {
+          user.setAttitude(attitude);
+          await this.users.upsert(user);
+        } catch {
+          // ignore invalid attitude
+        }
       }
     }
   }

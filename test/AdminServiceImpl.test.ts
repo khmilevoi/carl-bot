@@ -9,6 +9,7 @@ import type { ChatUserRepository } from '../src/domain/repositories/ChatUserRepo
 import type { MessageRepository } from '../src/domain/repositories/MessageRepository.interface';
 import type { SummaryRepository } from '../src/domain/repositories/SummaryRepository.interface';
 import type { UserRepository } from '../src/domain/repositories/UserRepository.interface';
+import { UserEntity } from '../src/domain/entities/UserEntity';
 import { AdminServiceImpl } from '../src/application/use-cases/admin/AdminServiceImpl';
 import type { ChatConfigService } from '../src/application/interfaces/chat/ChatConfigService.interface';
 import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
@@ -124,13 +125,7 @@ describe('AdminServiceImpl', () => {
     const summaryRepo = { findById: vi.fn(async () => 's') };
     const chatUserRepo = { listByChat: vi.fn(async () => [1]) };
     const userRepo = {
-      findById: vi.fn(async () => ({
-        id: 1,
-        username: 'u',
-        firstName: 'F',
-        lastName: 'L',
-        attitude: null,
-      })),
+      findById: vi.fn(async () => new UserEntity(1, 'u', 'F', 'L', null)),
     };
     const admin = new AdminServiceImpl(
       { get: vi.fn(), listTables: vi.fn() } as unknown as DbProvider,
