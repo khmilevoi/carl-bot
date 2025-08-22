@@ -4,9 +4,9 @@
   "description": "бот Карл",
   "main": "index.js",
   "scripts": {
-    "build": "swc src -d dist --copy-files --strip-leading-paths",
+    "build": "rsbuild build",
     "start": "node dist/index.js",
-    "dev": "nodemon --watch src --ext ts,js,json,md --exec node -r @swc-node/register src/index.ts",
+    "dev": "rsbuild dev",
     "test": "vitest run --config vitest.config.ts",
     "test:watch": "vitest --config vitest.config.ts",
     "test:coverage": "vitest run --config vitest.config.ts --coverage",
@@ -16,9 +16,9 @@
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "prepare": "husky",
-    "migration:up": "node -r @swc-node/register src/migrate.ts up",
-    "migration:down": "node -r @swc-node/register src/migrate.ts down",
-    "migration:check": "node -r @swc-node/register src/migrate.ts check"
+    "migration:up": "node dist/migrate.js up",
+    "migration:down": "node dist/migrate.js down",
+    "migration:check": "node dist/migrate.js check"
   },
   "keywords": [],
   "author": "",
@@ -42,9 +42,6 @@
     "@eslint/js": "^9.30.1",
     "@rsbuild/core": "^1.4.15",
     "@rspack/core": "^1.4.11",
-    "@swc-node/register": "^1.10.10",
-    "@swc/cli": "^0.7.8",
-    "@swc/core": "^1.12.11",
     "@types/node": "^24.0.11",
     "@typescript-eslint/eslint-plugin": "^8.36.0",
     "@typescript-eslint/parser": "^8.36.0",
@@ -56,7 +53,6 @@
     "eslint-plugin-unused-imports": "^4.1.4",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.2",
-    "nodemon": "^3.1.0",
     "prettier": "^3.6.2",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"

@@ -3,9 +3,9 @@
 # --------------------------------------------------------
 # Build-once, run-anywhere Dockerfile for Fly.io / Node.js
 # --------------------------------------------------------
-# 1) Builds TypeScript/SWC → plain JS during image build
+# 1) Builds TypeScript → plain JS during image build
 # 2) Prunes dev-dependencies ➜ tiny production image
-# 3) Runs pre-compiled JS, so @swc-node/register isn't needed
+# 3) Runs pre-compiled JS
 # --------------------------------------------------------
 
 ARG NODE_VERSION=20.18.0
