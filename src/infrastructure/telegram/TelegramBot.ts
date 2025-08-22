@@ -7,52 +7,52 @@ import { message } from 'telegraf/filters';
 import {
   ADMIN_SERVICE_ID,
   AdminService,
-} from '../application/interfaces/admin/AdminService.interface';
+} from '../../application/interfaces/admin/AdminService.interface';
 import {
   CHAT_APPROVAL_SERVICE_ID,
   ChatApprovalService,
-} from '../application/interfaces/chat/ChatApprovalService.interface';
+} from '../../application/interfaces/chat/ChatApprovalService.interface';
 import {
   InvalidHistoryLimitError,
   InvalidInterestIntervalError,
-} from '../application/interfaces/chat/ChatConfigService.errors';
+} from '../../application/interfaces/chat/ChatConfigService.errors';
 import {
   CHAT_CONFIG_SERVICE_ID,
   ChatConfigService,
-} from '../application/interfaces/chat/ChatConfigService.interface';
+} from '../../application/interfaces/chat/ChatConfigService.interface';
 import {
   CHAT_MEMORY_MANAGER_ID,
   ChatMemoryManager,
-} from '../application/interfaces/chat/ChatMemoryManager.interface';
+} from '../../application/interfaces/chat/ChatMemoryManager.interface';
 import {
   CHAT_RESPONDER_ID,
   ChatResponder,
-} from '../application/interfaces/chat/ChatResponder.interface';
+} from '../../application/interfaces/chat/ChatResponder.interface';
 import {
   TRIGGER_PIPELINE_ID,
   TriggerPipeline,
-} from '../application/interfaces/chat/TriggerPipeline.interface';
+} from '../../application/interfaces/chat/TriggerPipeline.interface';
 import {
   Env,
   ENV_SERVICE_ID,
   EnvService,
-} from '../application/interfaces/env/EnvService.interface';
-import type { Logger } from '../application/interfaces/logging/Logger.interface';
+} from '../../application/interfaces/env/EnvService.interface';
+import type { Logger } from '../../application/interfaces/logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '../application/interfaces/logging/LoggerFactory.interface';
+} from '../../application/interfaces/logging/LoggerFactory.interface';
 import {
   MESSAGE_CONTEXT_EXTRACTOR_ID,
   MessageContextExtractor,
-} from '../application/interfaces/messages/MessageContextExtractor.interface';
-import { MessageFactory } from '../application/use-cases/messages/MessageFactory';
+} from '../../application/interfaces/messages/MessageContextExtractor.interface';
+import { MessageFactory } from '../../application/use-cases/messages/MessageFactory';
 import {
   CHAT_REPOSITORY_ID,
   type ChatRepository,
-} from '../domain/repositories/ChatRepository.interface';
-import { TriggerContext } from '../domain/triggers/Trigger.interface';
-import { registerRoutes } from '../infrastructure/telegramRouter';
+} from '../../domain/repositories/ChatRepository.interface';
+import { TriggerContext } from '../../domain/triggers/Trigger.interface';
+import { registerRoutes } from './telegramRouter';
 import { createWindows, type WindowId } from './windowConfig';
 
 export async function withTyping(

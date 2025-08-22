@@ -2,9 +2,9 @@ import type { Context } from 'telegraf';
 import { Telegraf } from 'telegraf';
 import { describe, expect, it, vi } from 'vitest';
 
-import { TelegramBot } from '../src/bot/TelegramBot';
-import * as TelegramBotModule from '../src/bot/TelegramBot';
-import { createWindows } from '../src/bot/windowConfig';
+import { TelegramBot } from '../src/infrastructure/telegram/TelegramBot';
+import * as TelegramBotModule from '../src/infrastructure/telegram/TelegramBot';
+import { createWindows } from '../src/infrastructure/telegram/windowConfig';
 import type { ChatRepository } from '../src/domain/repositories/ChatRepository.interface';
 import type { AdminService } from '../src/application/interfaces/admin/AdminService.interface';
 import type { ChatApprovalService } from '../src/application/interfaces/chat/ChatApprovalService.interface';

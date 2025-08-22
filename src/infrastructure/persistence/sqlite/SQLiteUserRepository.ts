@@ -1,12 +1,12 @@
 import { inject, injectable } from 'inversify';
 
-import type { UserEntity } from '../../domain/entities/UserEntity';
+import type { UserEntity } from '../../../domain/entities/UserEntity';
 import {
   DB_PROVIDER_ID,
   type DbProvider,
   type SqlDatabase,
-} from '../../domain/repositories/DbProvider.interface';
-import type { UserRepository } from '../../domain/repositories/UserRepository.interface';
+} from '../../../domain/repositories/DbProvider.interface';
+import type { UserRepository } from '../../../domain/repositories/UserRepository.interface';
 
 @injectable()
 export class SQLiteUserRepository implements UserRepository {

@@ -4,8 +4,8 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { TestEnvService } from '../src/application/use-cases/env/TestEnvService';
-import type { FilePromptService } from '../src/application/use-cases/prompts/FilePromptService';
+import { TestEnvService } from '../src/infrastructure/config/TestEnvService';
+import type { FilePromptService } from '../src/infrastructure/external/FilePromptService';
 import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
 
 class TempEnvService extends TestEnvService {
@@ -87,7 +87,7 @@ describe('FilePromptService', () => {
     vi.doMock('fs/promises', () => ({ ...actual, readFile: readFileSpy }));
 
     const { FilePromptService } = await import(
-      '../src/application/use-cases/prompts/FilePromptService'
+      '../src/infrastructure/external/FilePromptService'
     );
     const env = new TempEnvService(dir);
     const loggerFactory: LoggerFactory = {

@@ -3,7 +3,10 @@ import 'dotenv/config';
 import { injectable } from 'inversify';
 import { ChatModel } from 'openai/resources/shared';
 
-import { Env, EnvService } from '../../interfaces/env/EnvService.interface';
+import {
+  Env,
+  EnvService,
+} from '../../application/interfaces/env/EnvService.interface';
 import { envSchema } from './envSchema';
 
 @injectable()

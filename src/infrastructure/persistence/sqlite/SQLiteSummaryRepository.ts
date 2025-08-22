@@ -4,8 +4,8 @@ import {
   DB_PROVIDER_ID,
   type DbProvider,
   type SqlDatabase,
-} from '../../domain/repositories/DbProvider.interface';
-import type { SummaryRepository } from '../../domain/repositories/SummaryRepository.interface';
+} from '../../../domain/repositories/DbProvider.interface';
+import type { SummaryRepository } from '../../../domain/repositories/SummaryRepository.interface';
 
 @injectable()
 export class SQLiteSummaryRepository implements SummaryRepository {

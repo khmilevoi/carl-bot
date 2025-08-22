@@ -5,14 +5,14 @@ import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { SQLiteDbProviderImpl } from '../src/infrastructure/repositories/DbProvider';
-import { SQLiteAccessKeyRepository } from '../src/infrastructure/repositories/SQLiteAccessKeyRepository';
-import { SQLiteChatRepository } from '../src/infrastructure/repositories/SQLiteChatRepository';
-import { SQLiteChatUserRepository } from '../src/infrastructure/repositories/SQLiteChatUserRepository';
-import { SQLiteMessageRepository } from '../src/infrastructure/repositories/SQLiteMessageRepository';
-import { SQLiteSummaryRepository } from '../src/infrastructure/repositories/SQLiteSummaryRepository';
-import { SQLiteUserRepository } from '../src/infrastructure/repositories/SQLiteUserRepository';
-import { TestEnvService } from '../src/application/use-cases/env/TestEnvService';
+import { SQLiteDbProviderImpl } from '../src/infrastructure/persistence/sqlite/DbProvider';
+import { SQLiteAccessKeyRepository } from '../src/infrastructure/persistence/sqlite/SQLiteAccessKeyRepository';
+import { SQLiteChatRepository } from '../src/infrastructure/persistence/sqlite/SQLiteChatRepository';
+import { SQLiteChatUserRepository } from '../src/infrastructure/persistence/sqlite/SQLiteChatUserRepository';
+import { SQLiteMessageRepository } from '../src/infrastructure/persistence/sqlite/SQLiteMessageRepository';
+import { SQLiteSummaryRepository } from '../src/infrastructure/persistence/sqlite/SQLiteSummaryRepository';
+import { SQLiteUserRepository } from '../src/infrastructure/persistence/sqlite/SQLiteUserRepository';
+import { TestEnvService } from '../src/infrastructure/config/TestEnvService';
 import { parseDatabaseUrl } from '../src/utils/database';
 import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
 
