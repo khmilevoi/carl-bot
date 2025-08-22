@@ -584,46 +584,7 @@ export class TelegramBot {
     const awaiting = this.awaitingConfig.get(chatId);
     if (awaiting) {
       this.awaitingConfig.delete(chatId);
-      const text =
-        ctx.message && 'text' in ctx.message ? ctx.message.text : undefined;
-      const value = Number(text);
-      try {
-        if (awaiting.type === 'history') {
-          if (awaiting.admin) {
-            await this.admin.setHistoryLimit(awaiting.chatId, value);
-          } else {
-            await this.chatConfig.setHistoryLimit(awaiting.chatId, value);
-          }
-          await ctx.reply('✅ Лимит истории обновлён');
-        } else {
-          if (awaiting.admin) {
-            await this.admin.setInterestInterval(awaiting.chatId, value);
-          } else {
-            await this.chatConfig.setInterestInterval(awaiting.chatId, value);
-          }
-          await ctx.reply('✅ Интервал интереса обновлён');
-        }
-      } catch (error) {
-        this.logger.error(
-          { error, chatId: awaiting.chatId },
-          'Failed to update chat config'
-        );
-        const message = (() => {
-          if (error instanceof InvalidHistoryLimitError) {
-            return '❌ Лимит истории должен быть целым числом от 1 до 50';
-          }
-          if (error instanceof InvalidInterestIntervalError) {
-            return '❌ Интервал интереса должен быть целым числом от 1 до 50';
-          }
-          return '❌ Ошибка при обновлении параметра';
-        })();
-        await ctx.reply(message);
-      }
-      if (awaiting.admin) {
-        await this.showAdminChat(ctx, awaiting.chatId);
-      } else {
-        await this.router.show(ctx, 'menu');
-      }
+      await this.handleAwaitingConfig(ctx, awaiting);
       return;
     }
     if (chatId === this.env.ADMIN_CHAT_ID) {
@@ -632,21 +593,80 @@ export class TelegramBot {
     }
 
     this.logger.debug({ chatId }, 'Received text message');
+    const allowed = await this.checkChatStatus(ctx, chatId);
+    if (!allowed) return;
 
+    await this.prepareAndSendResponse(ctx, chatId);
+  }
+
+  private async handleAwaitingConfig(
+    ctx: Context,
+    awaiting: { type: 'history' | 'interest'; chatId: number; admin: boolean }
+  ): Promise<void> {
+    const text =
+      ctx.message && 'text' in ctx.message ? ctx.message.text : undefined;
+    const value = Number(text);
+    try {
+      if (awaiting.type === 'history') {
+        if (awaiting.admin) {
+          await this.admin.setHistoryLimit(awaiting.chatId, value);
+        } else {
+          await this.chatConfig.setHistoryLimit(awaiting.chatId, value);
+        }
+        await ctx.reply('✅ Лимит истории обновлён');
+      } else {
+        if (awaiting.admin) {
+          await this.admin.setInterestInterval(awaiting.chatId, value);
+        } else {
+          await this.chatConfig.setInterestInterval(awaiting.chatId, value);
+        }
+        await ctx.reply('✅ Интервал интереса обновлён');
+      }
+    } catch (error) {
+      this.logger.error(
+        { error, chatId: awaiting.chatId },
+        'Failed to update chat config'
+      );
+      const message = (() => {
+        if (error instanceof InvalidHistoryLimitError) {
+          return '❌ Лимит истории должен быть целым числом от 1 до 50';
+        }
+        if (error instanceof InvalidInterestIntervalError) {
+          return '❌ Интервал интереса должен быть целым числом от 1 до 50';
+        }
+        return '❌ Ошибка при обновлении параметра';
+      })();
+      await ctx.reply(message);
+    }
+    if (awaiting.admin) {
+      await this.showAdminChat(ctx, awaiting.chatId);
+    } else {
+      await this.router.show(ctx, 'menu');
+    }
+  }
+
+  private async checkChatStatus(
+    ctx: Context,
+    chatId: number
+  ): Promise<boolean> {
     const status = await this.approvalService.getStatus(chatId);
     if (status === 'pending') {
       const title =
         ctx.chat && 'title' in ctx.chat ? ctx.chat.title : undefined;
       await this.sendChatApprovalRequest(chatId, title);
-
-      return;
+      return false;
     }
-
     if (status === 'banned') {
       this.logger.warn({ chatId }, 'Message from banned chat ignored');
-      return;
+      return false;
     }
+    return true;
+  }
 
+  private async prepareAndSendResponse(
+    ctx: Context,
+    chatId: number
+  ): Promise<void> {
     const meta = this.extractor.extract(ctx);
     const userMsg = MessageFactory.fromUser(ctx, meta);
     const memory = await this.memories.get(chatId);
