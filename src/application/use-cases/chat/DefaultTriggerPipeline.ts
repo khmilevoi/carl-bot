@@ -1,5 +1,5 @@
 import { inject, injectable, multiInject } from 'inversify';
-import { Context } from 'telegraf';
+import type { Context } from 'telegraf';
 
 import {
   type Trigger,
@@ -24,7 +24,7 @@ export class DefaultTriggerPipeline implements TriggerPipeline {
 
   constructor(
     @inject(DIALOGUE_MANAGER_ID) private dialogue: DialogueManager,
-    @multiInject(TRIGGER_ID) private triggers: Trigger[],
+    @multiInject(TRIGGER_ID) private triggers: Trigger<Context>[],
     @inject(LOGGER_FACTORY_ID) loggerFactory: LoggerFactory
   ) {
     this.logger = loggerFactory.create('DefaultTriggerPipeline');
