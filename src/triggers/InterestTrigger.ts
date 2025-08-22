@@ -1,7 +1,10 @@
 import { inject, injectable } from 'inversify';
 import type { Context } from 'telegraf';
 
-import type { DialogueManager } from '../application/interfaces/chat/DialogueManager.interface';
+import {
+  DIALOGUE_MANAGER_ID,
+  type DialogueManager,
+} from '../application/interfaces/chat/DialogueManager.interface';
 import {
   INTEREST_CHECKER_ID,
   type InterestChecker,
@@ -22,6 +25,7 @@ export class InterestTrigger implements Trigger {
   private readonly logger: Logger;
   constructor(
     @inject(INTEREST_CHECKER_ID) private checker: InterestChecker,
+    @inject(DIALOGUE_MANAGER_ID) private dialogue: DialogueManager,
     @inject(LOGGER_FACTORY_ID) loggerFactory: LoggerFactory
   ) {
     this.logger = loggerFactory.create('InterestTrigger');
@@ -29,10 +33,9 @@ export class InterestTrigger implements Trigger {
 
   async apply(
     _ctx: Context,
-    { chatId }: TriggerContext,
-    dialogue: DialogueManager
+    { chatId }: TriggerContext
   ): Promise<TriggerResult | null> {
-    if (dialogue.isActive(chatId)) {
+    if (this.dialogue.isActive(chatId)) {
       this.logger.debug(
         { chatId },
         'Interest trigger suppressed because dialogue is active'

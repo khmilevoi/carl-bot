@@ -1,7 +1,6 @@
 import { inject, injectable } from 'inversify';
 import type { Context } from 'telegraf';
 
-import type { DialogueManager } from '../application/interfaces/chat/DialogueManager.interface';
 import type { Logger } from '../application/interfaces/logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
@@ -21,8 +20,7 @@ export class ReplyTrigger implements Trigger {
   }
   async apply(
     ctx: Context,
-    context: TriggerContext,
-    _dialogue: DialogueManager
+    context: TriggerContext
   ): Promise<TriggerResult | null> {
     const msg = ctx.message as
       | {

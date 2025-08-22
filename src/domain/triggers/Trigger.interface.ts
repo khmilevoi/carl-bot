@@ -1,8 +1,6 @@
 import type { ServiceIdentifier } from 'inversify';
 import type { Context } from 'telegraf';
 
-import type { DialogueManager } from '../../application/interfaces/chat/DialogueManager.interface';
-
 export interface TriggerContext {
   text: string;
   replyText: string;
@@ -20,12 +18,7 @@ export interface TriggerResult {
 }
 
 export interface Trigger {
-  apply(
-    ctx: Context,
-    context: TriggerContext,
-    dialogue: DialogueManager
-  ): Promise<TriggerResult | null>;
+  apply(ctx: Context, context: TriggerContext): Promise<TriggerResult | null>;
 }
 
-// eslint-disable-next-line import/no-unused-modules
 export const TRIGGER_ID = Symbol.for('Trigger') as ServiceIdentifier<Trigger>;

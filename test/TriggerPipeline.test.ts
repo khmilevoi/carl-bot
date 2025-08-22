@@ -35,14 +35,14 @@ describe('TriggerPipeline', () => {
   const createPipeline = (
     interestChecker: InterestChecker,
     logger: LoggerFactory = loggerFactory,
-    triggers?: Trigger[]
+    triggers?: (dialogue: DialogueManager) => Trigger[]
   ): { pipeline: TriggerPipeline; dialogue: DialogueManager } => {
     const dialogue: DialogueManager = new DefaultDialogueManager(env, logger);
-    const defaultTriggers: Trigger[] = triggers ?? [
-      new MentionTrigger(logger),
+    const defaultTriggers: Trigger[] = triggers?.(dialogue) ?? [
+      new MentionTrigger(dialogue, logger),
       new ReplyTrigger(logger),
       new NameTrigger(env, logger),
-      new InterestTrigger(interestChecker, logger),
+      new InterestTrigger(interestChecker, dialogue, logger),
     ];
     const pipeline = new DefaultTriggerPipeline(
       dialogue,
@@ -123,16 +123,15 @@ describe('TriggerPipeline', () => {
         .fn()
         .mockResolvedValue({ messageId: '1', message: 'hi', why: 'because' }),
     };
-    const triggers: Trigger[] = [
-      { apply: vi.fn().mockResolvedValue(null) },
-      { apply: vi.fn().mockResolvedValue(null) },
-      new NameTrigger(env, loggerFactory),
-      new InterestTrigger(interestChecker, loggerFactory),
-    ];
     const { pipeline } = createPipeline(
       interestChecker,
       loggerFactory,
-      triggers
+      (dialogue) => [
+        { apply: vi.fn().mockResolvedValue(null) },
+        { apply: vi.fn().mockResolvedValue(null) },
+        new NameTrigger(env, loggerFactory),
+        new InterestTrigger(interestChecker, dialogue, loggerFactory),
+      ]
     );
     const ctx = {
       message: { text: 'hi @bot', reply_to_message: { message_id: 2 } },
