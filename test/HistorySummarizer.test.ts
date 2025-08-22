@@ -2,10 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { UserRepository } from '../src/domain/repositories/UserRepository.interface';
 import type { UserEntity } from '../src/domain/entities/UserEntity';
-import type {
-  AIService,
-  ChatMessage,
-} from '../src/application/interfaces/ai/AIService.interface';
+import type { AIService } from '../src/application/interfaces/ai/AIService.interface';
+import type { ChatMessage } from '../src/domain/messages/ChatMessage.interface';
 import { DefaultHistorySummarizer } from '../src/application/use-cases/chat/DefaultHistorySummarizer';
 import type { MessageService } from '../src/application/interfaces/messages/MessageService.interface';
 import type { SummaryService } from '../src/application/interfaces/summaries/SummaryService.interface';

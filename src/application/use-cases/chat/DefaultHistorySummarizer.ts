@@ -1,5 +1,6 @@
 import { inject, injectable } from 'inversify';
 
+import type { ChatMessage } from '../../../domain/messages/ChatMessage.interface';
 import {
   USER_REPOSITORY_ID,
   UserRepository,
@@ -7,7 +8,6 @@ import {
 import {
   AI_SERVICE_ID,
   AIService,
-  ChatMessage,
 } from '../../interfaces/ai/AIService.interface';
 import { type HistorySummarizer } from '../../interfaces/chat/HistorySummarizer.interface';
 import type { Logger } from '../../interfaces/logging/Logger.interface';

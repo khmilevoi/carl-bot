@@ -1,9 +1,9 @@
 import { inject, injectable } from 'inversify';
 
+import type { ChatMessage } from '../../../domain/messages/ChatMessage.interface';
 import {
   AI_SERVICE_ID,
   AIService,
-  ChatMessage,
 } from '../../interfaces/ai/AIService.interface';
 import {
   CHAT_CONFIG_SERVICE_ID,

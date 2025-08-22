@@ -4,10 +4,7 @@ import OpenAI from 'openai';
 import { ChatModel } from 'openai/resources/shared';
 import path from 'path';
 
-import {
-  AIService,
-  ChatMessage,
-} from '../../application/interfaces/ai/AIService.interface';
+import { AIService } from '../../application/interfaces/ai/AIService.interface';
 import {
   ENV_SERVICE_ID,
   EnvService,
@@ -21,6 +18,7 @@ import {
   PROMPT_SERVICE_ID,
   PromptService,
 } from '../../application/interfaces/prompts/PromptService.interface';
+import type { ChatMessage } from '../../domain/messages/ChatMessage.interface';
 import { TriggerReason } from '../../domain/triggers/Trigger.interface';
 
 @injectable()

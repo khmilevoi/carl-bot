@@ -1,10 +1,8 @@
 import type { Context } from 'telegraf';
 import { describe, expect, it, vi } from 'vitest';
 
-import type {
-  AIService,
-  ChatMessage,
-} from '../src/application/interfaces/ai/AIService.interface';
+import type { AIService } from '../src/application/interfaces/ai/AIService.interface';
+import type { ChatMessage } from '../src/domain/messages/ChatMessage.interface';
 import type { ChatMemoryManager } from '../src/application/interfaces/chat/ChatMemoryManager.interface';
 import { ChatResponder } from '../src/application/interfaces/chat/ChatResponder.interface';
 import { DefaultChatResponder } from '../src/application/use-cases/chat/DefaultChatResponder';
