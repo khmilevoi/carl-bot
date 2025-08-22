@@ -1,0 +1,198 @@
+import { type Container } from 'inversify';
+
+import {
+  ADMIN_SERVICE_ID,
+  type AdminService,
+} from '../application/interfaces/admin/AdminService.interface';
+import {
+  AI_SERVICE_ID,
+  type AIService,
+} from '../application/interfaces/ai/AIService.interface';
+import {
+  CHAT_APPROVAL_SERVICE_ID,
+  type ChatApprovalService,
+} from '../application/interfaces/chat/ChatApprovalService.interface';
+import {
+  CHAT_CONFIG_SERVICE_ID,
+  type ChatConfigService,
+} from '../application/interfaces/chat/ChatConfigService.interface';
+import {
+  CHAT_INFO_SERVICE_ID,
+  type ChatInfoService,
+} from '../application/interfaces/chat/ChatInfoService.interface';
+import {
+  CHAT_MEMORY_MANAGER_ID,
+  type ChatMemoryManager as ChatMemoryManagerInterface,
+} from '../application/interfaces/chat/ChatMemoryManager.interface';
+import {
+  CHAT_RESET_SERVICE_ID,
+  type ChatResetService,
+} from '../application/interfaces/chat/ChatResetService.interface';
+import {
+  CHAT_RESPONDER_ID,
+  type ChatResponder,
+} from '../application/interfaces/chat/ChatResponder.interface';
+import {
+  DIALOGUE_MANAGER_ID,
+  type DialogueManager,
+} from '../application/interfaces/chat/DialogueManager.interface';
+import {
+  HISTORY_SUMMARIZER_ID,
+  type HistorySummarizer,
+} from '../application/interfaces/chat/HistorySummarizer.interface';
+import {
+  TRIGGER_PIPELINE_ID,
+  type TriggerPipeline,
+} from '../application/interfaces/chat/TriggerPipeline.interface';
+import {
+  ENV_SERVICE_ID,
+  type EnvService,
+} from '../application/interfaces/env/EnvService.interface';
+import {
+  INTEREST_CHECKER_ID,
+  type InterestChecker,
+} from '../application/interfaces/interest/InterestChecker.interface';
+import {
+  LOGGER_FACTORY_ID,
+  type LoggerFactory,
+} from '../application/interfaces/logging/LoggerFactory.interface';
+import {
+  INTEREST_MESSAGE_STORE_ID,
+  type InterestMessageStore,
+} from '../application/interfaces/messages/InterestMessageStore.interface';
+import {
+  MESSAGE_CONTEXT_EXTRACTOR_ID,
+  type MessageContextExtractor,
+} from '../application/interfaces/messages/MessageContextExtractor.interface';
+import {
+  MESSAGE_SERVICE_ID,
+  type MessageService,
+} from '../application/interfaces/messages/MessageService.interface';
+import {
+  PROMPT_SERVICE_ID,
+  type PromptService,
+} from '../application/interfaces/prompts/PromptService.interface';
+import {
+  SUMMARY_SERVICE_ID,
+  type SummaryService,
+} from '../application/interfaces/summaries/SummaryService.interface';
+import { AdminServiceImpl } from '../application/use-cases/admin/AdminServiceImpl';
+import { ChatMemoryManager as ChatMemoryManagerImpl } from '../application/use-cases/chat/ChatMemory';
+import { DefaultChatApprovalService } from '../application/use-cases/chat/DefaultChatApprovalService';
+import { DefaultChatResetService } from '../application/use-cases/chat/DefaultChatResetService';
+import { DefaultChatResponder } from '../application/use-cases/chat/DefaultChatResponder';
+import { DefaultDialogueManager } from '../application/use-cases/chat/DefaultDialogueManager';
+import { DefaultHistorySummarizer } from '../application/use-cases/chat/DefaultHistorySummarizer';
+import { DefaultTriggerPipeline } from '../application/use-cases/chat/DefaultTriggerPipeline';
+import { RepositoryChatConfigService } from '../application/use-cases/chat/RepositoryChatConfigService';
+import { RepositoryChatInfoService } from '../application/use-cases/chat/RepositoryChatInfoService';
+import { DefaultInterestChecker } from '../application/use-cases/interest/DefaultInterestChecker';
+import { DefaultMessageContextExtractor } from '../application/use-cases/messages/DefaultMessageContextExtractor';
+import { InMemoryInterestMessageStore } from '../application/use-cases/messages/InMemoryInterestMessageStore';
+import { RepositoryMessageService } from '../application/use-cases/messages/RepositoryMessageService';
+import { RepositorySummaryService } from '../application/use-cases/summaries/RepositorySummaryService';
+import { DefaultEnvService } from '../infrastructure/config/DefaultEnvService';
+import { TestEnvService } from '../infrastructure/config/TestEnvService';
+import { ChatGPTService } from '../infrastructure/external/ChatGPTService';
+import { FilePromptService } from '../infrastructure/external/FilePromptService';
+import { PinoLoggerFactory } from '../infrastructure/logging/PinoLoggerFactory';
+
+export const register = (container: Container): void => {
+  const EnvServiceImpl =
+    process.env.NODE_ENV === 'test' ? TestEnvService : DefaultEnvService;
+
+  container
+    .bind<EnvService>(ENV_SERVICE_ID)
+    .to(EnvServiceImpl)
+    .inSingletonScope();
+
+  container
+    .bind<LoggerFactory>(LOGGER_FACTORY_ID)
+    .to(PinoLoggerFactory)
+    .inSingletonScope();
+
+  container
+    .bind<PromptService>(PROMPT_SERVICE_ID)
+    .to(FilePromptService)
+    .inSingletonScope();
+
+  container
+    .bind<AIService>(AI_SERVICE_ID)
+    .to(ChatGPTService)
+    .inSingletonScope();
+
+  container
+    .bind<MessageService>(MESSAGE_SERVICE_ID)
+    .to(RepositoryMessageService)
+    .inSingletonScope();
+
+  container
+    .bind<InterestMessageStore>(INTEREST_MESSAGE_STORE_ID)
+    .to(InMemoryInterestMessageStore)
+    .inSingletonScope();
+
+  container
+    .bind<SummaryService>(SUMMARY_SERVICE_ID)
+    .to(RepositorySummaryService)
+    .inSingletonScope();
+
+  container
+    .bind<HistorySummarizer>(HISTORY_SUMMARIZER_ID)
+    .to(DefaultHistorySummarizer)
+    .inSingletonScope();
+
+  container
+    .bind<ChatResetService>(CHAT_RESET_SERVICE_ID)
+    .to(DefaultChatResetService)
+    .inSingletonScope();
+
+  container
+    .bind<ChatApprovalService>(CHAT_APPROVAL_SERVICE_ID)
+    .to(DefaultChatApprovalService)
+    .inSingletonScope();
+
+  container
+    .bind<ChatConfigService>(CHAT_CONFIG_SERVICE_ID)
+    .to(RepositoryChatConfigService)
+    .inSingletonScope();
+
+  container
+    .bind<ChatInfoService>(CHAT_INFO_SERVICE_ID)
+    .to(RepositoryChatInfoService)
+    .inSingletonScope();
+
+  container
+    .bind<InterestChecker>(INTEREST_CHECKER_ID)
+    .to(DefaultInterestChecker)
+    .inSingletonScope();
+
+  container
+    .bind<AdminService>(ADMIN_SERVICE_ID)
+    .to(AdminServiceImpl)
+    .inSingletonScope();
+
+  container
+    .bind<ChatMemoryManagerInterface>(CHAT_MEMORY_MANAGER_ID)
+    .to(ChatMemoryManagerImpl)
+    .inSingletonScope();
+
+  container
+    .bind<DialogueManager>(DIALOGUE_MANAGER_ID)
+    .to(DefaultDialogueManager)
+    .inSingletonScope();
+
+  container
+    .bind<MessageContextExtractor>(MESSAGE_CONTEXT_EXTRACTOR_ID)
+    .to(DefaultMessageContextExtractor)
+    .inSingletonScope();
+
+  container
+    .bind<TriggerPipeline>(TRIGGER_PIPELINE_ID)
+    .to(DefaultTriggerPipeline)
+    .inSingletonScope();
+
+  container
+    .bind<ChatResponder>(CHAT_RESPONDER_ID)
+    .to(DefaultChatResponder)
+    .inSingletonScope();
+};
