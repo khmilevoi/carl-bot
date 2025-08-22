@@ -5,19 +5,20 @@ import type { AccessKeyRepository } from '@/domain/repositories/AccessKeyReposit
 import {
   DB_PROVIDER_ID,
   type DbProvider,
-  type SqlDatabase,
 } from '@/domain/repositories/DbProvider.interface';
 
 @injectable()
 export class SQLiteAccessKeyRepository implements AccessKeyRepository {
-  constructor(@inject(DB_PROVIDER_ID) private dbProvider: DbProvider) {}
+  constructor(
+    @inject(DB_PROVIDER_ID) private readonly dbProvider: DbProvider
+  ) {}
   async upsertKey({
     chatId,
     userId,
     accessKey,
     expiresAt,
   }: AccessKeyEntity): Promise<void> {
-    const db = await this.db();
+    const db = await this.dbProvider.get();
     await db.run(
       'INSERT INTO access_keys (chat_id, user_id, access_key, expires_at) VALUES (?, ?, ?, ?) ON CONFLICT(chat_id, user_id) DO UPDATE SET access_key=excluded.access_key, expires_at=excluded.expires_at',
       chatId,
@@ -31,7 +32,7 @@ export class SQLiteAccessKeyRepository implements AccessKeyRepository {
     chatId: number,
     userId: number
   ): Promise<AccessKeyEntity | undefined> {
-    const db = await this.db();
+    const db = await this.dbProvider.get();
     const row = await db.get<{
       chat_id: number;
       user_id: number;
@@ -53,11 +54,7 @@ export class SQLiteAccessKeyRepository implements AccessKeyRepository {
   }
 
   async deleteExpired(now: number): Promise<void> {
-    const db = await this.db();
+    const db = await this.dbProvider.get();
     await db.run('DELETE FROM access_keys WHERE expires_at <= ?', now);
-  }
-
-  private async db(): Promise<SqlDatabase> {
-    return this.dbProvider.get();
   }
 }

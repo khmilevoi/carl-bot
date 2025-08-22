@@ -5,13 +5,14 @@ import type { StoredMessage } from '@/domain/messages/StoredMessage.interface';
 import {
   DB_PROVIDER_ID,
   type DbProvider,
-  type SqlDatabase,
 } from '@/domain/repositories/DbProvider.interface';
 import type { MessageRepository } from '@/domain/repositories/MessageRepository.interface';
 
 @injectable()
 export class SQLiteMessageRepository implements MessageRepository {
-  constructor(@inject(DB_PROVIDER_ID) private dbProvider: DbProvider) {}
+  constructor(
+    @inject(DB_PROVIDER_ID) private readonly dbProvider: DbProvider
+  ) {}
   async insert({
     chatId,
     messageId,
@@ -22,7 +23,7 @@ export class SQLiteMessageRepository implements MessageRepository {
     replyUsername,
     quoteText,
   }: StoredMessage): Promise<void> {
-    const db = await this.db();
+    const db = await this.dbProvider.get();
     await db.run(
       'INSERT INTO messages (chat_id, message_id, role, content, user_id, reply_text, reply_username, quote_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       chatId,
@@ -37,7 +38,7 @@ export class SQLiteMessageRepository implements MessageRepository {
   }
 
   async findByChatId(chatId: number): Promise<ChatMessage[]> {
-    const db = await this.db();
+    const db = await this.dbProvider.get();
     const rows = await db.all<{
       role: 'user' | 'assistant';
       content: string;
@@ -77,7 +78,7 @@ export class SQLiteMessageRepository implements MessageRepository {
   }
 
   async countByChatId(chatId: number): Promise<number> {
-    const db = await this.db();
+    const db = await this.dbProvider.get();
     const row = await db.get<{ count: number }>(
       'SELECT COUNT(*) as count FROM messages WHERE chat_id = ?',
       chatId
@@ -89,7 +90,7 @@ export class SQLiteMessageRepository implements MessageRepository {
     chatId: number,
     limit: number
   ): Promise<ChatMessage[]> {
-    const db = await this.db();
+    const db = await this.dbProvider.get();
     const rows = await db.all<{
       role: 'user' | 'assistant';
       content: string;
@@ -130,11 +131,7 @@ export class SQLiteMessageRepository implements MessageRepository {
   }
 
   async clearByChatId(chatId: number): Promise<void> {
-    const db = await this.db();
+    const db = await this.dbProvider.get();
     await db.run('DELETE FROM messages WHERE chat_id = ?', chatId);
-  }
-
-  private async db(): Promise<SqlDatabase> {
-    return this.dbProvider.get();
   }
 }
