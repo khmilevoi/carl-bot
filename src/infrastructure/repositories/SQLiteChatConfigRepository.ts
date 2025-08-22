@@ -3,7 +3,7 @@ import type { Database } from 'sqlite';
 
 import type { ChatConfigEntity } from '../../domain/entities/ChatConfigEntity';
 import type { ChatConfigRepository } from '../../domain/repositories/ChatConfigRepository.interface';
-import { DB_PROVIDER_ID, type SQLiteDbProvider } from '../DbProvider';
+import { DB_PROVIDER_ID, type SQLiteDbProvider } from './DbProvider';
 
 @injectable()
 export class SQLiteChatConfigRepository implements ChatConfigRepository {

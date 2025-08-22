@@ -11,7 +11,7 @@ describe('logger', () => {
 
   it('creates logger instance', async () => {
     const { PinoLogger } = await import(
-      '../src/application/use-cases/logging/PinoLogger'
+      '../src/infrastructure/logging/PinoLogger'
     );
     const logger = new PinoLogger();
     expect(logger).toBeDefined();
@@ -40,7 +40,7 @@ describe('logger', () => {
   it('child logger respects EnvService log level', async () => {
     process.env.LOG_LEVEL = 'info';
     const { PinoLogger } = await import(
-      '../src/application/use-cases/logging/PinoLogger'
+      '../src/infrastructure/logging/PinoLogger'
     );
     const envService = { env: { LOG_LEVEL: 'error' } } as unknown as EnvService;
     const logger = new PinoLogger(envService);

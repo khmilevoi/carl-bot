@@ -27,7 +27,7 @@ import {
 import {
   DB_PROVIDER_ID,
   type SQLiteDbProvider,
-} from '../../../repositories/DbProvider';
+} from '../../../infrastructure/repositories/DbProvider';
 import { AdminService } from '../../interfaces/admin/AdminService.interface';
 import type { ChatMessage } from '../../interfaces/ai/AIService.interface';
 import {

@@ -79,7 +79,7 @@ module.exports = [
           missingExports: true,
           ignoreExports: [
             'src/index.ts',
-            'src/repositories/DbProvider.ts',
+            'src/infrastructure/repositories/DbProvider.ts',
             'test/**',
           ],
         },

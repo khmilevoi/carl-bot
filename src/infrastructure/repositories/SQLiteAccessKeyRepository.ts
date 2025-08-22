@@ -3,7 +3,7 @@ import type { Database } from 'sqlite';
 
 import type { AccessKeyEntity } from '../../domain/entities/AccessKeyEntity';
 import type { AccessKeyRepository } from '../../domain/repositories/AccessKeyRepository.interface';
-import { DB_PROVIDER_ID, type SQLiteDbProvider } from '../DbProvider';
+import { DB_PROVIDER_ID, type SQLiteDbProvider } from './DbProvider';
 
 @injectable()
 export class SQLiteAccessKeyRepository implements AccessKeyRepository {
