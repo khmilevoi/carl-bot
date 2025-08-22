@@ -1,31 +1,31 @@
 import { inject, injectable } from 'inversify';
 
-import type { Logger } from '@/application/interfaces/logging/Logger.interface';
+import type { Logger } from '@/application/interfaces/logging/Logger';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '@/application/interfaces/logging/LoggerFactory.interface';
-import type { MessageService } from '@/application/interfaces/messages/MessageService.interface';
+} from '@/application/interfaces/logging/LoggerFactory';
+import type { MessageService } from '@/application/interfaces/messages/MessageService';
 import { ChatEntity } from '@/domain/entities/ChatEntity';
 import { UserEntity } from '@/domain/entities/UserEntity';
-import type { ChatMessage } from '@/domain/messages/ChatMessage.interface';
-import type { StoredMessage } from '@/domain/messages/StoredMessage.interface';
+import type { ChatMessage } from '@/domain/messages/ChatMessage';
+import type { StoredMessage } from '@/domain/messages/StoredMessage';
 import {
   CHAT_REPOSITORY_ID,
   type ChatRepository,
-} from '@/domain/repositories/ChatRepository.interface';
+} from '@/domain/repositories/ChatRepository';
 import {
   CHAT_USER_REPOSITORY_ID,
   type ChatUserRepository,
-} from '@/domain/repositories/ChatUserRepository.interface';
+} from '@/domain/repositories/ChatUserRepository';
 import {
   MESSAGE_REPOSITORY_ID,
   type MessageRepository,
-} from '@/domain/repositories/MessageRepository.interface';
+} from '@/domain/repositories/MessageRepository';
 import {
   USER_REPOSITORY_ID,
   type UserRepository,
-} from '@/domain/repositories/UserRepository.interface';
+} from '@/domain/repositories/UserRepository';
 
 @injectable()
 export class RepositoryMessageService implements MessageService {

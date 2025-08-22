@@ -16,7 +16,7 @@ import { ChatEntity } from '../src/domain/entities/ChatEntity';
 import { UserEntity } from '../src/domain/entities/UserEntity';
 import { TestEnvService } from '../src/infrastructure/config/TestEnvService';
 import { parseDatabaseUrl } from '../src/utils/database';
-import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
+import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory';
 
 const createLoggerFactory = (): LoggerFactory =>
   ({

@@ -6,9 +6,9 @@ import { TestEnvService } from '../src/infrastructure/config/TestEnvService';
 import { MentionTrigger } from '../src/view/telegram/triggers/MentionTrigger';
 import { NameTrigger } from '../src/view/telegram/triggers/NameTrigger';
 import { ReplyTrigger } from '../src/view/telegram/triggers/ReplyTrigger';
-import { TriggerContext } from '../src/domain/triggers/Trigger.interface';
-import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
-import type { EnvService } from '../src/application/interfaces/env/EnvService.interface';
+import { TriggerContext } from '../src/domain/triggers/Trigger';
+import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory';
+import type { EnvService } from '../src/application/interfaces/env/EnvService';
 
 const createLoggerFactory = (): LoggerFactory =>
   ({

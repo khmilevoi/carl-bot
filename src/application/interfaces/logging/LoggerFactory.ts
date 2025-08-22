@@ -1,6 +1,6 @@
 import type { ServiceIdentifier } from 'inversify';
 
-import type { Logger } from './Logger.interface';
+import type { Logger } from './Logger';
 
 export interface LoggerFactory {
   create(serviceName: string): Logger;

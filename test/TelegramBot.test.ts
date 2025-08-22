@@ -5,14 +5,14 @@ import { describe, expect, it, vi } from 'vitest';
 import { TelegramBot } from '../src/view/telegram/TelegramBot';
 import * as TelegramBotModule from '../src/view/telegram/TelegramBot';
 import { createWindows } from '../src/view/telegram/windowConfig';
-import type { ChatInfoService } from '../src/application/interfaces/chat/ChatInfoService.interface';
-import type { AdminService } from '../src/application/interfaces/admin/AdminService.interface';
-import type { ChatApprovalService } from '../src/application/interfaces/chat/ChatApprovalService.interface';
-import type { ChatMemoryManager } from '../src/application/interfaces/chat/ChatMemoryManager.interface';
-import type { ChatResponder } from '../src/application/interfaces/chat/ChatResponder.interface';
-import type { TriggerPipeline } from '../src/application/interfaces/chat/TriggerPipeline.interface';
-import type { EnvService } from '../src/application/interfaces/env/EnvService.interface';
-import type { ChatConfigService } from '../src/application/interfaces/chat/ChatConfigService.interface';
+import type { ChatInfoService } from '../src/application/interfaces/chat/ChatInfoService';
+import type { AdminService } from '../src/application/interfaces/admin/AdminService';
+import type { ChatApprovalService } from '../src/application/interfaces/chat/ChatApprovalService';
+import type { ChatMemoryManager } from '../src/application/interfaces/chat/ChatMemoryManager';
+import type { ChatResponder } from '../src/application/interfaces/chat/ChatResponder';
+import type { TriggerPipeline } from '../src/application/interfaces/chat/TriggerPipeline';
+import type { EnvService } from '../src/application/interfaces/env/EnvService';
+import type { ChatConfigService } from '../src/application/interfaces/chat/ChatConfigService';
 import {
   InvalidInterestIntervalError,
   InvalidHistoryLimitError,
@@ -20,8 +20,8 @@ import {
 import type {
   MessageContext,
   MessageContextExtractor,
-} from '../src/application/interfaces/messages/MessageContextExtractor.interface';
-import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
+} from '../src/application/interfaces/messages/MessageContextExtractor';
+import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory';
 
 const createLoggerFactory = (): LoggerFactory =>
   ({
@@ -1229,10 +1229,10 @@ describe('TelegramBot', () => {
     botWithRouter.router = { show: vi.fn() };
     const ctx = { chat: { id: 1 } } as unknown as Context;
     await botWithRouter.showMenu(ctx);
-    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'admin_menu');
+    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'menu');
   });
 
-  it('shows banned and pending states in menu', async () => {
+  it('shows menu regardless of chat status', async () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
       .spyOn(
@@ -1263,13 +1263,16 @@ describe('TelegramBot', () => {
     approvalService.getStatus.mockResolvedValueOnce('banned');
     const bannedCtx = { chat: { id: 2 }, reply: vi.fn() } as unknown as Context;
     await botWithRouter.showMenu(bannedCtx);
-    expect(bannedCtx.reply).toHaveBeenCalledWith('Доступ к боту запрещён.');
+    expect(botWithRouter.router.show).toHaveBeenCalledWith(bannedCtx, 'menu');
     approvalService.getStatus.mockResolvedValueOnce('pending');
-    const pendingCtx = { chat: { id: 3 } } as unknown as Context;
+    const pendingCtx = {
+      chat: { id: 3 },
+      reply: vi.fn(),
+    } as unknown as Context;
     await botWithRouter.showMenu(pendingCtx);
     expect(botWithRouter.router.show).toHaveBeenLastCalledWith(
       pendingCtx,
-      'chat_not_approved'
+      'menu'
     );
   });
 
@@ -1343,24 +1346,31 @@ describe('TelegramBot', () => {
         'sendChatApprovalRequest'
       )
       .mockResolvedValue();
+    const showSpy = vi
+      .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
+      .mockResolvedValue(undefined);
     const ctxPending = {
       chat: { id: 2 },
       from: { id: 1 },
       message: { text: 'hi', message_id: 1 },
+      reply: vi.fn(),
     } as unknown as Context;
     await (
       bot as unknown as { handleText: (ctx: Context) => Promise<void> }
     ).handleText(ctxPending);
-    expect(sendRequest).toHaveBeenCalledWith(2, undefined);
+    expect(sendRequest).not.toHaveBeenCalled();
+    expect(showSpy).toHaveBeenCalledWith(ctxPending, 'chat_not_approved');
     const ctxBanned = {
       chat: { id: 3 },
       from: { id: 1 },
       message: { text: 'hi', message_id: 1 },
+      reply: vi.fn(),
     } as unknown as Context;
     await (
       bot as unknown as { handleText: (ctx: Context) => Promise<void> }
     ).handleText(ctxBanned);
     expect(memories.memory.addMessage).not.toHaveBeenCalled();
+    expect(showSpy).toHaveBeenCalledTimes(1);
   });
 
   it('denies export when access is missing', async () => {
@@ -1470,14 +1480,18 @@ describe('TelegramBot', () => {
         'sendChatApprovalRequest'
       )
       .mockResolvedValue();
-    const ctx = { chat: { id: 5 } } as unknown as Context;
+    const showSpy = vi
+      .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
+      .mockResolvedValue(undefined);
+    const ctx = { chat: { id: 5 }, reply: vi.fn() } as unknown as Context;
     const result = await (
       bot as unknown as {
         checkChatStatus: (ctx: Context, chatId: number) => Promise<boolean>;
       }
     ).checkChatStatus(ctx, 5);
     expect(result).toBe(false);
-    expect(sendSpy).toHaveBeenCalledWith(5, undefined);
+    expect(sendSpy).not.toHaveBeenCalled();
+    expect(showSpy).toHaveBeenCalledWith(ctx, 'chat_not_approved');
   });
 
   it('checkChatStatus handles banned chat', async () => {

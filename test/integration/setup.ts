@@ -12,9 +12,9 @@ import { migrateUp } from '../../src/migrate';
 import {
   type AIService,
   AI_SERVICE_ID,
-} from '../../src/application/interfaces/ai/AIService.interface';
-import type { ChatMessage } from '../../src/domain/messages/ChatMessage.interface';
-import type { TriggerReason } from '../../src/domain/triggers/Trigger.interface';
+} from '../../src/application/interfaces/ai/AIService';
+import type { ChatMessage } from '../../src/domain/messages/ChatMessage';
+import type { TriggerReason } from '../../src/domain/triggers/Trigger';
 import type { Context, Telegram } from 'telegraf';
 
 // Stable mock for AIService

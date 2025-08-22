@@ -3,16 +3,16 @@ import { describe, expect, it, vi } from 'vitest';
 import type {
   DbProvider,
   SqlDatabase,
-} from '../src/domain/repositories/DbProvider.interface';
-import type { AccessKeyRepository } from '../src/domain/repositories/AccessKeyRepository.interface';
-import type { ChatUserRepository } from '../src/domain/repositories/ChatUserRepository.interface';
-import type { MessageRepository } from '../src/domain/repositories/MessageRepository.interface';
-import type { SummaryRepository } from '../src/domain/repositories/SummaryRepository.interface';
-import type { UserRepository } from '../src/domain/repositories/UserRepository.interface';
+} from '../src/domain/repositories/DbProvider';
+import type { AccessKeyRepository } from '../src/domain/repositories/AccessKeyRepository';
+import type { ChatUserRepository } from '../src/domain/repositories/ChatUserRepository';
+import type { MessageRepository } from '../src/domain/repositories/MessageRepository';
+import type { SummaryRepository } from '../src/domain/repositories/SummaryRepository';
+import type { UserRepository } from '../src/domain/repositories/UserRepository';
 import { UserEntity } from '../src/domain/entities/UserEntity';
 import { AdminServiceImpl } from '../src/application/use-cases/admin/AdminServiceImpl';
-import type { ChatConfigService } from '../src/application/interfaces/chat/ChatConfigService.interface';
-import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
+import type { ChatConfigService } from '../src/application/interfaces/chat/ChatConfigService';
+import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory';
 
 const createLoggerFactory = (): LoggerFactory =>
   ({

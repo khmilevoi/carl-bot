@@ -1,7 +1,7 @@
 import { type Container } from 'inversify';
 import type { Context } from 'telegraf';
 
-import { type Trigger, TRIGGER_ID } from '../domain/triggers/Trigger.interface';
+import { type Trigger, TRIGGER_ID } from '../domain/triggers/Trigger';
 import { TelegramBot } from '../view/telegram/TelegramBot';
 import { InterestTrigger } from '../view/telegram/triggers/InterestTrigger';
 import { MentionTrigger } from '../view/telegram/triggers/MentionTrigger';

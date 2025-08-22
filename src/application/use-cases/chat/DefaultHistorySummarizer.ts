@@ -1,21 +1,21 @@
 import { inject, injectable } from 'inversify';
 
-import type { AIService } from '@/application/interfaces/ai/AIService.interface';
-import { AI_SERVICE_ID } from '@/application/interfaces/ai/AIService.interface';
-import { type HistorySummarizer } from '@/application/interfaces/chat/HistorySummarizer.interface';
-import type { Logger } from '@/application/interfaces/logging/Logger.interface';
+import type { AIService } from '@/application/interfaces/ai/AIService';
+import { AI_SERVICE_ID } from '@/application/interfaces/ai/AIService';
+import { type HistorySummarizer } from '@/application/interfaces/chat/HistorySummarizer';
+import type { Logger } from '@/application/interfaces/logging/Logger';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '@/application/interfaces/logging/LoggerFactory.interface';
-import type { MessageService } from '@/application/interfaces/messages/MessageService.interface';
-import { MESSAGE_SERVICE_ID } from '@/application/interfaces/messages/MessageService.interface';
-import type { SummaryService } from '@/application/interfaces/summaries/SummaryService.interface';
-import { SUMMARY_SERVICE_ID } from '@/application/interfaces/summaries/SummaryService.interface';
+} from '@/application/interfaces/logging/LoggerFactory';
+import type { MessageService } from '@/application/interfaces/messages/MessageService';
+import { MESSAGE_SERVICE_ID } from '@/application/interfaces/messages/MessageService';
+import type { SummaryService } from '@/application/interfaces/summaries/SummaryService';
+import { SUMMARY_SERVICE_ID } from '@/application/interfaces/summaries/SummaryService';
 import { UserEntity } from '@/domain/entities/UserEntity';
-import type { ChatMessage } from '@/domain/messages/ChatMessage.interface';
-import type { UserRepository } from '@/domain/repositories/UserRepository.interface';
-import { USER_REPOSITORY_ID } from '@/domain/repositories/UserRepository.interface';
+import type { ChatMessage } from '@/domain/messages/ChatMessage';
+import type { UserRepository } from '@/domain/repositories/UserRepository';
+import { USER_REPOSITORY_ID } from '@/domain/repositories/UserRepository';
 
 @injectable()
 export class DefaultHistorySummarizer implements HistorySummarizer {

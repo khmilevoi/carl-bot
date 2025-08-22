@@ -3,79 +3,79 @@ import { type Container } from 'inversify';
 import {
   ADMIN_SERVICE_ID,
   type AdminService,
-} from '../application/interfaces/admin/AdminService.interface';
+} from '../application/interfaces/admin/AdminService';
 import {
   AI_SERVICE_ID,
   type AIService,
-} from '../application/interfaces/ai/AIService.interface';
+} from '../application/interfaces/ai/AIService';
 import {
   CHAT_APPROVAL_SERVICE_ID,
   type ChatApprovalService,
-} from '../application/interfaces/chat/ChatApprovalService.interface';
+} from '../application/interfaces/chat/ChatApprovalService';
 import {
   CHAT_CONFIG_SERVICE_ID,
   type ChatConfigService,
-} from '../application/interfaces/chat/ChatConfigService.interface';
+} from '../application/interfaces/chat/ChatConfigService';
 import {
   CHAT_INFO_SERVICE_ID,
   type ChatInfoService,
-} from '../application/interfaces/chat/ChatInfoService.interface';
+} from '../application/interfaces/chat/ChatInfoService';
 import {
   CHAT_MEMORY_MANAGER_ID,
   type ChatMemoryManager as ChatMemoryManagerInterface,
-} from '../application/interfaces/chat/ChatMemoryManager.interface';
+} from '../application/interfaces/chat/ChatMemoryManager';
 import {
   CHAT_RESET_SERVICE_ID,
   type ChatResetService,
-} from '../application/interfaces/chat/ChatResetService.interface';
+} from '../application/interfaces/chat/ChatResetService';
 import {
   CHAT_RESPONDER_ID,
   type ChatResponder,
-} from '../application/interfaces/chat/ChatResponder.interface';
+} from '../application/interfaces/chat/ChatResponder';
 import {
   DIALOGUE_MANAGER_ID,
   type DialogueManager,
-} from '../application/interfaces/chat/DialogueManager.interface';
+} from '../application/interfaces/chat/DialogueManager';
 import {
   HISTORY_SUMMARIZER_ID,
   type HistorySummarizer,
-} from '../application/interfaces/chat/HistorySummarizer.interface';
+} from '../application/interfaces/chat/HistorySummarizer';
 import {
   TRIGGER_PIPELINE_ID,
   type TriggerPipeline,
-} from '../application/interfaces/chat/TriggerPipeline.interface';
+} from '../application/interfaces/chat/TriggerPipeline';
 import {
   ENV_SERVICE_ID,
   type EnvService,
-} from '../application/interfaces/env/EnvService.interface';
+} from '../application/interfaces/env/EnvService';
 import {
   INTEREST_CHECKER_ID,
   type InterestChecker,
-} from '../application/interfaces/interest/InterestChecker.interface';
+} from '../application/interfaces/interest/InterestChecker';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '../application/interfaces/logging/LoggerFactory.interface';
+} from '../application/interfaces/logging/LoggerFactory';
 import {
   INTEREST_MESSAGE_STORE_ID,
   type InterestMessageStore,
-} from '../application/interfaces/messages/InterestMessageStore.interface';
+} from '../application/interfaces/messages/InterestMessageStore';
 import {
   MESSAGE_CONTEXT_EXTRACTOR_ID,
   type MessageContextExtractor,
-} from '../application/interfaces/messages/MessageContextExtractor.interface';
+} from '../application/interfaces/messages/MessageContextExtractor';
 import {
   MESSAGE_SERVICE_ID,
   type MessageService,
-} from '../application/interfaces/messages/MessageService.interface';
+} from '../application/interfaces/messages/MessageService';
 import {
   PROMPT_SERVICE_ID,
   type PromptService,
-} from '../application/interfaces/prompts/PromptService.interface';
+} from '../application/interfaces/prompts/PromptService';
 import {
   SUMMARY_SERVICE_ID,
   type SummaryService,
-} from '../application/interfaces/summaries/SummaryService.interface';
+} from '../application/interfaces/summaries/SummaryService';
 import { AdminServiceImpl } from '../application/use-cases/admin/AdminServiceImpl';
 import { ChatMemoryManager as ChatMemoryManagerImpl } from '../application/use-cases/chat/ChatMemory';
 import { DefaultChatApprovalService } from '../application/use-cases/chat/DefaultChatApprovalService';

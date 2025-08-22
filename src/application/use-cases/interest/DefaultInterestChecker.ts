@@ -1,22 +1,22 @@
 import { inject, injectable } from 'inversify';
 
-import type { AIService } from '@/application/interfaces/ai/AIService.interface';
-import { AI_SERVICE_ID } from '@/application/interfaces/ai/AIService.interface';
+import type { AIService } from '@/application/interfaces/ai/AIService';
+import { AI_SERVICE_ID } from '@/application/interfaces/ai/AIService';
 import {
   CHAT_CONFIG_SERVICE_ID,
   type ChatConfigService,
-} from '@/application/interfaces/chat/ChatConfigService.interface';
-import { type InterestChecker } from '@/application/interfaces/interest/InterestChecker.interface';
-import type { Logger } from '@/application/interfaces/logging/Logger.interface';
+} from '@/application/interfaces/chat/ChatConfigService';
+import { type InterestChecker } from '@/application/interfaces/interest/InterestChecker';
+import type { Logger } from '@/application/interfaces/logging/Logger';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '@/application/interfaces/logging/LoggerFactory.interface';
-import type { InterestMessageStore } from '@/application/interfaces/messages/InterestMessageStore.interface';
-import { INTEREST_MESSAGE_STORE_ID } from '@/application/interfaces/messages/InterestMessageStore.interface';
-import type { SummaryService } from '@/application/interfaces/summaries/SummaryService.interface';
-import { SUMMARY_SERVICE_ID } from '@/application/interfaces/summaries/SummaryService.interface';
-import type { ChatMessage } from '@/domain/messages/ChatMessage.interface';
+} from '@/application/interfaces/logging/LoggerFactory';
+import type { InterestMessageStore } from '@/application/interfaces/messages/InterestMessageStore';
+import { INTEREST_MESSAGE_STORE_ID } from '@/application/interfaces/messages/InterestMessageStore';
+import type { SummaryService } from '@/application/interfaces/summaries/SummaryService';
+import { SUMMARY_SERVICE_ID } from '@/application/interfaces/summaries/SummaryService';
+import type { ChatMessage } from '@/domain/messages/ChatMessage';
 
 @injectable()
 export class DefaultInterestChecker implements InterestChecker {

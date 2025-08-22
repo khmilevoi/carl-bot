@@ -2,8 +2,8 @@ import assert from 'node:assert';
 
 import type { Context } from 'telegraf';
 
-import type { MessageContext } from '@/application/interfaces/messages/MessageContextExtractor.interface';
-import type { StoredMessage } from '@/domain/messages/StoredMessage.interface';
+import type { MessageContext } from '@/application/interfaces/messages/MessageContextExtractor';
+import type { StoredMessage } from '@/domain/messages/StoredMessage';
 
 export class MessageFactory {
   static fromUser(ctx: Context, meta: MessageContext): StoredMessage {

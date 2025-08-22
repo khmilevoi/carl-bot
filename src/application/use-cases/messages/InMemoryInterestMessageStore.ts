@@ -1,13 +1,13 @@
 import { inject, injectable } from 'inversify';
 
-import type { Logger } from '@/application/interfaces/logging/Logger.interface';
+import type { Logger } from '@/application/interfaces/logging/Logger';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '@/application/interfaces/logging/LoggerFactory.interface';
-import { type InterestMessageStore } from '@/application/interfaces/messages/InterestMessageStore.interface';
-import type { ChatMessage } from '@/domain/messages/ChatMessage.interface';
-import type { StoredMessage } from '@/domain/messages/StoredMessage.interface';
+} from '@/application/interfaces/logging/LoggerFactory';
+import { type InterestMessageStore } from '@/application/interfaces/messages/InterestMessageStore';
+import type { ChatMessage } from '@/domain/messages/ChatMessage';
+import type { StoredMessage } from '@/domain/messages/StoredMessage';
 
 @injectable()
 export class InMemoryInterestMessageStore implements InterestMessageStore {
