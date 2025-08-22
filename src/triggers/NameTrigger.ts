@@ -7,7 +7,7 @@ import type {
   Trigger,
   TriggerContext,
   TriggerResult,
-} from './Trigger.interface';
+} from '../domain/triggers/Trigger.interface';
 
 export class NameTrigger implements Trigger {
   private pattern: RegExp;

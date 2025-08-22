@@ -9,7 +9,7 @@ import { InterestChecker } from '../src/application/interfaces/interest/Interest
 import {
   type Trigger,
   TriggerContext,
-} from '../src/triggers/Trigger.interface';
+} from '../src/domain/triggers/Trigger.interface';
 import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
 
 describe('TriggerPipeline', () => {

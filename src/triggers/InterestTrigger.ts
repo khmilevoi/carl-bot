@@ -8,7 +8,7 @@ import type {
   Trigger,
   TriggerContext,
   TriggerResult,
-} from './Trigger.interface';
+} from '../domain/triggers/Trigger.interface';
 
 export class InterestTrigger implements Trigger {
   private readonly logger: Logger;

@@ -4,7 +4,7 @@ import OpenAI from 'openai';
 import { ChatModel } from 'openai/resources/shared';
 import path from 'path';
 
-import { TriggerReason } from '../../../triggers/Trigger.interface';
+import { TriggerReason } from '../../../domain/triggers/Trigger.interface';
 import {
   AIService,
   ChatMessage,

@@ -5,7 +5,7 @@ import { DefaultDialogueManager } from '../src/application/use-cases/chat/Defaul
 import { DialogueManager } from '../src/application/interfaces/chat/DialogueManager.interface';
 import { InterestChecker } from '../src/application/interfaces/interest/InterestChecker.interface';
 import { InterestTrigger } from '../src/triggers/InterestTrigger';
-import { TriggerContext } from '../src/triggers/Trigger.interface';
+import { TriggerContext } from '../src/domain/triggers/Trigger.interface';
 import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
 
 class MockInterestChecker implements InterestChecker {
