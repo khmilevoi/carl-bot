@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto';
 import { inject, injectable } from 'inversify';
 
 import type { UserEntity } from '../../../domain/entities/UserEntity';
+import type { ChatMessage } from '../../../domain/messages/ChatMessage.interface';
 import {
   ACCESS_KEY_REPOSITORY_ID,
   type AccessKeyRepository,
@@ -29,7 +30,6 @@ import {
   type UserRepository,
 } from '../../../domain/repositories/UserRepository.interface';
 import { AdminService } from '../../interfaces/admin/AdminService.interface';
-import type { ChatMessage } from '../../interfaces/ai/AIService.interface';
 import {
   CHAT_CONFIG_SERVICE_ID,
   type ChatConfigService,

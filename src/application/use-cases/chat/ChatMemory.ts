@@ -1,6 +1,7 @@
 import { inject, injectable } from 'inversify';
 
-import { ChatMessage } from '../../interfaces/ai/AIService.interface';
+import type { ChatMessage } from '../../../domain/messages/ChatMessage.interface';
+import { StoredMessage } from '../../../domain/messages/StoredMessage.interface';
 import {
   CHAT_CONFIG_SERVICE_ID,
   type ChatConfigService,
@@ -28,7 +29,6 @@ import {
   MESSAGE_SERVICE_ID,
   type MessageService,
 } from '../../interfaces/messages/MessageService.interface';
-import { StoredMessage } from '../../interfaces/messages/StoredMessage.interface';
 
 @injectable()
 export class ChatMemory implements ChatMemoryInterface {

@@ -85,6 +85,22 @@ module.exports = [
         },
       ],
       'import/no-default-export': 'error',
+      'import/no-restricted-paths': [
+        'error',
+        {
+          zones: [
+            {
+              target: ['src/domain'],
+              from: ['src/application', 'src/infrastructure', 'src/view'],
+            },
+            {
+              target: ['src/application'],
+              from: ['src/infrastructure', 'src/view'],
+            },
+            { target: ['src/infrastructure'], from: ['src/view'] },
+          ],
+        },
+      ],
     },
     settings: {
       'import/extensions': ['.js', '.ts'],

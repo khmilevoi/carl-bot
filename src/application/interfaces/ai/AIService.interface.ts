@@ -1,17 +1,4 @@
-export interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  username?: string;
-  fullName?: string;
-  replyText?: string;
-  replyUsername?: string;
-  quoteText?: string;
-  userId?: number;
-  messageId?: number;
-  chatId?: number;
-  attitude?: string | null;
-}
-
+import type { ChatMessage } from '../../../domain/messages/ChatMessage.interface';
 import type { TriggerReason } from '../../../domain/triggers/Trigger.interface';
 
 export interface AIService {

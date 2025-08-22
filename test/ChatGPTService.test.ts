@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ChatMessage } from '../src/application/interfaces/ai/AIService.interface';
+import type { ChatMessage } from '../src/domain/messages/ChatMessage.interface';
 import type { ChatGPTService as ChatGPTServiceType } from '../src/infrastructure/external/ChatGPTService';
 import { TestEnvService } from '../src/infrastructure/config/TestEnvService';
 import type { PromptService } from '../src/application/interfaces/prompts/PromptService.interface';

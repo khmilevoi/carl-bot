@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ChatMessage } from '../src/application/interfaces/ai/AIService.interface';
+import type { ChatMessage } from '../src/domain/messages/ChatMessage.interface';
 import {
   ChatMemory,
   ChatMemoryManager,
@@ -14,7 +14,7 @@ import {
   InMemoryInterestMessageStore,
 } from '../src/application/use-cases/messages/InMemoryInterestMessageStore';
 import { MessageService } from '../src/application/interfaces/messages/MessageService.interface';
-import { StoredMessage } from '../src/application/interfaces/messages/StoredMessage.interface';
+import { StoredMessage } from '../src/domain/messages/StoredMessage.interface';
 import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
 
 const createLoggerFactory = (): LoggerFactory =>

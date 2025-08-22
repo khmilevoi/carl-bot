@@ -12,8 +12,8 @@ import { migrateUp } from '../../src/migrate';
 import {
   type AIService,
   AI_SERVICE_ID,
-  type ChatMessage,
 } from '../../src/application/interfaces/ai/AIService.interface';
+import type { ChatMessage } from '../../src/domain/messages/ChatMessage.interface';
 import type { TriggerReason } from '../../src/domain/triggers/Trigger.interface';
 import type { Context, Telegram } from 'telegraf';
 

@@ -1,9 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  AIService,
-  ChatMessage,
-} from '../src/application/interfaces/ai/AIService.interface';
+import type { AIService } from '../src/application/interfaces/ai/AIService.interface';
+import type { ChatMessage } from '../src/domain/messages/ChatMessage.interface';
 import { DefaultInterestChecker } from '../src/application/use-cases/interest/DefaultInterestChecker';
 import { ChatConfigService } from '../src/application/interfaces/chat/ChatConfigService.interface';
 import {
