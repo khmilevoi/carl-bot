@@ -1,19 +1,19 @@
 import { inject, injectable } from 'inversify';
 
-import type { ChatResetService } from '../../interfaces/chat/ChatResetService.interface';
-import type { Logger } from '../../interfaces/logging/Logger.interface';
+import type { ChatResetService } from '@/application/interfaces/chat/ChatResetService.interface';
+import type { Logger } from '@/application/interfaces/logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '../../interfaces/logging/LoggerFactory.interface';
+} from '@/application/interfaces/logging/LoggerFactory.interface';
 import {
   MESSAGE_SERVICE_ID,
   type MessageService,
-} from '../../interfaces/messages/MessageService.interface';
+} from '@/application/interfaces/messages/MessageService.interface';
 import {
   SUMMARY_SERVICE_ID,
   type SummaryService,
-} from '../../interfaces/summaries/SummaryService.interface';
+} from '@/application/interfaces/summaries/SummaryService.interface';
 
 @injectable()
 export class DefaultChatResetService implements ChatResetService {

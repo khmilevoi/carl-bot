@@ -4,7 +4,7 @@ import type { Context } from 'telegraf';
 import type {
   TriggerContext,
   TriggerResult,
-} from '../../../domain/triggers/Trigger.interface';
+} from '@/domain/triggers/Trigger.interface';
 
 export interface TriggerPipeline {
   shouldRespond(

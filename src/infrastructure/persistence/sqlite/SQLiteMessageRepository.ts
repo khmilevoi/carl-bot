@@ -1,13 +1,13 @@
 import { inject, injectable } from 'inversify';
 
-import type { ChatMessage } from '../../../domain/messages/ChatMessage.interface';
-import type { StoredMessage } from '../../../domain/messages/StoredMessage.interface';
+import type { ChatMessage } from '@/domain/messages/ChatMessage.interface';
+import type { StoredMessage } from '@/domain/messages/StoredMessage.interface';
 import {
   DB_PROVIDER_ID,
   type DbProvider,
   type SqlDatabase,
-} from '../../../domain/repositories/DbProvider.interface';
-import type { MessageRepository } from '../../../domain/repositories/MessageRepository.interface';
+} from '@/domain/repositories/DbProvider.interface';
+import type { MessageRepository } from '@/domain/repositories/MessageRepository.interface';
 
 @injectable()
 export class SQLiteMessageRepository implements MessageRepository {

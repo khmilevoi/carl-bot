@@ -3,13 +3,13 @@ import { inject, injectable } from 'inversify';
 import type {
   ChatAccessEntity,
   ChatStatus,
-} from '../../../domain/entities/ChatAccessEntity';
-import type { ChatAccessRepository } from '../../../domain/repositories/ChatAccessRepository.interface';
+} from '@/domain/entities/ChatAccessEntity';
+import type { ChatAccessRepository } from '@/domain/repositories/ChatAccessRepository.interface';
 import {
   DB_PROVIDER_ID,
   type DbProvider,
   type SqlDatabase,
-} from '../../../domain/repositories/DbProvider.interface';
+} from '@/domain/repositories/DbProvider.interface';
 
 @injectable()
 export class SQLiteChatAccessRepository implements ChatAccessRepository {

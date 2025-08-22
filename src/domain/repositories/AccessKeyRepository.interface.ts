@@ -1,6 +1,6 @@
 import type { ServiceIdentifier } from 'inversify';
 
-import type { AccessKeyEntity } from '../entities/AccessKeyEntity';
+import type { AccessKeyEntity } from '@/domain/entities/AccessKeyEntity';
 
 export interface AccessKeyRepository {
   upsertKey(entry: AccessKeyEntity): Promise<void>;

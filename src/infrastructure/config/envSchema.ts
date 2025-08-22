@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { Env } from '../../application/interfaces/env/EnvService.interface';
+import type { Env } from '@/application/interfaces/env/EnvService.interface';
 
 export const envSchema = z.object({
   BOT_TOKEN: z.string().min(1),

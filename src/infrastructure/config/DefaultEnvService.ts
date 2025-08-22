@@ -6,7 +6,8 @@ import type { ChatModel } from 'openai/resources/shared';
 import type {
   Env,
   EnvService,
-} from '../../application/interfaces/env/EnvService.interface';
+} from '@/application/interfaces/env/EnvService.interface';
+
 import { envSchema } from './envSchema';
 
 @injectable()
