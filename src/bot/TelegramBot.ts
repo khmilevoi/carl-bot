@@ -51,8 +51,8 @@ import {
   CHAT_REPOSITORY_ID,
   type ChatRepository,
 } from '../domain/repositories/ChatRepository.interface';
+import { TriggerContext } from '../domain/triggers/Trigger.interface';
 import { registerRoutes } from '../infrastructure/telegramRouter';
-import { TriggerContext } from '../triggers/Trigger.interface';
 import { createWindows, type WindowId } from './windowConfig';
 
 export async function withTyping(

@@ -1,14 +1,14 @@
 import { inject, injectable } from 'inversify';
 import { Context } from 'telegraf';
 
+import {
+  TriggerContext,
+  TriggerResult,
+} from '../../../domain/triggers/Trigger.interface';
 import { InterestTrigger } from '../../../triggers/InterestTrigger';
 import { MentionTrigger } from '../../../triggers/MentionTrigger';
 import { NameTrigger } from '../../../triggers/NameTrigger';
 import { ReplyTrigger } from '../../../triggers/ReplyTrigger';
-import {
-  TriggerContext,
-  TriggerResult,
-} from '../../../triggers/Trigger.interface';
 import {
   DIALOGUE_MANAGER_ID,
   type DialogueManager,

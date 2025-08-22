@@ -9,7 +9,7 @@ import type { ChatMemoryManager } from '../src/application/interfaces/chat/ChatM
 import { ChatResponder } from '../src/application/interfaces/chat/ChatResponder.interface';
 import { DefaultChatResponder } from '../src/application/use-cases/chat/DefaultChatResponder';
 import type { SummaryService } from '../src/application/interfaces/summaries/SummaryService.interface';
-import { TriggerReason } from '../src/triggers/Trigger.interface';
+import { TriggerReason } from '../src/domain/triggers/Trigger.interface';
 import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
 
 class MockAIService implements AIService {

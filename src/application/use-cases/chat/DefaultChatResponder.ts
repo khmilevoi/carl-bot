@@ -1,7 +1,7 @@
 import { inject, injectable } from 'inversify';
 import { Context } from 'telegraf';
 
-import { TriggerReason } from '../../../triggers/Trigger.interface';
+import { TriggerReason } from '../../../domain/triggers/Trigger.interface';
 import {
   AI_SERVICE_ID,
   AIService,

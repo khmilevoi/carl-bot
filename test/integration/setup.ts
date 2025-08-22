@@ -14,7 +14,7 @@ import {
   AI_SERVICE_ID,
   type ChatMessage,
 } from '../../src/application/interfaces/ai/AIService.interface';
-import type { TriggerReason } from '../../src/triggers/Trigger.interface';
+import type { TriggerReason } from '../../src/domain/triggers/Trigger.interface';
 import type { Context, Telegram } from 'telegraf';
 
 // Stable mock for AIService

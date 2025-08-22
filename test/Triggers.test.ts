@@ -6,7 +6,7 @@ import { TestEnvService } from '../src/application/use-cases/env/TestEnvService'
 import { MentionTrigger } from '../src/triggers/MentionTrigger';
 import { NameTrigger } from '../src/triggers/NameTrigger';
 import { ReplyTrigger } from '../src/triggers/ReplyTrigger';
-import { TriggerContext } from '../src/triggers/Trigger.interface';
+import { TriggerContext } from '../src/domain/triggers/Trigger.interface';
 import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
 
 const createLoggerFactory = (): LoggerFactory =>
