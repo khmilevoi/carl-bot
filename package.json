@@ -16,9 +16,9 @@
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "prepare": "husky",
-    "migration:up": "tsx src/migrate.ts up",
-    "migration:down": "tsx src/migrate.ts down",
-    "migration:check": "tsx src/migrate.ts check"
+    "migration:up": "node scripts/pre-migrate.js && node dist/migrate.js up",
+    "migration:down": "node scripts/pre-migrate.js && node dist/migrate.js down",
+    "migration:check": "node scripts/pre-migrate.js && node dist/migrate.js check"
   },
   "keywords": [],
   "author": "",
