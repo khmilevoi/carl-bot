@@ -6,16 +6,12 @@ import {
   DB_PROVIDER_ID,
   type DbProvider,
 } from '@/domain/repositories/DbProvider.interface';
-import { BaseSQLiteRepository } from '@/infrastructure/persistence/sqlite/BaseSQLiteRepository';
 
 @injectable()
-export class SQLiteAccessKeyRepository
-  extends BaseSQLiteRepository
-  implements AccessKeyRepository
-{
-  constructor(@inject(DB_PROVIDER_ID) dbProvider: DbProvider) {
-    super(dbProvider);
-  }
+export class SQLiteAccessKeyRepository implements AccessKeyRepository {
+  constructor(
+    @inject(DB_PROVIDER_ID) private readonly dbProvider: DbProvider
+  ) {}
   async upsertKey({
     chatId,
     userId,

@@ -9,16 +9,12 @@ import {
   DB_PROVIDER_ID,
   type DbProvider,
 } from '@/domain/repositories/DbProvider.interface';
-import { BaseSQLiteRepository } from '@/infrastructure/persistence/sqlite/BaseSQLiteRepository';
 
 @injectable()
-export class SQLiteChatAccessRepository
-  extends BaseSQLiteRepository
-  implements ChatAccessRepository
-{
-  constructor(@inject(DB_PROVIDER_ID) dbProvider: DbProvider) {
-    super(dbProvider);
-  }
+export class SQLiteChatAccessRepository implements ChatAccessRepository {
+  constructor(
+    @inject(DB_PROVIDER_ID) private readonly dbProvider: DbProvider
+  ) {}
   async get(chatId: number): Promise<ChatAccessEntity | undefined> {
     const db = await this.dbProvider.get();
     const row = await db.get<{

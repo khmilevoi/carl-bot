@@ -7,16 +7,12 @@ import {
   type DbProvider,
 } from '@/domain/repositories/DbProvider.interface';
 import type { MessageRepository } from '@/domain/repositories/MessageRepository.interface';
-import { BaseSQLiteRepository } from '@/infrastructure/persistence/sqlite/BaseSQLiteRepository';
 
 @injectable()
-export class SQLiteMessageRepository
-  extends BaseSQLiteRepository
-  implements MessageRepository
-{
-  constructor(@inject(DB_PROVIDER_ID) dbProvider: DbProvider) {
-    super(dbProvider);
-  }
+export class SQLiteMessageRepository implements MessageRepository {
+  constructor(
+    @inject(DB_PROVIDER_ID) private readonly dbProvider: DbProvider
+  ) {}
   async insert({
     chatId,
     messageId,

@@ -6,16 +6,12 @@ import {
   type DbProvider,
 } from '@/domain/repositories/DbProvider.interface';
 import type { UserRepository } from '@/domain/repositories/UserRepository.interface';
-import { BaseSQLiteRepository } from '@/infrastructure/persistence/sqlite/BaseSQLiteRepository';
 
 @injectable()
-export class SQLiteUserRepository
-  extends BaseSQLiteRepository
-  implements UserRepository
-{
-  constructor(@inject(DB_PROVIDER_ID) dbProvider: DbProvider) {
-    super(dbProvider);
-  }
+export class SQLiteUserRepository implements UserRepository {
+  constructor(
+    @inject(DB_PROVIDER_ID) private readonly dbProvider: DbProvider
+  ) {}
   async upsert({
     id,
     username,

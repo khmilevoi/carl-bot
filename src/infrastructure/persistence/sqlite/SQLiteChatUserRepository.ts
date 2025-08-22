@@ -5,16 +5,12 @@ import {
   DB_PROVIDER_ID,
   type DbProvider,
 } from '@/domain/repositories/DbProvider.interface';
-import { BaseSQLiteRepository } from '@/infrastructure/persistence/sqlite/BaseSQLiteRepository';
 
 @injectable()
-export class SQLiteChatUserRepository
-  extends BaseSQLiteRepository
-  implements ChatUserRepository
-{
-  constructor(@inject(DB_PROVIDER_ID) dbProvider: DbProvider) {
-    super(dbProvider);
-  }
+export class SQLiteChatUserRepository implements ChatUserRepository {
+  constructor(
+    @inject(DB_PROVIDER_ID) private readonly dbProvider: DbProvider
+  ) {}
   async link(chatId: number, userId: number): Promise<void> {
     const db = await this.dbProvider.get();
     await db.run(
