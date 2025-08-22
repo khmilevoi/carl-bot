@@ -1,5 +1,3 @@
-import type { ServiceIdentifier } from 'inversify';
-
 import type { UserEntity } from '@/domain/entities/UserEntity';
 
 export interface UserRepository {
@@ -8,6 +6,4 @@ export interface UserRepository {
   setAttitude(userId: number, attitude: string): Promise<void>;
 }
 
-export const USER_REPOSITORY_ID = Symbol.for(
-  'UserRepository'
-) as ServiceIdentifier<UserRepository>;
+export const USER_REPOSITORY_ID = Symbol('UserRepository');

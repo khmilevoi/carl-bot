@@ -1,5 +1,3 @@
-import type { ServiceIdentifier } from 'inversify';
-
 import type { ChatMessage } from '@/domain/messages/ChatMessage.interface';
 import type { StoredMessage } from '@/domain/messages/StoredMessage.interface';
 
@@ -11,6 +9,4 @@ export interface MessageRepository {
   clearByChatId(chatId: number): Promise<void>;
 }
 
-export const MESSAGE_REPOSITORY_ID = Symbol.for(
-  'MessageRepository'
-) as ServiceIdentifier<MessageRepository>;
+export const MESSAGE_REPOSITORY_ID = Symbol('MessageRepository');

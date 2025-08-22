@@ -1,5 +1,3 @@
-import type { ServiceIdentifier } from 'inversify';
-
 import type { ChatConfigEntity } from '@/domain/entities/ChatConfigEntity';
 
 export interface ChatConfigRepository {
@@ -7,6 +5,4 @@ export interface ChatConfigRepository {
   findById(chatId: number): Promise<ChatConfigEntity | undefined>;
 }
 
-export const CHAT_CONFIG_REPOSITORY_ID = Symbol.for(
-  'ChatConfigRepository'
-) as ServiceIdentifier<ChatConfigRepository>;
+export const CHAT_CONFIG_REPOSITORY_ID = Symbol('ChatConfigRepository');

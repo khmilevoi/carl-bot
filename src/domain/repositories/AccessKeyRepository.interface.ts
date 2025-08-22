@@ -1,5 +1,3 @@
-import type { ServiceIdentifier } from 'inversify';
-
 import type { AccessKeyEntity } from '@/domain/entities/AccessKeyEntity';
 
 export interface AccessKeyRepository {
@@ -11,6 +9,4 @@ export interface AccessKeyRepository {
   deleteExpired(now: number): Promise<void>;
 }
 
-export const ACCESS_KEY_REPOSITORY_ID = Symbol.for(
-  'AccessKeyRepository'
-) as ServiceIdentifier<AccessKeyRepository>;
+export const ACCESS_KEY_REPOSITORY_ID = Symbol('AccessKeyRepository');
