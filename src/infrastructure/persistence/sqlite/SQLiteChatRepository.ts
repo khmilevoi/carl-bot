@@ -17,7 +17,7 @@ export class SQLiteChatRepository
     super(dbProvider);
   }
   async upsert({ chatId, title }: ChatEntity): Promise<void> {
-    const db = await this.db();
+    const db = await this.dbProvider.get();
     await db.run(
       'INSERT INTO chats (chat_id, title) VALUES (?, ?) ON CONFLICT(chat_id) DO UPDATE SET title=excluded.title',
       chatId,
@@ -26,7 +26,7 @@ export class SQLiteChatRepository
   }
 
   async findById(chatId: number): Promise<ChatEntity | undefined> {
-    const db = await this.db();
+    const db = await this.dbProvider.get();
     const row = await db.get<{ chat_id: number; title: string | null }>(
       'SELECT chat_id, title FROM chats WHERE chat_id = ?',
       chatId

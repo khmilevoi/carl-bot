@@ -20,7 +20,7 @@ export class SQLiteChatAccessRepository
     super(dbProvider);
   }
   async get(chatId: number): Promise<ChatAccessEntity | undefined> {
-    const db = await this.db();
+    const db = await this.dbProvider.get();
     const row = await db.get<{
       chat_id: number;
       status: ChatStatus;
@@ -41,7 +41,7 @@ export class SQLiteChatAccessRepository
   }
 
   async setStatus(chatId: number, status: ChatStatus): Promise<void> {
-    const db = await this.db();
+    const db = await this.dbProvider.get();
     const now = Date.now();
     const requestedAt = status === 'pending' ? now : null;
     const approvedAt = status === 'approved' ? now : null;
@@ -55,7 +55,7 @@ export class SQLiteChatAccessRepository
   }
 
   async listPending(): Promise<ChatAccessEntity[]> {
-    const db = await this.db();
+    const db = await this.dbProvider.get();
     const rows = await db.all<{
       chat_id: number;
       status: ChatStatus;
@@ -74,7 +74,7 @@ export class SQLiteChatAccessRepository
   }
 
   async listAll(): Promise<ChatAccessEntity[]> {
-    const db = await this.db();
+    const db = await this.dbProvider.get();
     const rows = await db.all<{
       chat_id: number;
       status: ChatStatus;

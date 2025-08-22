@@ -22,7 +22,7 @@ export class SQLiteChatConfigRepository
     historyLimit,
     interestInterval,
   }: ChatConfigEntity): Promise<void> {
-    const db = await this.db();
+    const db = await this.dbProvider.get();
     await db.run(
       'INSERT INTO chat_configs (chat_id, history_limit, interest_interval) VALUES (?, ?, ?) ON CONFLICT(chat_id) DO UPDATE SET history_limit=excluded.history_limit, interest_interval=excluded.interest_interval',
       chatId,
@@ -32,7 +32,7 @@ export class SQLiteChatConfigRepository
   }
 
   async findById(chatId: number): Promise<ChatConfigEntity | undefined> {
-    const db = await this.db();
+    const db = await this.dbProvider.get();
     const row = await db.get<{
       chat_id: number;
       history_limit: number;

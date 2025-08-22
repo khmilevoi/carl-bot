@@ -27,7 +27,7 @@ export class SQLiteMessageRepository
     replyUsername,
     quoteText,
   }: StoredMessage): Promise<void> {
-    const db = await this.db();
+    const db = await this.dbProvider.get();
     await db.run(
       'INSERT INTO messages (chat_id, message_id, role, content, user_id, reply_text, reply_username, quote_text) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       chatId,
@@ -42,7 +42,7 @@ export class SQLiteMessageRepository
   }
 
   async findByChatId(chatId: number): Promise<ChatMessage[]> {
-    const db = await this.db();
+    const db = await this.dbProvider.get();
     const rows = await db.all<{
       role: 'user' | 'assistant';
       content: string;
@@ -82,7 +82,7 @@ export class SQLiteMessageRepository
   }
 
   async countByChatId(chatId: number): Promise<number> {
-    const db = await this.db();
+    const db = await this.dbProvider.get();
     const row = await db.get<{ count: number }>(
       'SELECT COUNT(*) as count FROM messages WHERE chat_id = ?',
       chatId
@@ -94,7 +94,7 @@ export class SQLiteMessageRepository
     chatId: number,
     limit: number
   ): Promise<ChatMessage[]> {
-    const db = await this.db();
+    const db = await this.dbProvider.get();
     const rows = await db.all<{
       role: 'user' | 'assistant';
       content: string;
@@ -135,7 +135,7 @@ export class SQLiteMessageRepository
   }
 
   async clearByChatId(chatId: number): Promise<void> {
-    const db = await this.db();
+    const db = await this.dbProvider.get();
     await db.run('DELETE FROM messages WHERE chat_id = ?', chatId);
   }
 }

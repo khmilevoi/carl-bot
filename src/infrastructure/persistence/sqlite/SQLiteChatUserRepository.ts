@@ -16,7 +16,7 @@ export class SQLiteChatUserRepository
     super(dbProvider);
   }
   async link(chatId: number, userId: number): Promise<void> {
-    const db = await this.db();
+    const db = await this.dbProvider.get();
     await db.run(
       'INSERT OR IGNORE INTO chat_users (chat_id, user_id) VALUES (?, ?)',
       chatId,
@@ -25,7 +25,7 @@ export class SQLiteChatUserRepository
   }
 
   async listByChat(chatId: number): Promise<number[]> {
-    const db = await this.db();
+    const db = await this.dbProvider.get();
     const rows = await db.all<{
       user_id: number;
     }>('SELECT user_id FROM chat_users WHERE chat_id = ?', chatId);
