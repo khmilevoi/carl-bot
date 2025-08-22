@@ -1,13 +1,13 @@
 import http from 'node:http';
 
-import type { EnvService } from './application/interfaces/env/EnvService.interface';
-import { ENV_SERVICE_ID } from './application/interfaces/env/EnvService.interface';
+import {
+  LOGGER_FACTORY_ID,
+  type LoggerFactory,
+} from './application/interfaces/logging/LoggerFactory.interface';
 import { container } from './container';
-import { PinoLoggerFactory } from './infrastructure/logging/PinoLoggerFactory';
-import { TelegramBot } from './infrastructure/telegram/TelegramBot';
+import { TelegramBot } from './view/telegram/TelegramBot';
 
-const envService = container.get<EnvService>(ENV_SERVICE_ID);
-const loggerFactory = new PinoLoggerFactory(envService);
+const loggerFactory = container.get<LoggerFactory>(LOGGER_FACTORY_ID);
 const logger = loggerFactory.create('index');
 const bot = container.get<TelegramBot>(TelegramBot);
 
