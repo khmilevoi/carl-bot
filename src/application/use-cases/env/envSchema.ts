@@ -1,0 +1,13 @@
+import { z } from 'zod';
+
+import type { Env } from '../../interfaces/env/EnvService.interface';
+
+export const envSchema = z.object({
+  BOT_TOKEN: z.string().min(1),
+  OPENAI_KEY: z.string().min(1),
+  DATABASE_URL: z.string().min(1),
+  LOG_LEVEL: z.string().default('debug'),
+  ADMIN_CHAT_ID: z.coerce.number(),
+  NODE_ENV: z.string().default('development'),
+  LOG_PROMPTS: z.coerce.boolean().default(false),
+}) as z.ZodType<Env>;

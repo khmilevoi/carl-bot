@@ -13,11 +13,17 @@ import {
   ChatApprovalService,
 } from '../application/interfaces/chat/ChatApprovalService.interface';
 import {
-  CHAT_CONFIG_SERVICE_ID,
-  ChatConfigService,
   InvalidHistoryLimitError,
   InvalidInterestIntervalError,
+} from '../application/interfaces/chat/ChatConfigService.errors';
+import {
+  CHAT_CONFIG_SERVICE_ID,
+  ChatConfigService,
 } from '../application/interfaces/chat/ChatConfigService.interface';
+import {
+  CHAT_MEMORY_MANAGER_ID,
+  ChatMemoryManager,
+} from '../application/interfaces/chat/ChatMemoryManager.interface';
 import {
   CHAT_RESPONDER_ID,
   ChatResponder,
@@ -40,7 +46,6 @@ import {
   MESSAGE_CONTEXT_EXTRACTOR_ID,
   MessageContextExtractor,
 } from '../application/interfaces/messages/MessageContextExtractor.interface';
-import { ChatMemoryManager } from '../application/use-cases/chat/ChatMemory';
 import { MessageFactory } from '../application/use-cases/messages/MessageFactory';
 import {
   CHAT_REPOSITORY_ID,
@@ -83,7 +88,7 @@ export class TelegramBot {
 
   constructor(
     @inject(ENV_SERVICE_ID) envService: EnvService,
-    @inject(ChatMemoryManager) private memories: ChatMemoryManager,
+    @inject(CHAT_MEMORY_MANAGER_ID) private memories: ChatMemoryManager,
     @inject(ADMIN_SERVICE_ID) private admin: AdminService,
     @inject(CHAT_APPROVAL_SERVICE_ID)
     private approvalService: ChatApprovalService,

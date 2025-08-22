@@ -6,10 +6,10 @@ import {
   type ChatConfigRepository,
 } from '../../../domain/repositories/ChatConfigRepository.interface';
 import {
-  type ChatConfigService,
   InvalidHistoryLimitError,
   InvalidInterestIntervalError,
-} from '../../interfaces/chat/ChatConfigService.interface';
+} from '../../interfaces/chat/ChatConfigService.errors';
+import { type ChatConfigService } from '../../interfaces/chat/ChatConfigService.interface';
 
 const DEFAULT_HISTORY_LIMIT = 50;
 const DEFAULT_INTEREST_INTERVAL = 25;

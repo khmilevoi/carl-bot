@@ -6,6 +6,10 @@ import {
   AI_SERVICE_ID,
   AIService,
 } from '../../interfaces/ai/AIService.interface';
+import {
+  CHAT_MEMORY_MANAGER_ID,
+  ChatMemoryManager,
+} from '../../interfaces/chat/ChatMemoryManager.interface';
 import { type ChatResponder } from '../../interfaces/chat/ChatResponder.interface';
 import type { Logger } from '../../interfaces/logging/Logger.interface';
 import {
@@ -17,7 +21,6 @@ import {
   SummaryService,
 } from '../../interfaces/summaries/SummaryService.interface';
 import { MessageFactory } from '../messages/MessageFactory';
-import { ChatMemoryManager } from './ChatMemory';
 
 @injectable()
 export class DefaultChatResponder implements ChatResponder {
@@ -25,7 +28,7 @@ export class DefaultChatResponder implements ChatResponder {
 
   constructor(
     @inject(AI_SERVICE_ID) private ai: AIService,
-    @inject(ChatMemoryManager) private memories: ChatMemoryManager,
+    @inject(CHAT_MEMORY_MANAGER_ID) private memories: ChatMemoryManager,
     @inject(SUMMARY_SERVICE_ID) private summaries: SummaryService,
     @inject(LOGGER_FACTORY_ID) private loggerFactory: LoggerFactory
   ) {

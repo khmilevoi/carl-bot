@@ -9,6 +9,7 @@ import {
   CHAT_CONFIG_SERVICE_ID,
   type ChatConfigService,
 } from './application/interfaces/chat/ChatConfigService.interface';
+import { CHAT_MEMORY_MANAGER_ID } from './application/interfaces/chat/ChatMemoryManager.interface';
 import { CHAT_RESET_SERVICE_ID } from './application/interfaces/chat/ChatResetService.interface';
 import {
   CHAT_RESPONDER_ID,
@@ -157,7 +158,7 @@ container
   .to(SQLiteChatConfigRepository)
   .inSingletonScope();
 
-container.bind(ChatMemoryManager).toSelf().inSingletonScope();
+container.bind(CHAT_MEMORY_MANAGER_ID).to(ChatMemoryManager).inSingletonScope();
 
 container
   .bind(DIALOGUE_MANAGER_ID)

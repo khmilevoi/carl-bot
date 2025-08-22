@@ -5,7 +5,7 @@ import type {
   AIService,
   ChatMessage,
 } from '../src/application/interfaces/ai/AIService.interface';
-import type { ChatMemoryManager } from '../src/application/use-cases/chat/ChatMemory';
+import type { ChatMemoryManager } from '../src/application/interfaces/chat/ChatMemoryManager.interface';
 import { ChatResponder } from '../src/application/interfaces/chat/ChatResponder.interface';
 import { DefaultChatResponder } from '../src/application/use-cases/chat/DefaultChatResponder';
 import type { SummaryService } from '../src/application/interfaces/summaries/SummaryService.interface';
