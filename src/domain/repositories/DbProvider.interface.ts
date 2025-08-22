@@ -1,5 +1,3 @@
-import type { ServiceIdentifier } from 'inversify';
-
 export interface SqlDatabase {
   run(sql: string, ...params: unknown[]): Promise<unknown>;
   get<T>(sql: string, ...params: unknown[]): Promise<T | undefined>;
@@ -11,6 +9,4 @@ export interface DbProvider {
   listTables(): Promise<string[]>;
 }
 
-export const DB_PROVIDER_ID = Symbol.for(
-  'DbProvider'
-) as ServiceIdentifier<DbProvider>;
+export const DB_PROVIDER_ID = Symbol('DbProvider');

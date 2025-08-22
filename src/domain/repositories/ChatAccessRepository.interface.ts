@@ -1,5 +1,3 @@
-import type { ServiceIdentifier } from 'inversify';
-
 import type {
   ChatAccessEntity,
   ChatStatus,
@@ -12,6 +10,4 @@ export interface ChatAccessRepository {
   listAll(): Promise<ChatAccessEntity[]>;
 }
 
-export const CHAT_ACCESS_REPOSITORY_ID = Symbol.for(
-  'ChatAccessRepository'
-) as ServiceIdentifier<ChatAccessRepository>;
+export const CHAT_ACCESS_REPOSITORY_ID = Symbol('ChatAccessRepository');
