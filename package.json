@@ -16,9 +16,9 @@
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "prepare": "husky",
-    "migration:up": "npm run build && node dist/migrate.js up",
-    "migration:down": "npm run build && node dist/migrate.js down",
-    "migration:check": "npm run build && node dist/migrate.js check"
+    "migration:up": "tsx src/migrate.ts up",
+    "migration:down": "tsx src/migrate.ts down",
+    "migration:check": "tsx src/migrate.ts check"
   },
   "keywords": [],
   "author": "",
@@ -54,6 +54,7 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.1.2",
     "prettier": "^3.6.2",
+    "tsx": "^4.8.1",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   },
