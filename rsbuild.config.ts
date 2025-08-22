@@ -16,6 +16,8 @@ export default defineConfig({
       externalsPresets: { node: true },
       externals: {
         sqlite3: 'commonjs sqlite3',
+        pino: 'commonjs pino',
+        'pino-pretty': 'commonjs pino-pretty',
       },
     },
     swc: {
