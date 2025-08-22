@@ -2,7 +2,7 @@ import type { Context } from 'telegraf';
 import { describe, expect, it, vi } from 'vitest';
 
 import { DefaultDialogueManager } from '../src/application/use-cases/chat/DefaultDialogueManager';
-import { DialogueManager } from '../src/application/interfaces/chat/DialogueManager.interface';
+import type { DialogueManager } from '../src/application/interfaces/chat/DialogueManager.interface';
 import { InterestChecker } from '../src/application/interfaces/interest/InterestChecker.interface';
 import { InterestTrigger } from '../src/triggers/InterestTrigger';
 import { TriggerContext } from '../src/domain/triggers/Trigger.interface';
@@ -55,13 +55,10 @@ describe('InterestTrigger', () => {
         message: 'hi',
         why: 'because',
       }),
+      dialogue,
       loggerFactory
     );
-    const res = await trigger.apply(
-      {} as unknown as Context,
-      baseCtx,
-      dialogue
-    );
+    const res = await trigger.apply({} as unknown as Context, baseCtx);
     expect(res).toBeNull();
   });
 
@@ -72,14 +69,11 @@ describe('InterestTrigger', () => {
         message: 'hi',
         why: 'because',
       }),
+      dialogue,
       loggerFactory
     );
-    await trigger.apply({} as unknown as Context, baseCtx, dialogue);
-    const res = await trigger.apply(
-      {} as unknown as Context,
-      baseCtx,
-      dialogue
-    );
+    await trigger.apply({} as unknown as Context, baseCtx);
+    const res = await trigger.apply({} as unknown as Context, baseCtx);
     expect(res).not.toBeNull();
     expect(res?.replyToMessageId).toBe(1);
     expect(res?.reason?.why).toBe('because');
@@ -89,14 +83,11 @@ describe('InterestTrigger', () => {
   it('returns null when checker reports not interested', async () => {
     const trigger = new InterestTrigger(
       new MockInterestChecker(2, null),
+      dialogue,
       loggerFactory
     );
-    await trigger.apply({} as unknown as Context, baseCtx, dialogue);
-    const res = await trigger.apply(
-      {} as unknown as Context,
-      baseCtx,
-      dialogue
-    );
+    await trigger.apply({} as unknown as Context, baseCtx);
+    const res = await trigger.apply({} as unknown as Context, baseCtx);
     expect(res).toBeNull();
   });
 
@@ -106,17 +97,13 @@ describe('InterestTrigger', () => {
       message: 'hi',
       why: 'because',
     });
-    const trigger = new InterestTrigger(checker, loggerFactory);
     const activeDialogue: DialogueManager = new DefaultDialogueManager(
       { getDialogueTimeoutMs: () => 0 } as any,
       loggerFactory
     );
+    const trigger = new InterestTrigger(checker, activeDialogue, loggerFactory);
     activeDialogue.start(baseCtx.chatId);
-    const res = await trigger.apply(
-      {} as unknown as Context,
-      baseCtx,
-      activeDialogue
-    );
+    const res = await trigger.apply({} as unknown as Context, baseCtx);
     expect(res).toBeNull();
     expect(checker.calls).toBe(0);
   });

@@ -40,7 +40,7 @@ export class DefaultTriggerPipeline implements TriggerPipeline {
     let result: TriggerResult | null = null;
 
     for (const trigger of this.triggers) {
-      result = await trigger.apply(ctx, context, this.dialogue);
+      result = await trigger.apply(ctx, context);
       if (result) {
         matchedTrigger = trigger.constructor.name;
         break;

@@ -1,7 +1,10 @@
 import { inject, injectable } from 'inversify';
 import type { Context } from 'telegraf';
 
-import type { DialogueManager } from '../application/interfaces/chat/DialogueManager.interface';
+import {
+  DIALOGUE_MANAGER_ID,
+  type DialogueManager,
+} from '../application/interfaces/chat/DialogueManager.interface';
 import type { Logger } from '../application/interfaces/logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
@@ -16,13 +19,15 @@ import type {
 @injectable()
 export class MentionTrigger implements Trigger {
   private readonly logger: Logger;
-  constructor(@inject(LOGGER_FACTORY_ID) loggerFactory: LoggerFactory) {
+  constructor(
+    @inject(DIALOGUE_MANAGER_ID) private dialogue: DialogueManager,
+    @inject(LOGGER_FACTORY_ID) loggerFactory: LoggerFactory
+  ) {
     this.logger = loggerFactory.create('MentionTrigger');
   }
   async apply(
     ctx: Context,
-    context: TriggerContext,
-    dialogue: DialogueManager
+    context: TriggerContext
   ): Promise<TriggerResult | null> {
     const msg = ctx.message as Record<string, unknown> | undefined;
     const text = typeof msg?.text === 'string' ? msg.text : '';
@@ -38,7 +43,7 @@ export class MentionTrigger implements Trigger {
         Math.min(text.length, index + mention.length + 20)
       );
       context.text = text.replace(mention, '').trim();
-      const dialogueState = dialogue.isActive(context.chatId)
+      const dialogueState = this.dialogue.isActive(context.chatId)
         ? 'active'
         : 'inactive';
       this.logger.debug(

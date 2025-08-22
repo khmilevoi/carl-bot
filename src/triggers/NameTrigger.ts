@@ -1,7 +1,6 @@
 import { inject, injectable } from 'inversify';
 import type { Context } from 'telegraf';
 
-import type { DialogueManager } from '../application/interfaces/chat/DialogueManager.interface';
 import {
   ENV_SERVICE_ID,
   type EnvService,
@@ -33,9 +32,8 @@ export class NameTrigger implements Trigger {
     );
   }
   async apply(
-    ctx: Context,
-    context: TriggerContext,
-    _dialogue: DialogueManager
+    _ctx: Context,
+    context: TriggerContext
   ): Promise<TriggerResult | null> {
     const text = context.text;
     if (this.pattern.test(text)) {
