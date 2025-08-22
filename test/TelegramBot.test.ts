@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { TelegramBot } from '../src/view/telegram/TelegramBot';
 import * as TelegramBotModule from '../src/view/telegram/TelegramBot';
 import { createWindows } from '../src/view/telegram/windowConfig';
-import type { ChatRepository } from '../src/domain/repositories/ChatRepository.interface';
+import type { ChatInfoService } from '../src/application/interfaces/chat/ChatInfoService.interface';
 import type { AdminService } from '../src/application/interfaces/admin/AdminService.interface';
 import type { ChatApprovalService } from '../src/application/interfaces/chat/ChatApprovalService.interface';
 import type { ChatMemoryManager } from '../src/application/interfaces/chat/ChatMemoryManager.interface';
@@ -82,9 +82,9 @@ class DummyApprovalService {
   pending = vi.fn(async () => {});
 }
 
-class DummyChatRepository {
-  upsert = vi.fn(async () => {});
-  findById = vi.fn(async () => undefined);
+class DummyChatInfoService {
+  saveChat = vi.fn(async () => {});
+  getChat = vi.fn(async () => undefined);
 }
 
 class DummyChatConfigService {
@@ -133,7 +133,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -166,7 +166,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -202,7 +202,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -238,7 +238,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -279,7 +279,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -320,7 +320,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -370,7 +370,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -420,7 +420,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -475,7 +475,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -542,7 +542,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -580,8 +580,8 @@ describe('TelegramBot', () => {
       { chatId: 42, status: 'approved' },
     ]);
 
-    const chatRepo = new DummyChatRepository();
-    chatRepo.findById.mockResolvedValue({ chatId: 42, title: 'Test Chat' });
+    const chatRepo = new DummyChatInfoService();
+    chatRepo.getChat.mockResolvedValue({ chatId: 42, title: 'Test Chat' });
 
     const actionSpy = vi.spyOn(Telegraf.prototype, 'action');
     const bot = new TelegramBot(
@@ -592,7 +592,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      chatRepo as unknown as ChatRepository,
+      chatRepo as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -624,7 +624,7 @@ describe('TelegramBot', () => {
     await handler(ctx);
 
     expect(approvalService.listAll).toHaveBeenCalled();
-    expect(chatRepo.findById).toHaveBeenCalledWith(42);
+    expect(chatRepo.getChat).toHaveBeenCalledWith(42);
     expect(ctx.reply).toHaveBeenCalledWith('Выберите чат для управления:', {
       reply_markup: {
         inline_keyboard: [
@@ -654,7 +654,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -731,7 +731,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -796,7 +796,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -880,7 +880,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -925,7 +925,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -973,7 +973,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -1031,7 +1031,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -1083,7 +1083,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -1129,7 +1129,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -1174,7 +1174,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -1217,7 +1217,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -1250,7 +1250,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -1292,7 +1292,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -1327,7 +1327,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -1381,7 +1381,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -1419,7 +1419,7 @@ describe('TelegramBot', () => {
       new DummyExtractor() as unknown as MessageContextExtractor,
       new DummyPipeline() as unknown as TriggerPipeline,
       new DummyResponder() as unknown as ChatResponder,
-      new DummyChatRepository() as unknown as ChatRepository,
+      new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
       createLoggerFactory()
     );

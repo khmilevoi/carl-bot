@@ -20,6 +20,10 @@ import {
   type ChatConfigService,
 } from './application/interfaces/chat/ChatConfigService.interface';
 import {
+  CHAT_INFO_SERVICE_ID,
+  type ChatInfoService,
+} from './application/interfaces/chat/ChatInfoService.interface';
+import {
   CHAT_MEMORY_MANAGER_ID,
   type ChatMemoryManager as ChatMemoryManagerInterface,
 } from './application/interfaces/chat/ChatMemoryManager.interface';
@@ -84,6 +88,7 @@ import { DefaultDialogueManager } from './application/use-cases/chat/DefaultDial
 import { DefaultHistorySummarizer } from './application/use-cases/chat/DefaultHistorySummarizer';
 import { DefaultTriggerPipeline } from './application/use-cases/chat/DefaultTriggerPipeline';
 import { RepositoryChatConfigService } from './application/use-cases/chat/RepositoryChatConfigService';
+import { RepositoryChatInfoService } from './application/use-cases/chat/RepositoryChatInfoService';
 import { DefaultInterestChecker } from './application/use-cases/interest/DefaultInterestChecker';
 import { DefaultMessageContextExtractor } from './application/use-cases/messages/DefaultMessageContextExtractor';
 import { InMemoryInterestMessageStore } from './application/use-cases/messages/InMemoryInterestMessageStore';
@@ -196,6 +201,11 @@ container
 container
   .bind<ChatConfigService>(CHAT_CONFIG_SERVICE_ID)
   .to(RepositoryChatConfigService)
+  .inSingletonScope();
+
+container
+  .bind<ChatInfoService>(CHAT_INFO_SERVICE_ID)
+  .to(RepositoryChatInfoService)
   .inSingletonScope();
 
 container

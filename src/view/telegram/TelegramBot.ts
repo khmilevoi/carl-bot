@@ -15,6 +15,10 @@ import {
 } from '@/application/interfaces/chat/ChatConfigService.errors';
 import type { ChatConfigService } from '@/application/interfaces/chat/ChatConfigService.interface';
 import { CHAT_CONFIG_SERVICE_ID } from '@/application/interfaces/chat/ChatConfigService.interface';
+import {
+  CHAT_INFO_SERVICE_ID,
+  type ChatInfoService,
+} from '@/application/interfaces/chat/ChatInfoService.interface';
 import type { ChatMemoryManager } from '@/application/interfaces/chat/ChatMemoryManager.interface';
 import { CHAT_MEMORY_MANAGER_ID } from '@/application/interfaces/chat/ChatMemoryManager.interface';
 import type { ChatResponder } from '@/application/interfaces/chat/ChatResponder.interface';
@@ -34,10 +38,6 @@ import {
 import type { MessageContextExtractor } from '@/application/interfaces/messages/MessageContextExtractor.interface';
 import { MESSAGE_CONTEXT_EXTRACTOR_ID } from '@/application/interfaces/messages/MessageContextExtractor.interface';
 import { MessageFactory } from '@/application/use-cases/messages/MessageFactory';
-import {
-  CHAT_REPOSITORY_ID,
-  type ChatRepository,
-} from '@/domain/repositories/ChatRepository.interface';
 import type { TriggerContext } from '@/domain/triggers/Trigger.interface';
 
 import { registerRoutes } from './telegramRouter';
@@ -84,7 +84,7 @@ export class TelegramBot {
     private extractor: MessageContextExtractor,
     @inject(TRIGGER_PIPELINE_ID) private pipeline: TriggerPipeline,
     @inject(CHAT_RESPONDER_ID) private responder: ChatResponder,
-    @inject(CHAT_REPOSITORY_ID) private chatRepo: ChatRepository,
+    @inject(CHAT_INFO_SERVICE_ID) private chatInfo: ChatInfoService,
     @inject(CHAT_CONFIG_SERVICE_ID) private chatConfig: ChatConfigService,
     @inject(LOGGER_FACTORY_ID) loggerFactory: LoggerFactory
   ) {
@@ -396,7 +396,7 @@ export class TelegramBot {
     const chats = await this.approvalService.listAll();
     return Promise.all(
       chats.map(async ({ chatId }) => {
-        const chat = await this.chatRepo.findById(chatId);
+        const chat = await this.chatInfo.getChat(chatId);
         return { id: chatId, title: chat?.title ?? 'Без названия' };
       })
     );
