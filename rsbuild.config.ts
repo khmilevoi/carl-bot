@@ -2,13 +2,13 @@
 import { defineConfig } from '@rsbuild/core';
 import path from 'path';
 
-export const rsbuildConfig = defineConfig({
-  target: 'node',
+export default defineConfig({
   source: {
     entry: {
       index: './src/index.ts',
       migrate: './src/migrate.ts',
     },
+    decorators: { version: 'legacy' },
   },
   tools: {
     rspack: {
@@ -22,12 +22,13 @@ export const rsbuildConfig = defineConfig({
           decorators: true,
         },
         transform: {
-          decoratorMetadata: true,
+          decoratorMetadata: false,
         },
       },
     },
   },
   output: {
+    target: 'node',
     distPath: {
       root: 'dist',
     },

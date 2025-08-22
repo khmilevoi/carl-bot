@@ -16,9 +16,9 @@
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
     "prepare": "husky",
-    "migration:up": "node dist/migrate.js up",
-    "migration:down": "node dist/migrate.js down",
-    "migration:check": "node dist/migrate.js check"
+    "migration:up": "npm run build && node dist/migrate.js up",
+    "migration:down": "npm run build && node dist/migrate.js down",
+    "migration:check": "npm run build && node dist/migrate.js check"
   },
   "keywords": [],
   "author": "",
