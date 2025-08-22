@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { DefaultDialogueManager } from '../src/application/use-cases/chat/DefaultDialogueManager';
 import { DialogueManager } from '../src/application/interfaces/chat/DialogueManager.interface';
-import { TestEnvService } from '../src/application/use-cases/env/TestEnvService';
+import { TestEnvService } from '../src/infrastructure/config/TestEnvService';
 import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
 
 describe('DialogueManager', () => {

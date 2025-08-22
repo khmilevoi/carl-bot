@@ -1,17 +1,17 @@
 import { readFile } from 'fs/promises';
 import { inject, injectable } from 'inversify';
 
-import { createLazy } from '../../../utils/lazy';
 import {
   ENV_SERVICE_ID,
   EnvService,
-} from '../../interfaces/env/EnvService.interface';
-import type { Logger } from '../../interfaces/logging/Logger.interface';
+} from '../../application/interfaces/env/EnvService.interface';
+import type { Logger } from '../../application/interfaces/logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '../../interfaces/logging/LoggerFactory.interface';
-import { PromptService } from '../../interfaces/prompts/PromptService.interface';
+} from '../../application/interfaces/logging/LoggerFactory.interface';
+import { PromptService } from '../../application/interfaces/prompts/PromptService.interface';
+import { createLazy } from '../../utils/lazy';
 
 @injectable()
 export class FilePromptService implements PromptService {

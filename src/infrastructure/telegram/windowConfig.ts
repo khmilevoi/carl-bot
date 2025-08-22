@@ -1,10 +1,6 @@
 import type { Context } from 'telegraf';
 
-import {
-  createButton,
-  createRoute,
-  type RouteApi,
-} from '../infrastructure/telegramRouter';
+import { createButton, createRoute, type RouteApi } from './telegramRouter';
 
 export type WindowId =
   | 'menu'

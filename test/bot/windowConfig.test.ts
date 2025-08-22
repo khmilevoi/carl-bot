@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { createWindows } from '../../src/bot/windowConfig';
+import { createWindows } from '../../src/infrastructure/telegram/windowConfig';
 
 describe('windowConfig', () => {
   it('handles missing chats data', async () => {

@@ -75,7 +75,6 @@ import {
   type SummaryService,
 } from './application/interfaces/summaries/SummaryService.interface';
 import { AdminServiceImpl } from './application/use-cases/admin/AdminServiceImpl';
-import { ChatGPTService } from './application/use-cases/ai/ChatGPTService';
 import { ChatMemoryManager as ChatMemoryManagerImpl } from './application/use-cases/chat/ChatMemory';
 import { DefaultChatApprovalService } from './application/use-cases/chat/DefaultChatApprovalService';
 import { DefaultChatResetService } from './application/use-cases/chat/DefaultChatResetService';
@@ -84,15 +83,11 @@ import { DefaultDialogueManager } from './application/use-cases/chat/DefaultDial
 import { DefaultHistorySummarizer } from './application/use-cases/chat/DefaultHistorySummarizer';
 import { DefaultTriggerPipeline } from './application/use-cases/chat/DefaultTriggerPipeline';
 import { RepositoryChatConfigService } from './application/use-cases/chat/RepositoryChatConfigService';
-import { DefaultEnvService } from './application/use-cases/env/DefaultEnvService';
-import { TestEnvService } from './application/use-cases/env/TestEnvService';
 import { DefaultInterestChecker } from './application/use-cases/interest/DefaultInterestChecker';
 import { DefaultMessageContextExtractor } from './application/use-cases/messages/DefaultMessageContextExtractor';
 import { InMemoryInterestMessageStore } from './application/use-cases/messages/InMemoryInterestMessageStore';
 import { RepositoryMessageService } from './application/use-cases/messages/RepositoryMessageService';
-import { FilePromptService } from './application/use-cases/prompts/FilePromptService';
 import { RepositorySummaryService } from './application/use-cases/summaries/RepositorySummaryService';
-import { TelegramBot } from './bot/TelegramBot';
 import {
   ACCESS_KEY_REPOSITORY_ID,
   type AccessKeyRepository,
@@ -130,16 +125,21 @@ import {
   type UserRepository,
 } from './domain/repositories/UserRepository.interface';
 import { type Trigger, TRIGGER_ID } from './domain/triggers/Trigger.interface';
+import { DefaultEnvService } from './infrastructure/config/DefaultEnvService';
+import { TestEnvService } from './infrastructure/config/TestEnvService';
+import { ChatGPTService } from './infrastructure/external/ChatGPTService';
+import { FilePromptService } from './infrastructure/external/FilePromptService';
 import { PinoLoggerFactory } from './infrastructure/logging/PinoLoggerFactory';
-import { SQLiteDbProviderImpl } from './infrastructure/repositories/DbProvider';
-import { SQLiteAccessKeyRepository } from './infrastructure/repositories/SQLiteAccessKeyRepository';
-import { SQLiteChatAccessRepository } from './infrastructure/repositories/SQLiteChatAccessRepository';
-import { SQLiteChatConfigRepository } from './infrastructure/repositories/SQLiteChatConfigRepository';
-import { SQLiteChatRepository } from './infrastructure/repositories/SQLiteChatRepository';
-import { SQLiteChatUserRepository } from './infrastructure/repositories/SQLiteChatUserRepository';
-import { SQLiteMessageRepository } from './infrastructure/repositories/SQLiteMessageRepository';
-import { SQLiteSummaryRepository } from './infrastructure/repositories/SQLiteSummaryRepository';
-import { SQLiteUserRepository } from './infrastructure/repositories/SQLiteUserRepository';
+import { SQLiteDbProviderImpl } from './infrastructure/persistence/sqlite/DbProvider';
+import { SQLiteAccessKeyRepository } from './infrastructure/persistence/sqlite/SQLiteAccessKeyRepository';
+import { SQLiteChatAccessRepository } from './infrastructure/persistence/sqlite/SQLiteChatAccessRepository';
+import { SQLiteChatConfigRepository } from './infrastructure/persistence/sqlite/SQLiteChatConfigRepository';
+import { SQLiteChatRepository } from './infrastructure/persistence/sqlite/SQLiteChatRepository';
+import { SQLiteChatUserRepository } from './infrastructure/persistence/sqlite/SQLiteChatUserRepository';
+import { SQLiteMessageRepository } from './infrastructure/persistence/sqlite/SQLiteMessageRepository';
+import { SQLiteSummaryRepository } from './infrastructure/persistence/sqlite/SQLiteSummaryRepository';
+import { SQLiteUserRepository } from './infrastructure/persistence/sqlite/SQLiteUserRepository';
+import { TelegramBot } from './infrastructure/telegram/TelegramBot';
 import { InterestTrigger } from './triggers/InterestTrigger';
 import { MentionTrigger } from './triggers/MentionTrigger';
 import { NameTrigger } from './triggers/NameTrigger';

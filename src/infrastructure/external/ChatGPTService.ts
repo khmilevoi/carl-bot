@@ -4,24 +4,24 @@ import OpenAI from 'openai';
 import { ChatModel } from 'openai/resources/shared';
 import path from 'path';
 
-import { TriggerReason } from '../../../domain/triggers/Trigger.interface';
 import {
   AIService,
   ChatMessage,
-} from '../../interfaces/ai/AIService.interface';
+} from '../../application/interfaces/ai/AIService.interface';
 import {
   ENV_SERVICE_ID,
   EnvService,
-} from '../../interfaces/env/EnvService.interface';
-import type { Logger } from '../../interfaces/logging/Logger.interface';
+} from '../../application/interfaces/env/EnvService.interface';
+import type { Logger } from '../../application/interfaces/logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '../../interfaces/logging/LoggerFactory.interface';
+} from '../../application/interfaces/logging/LoggerFactory.interface';
 import {
   PROMPT_SERVICE_ID,
   PromptService,
-} from '../../interfaces/prompts/PromptService.interface';
+} from '../../application/interfaces/prompts/PromptService.interface';
+import { TriggerReason } from '../../domain/triggers/Trigger.interface';
 
 @injectable()
 export class ChatGPTService implements AIService {
