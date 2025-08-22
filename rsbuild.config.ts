@@ -1,4 +1,3 @@
-/* eslint-disable import/no-unused-modules */
 import { defineConfig } from '@rsbuild/core';
 import path from 'path';
 
@@ -14,6 +13,11 @@ export default defineConfig({
     rspack: {
       target: 'node',
       externalsPresets: { node: true },
+      externals: {
+        sqlite3: 'commonjs sqlite3',
+        pino: 'commonjs pino',
+        'pino-pretty': 'commonjs pino-pretty',
+      },
     },
     swc: {
       jsc: {

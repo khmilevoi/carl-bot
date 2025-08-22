@@ -1,12 +1,17 @@
 import { inject, injectable } from 'inversify';
-import pino, { type LevelWithSilent, type Logger as Pino } from 'pino';
+import pino, {
+  type LevelWithSilent,
+  type Logger as Pino,
+  type LoggerOptions,
+  type TransportSingleOptions,
+} from 'pino';
 
 import {
   ENV_SERVICE_ID,
   type EnvService,
-} from '@/application/interfaces/env/EnvService.interface';
-import type { Logger } from '@/application/interfaces/logging/Logger.interface';
-import { type LoggerFactory } from '@/application/interfaces/logging/LoggerFactory.interface';
+} from '@/application/interfaces/env/EnvService';
+import type { Logger } from '@/application/interfaces/logging/Logger';
+import { type LoggerFactory } from '@/application/interfaces/logging/LoggerFactory';
 
 import { PinoLogger } from './PinoLogger';
 
@@ -19,7 +24,20 @@ export class PinoLoggerFactory implements LoggerFactory {
       (this.envService.env.LOG_LEVEL as LevelWithSilent | undefined) ??
       (process.env.LOG_LEVEL as LevelWithSilent | undefined) ??
       'info';
-    this.root = pino({ level });
+    const isProd =
+      this.envService.env.NODE_ENV === 'production' ||
+      process.env.NODE_ENV === 'production';
+    const isTest =
+      this.envService.env.NODE_ENV === 'test' ||
+      process.env.NODE_ENV === 'test';
+    const options: LoggerOptions = { level };
+    if (!isProd && !isTest) {
+      options.transport = {
+        target: 'pino-pretty',
+        options: { colorize: true },
+      } satisfies TransportSingleOptions;
+    }
+    this.root = pino(options);
   }
 
   create(serviceName: string): Logger {

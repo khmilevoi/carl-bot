@@ -1,5 +1,5 @@
-import type { ChatMessage } from '@/domain/messages/ChatMessage.interface';
-import type { StoredMessage } from '@/domain/messages/StoredMessage.interface';
+import type { ChatMessage } from '@/domain/messages/ChatMessage';
+import type { StoredMessage } from '@/domain/messages/StoredMessage';
 
 export interface MessageRepository {
   insert(message: StoredMessage): Promise<void>;

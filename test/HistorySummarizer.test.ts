@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { UserRepository } from '../src/domain/repositories/UserRepository.interface';
+import type { UserRepository } from '../src/domain/repositories/UserRepository';
 import { UserEntity } from '../src/domain/entities/UserEntity';
-import type { AIService } from '../src/application/interfaces/ai/AIService.interface';
-import type { ChatMessage } from '../src/domain/messages/ChatMessage.interface';
+import type { AIService } from '../src/application/interfaces/ai/AIService';
+import type { ChatMessage } from '../src/domain/messages/ChatMessage';
 import { DefaultHistorySummarizer } from '../src/application/use-cases/chat/DefaultHistorySummarizer';
-import type { MessageService } from '../src/application/interfaces/messages/MessageService.interface';
-import type { SummaryService } from '../src/application/interfaces/summaries/SummaryService.interface';
-import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
+import type { MessageService } from '../src/application/interfaces/messages/MessageService';
+import type { SummaryService } from '../src/application/interfaces/summaries/SummaryService';
+import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory';
 
 class MockAIService implements AIService {
   summarize = vi.fn(async () => 'new summary');

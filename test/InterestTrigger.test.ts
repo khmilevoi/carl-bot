@@ -2,11 +2,11 @@ import type { Context } from 'telegraf';
 import { describe, expect, it, vi } from 'vitest';
 
 import { DefaultDialogueManager } from '../src/application/use-cases/chat/DefaultDialogueManager';
-import type { DialogueManager } from '../src/application/interfaces/chat/DialogueManager.interface';
-import { InterestChecker } from '../src/application/interfaces/interest/InterestChecker.interface';
+import type { DialogueManager } from '../src/application/interfaces/chat/DialogueManager';
+import { InterestChecker } from '../src/application/interfaces/interest/InterestChecker';
 import { InterestTrigger } from '../src/view/telegram/triggers/InterestTrigger';
-import { TriggerContext } from '../src/domain/triggers/Trigger.interface';
-import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
+import { TriggerContext } from '../src/domain/triggers/Trigger';
+import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory';
 
 class MockInterestChecker implements InterestChecker {
   public calls = 0;

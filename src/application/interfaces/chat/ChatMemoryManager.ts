@@ -1,6 +1,6 @@
 import type { ServiceIdentifier } from 'inversify';
 
-import type { ChatMemory } from './ChatMemory.interface';
+import type { ChatMemory } from './ChatMemory';
 
 export interface ChatMemoryManager {
   get(chatId: number): Promise<ChatMemory>;

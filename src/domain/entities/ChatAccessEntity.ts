@@ -1,4 +1,3 @@
-/* c8 ignore start */
 export type ChatStatus = 'pending' | 'approved' | 'banned';
 
 export interface ChatAccessEntity {
@@ -7,4 +6,3 @@ export interface ChatAccessEntity {
   requestedAt?: number;
   approvedAt?: number;
 }
-/* c8 ignore end */

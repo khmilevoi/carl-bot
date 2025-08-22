@@ -3,32 +3,32 @@ import { inject, injectable } from 'inversify';
 import {
   CHAT_CONFIG_SERVICE_ID,
   type ChatConfigService,
-} from '@/application/interfaces/chat/ChatConfigService.interface';
-import type { ChatMemory as ChatMemoryInterface } from '@/application/interfaces/chat/ChatMemory.interface';
-import type { ChatMemoryManager as ChatMemoryManagerInterface } from '@/application/interfaces/chat/ChatMemoryManager.interface';
+} from '@/application/interfaces/chat/ChatConfigService';
+import type { ChatMemory as ChatMemoryInterface } from '@/application/interfaces/chat/ChatMemory';
+import type { ChatMemoryManager as ChatMemoryManagerInterface } from '@/application/interfaces/chat/ChatMemoryManager';
 import {
   CHAT_RESET_SERVICE_ID,
   type ChatResetService,
-} from '@/application/interfaces/chat/ChatResetService.interface';
+} from '@/application/interfaces/chat/ChatResetService';
 import {
   HISTORY_SUMMARIZER_ID,
   type HistorySummarizer,
-} from '@/application/interfaces/chat/HistorySummarizer.interface';
-import type { Logger } from '@/application/interfaces/logging/Logger.interface';
+} from '@/application/interfaces/chat/HistorySummarizer';
+import type { Logger } from '@/application/interfaces/logging/Logger';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '@/application/interfaces/logging/LoggerFactory.interface';
+} from '@/application/interfaces/logging/LoggerFactory';
 import {
   INTEREST_MESSAGE_STORE_ID,
   type InterestMessageStore,
-} from '@/application/interfaces/messages/InterestMessageStore.interface';
+} from '@/application/interfaces/messages/InterestMessageStore';
 import {
   MESSAGE_SERVICE_ID,
   type MessageService,
-} from '@/application/interfaces/messages/MessageService.interface';
-import type { ChatMessage } from '@/domain/messages/ChatMessage.interface';
-import type { StoredMessage } from '@/domain/messages/StoredMessage.interface';
+} from '@/application/interfaces/messages/MessageService';
+import type { ChatMessage } from '@/domain/messages/ChatMessage';
+import type { StoredMessage } from '@/domain/messages/StoredMessage';
 
 @injectable()
 export class ChatMemory implements ChatMemoryInterface {

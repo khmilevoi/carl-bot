@@ -1,11 +1,11 @@
 import { inject, injectable } from 'inversify';
 
-import type { ChatInfoService } from '@/application/interfaces/chat/ChatInfoService.interface';
+import type { ChatInfoService } from '@/application/interfaces/chat/ChatInfoService';
 import type { ChatEntity } from '@/domain/entities/ChatEntity';
 import {
   CHAT_REPOSITORY_ID,
   type ChatRepository,
-} from '@/domain/repositories/ChatRepository.interface';
+} from '@/domain/repositories/ChatRepository';
 
 @injectable()
 export class RepositoryChatInfoService implements ChatInfoService {

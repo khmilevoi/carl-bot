@@ -1,15 +1,15 @@
 import { inject, injectable } from 'inversify';
 
-import type { Logger } from '@/application/interfaces/logging/Logger.interface';
+import type { Logger } from '@/application/interfaces/logging/Logger';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '@/application/interfaces/logging/LoggerFactory.interface';
-import type { SummaryService } from '@/application/interfaces/summaries/SummaryService.interface';
+} from '@/application/interfaces/logging/LoggerFactory';
+import type { SummaryService } from '@/application/interfaces/summaries/SummaryService';
 import {
   SUMMARY_REPOSITORY_ID,
   type SummaryRepository,
-} from '@/domain/repositories/SummaryRepository.interface';
+} from '@/domain/repositories/SummaryRepository';
 
 @injectable()
 export class RepositorySummaryService implements SummaryService {
