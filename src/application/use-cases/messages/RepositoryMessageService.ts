@@ -6,6 +6,8 @@ import {
   type LoggerFactory,
 } from '@/application/interfaces/logging/LoggerFactory.interface';
 import type { MessageService } from '@/application/interfaces/messages/MessageService.interface';
+import { ChatEntity } from '@/domain/entities/ChatEntity';
+import { UserEntity } from '@/domain/entities/UserEntity';
 import type { ChatMessage } from '@/domain/messages/ChatMessage.interface';
 import type { StoredMessage } from '@/domain/messages/StoredMessage.interface';
 import {
@@ -47,16 +49,15 @@ export class RepositoryMessageService implements MessageService {
       'Inserting message into database'
     );
     const storedUserId = message.userId ?? 0;
-    await this.chatRepo.upsert({
-      chatId: message.chatId,
-      title: message.chatTitle ?? null,
-    });
-    await this.userRepo.upsert({
-      id: storedUserId,
-      username: message.username ?? null,
-      firstName: message.firstName ?? null,
-      lastName: message.lastName ?? null,
-    });
+    const chat = new ChatEntity(message.chatId, message.chatTitle ?? null);
+    await this.chatRepo.upsert(chat);
+    const user = new UserEntity(
+      storedUserId,
+      message.username ?? null,
+      message.firstName ?? null,
+      message.lastName ?? null
+    );
+    await this.userRepo.upsert(user);
     await this.chatUserRepo.link(message.chatId, storedUserId);
     await this.messageRepo.insert({
       ...message,

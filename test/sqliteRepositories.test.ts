@@ -12,6 +12,8 @@ import { SQLiteChatUserRepository } from '../src/infrastructure/persistence/sqli
 import { SQLiteMessageRepository } from '../src/infrastructure/persistence/sqlite/SQLiteMessageRepository';
 import { SQLiteSummaryRepository } from '../src/infrastructure/persistence/sqlite/SQLiteSummaryRepository';
 import { SQLiteUserRepository } from '../src/infrastructure/persistence/sqlite/SQLiteUserRepository';
+import { ChatEntity } from '../src/domain/entities/ChatEntity';
+import { UserEntity } from '../src/domain/entities/UserEntity';
 import { TestEnvService } from '../src/infrastructure/config/TestEnvService';
 import { parseDatabaseUrl } from '../src/utils/database';
 import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
@@ -102,14 +104,10 @@ beforeEach(async () => {
 
 describe('SQLite repositories', () => {
   it('adds and retrieves messages', async () => {
-    await chatRepo.upsert({ chatId: 1 });
-    await userRepo.upsert({
-      id: 1,
-      username: 'alice',
-      firstName: 'Alice',
-      lastName: 'Smith',
-      attitude: 'neutral',
-    });
+    await chatRepo.upsert(new ChatEntity(1));
+    await userRepo.upsert(
+      new UserEntity(1, 'alice', 'Alice', 'Smith', 'neutral')
+    );
     await messageRepo.insert({
       chatId: 1,
       role: 'user',
@@ -117,7 +115,7 @@ describe('SQLite repositories', () => {
       userId: 1,
       messageId: 11,
     });
-    await userRepo.upsert({ id: 0, username: 'bot' });
+    await userRepo.upsert(new UserEntity(0, 'bot'));
     await messageRepo.insert({
       chatId: 1,
       role: 'assistant',
@@ -141,15 +139,15 @@ describe('SQLite repositories', () => {
   });
 
   it('counts and retrieves last messages', async () => {
-    await chatRepo.upsert({ chatId: 1 });
-    await userRepo.upsert({ id: 1, username: 'alice' });
+    await chatRepo.upsert(new ChatEntity(1));
+    await userRepo.upsert(new UserEntity(1, 'alice'));
     await messageRepo.insert({
       chatId: 1,
       role: 'user',
       content: 'hi',
       userId: 1,
     });
-    await userRepo.upsert({ id: 0, username: 'bot' });
+    await userRepo.upsert(new UserEntity(0, 'bot'));
     await messageRepo.insert({
       chatId: 1,
       role: 'assistant',
@@ -164,8 +162,8 @@ describe('SQLite repositories', () => {
   });
 
   it('clears messages', async () => {
-    await chatRepo.upsert({ chatId: 1 });
-    await userRepo.upsert({ id: 1, username: 'alice' });
+    await chatRepo.upsert(new ChatEntity(1));
+    await userRepo.upsert(new UserEntity(1, 'alice'));
     await messageRepo.insert({
       chatId: 1,
       role: 'user',
@@ -183,8 +181,8 @@ describe('SQLite repositories', () => {
   });
 
   it('resets messages and summary', async () => {
-    await chatRepo.upsert({ chatId: 1 });
-    await userRepo.upsert({ id: 1, username: 'alice' });
+    await chatRepo.upsert(new ChatEntity(1));
+    await userRepo.upsert(new UserEntity(1, 'alice'));
     await messageRepo.insert({
       chatId: 1,
       role: 'user',
@@ -200,41 +198,26 @@ describe('SQLite repositories', () => {
   });
 
   it('stores and updates users', async () => {
-    await userRepo.upsert({
-      id: 42,
-      username: 'alice',
-      firstName: 'Alice',
-      lastName: 'Smith',
-      attitude: 'neutral',
-    });
-    await userRepo.upsert({
-      id: 42,
-      username: 'alice2',
-      firstName: 'Alicia',
-      lastName: 'Johnson',
-      attitude: 'hostile',
-    });
-    await userRepo.setAttitude(42, 'friendly');
-    const user = await userRepo.findById(42);
-    expect(user).toEqual({
-      id: 42,
-      username: 'alice2',
-      firstName: 'Alicia',
-      lastName: 'Johnson',
-      attitude: 'friendly',
-    });
+    await userRepo.upsert(
+      new UserEntity(42, 'alice', 'Alice', 'Smith', 'neutral')
+    );
+    const user = new UserEntity(42, 'alice2', 'Alicia', 'Johnson', 'hostile');
+    user.setAttitude('friendly');
+    await userRepo.upsert(user);
+    const fetched = await userRepo.findById(42);
+    expect(fetched).toEqual(user);
   });
 
   it('stores chats', async () => {
-    await chatRepo.upsert({ chatId: 1, title: 'Test Chat' });
+    await chatRepo.upsert(new ChatEntity(1, 'Test Chat'));
     const chat = await chatRepo.findById(1);
-    expect(chat).toEqual({ chatId: 1, title: 'Test Chat' });
+    expect(chat).toEqual(new ChatEntity(1, 'Test Chat'));
   });
 
   it('links users to chats and lists them', async () => {
-    await chatRepo.upsert({ chatId: 1 });
-    await userRepo.upsert({ id: 2, username: 'bob' });
-    await userRepo.upsert({ id: 3, username: 'carol' });
+    await chatRepo.upsert(new ChatEntity(1));
+    await userRepo.upsert(new UserEntity(2, 'bob'));
+    await userRepo.upsert(new UserEntity(3, 'carol'));
     await chatUserRepo.link(1, 2);
     await chatUserRepo.link(1, 3);
     expect(await chatUserRepo.listByChat(1)).toEqual([2, 3]);

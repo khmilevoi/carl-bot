@@ -1,6 +1,6 @@
 import { inject, injectable } from 'inversify';
 
-import type { ChatEntity } from '@/domain/entities/ChatEntity';
+import { ChatEntity } from '@/domain/entities/ChatEntity';
 import type { ChatRepository } from '@/domain/repositories/ChatRepository.interface';
 import {
   DB_PROVIDER_ID,
@@ -27,6 +27,6 @@ export class SQLiteChatRepository implements ChatRepository {
       'SELECT chat_id, title FROM chats WHERE chat_id = ?',
       chatId
     );
-    return row ? { chatId: row.chat_id, title: row.title } : undefined;
+    return row ? new ChatEntity(row.chat_id, row.title) : undefined;
   }
 }

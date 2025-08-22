@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { UserRepository } from '../src/domain/repositories/UserRepository.interface';
-import type { UserEntity } from '../src/domain/entities/UserEntity';
+import { UserEntity } from '../src/domain/entities/UserEntity';
 import type { AIService } from '../src/application/interfaces/ai/AIService.interface';
 import type { ChatMessage } from '../src/domain/messages/ChatMessage.interface';
 import { DefaultHistorySummarizer } from '../src/application/use-cases/chat/DefaultHistorySummarizer';
@@ -65,15 +65,17 @@ class MockSummaryService implements SummaryService {
 }
 
 class MockUserRepository implements UserRepository {
-  updates: { userId: number; attitude: string }[] = [];
+  updates: UserEntity[] = [];
   attitudes = new Map<number, string>();
-  async setAttitude(userId: number, attitude: string): Promise<void> {
-    this.updates.push({ userId, attitude });
+  async upsert(user: UserEntity): Promise<void> {
+    this.updates.push(user);
+    if (user.attitude) this.attitudes.set(user.id, user.attitude);
   }
-  async upsert(_user: UserEntity): Promise<void> {}
   async findById(id: number): Promise<UserEntity | undefined> {
     const attitude = this.attitudes.get(id);
-    return attitude ? { id, attitude } : undefined;
+    return attitude !== undefined
+      ? new UserEntity(id, undefined, undefined, undefined, attitude)
+      : undefined;
   }
 }
 
@@ -143,7 +145,9 @@ describe('HistorySummarizer', () => {
       { username: 'user2', attitude: 'hostile' },
     ]);
     expect(summaries.summary).toBe('new summary');
-    expect(users.updates).toEqual([{ userId: 1, attitude: 'positive' }]);
+    expect(
+      users.updates.map((u) => ({ id: u.id, attitude: u.attitude }))
+    ).toEqual([{ id: 1, attitude: 'positive' }]);
     expect(messages.messages).toHaveLength(0);
   });
 
