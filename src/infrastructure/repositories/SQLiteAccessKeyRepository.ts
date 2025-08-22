@@ -1,13 +1,16 @@
 import { inject, injectable } from 'inversify';
-import type { Database } from 'sqlite';
 
 import type { AccessKeyEntity } from '../../domain/entities/AccessKeyEntity';
 import type { AccessKeyRepository } from '../../domain/repositories/AccessKeyRepository.interface';
-import { DB_PROVIDER_ID, type SQLiteDbProvider } from './DbProvider';
+import {
+  DB_PROVIDER_ID,
+  type DbProvider,
+  type SqlDatabase,
+} from '../../domain/repositories/DbProvider.interface';
 
 @injectable()
 export class SQLiteAccessKeyRepository implements AccessKeyRepository {
-  constructor(@inject(DB_PROVIDER_ID) private dbProvider: SQLiteDbProvider) {}
+  constructor(@inject(DB_PROVIDER_ID) private dbProvider: DbProvider) {}
   async upsertKey({
     chatId,
     userId,
@@ -54,7 +57,7 @@ export class SQLiteAccessKeyRepository implements AccessKeyRepository {
     await db.run('DELETE FROM access_keys WHERE expires_at <= ?', now);
   }
 
-  private async db(): Promise<Database> {
+  private async db(): Promise<SqlDatabase> {
     return this.dbProvider.get();
   }
 }

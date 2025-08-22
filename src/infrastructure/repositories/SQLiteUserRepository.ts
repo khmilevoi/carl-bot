@@ -1,13 +1,16 @@
 import { inject, injectable } from 'inversify';
-import type { Database } from 'sqlite';
 
 import type { UserEntity } from '../../domain/entities/UserEntity';
+import {
+  DB_PROVIDER_ID,
+  type DbProvider,
+  type SqlDatabase,
+} from '../../domain/repositories/DbProvider.interface';
 import type { UserRepository } from '../../domain/repositories/UserRepository.interface';
-import { DB_PROVIDER_ID, type SQLiteDbProvider } from './DbProvider';
 
 @injectable()
 export class SQLiteUserRepository implements UserRepository {
-  constructor(@inject(DB_PROVIDER_ID) private dbProvider: SQLiteDbProvider) {}
+  constructor(@inject(DB_PROVIDER_ID) private dbProvider: DbProvider) {}
   async upsert({
     id,
     username,
@@ -58,7 +61,7 @@ export class SQLiteUserRepository implements UserRepository {
     );
   }
 
-  private async db(): Promise<Database> {
+  private async db(): Promise<SqlDatabase> {
     return this.dbProvider.get();
   }
 }

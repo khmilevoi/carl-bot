@@ -1,7 +1,6 @@
 import { randomBytes } from 'node:crypto';
 
 import { inject, injectable } from 'inversify';
-import type { Database } from 'sqlite';
 
 import type { UserEntity } from '../../../domain/entities/UserEntity';
 import {
@@ -12,6 +11,11 @@ import {
   CHAT_USER_REPOSITORY_ID,
   type ChatUserRepository,
 } from '../../../domain/repositories/ChatUserRepository.interface';
+import {
+  DB_PROVIDER_ID,
+  type DbProvider,
+  type SqlDatabase,
+} from '../../../domain/repositories/DbProvider.interface';
 import {
   MESSAGE_REPOSITORY_ID,
   type MessageRepository,
@@ -24,10 +28,6 @@ import {
   USER_REPOSITORY_ID,
   type UserRepository,
 } from '../../../domain/repositories/UserRepository.interface';
-import {
-  DB_PROVIDER_ID,
-  type SQLiteDbProvider,
-} from '../../../infrastructure/repositories/DbProvider';
 import { AdminService } from '../../interfaces/admin/AdminService.interface';
 import type { ChatMessage } from '../../interfaces/ai/AIService.interface';
 import {
@@ -45,7 +45,7 @@ export class AdminServiceImpl implements AdminService {
   private readonly logger: Logger;
 
   constructor(
-    @inject(DB_PROVIDER_ID) private dbProvider: SQLiteDbProvider,
+    @inject(DB_PROVIDER_ID) private dbProvider: DbProvider,
     @inject(ACCESS_KEY_REPOSITORY_ID)
     private accessKeyRepo: AccessKeyRepository,
     @inject(MESSAGE_REPOSITORY_ID) private messageRepo: MessageRepository,
@@ -168,7 +168,7 @@ export class AdminServiceImpl implements AdminService {
   }
 
   private async exportTable(
-    db: Database,
+    db: SqlDatabase,
     table: string
   ): Promise<Buffer | null> {
     try {

@@ -114,6 +114,10 @@ import {
   type ChatUserRepository,
 } from './domain/repositories/ChatUserRepository.interface';
 import {
+  DB_PROVIDER_ID,
+  type DbProvider,
+} from './domain/repositories/DbProvider.interface';
+import {
   MESSAGE_REPOSITORY_ID,
   type MessageRepository,
 } from './domain/repositories/MessageRepository.interface';
@@ -126,11 +130,7 @@ import {
   type UserRepository,
 } from './domain/repositories/UserRepository.interface';
 import { PinoLoggerFactory } from './infrastructure/logging/PinoLoggerFactory';
-import {
-  DB_PROVIDER_ID,
-  type DbProvider,
-  SQLiteDbProviderImpl,
-} from './infrastructure/repositories/DbProvider';
+import { SQLiteDbProviderImpl } from './infrastructure/repositories/DbProvider';
 import { SQLiteAccessKeyRepository } from './infrastructure/repositories/SQLiteAccessKeyRepository';
 import { SQLiteChatAccessRepository } from './infrastructure/repositories/SQLiteChatAccessRepository';
 import { SQLiteChatConfigRepository } from './infrastructure/repositories/SQLiteChatConfigRepository';
