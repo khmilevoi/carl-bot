@@ -10,4 +10,7 @@ export const envSchema = z.object({
   ADMIN_CHAT_ID: z.coerce.number(),
   NODE_ENV: z.string().default('development'),
   LOG_PROMPTS: z.coerce.boolean().default(false),
+  RABBITMQ_URL: z.string().min(1),
+  RABBITMQ_QUEUE: z.string().min(1),
+  RABBITMQ_MAX_PRIORITY: z.coerce.number(),
 }) as z.ZodType<Env>;
