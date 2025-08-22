@@ -1,16 +1,19 @@
 import { inject, injectable } from 'inversify';
-import type { Database } from 'sqlite';
 
 import type {
   ChatAccessEntity,
   ChatStatus,
 } from '../../domain/entities/ChatAccessEntity';
 import type { ChatAccessRepository } from '../../domain/repositories/ChatAccessRepository.interface';
-import { DB_PROVIDER_ID, type SQLiteDbProvider } from './DbProvider';
+import {
+  DB_PROVIDER_ID,
+  type DbProvider,
+  type SqlDatabase,
+} from '../../domain/repositories/DbProvider.interface';
 
 @injectable()
 export class SQLiteChatAccessRepository implements ChatAccessRepository {
-  constructor(@inject(DB_PROVIDER_ID) private dbProvider: SQLiteDbProvider) {}
+  constructor(@inject(DB_PROVIDER_ID) private dbProvider: DbProvider) {}
   async get(chatId: number): Promise<ChatAccessEntity | undefined> {
     const db = await this.db();
     const row = await db.get<{
@@ -48,14 +51,12 @@ export class SQLiteChatAccessRepository implements ChatAccessRepository {
 
   async listPending(): Promise<ChatAccessEntity[]> {
     const db = await this.db();
-    const rows = await db.all<
-      {
-        chat_id: number;
-        status: ChatStatus;
-        requested_at: number | null;
-        approved_at: number | null;
-      }[]
-    >(
+    const rows = await db.all<{
+      chat_id: number;
+      status: ChatStatus;
+      requested_at: number | null;
+      approved_at: number | null;
+    }>(
       'SELECT chat_id, status, requested_at, approved_at FROM chat_access WHERE status = ?',
       'pending'
     );
@@ -69,14 +70,12 @@ export class SQLiteChatAccessRepository implements ChatAccessRepository {
 
   async listAll(): Promise<ChatAccessEntity[]> {
     const db = await this.db();
-    const rows = await db.all<
-      {
-        chat_id: number;
-        status: ChatStatus;
-        requested_at: number | null;
-        approved_at: number | null;
-      }[]
-    >('SELECT chat_id, status, requested_at, approved_at FROM chat_access');
+    const rows = await db.all<{
+      chat_id: number;
+      status: ChatStatus;
+      requested_at: number | null;
+      approved_at: number | null;
+    }>('SELECT chat_id, status, requested_at, approved_at FROM chat_access');
     return (rows ?? []).map((row) => ({
       chatId: row.chat_id,
       status: row.status,
@@ -85,7 +84,7 @@ export class SQLiteChatAccessRepository implements ChatAccessRepository {
     }));
   }
 
-  private async db(): Promise<Database> {
+  private async db(): Promise<SqlDatabase> {
     return this.dbProvider.get();
   }
 }

@@ -1,7 +1,9 @@
-import type { Database } from 'sqlite';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { DbProvider } from '../src/infrastructure/repositories/DbProvider';
+import type {
+  DbProvider,
+  SqlDatabase,
+} from '../src/domain/repositories/DbProvider.interface';
 import type { AccessKeyRepository } from '../src/domain/repositories/AccessKeyRepository.interface';
 import type { ChatUserRepository } from '../src/domain/repositories/ChatUserRepository.interface';
 import type { MessageRepository } from '../src/domain/repositories/MessageRepository.interface';
@@ -36,7 +38,7 @@ describe('AdminServiceImpl', () => {
       findByChatAndUser: vi.fn(),
     } as unknown as AccessKeyRepository;
     const admin = new AdminServiceImpl(
-      { get: vi.fn(), listTables: vi.fn() } as unknown as DbProvider<Database>,
+      { get: vi.fn(), listTables: vi.fn() } as unknown as DbProvider,
       accessRepo,
       {} as unknown as MessageRepository,
       {} as unknown as SummaryRepository,
@@ -61,7 +63,7 @@ describe('AdminServiceImpl', () => {
       findByChatAndUser: vi.fn(async () => ({ chatId: 1, userId: 2 })),
     } as unknown as AccessKeyRepository;
     const admin = new AdminServiceImpl(
-      { get: vi.fn(), listTables: vi.fn() } as unknown as DbProvider<Database>,
+      { get: vi.fn(), listTables: vi.fn() } as unknown as DbProvider,
       accessRepo,
       {} as unknown as MessageRepository,
       {} as unknown as SummaryRepository,
@@ -81,11 +83,11 @@ describe('AdminServiceImpl', () => {
       .fn()
       .mockResolvedValueOnce([{ id: 1 }])
       .mockResolvedValueOnce([]);
-    const db = { all: dbAll } as unknown as Database;
+    const db = { all: dbAll } as unknown as SqlDatabase;
     const provider = {
       get: vi.fn(async () => db),
       listTables: vi.fn(async () => ['t']),
-    } as unknown as DbProvider<Database>;
+    } as unknown as DbProvider;
     const admin = new AdminServiceImpl(
       provider,
       {} as unknown as AccessKeyRepository,
@@ -131,8 +133,8 @@ describe('AdminServiceImpl', () => {
       })),
     };
     const admin = new AdminServiceImpl(
-      { get: vi.fn(), listTables: vi.fn() } as unknown as DbProvider<Database>,
-      {} as unknown as Database,
+      { get: vi.fn(), listTables: vi.fn() } as unknown as DbProvider,
+      {} as unknown as AccessKeyRepository,
       messageRepo as unknown as MessageRepository,
       summaryRepo as unknown as SummaryRepository,
       chatUserRepo as unknown as ChatUserRepository,

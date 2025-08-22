@@ -1,6 +1,4 @@
-import type { ServiceIdentifier } from 'inversify';
 import { inject, injectable } from 'inversify';
-import type { Database } from 'sqlite';
 import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 
@@ -13,18 +11,17 @@ import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
 } from '../../application/interfaces/logging/LoggerFactory.interface';
+import {
+  type DbProvider,
+  type SqlDatabase,
+} from '../../domain/repositories/DbProvider.interface';
 import { parseDatabaseUrl } from '../../utils/database';
 
-export interface DbProvider<T = unknown> {
-  get(): Promise<T>;
-  listTables(): Promise<string[]>;
-}
-
-export type SQLiteDbProvider = DbProvider<Database>;
+export type SQLiteDbProvider = DbProvider;
 
 @injectable()
-export class SQLiteDbProviderImpl implements SQLiteDbProvider {
-  private db: Promise<Database>;
+export class SQLiteDbProviderImpl implements DbProvider {
+  private db: Promise<SqlDatabase>;
   private readonly logger: Logger;
 
   constructor(
@@ -37,17 +34,17 @@ export class SQLiteDbProviderImpl implements SQLiteDbProvider {
     this.db = open({ filename, driver: sqlite3.Database }).catch((error) => {
       this.logger.error({ filename, error }, 'Failed to open SQLite database');
       throw error;
-    });
+    }) as Promise<SqlDatabase>;
   }
 
-  get(): Promise<Database> {
+  get(): Promise<SqlDatabase> {
     return this.db;
   }
 
   async listTables(): Promise<string[]> {
     try {
       const db = await this.db;
-      const rows = await db.all<{ name: string }[]>(
+      const rows = await db.all<{ name: string }>(
         "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
       );
       const tables = rows.map((r) => r.name);
@@ -59,7 +56,3 @@ export class SQLiteDbProviderImpl implements SQLiteDbProvider {
     }
   }
 }
-
-export const DB_PROVIDER_ID = Symbol.for('DbProvider') as ServiceIdentifier<
-  DbProvider<Database>
->;

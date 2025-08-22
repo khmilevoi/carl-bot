@@ -1,14 +1,17 @@
 import { inject, injectable } from 'inversify';
-import type { Database } from 'sqlite';
 
 import type { ChatMessage } from '../../application/interfaces/ai/AIService.interface';
 import type { StoredMessage } from '../../application/interfaces/messages/StoredMessage.interface';
+import {
+  DB_PROVIDER_ID,
+  type DbProvider,
+  type SqlDatabase,
+} from '../../domain/repositories/DbProvider.interface';
 import type { MessageRepository } from '../../domain/repositories/MessageRepository.interface';
-import { DB_PROVIDER_ID, type SQLiteDbProvider } from './DbProvider';
 
 @injectable()
 export class SQLiteMessageRepository implements MessageRepository {
-  constructor(@inject(DB_PROVIDER_ID) private dbProvider: SQLiteDbProvider) {}
+  constructor(@inject(DB_PROVIDER_ID) private dbProvider: DbProvider) {}
   async insert({
     chatId,
     messageId,
@@ -35,22 +38,20 @@ export class SQLiteMessageRepository implements MessageRepository {
 
   async findByChatId(chatId: number): Promise<ChatMessage[]> {
     const db = await this.db();
-    const rows = await db.all<
-      {
-        role: 'user' | 'assistant';
-        content: string;
-        username: string | null;
-        first_name: string | null;
-        last_name: string | null;
-        reply_text: string | null;
-        reply_username: string | null;
-        quote_text: string | null;
-        user_id: number | null;
-        chat_id: number | null;
-        message_id: number | null;
-        attitude: string | null;
-      }[]
-    >(
+    const rows = await db.all<{
+      role: 'user' | 'assistant';
+      content: string;
+      username: string | null;
+      first_name: string | null;
+      last_name: string | null;
+      reply_text: string | null;
+      reply_username: string | null;
+      quote_text: string | null;
+      user_id: number | null;
+      chat_id: number | null;
+      message_id: number | null;
+      attitude: string | null;
+    }>(
       'SELECT m.role, m.content, u.username, u.first_name, u.last_name, u.attitude, m.reply_text, m.reply_username, m.quote_text, m.user_id, c.chat_id, m.message_id FROM messages m LEFT JOIN users u ON m.user_id = u.id LEFT JOIN chats c ON m.chat_id = c.chat_id WHERE m.chat_id = ? ORDER BY m.id',
       chatId
     );
@@ -89,22 +90,20 @@ export class SQLiteMessageRepository implements MessageRepository {
     limit: number
   ): Promise<ChatMessage[]> {
     const db = await this.db();
-    const rows = await db.all<
-      {
-        role: 'user' | 'assistant';
-        content: string;
-        username: string | null;
-        first_name: string | null;
-        last_name: string | null;
-        reply_text: string | null;
-        reply_username: string | null;
-        quote_text: string | null;
-        user_id: number | null;
-        chat_id: number | null;
-        message_id: number | null;
-        attitude: string | null;
-      }[]
-    >(
+    const rows = await db.all<{
+      role: 'user' | 'assistant';
+      content: string;
+      username: string | null;
+      first_name: string | null;
+      last_name: string | null;
+      reply_text: string | null;
+      reply_username: string | null;
+      quote_text: string | null;
+      user_id: number | null;
+      chat_id: number | null;
+      message_id: number | null;
+      attitude: string | null;
+    }>(
       'SELECT m.role, m.content, u.username, u.first_name, u.last_name, u.attitude, m.reply_text, m.reply_username, m.quote_text, m.user_id, c.chat_id, m.message_id FROM messages m LEFT JOIN users u ON m.user_id = u.id LEFT JOIN chats c ON m.chat_id = c.chat_id WHERE m.chat_id = ? ORDER BY m.id DESC LIMIT ?',
       chatId,
       limit
@@ -135,7 +134,7 @@ export class SQLiteMessageRepository implements MessageRepository {
     await db.run('DELETE FROM messages WHERE chat_id = ?', chatId);
   }
 
-  private async db(): Promise<Database> {
+  private async db(): Promise<SqlDatabase> {
     return this.dbProvider.get();
   }
 }

@@ -1,13 +1,16 @@
 import { inject, injectable } from 'inversify';
-import type { Database } from 'sqlite';
 
 import type { ChatEntity } from '../../domain/entities/ChatEntity';
 import type { ChatRepository } from '../../domain/repositories/ChatRepository.interface';
-import { DB_PROVIDER_ID, type SQLiteDbProvider } from './DbProvider';
+import {
+  DB_PROVIDER_ID,
+  type DbProvider,
+  type SqlDatabase,
+} from '../../domain/repositories/DbProvider.interface';
 
 @injectable()
 export class SQLiteChatRepository implements ChatRepository {
-  constructor(@inject(DB_PROVIDER_ID) private dbProvider: SQLiteDbProvider) {}
+  constructor(@inject(DB_PROVIDER_ID) private dbProvider: DbProvider) {}
   async upsert({ chatId, title }: ChatEntity): Promise<void> {
     const db = await this.db();
     await db.run(
@@ -26,7 +29,7 @@ export class SQLiteChatRepository implements ChatRepository {
     return row ? { chatId: row.chat_id, title: row.title } : undefined;
   }
 
-  private async db(): Promise<Database> {
+  private async db(): Promise<SqlDatabase> {
     return this.dbProvider.get();
   }
 }
