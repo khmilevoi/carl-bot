@@ -8,6 +8,7 @@ import { NameTrigger } from '../src/triggers/NameTrigger';
 import { ReplyTrigger } from '../src/triggers/ReplyTrigger';
 import { TriggerContext } from '../src/domain/triggers/Trigger.interface';
 import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
+import type { EnvService } from '../src/application/interfaces/env/EnvService.interface';
 
 const createLoggerFactory = (): LoggerFactory =>
   ({
@@ -102,7 +103,10 @@ describe('MentionTrigger', () => {
 });
 
 describe('NameTrigger', () => {
-  const trigger = new NameTrigger('Arkadius', createLoggerFactory());
+  const envService = {
+    getBotName: () => 'Arkadius',
+  } as unknown as EnvService;
+  const trigger = new NameTrigger(envService, createLoggerFactory());
 
   it('recognizes name at start of text', async () => {
     const ctx: TriggerContext = {

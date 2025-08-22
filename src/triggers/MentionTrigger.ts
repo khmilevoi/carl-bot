@@ -1,17 +1,22 @@
+import { inject, injectable } from 'inversify';
 import type { Context } from 'telegraf';
 
 import type { DialogueManager } from '../application/interfaces/chat/DialogueManager.interface';
 import type { Logger } from '../application/interfaces/logging/Logger.interface';
-import { type LoggerFactory } from '../application/interfaces/logging/LoggerFactory.interface';
+import {
+  LOGGER_FACTORY_ID,
+  type LoggerFactory,
+} from '../application/interfaces/logging/LoggerFactory.interface';
 import type {
   Trigger,
   TriggerContext,
   TriggerResult,
 } from '../domain/triggers/Trigger.interface';
 
+@injectable()
 export class MentionTrigger implements Trigger {
   private readonly logger: Logger;
-  constructor(loggerFactory: LoggerFactory) {
+  constructor(@inject(LOGGER_FACTORY_ID) loggerFactory: LoggerFactory) {
     this.logger = loggerFactory.create('MentionTrigger');
   }
   async apply(

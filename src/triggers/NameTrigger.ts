@@ -1,19 +1,31 @@
+import { inject, injectable } from 'inversify';
 import type { Context } from 'telegraf';
 
 import type { DialogueManager } from '../application/interfaces/chat/DialogueManager.interface';
+import {
+  ENV_SERVICE_ID,
+  type EnvService,
+} from '../application/interfaces/env/EnvService.interface';
 import type { Logger } from '../application/interfaces/logging/Logger.interface';
-import { type LoggerFactory } from '../application/interfaces/logging/LoggerFactory.interface';
+import {
+  LOGGER_FACTORY_ID,
+  type LoggerFactory,
+} from '../application/interfaces/logging/LoggerFactory.interface';
 import type {
   Trigger,
   TriggerContext,
   TriggerResult,
 } from '../domain/triggers/Trigger.interface';
 
+@injectable()
 export class NameTrigger implements Trigger {
   private pattern: RegExp;
   private readonly logger: Logger;
-  constructor(name: string, loggerFactory: LoggerFactory) {
-    this.pattern = new RegExp(`^${name}[,:\\s]`, 'i');
+  constructor(
+    @inject(ENV_SERVICE_ID) envService: EnvService,
+    @inject(LOGGER_FACTORY_ID) loggerFactory: LoggerFactory
+  ) {
+    this.pattern = new RegExp(`^${envService.getBotName()}[,:\\s]`, 'i');
     this.logger = loggerFactory.create('NameTrigger');
     this.logger.debug(
       { pattern: this.pattern },

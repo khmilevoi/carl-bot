@@ -129,6 +129,7 @@ import {
   USER_REPOSITORY_ID,
   type UserRepository,
 } from './domain/repositories/UserRepository.interface';
+import { type Trigger, TRIGGER_ID } from './domain/triggers/Trigger.interface';
 import { PinoLoggerFactory } from './infrastructure/logging/PinoLoggerFactory';
 import { SQLiteDbProviderImpl } from './infrastructure/repositories/DbProvider';
 import { SQLiteAccessKeyRepository } from './infrastructure/repositories/SQLiteAccessKeyRepository';
@@ -139,6 +140,10 @@ import { SQLiteChatUserRepository } from './infrastructure/repositories/SQLiteCh
 import { SQLiteMessageRepository } from './infrastructure/repositories/SQLiteMessageRepository';
 import { SQLiteSummaryRepository } from './infrastructure/repositories/SQLiteSummaryRepository';
 import { SQLiteUserRepository } from './infrastructure/repositories/SQLiteUserRepository';
+import { InterestTrigger } from './triggers/InterestTrigger';
+import { MentionTrigger } from './triggers/MentionTrigger';
+import { NameTrigger } from './triggers/NameTrigger';
+import { ReplyTrigger } from './triggers/ReplyTrigger';
 
 export const container = new Container();
 
@@ -254,6 +259,11 @@ container
   .bind<MessageContextExtractor>(MESSAGE_CONTEXT_EXTRACTOR_ID)
   .to(DefaultMessageContextExtractor)
   .inSingletonScope();
+
+container.bind<Trigger>(TRIGGER_ID).to(MentionTrigger).inSingletonScope();
+container.bind<Trigger>(TRIGGER_ID).to(ReplyTrigger).inSingletonScope();
+container.bind<Trigger>(TRIGGER_ID).to(NameTrigger).inSingletonScope();
+container.bind<Trigger>(TRIGGER_ID).to(InterestTrigger).inSingletonScope();
 
 container
   .bind<TriggerPipeline>(TRIGGER_PIPELINE_ID)
