@@ -636,7 +636,7 @@ export class TelegramBot {
       return false;
     }
     if (status !== 'approved') {
-       await this.router.show(ctx, 'chat_not_approved');
+      await this.router.show(ctx, 'chat_not_approved');
       return false;
     }
     return true;
