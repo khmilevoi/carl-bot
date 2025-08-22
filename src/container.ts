@@ -48,7 +48,6 @@ import { RepositoryChatConfigService } from './application/use-cases/chat/Reposi
 import { DefaultEnvService } from './application/use-cases/env/DefaultEnvService';
 import { TestEnvService } from './application/use-cases/env/TestEnvService';
 import { DefaultInterestChecker } from './application/use-cases/interest/DefaultInterestChecker';
-import { PinoLoggerFactory } from './application/use-cases/logging/PinoLoggerFactory';
 import { DefaultMessageContextExtractor } from './application/use-cases/messages/DefaultMessageContextExtractor';
 import { InMemoryInterestMessageStore } from './application/use-cases/messages/InMemoryInterestMessageStore';
 import { RepositoryMessageService } from './application/use-cases/messages/RepositoryMessageService';
@@ -63,18 +62,19 @@ import { CHAT_USER_REPOSITORY_ID } from './domain/repositories/ChatUserRepositor
 import { MESSAGE_REPOSITORY_ID } from './domain/repositories/MessageRepository.interface';
 import { SUMMARY_REPOSITORY_ID } from './domain/repositories/SummaryRepository.interface';
 import { USER_REPOSITORY_ID } from './domain/repositories/UserRepository.interface';
+import { PinoLoggerFactory } from './infrastructure/logging/PinoLoggerFactory';
 import {
   DB_PROVIDER_ID,
   SQLiteDbProviderImpl,
-} from './repositories/DbProvider';
-import { SQLiteAccessKeyRepository } from './repositories/sqlite/SQLiteAccessKeyRepository';
-import { SQLiteChatAccessRepository } from './repositories/sqlite/SQLiteChatAccessRepository';
-import { SQLiteChatConfigRepository } from './repositories/sqlite/SQLiteChatConfigRepository';
-import { SQLiteChatRepository } from './repositories/sqlite/SQLiteChatRepository';
-import { SQLiteChatUserRepository } from './repositories/sqlite/SQLiteChatUserRepository';
-import { SQLiteMessageRepository } from './repositories/sqlite/SQLiteMessageRepository';
-import { SQLiteSummaryRepository } from './repositories/sqlite/SQLiteSummaryRepository';
-import { SQLiteUserRepository } from './repositories/sqlite/SQLiteUserRepository';
+} from './infrastructure/repositories/DbProvider';
+import { SQLiteAccessKeyRepository } from './infrastructure/repositories/SQLiteAccessKeyRepository';
+import { SQLiteChatAccessRepository } from './infrastructure/repositories/SQLiteChatAccessRepository';
+import { SQLiteChatConfigRepository } from './infrastructure/repositories/SQLiteChatConfigRepository';
+import { SQLiteChatRepository } from './infrastructure/repositories/SQLiteChatRepository';
+import { SQLiteChatUserRepository } from './infrastructure/repositories/SQLiteChatUserRepository';
+import { SQLiteMessageRepository } from './infrastructure/repositories/SQLiteMessageRepository';
+import { SQLiteSummaryRepository } from './infrastructure/repositories/SQLiteSummaryRepository';
+import { SQLiteUserRepository } from './infrastructure/repositories/SQLiteUserRepository';
 
 export const container = new Container();
 

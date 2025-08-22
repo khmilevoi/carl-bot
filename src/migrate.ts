@@ -5,8 +5,8 @@ import sqlite3 from 'sqlite3';
 
 import type { EnvService } from './application/interfaces/env/EnvService.interface';
 import { ENV_SERVICE_ID } from './application/interfaces/env/EnvService.interface';
-import { PinoLoggerFactory } from './application/use-cases/logging/PinoLoggerFactory';
 import { container } from './container';
+import { PinoLoggerFactory } from './infrastructure/logging/PinoLoggerFactory';
 import { parseDatabaseUrl } from './utils/database';
 
 interface Migration {

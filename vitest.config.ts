@@ -11,7 +11,7 @@ export default defineConfig({
         '**/index.ts',
         'src/migrate.ts',
         'src/container.ts',
-        'src/repositories/**',
+        'src/infrastructure/repositories/**',
         'src/application/use-cases/env/**',
         'src/bot/**',
         'src/triggers/**',

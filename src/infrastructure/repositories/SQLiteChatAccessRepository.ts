@@ -6,7 +6,7 @@ import type {
   ChatStatus,
 } from '../../domain/entities/ChatAccessEntity';
 import type { ChatAccessRepository } from '../../domain/repositories/ChatAccessRepository.interface';
-import { DB_PROVIDER_ID, type SQLiteDbProvider } from '../DbProvider';
+import { DB_PROVIDER_ID, type SQLiteDbProvider } from './DbProvider';
 
 @injectable()
 export class SQLiteChatAccessRepository implements ChatAccessRepository {

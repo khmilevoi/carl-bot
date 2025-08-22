@@ -1,7 +1,7 @@
 import type { Database } from 'sqlite';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { DbProvider } from '../src/repositories/DbProvider';
+import type { DbProvider } from '../src/infrastructure/repositories/DbProvider';
 import type { AccessKeyRepository } from '../src/domain/repositories/AccessKeyRepository.interface';
 import type { ChatUserRepository } from '../src/domain/repositories/ChatUserRepository.interface';
 import type { MessageRepository } from '../src/domain/repositories/MessageRepository.interface';

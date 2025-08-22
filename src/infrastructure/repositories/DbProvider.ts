@@ -7,13 +7,13 @@ import sqlite3 from 'sqlite3';
 import {
   ENV_SERVICE_ID,
   EnvService,
-} from '../application/interfaces/env/EnvService.interface';
-import type { Logger } from '../application/interfaces/logging/Logger.interface';
+} from '../../application/interfaces/env/EnvService.interface';
+import type { Logger } from '../../application/interfaces/logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '../application/interfaces/logging/LoggerFactory.interface';
-import { parseDatabaseUrl } from '../utils/database';
+} from '../../application/interfaces/logging/LoggerFactory.interface';
+import { parseDatabaseUrl } from '../../utils/database';
 
 export interface DbProvider<T = unknown> {
   get(): Promise<T>;

@@ -2,7 +2,7 @@ import { inject, injectable } from 'inversify';
 import type { Database } from 'sqlite';
 
 import type { ChatUserRepository } from '../../domain/repositories/ChatUserRepository.interface';
-import { DB_PROVIDER_ID, type SQLiteDbProvider } from '../DbProvider';
+import { DB_PROVIDER_ID, type SQLiteDbProvider } from './DbProvider';
 
 @injectable()
 export class SQLiteChatUserRepository implements ChatUserRepository {

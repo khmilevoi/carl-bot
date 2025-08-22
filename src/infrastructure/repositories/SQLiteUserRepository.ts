@@ -3,7 +3,7 @@ import type { Database } from 'sqlite';
 
 import type { UserEntity } from '../../domain/entities/UserEntity';
 import type { UserRepository } from '../../domain/repositories/UserRepository.interface';
-import { DB_PROVIDER_ID, type SQLiteDbProvider } from '../DbProvider';
+import { DB_PROVIDER_ID, type SQLiteDbProvider } from './DbProvider';
 
 @injectable()
 export class SQLiteUserRepository implements UserRepository {
