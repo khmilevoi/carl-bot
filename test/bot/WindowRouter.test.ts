@@ -7,7 +7,7 @@ import {
   createRoute,
   registerRoutes,
   type RouteApi,
-} from '../../src/infrastructure/telegram/telegramRouter';
+} from '../../src/view/telegram/telegramRouter';
 
 type RouteId = 'first' | 'second' | 'third' | 'fourth' | 'needs_data';
 

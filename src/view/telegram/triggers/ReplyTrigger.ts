@@ -1,16 +1,16 @@
 import { inject, injectable } from 'inversify';
 import type { Context } from 'telegraf';
 
-import type { Logger } from '../application/interfaces/logging/Logger.interface';
+import type { Logger } from '../../../application/interfaces/logging/Logger.interface';
 import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
-} from '../application/interfaces/logging/LoggerFactory.interface';
+} from '../../../application/interfaces/logging/LoggerFactory.interface';
 import type {
   Trigger,
   TriggerContext,
   TriggerResult,
-} from '../domain/triggers/Trigger.interface';
+} from '../../../domain/triggers/Trigger.interface';
 
 @injectable()
 export class ReplyTrigger implements Trigger {

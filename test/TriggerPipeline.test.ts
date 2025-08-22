@@ -10,10 +10,10 @@ import type {
   Trigger,
   TriggerContext,
 } from '../src/domain/triggers/Trigger.interface';
-import { MentionTrigger } from '../src/triggers/MentionTrigger';
-import { ReplyTrigger } from '../src/triggers/ReplyTrigger';
-import { NameTrigger } from '../src/triggers/NameTrigger';
-import { InterestTrigger } from '../src/triggers/InterestTrigger';
+import { MentionTrigger } from '../src/view/telegram/triggers/MentionTrigger';
+import { ReplyTrigger } from '../src/view/telegram/triggers/ReplyTrigger';
+import { NameTrigger } from '../src/view/telegram/triggers/NameTrigger';
+import { InterestTrigger } from '../src/view/telegram/triggers/InterestTrigger';
 import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory.interface';
 import type { EnvService } from '../src/application/interfaces/env/EnvService.interface';
 

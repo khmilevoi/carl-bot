@@ -139,11 +139,11 @@ import { SQLiteChatUserRepository } from './infrastructure/persistence/sqlite/SQ
 import { SQLiteMessageRepository } from './infrastructure/persistence/sqlite/SQLiteMessageRepository';
 import { SQLiteSummaryRepository } from './infrastructure/persistence/sqlite/SQLiteSummaryRepository';
 import { SQLiteUserRepository } from './infrastructure/persistence/sqlite/SQLiteUserRepository';
-import { TelegramBot } from './infrastructure/telegram/TelegramBot';
-import { InterestTrigger } from './triggers/InterestTrigger';
-import { MentionTrigger } from './triggers/MentionTrigger';
-import { NameTrigger } from './triggers/NameTrigger';
-import { ReplyTrigger } from './triggers/ReplyTrigger';
+import { TelegramBot } from './view/telegram/TelegramBot';
+import { InterestTrigger } from './view/telegram/triggers/InterestTrigger';
+import { MentionTrigger } from './view/telegram/triggers/MentionTrigger';
+import { NameTrigger } from './view/telegram/triggers/NameTrigger';
+import { ReplyTrigger } from './view/telegram/triggers/ReplyTrigger';
 
 export const container = new Container();
 
