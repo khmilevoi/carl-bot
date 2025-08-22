@@ -8,9 +8,6 @@ export interface ChatConfigService {
   setInterestInterval(chatId: number, interestInterval: number): Promise<void>;
 }
 
-export class InvalidHistoryLimitError extends Error {}
-export class InvalidInterestIntervalError extends Error {}
-
 export const CHAT_CONFIG_SERVICE_ID = Symbol.for(
   'ChatConfigService'
 ) as ServiceIdentifier<ChatConfigService>;

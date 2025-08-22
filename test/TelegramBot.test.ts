@@ -8,7 +8,7 @@ import { createWindows } from '../src/bot/windowConfig';
 import type { ChatRepository } from '../src/domain/repositories/ChatRepository.interface';
 import type { AdminService } from '../src/application/interfaces/admin/AdminService.interface';
 import type { ChatApprovalService } from '../src/application/interfaces/chat/ChatApprovalService.interface';
-import type { ChatMemoryManager } from '../src/application/use-cases/chat/ChatMemory';
+import type { ChatMemoryManager } from '../src/application/interfaces/chat/ChatMemoryManager.interface';
 import type { ChatResponder } from '../src/application/interfaces/chat/ChatResponder.interface';
 import type { TriggerPipeline } from '../src/application/interfaces/chat/TriggerPipeline.interface';
 import type { EnvService } from '../src/application/interfaces/env/EnvService.interface';
@@ -16,7 +16,7 @@ import type { ChatConfigService } from '../src/application/interfaces/chat/ChatC
 import {
   InvalidInterestIntervalError,
   InvalidHistoryLimitError,
-} from '../src/application/interfaces/chat/ChatConfigService.interface';
+} from '../src/application/interfaces/chat/ChatConfigService.errors';
 import type {
   MessageContext,
   MessageContextExtractor,

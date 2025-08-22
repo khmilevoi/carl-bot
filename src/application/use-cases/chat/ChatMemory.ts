@@ -5,6 +5,8 @@ import {
   CHAT_CONFIG_SERVICE_ID,
   type ChatConfigService,
 } from '../../interfaces/chat/ChatConfigService.interface';
+import type { ChatMemory as ChatMemoryInterface } from '../../interfaces/chat/ChatMemory.interface';
+import type { ChatMemoryManager as ChatMemoryManagerInterface } from '../../interfaces/chat/ChatMemoryManager.interface';
 import {
   CHAT_RESET_SERVICE_ID,
   type ChatResetService,
@@ -29,7 +31,7 @@ import {
 import { StoredMessage } from '../../interfaces/messages/StoredMessage.interface';
 
 @injectable()
-export class ChatMemory {
+export class ChatMemory implements ChatMemoryInterface {
   private readonly logger: Logger;
 
   constructor(
@@ -92,7 +94,7 @@ export class ChatMemory {
 }
 
 @injectable()
-export class ChatMemoryManager {
+export class ChatMemoryManager implements ChatMemoryManagerInterface {
   private readonly logger: Logger;
 
   constructor(
