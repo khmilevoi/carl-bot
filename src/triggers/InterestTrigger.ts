@@ -1,20 +1,28 @@
+import { inject, injectable } from 'inversify';
 import type { Context } from 'telegraf';
 
 import type { DialogueManager } from '../application/interfaces/chat/DialogueManager.interface';
-import type { InterestChecker } from '../application/interfaces/interest/InterestChecker.interface';
+import {
+  INTEREST_CHECKER_ID,
+  type InterestChecker,
+} from '../application/interfaces/interest/InterestChecker.interface';
 import type { Logger } from '../application/interfaces/logging/Logger.interface';
-import { type LoggerFactory } from '../application/interfaces/logging/LoggerFactory.interface';
+import {
+  LOGGER_FACTORY_ID,
+  type LoggerFactory,
+} from '../application/interfaces/logging/LoggerFactory.interface';
 import type {
   Trigger,
   TriggerContext,
   TriggerResult,
 } from '../domain/triggers/Trigger.interface';
 
+@injectable()
 export class InterestTrigger implements Trigger {
   private readonly logger: Logger;
   constructor(
-    private checker: InterestChecker,
-    loggerFactory: LoggerFactory
+    @inject(INTEREST_CHECKER_ID) private checker: InterestChecker,
+    @inject(LOGGER_FACTORY_ID) loggerFactory: LoggerFactory
   ) {
     this.logger = loggerFactory.create('InterestTrigger');
   }
