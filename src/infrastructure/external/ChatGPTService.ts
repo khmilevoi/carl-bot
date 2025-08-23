@@ -19,6 +19,8 @@ import { RABBITMQ_SERVICE_ID } from '@/application/interfaces/queue/RabbitMQServ
 import {
   OPENAI_REQUEST_PRIORITY,
   type OpenAIRequest,
+  type OpenAIResponse,
+  openAIResponseSchema,
 } from '@/domain/ai/OpenAI';
 import type { ChatMessage } from '@/domain/messages/ChatMessage';
 import type { TriggerReason } from '@/domain/triggers/Trigger';
@@ -115,12 +117,17 @@ export class ChatGPTService implements AIService {
       },
     };
 
-    await this.rabbit.publish(
-      JSON.stringify(request),
-      OPENAI_REQUEST_PRIORITY.generateMessage
+    const response = await this.rabbit.rpc<OpenAIRequest, OpenAIResponse>(
+      request,
+      OPENAI_REQUEST_PRIORITY.generateMessage,
+      openAIResponseSchema
     );
-    void this.logPrompt('generateMessage', messages);
-    return '';
+    if (response.type !== 'generateMessage') {
+      this.logger.error({ response }, 'Invalid response type');
+      return '';
+    }
+    void this.logPrompt('generateMessage', messages, response.body);
+    return response.body;
   }
 
   public async checkInterest(
@@ -164,12 +171,21 @@ export class ChatGPTService implements AIService {
         messages,
       },
     };
-    await this.rabbit.publish(
-      JSON.stringify(request),
-      OPENAI_REQUEST_PRIORITY.checkInterest
+    const response = await this.rabbit.rpc<OpenAIRequest, OpenAIResponse>(
+      request,
+      OPENAI_REQUEST_PRIORITY.checkInterest,
+      openAIResponseSchema
     );
-    void this.logPrompt('checkInterest', messages);
-    return null;
+    if (response.type !== 'checkInterest') {
+      this.logger.error({ response }, 'Invalid response type');
+      return null;
+    }
+    void this.logPrompt(
+      'checkInterest',
+      messages,
+      response.body ? JSON.stringify(response.body) : undefined
+    );
+    return response.body;
   }
 
   public async assessUsers(
@@ -202,8 +218,7 @@ export class ChatGPTService implements AIService {
                 m.username,
                 m.fullName,
                 m.replyText,
-                m.quoteText,
-                m.attitude ?? undefined
+                m.quoteText
               ),
             }
           : { role: 'assistant', content: m.content }
@@ -219,16 +234,25 @@ export class ChatGPTService implements AIService {
     const request: OpenAIRequest = {
       type: 'assessUsers',
       body: {
-        model: this.summaryModel,
+        model: this.interestModel,
         messages: reqMessages,
       },
     };
-    await this.rabbit.publish(
-      JSON.stringify(request),
-      OPENAI_REQUEST_PRIORITY.assessUsers
+    const response = await this.rabbit.rpc<OpenAIRequest, OpenAIResponse>(
+      request,
+      OPENAI_REQUEST_PRIORITY.assessUsers,
+      openAIResponseSchema
     );
-    void this.logPrompt('assessUsers', reqMessages);
-    return [];
+    if (response.type !== 'assessUsers') {
+      this.logger.error({ response }, 'Invalid response type');
+      return [];
+    }
+    void this.logPrompt(
+      'assessUsers',
+      reqMessages,
+      JSON.stringify(response.body)
+    );
+    return response.body;
   }
 
   public async summarize(
@@ -281,12 +305,17 @@ export class ChatGPTService implements AIService {
         messages,
       },
     };
-    await this.rabbit.publish(
-      JSON.stringify(request),
-      OPENAI_REQUEST_PRIORITY.summarizeHistory
+    const response = await this.rabbit.rpc<OpenAIRequest, OpenAIResponse>(
+      request,
+      OPENAI_REQUEST_PRIORITY.summarizeHistory,
+      openAIResponseSchema
     );
-    void this.logPrompt('summarizeHistory', messages);
-    return prev ?? '';
+    if (response.type !== 'summarizeHistory') {
+      this.logger.error({ response }, 'Invalid response type');
+      return '';
+    }
+    void this.logPrompt('summarizeHistory', messages, response.body);
+    return response.body;
   }
 
   private async logPrompt(
@@ -306,7 +335,7 @@ export class ChatGPTService implements AIService {
     try {
       await fs.appendFile(filePath, entry);
     } catch (err) {
-      this.logger.error({ err }, 'Failed to write prompt log');
+      this.logger.warn({ err }, 'Failed to log prompt');
     }
   }
 }

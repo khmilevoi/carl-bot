@@ -8,9 +8,10 @@ import { TestEnvService } from '../src/infrastructure/config/TestEnvService';
 import { ChatGPTService } from '../src/infrastructure/external/ChatGPTService';
 import type { ChatMessage } from '../src/domain/messages/ChatMessage';
 import { OPENAI_REQUEST_PRIORITY } from '../src/domain/ai/OpenAI';
+import { sleep } from '../src/utils/sleep';
 
 describe('ChatGPTService', () => {
-  let publish: ReturnType<typeof vi.fn>;
+  let rpc: ReturnType<typeof vi.fn>;
   let service: ChatGPTService;
   let prompts: Record<string, unknown>;
   let env: TestEnvService;
@@ -18,10 +19,12 @@ describe('ChatGPTService', () => {
 
   beforeEach(async () => {
     vi.resetModules();
-    publish = vi.fn(async () => {});
+    rpc = vi.fn(async () => ({ type: 'generateMessage', body: 'ok' }));
     const rabbit: RabbitMQService = {
-      publish: publish as unknown as RabbitMQService['publish'],
+      publish: vi.fn(),
       consume: vi.fn(),
+      rpc: rpc as unknown as RabbitMQService['rpc'],
+      consumeRpc: vi.fn(),
     };
 
     prompts = {
@@ -64,6 +67,7 @@ describe('ChatGPTService', () => {
   });
 
   it('publishes generateMessage request', async () => {
+    rpc.mockResolvedValueOnce({ type: 'generateMessage', body: 'resp' });
     const history: ChatMessage[] = [
       {
         role: 'user',
@@ -77,14 +81,17 @@ describe('ChatGPTService', () => {
       },
       { role: 'assistant', content: 'yo' },
     ];
-    await service.ask(history, 'sum', { why: 'why', message: 'msg' });
-    expect(publish).toHaveBeenCalledTimes(1);
-    const [msg, priority] = publish.mock.calls[0];
+    const result = await service.ask(history, 'sum', {
+      why: 'why',
+      message: 'msg',
+    });
+    expect(result).toBe('resp');
+    expect(rpc).toHaveBeenCalledTimes(1);
+    const [msg, priority] = rpc.mock.calls[0];
     expect(priority).toBe(OPENAI_REQUEST_PRIORITY.generateMessage);
-    const parsed = JSON.parse(msg as string);
-    expect(parsed.type).toBe('generateMessage');
-    expect(parsed.body.model).toBe(env.getModels().ask);
-    expect(parsed.body.messages).toEqual([
+    expect((msg as any).type).toBe('generateMessage');
+    expect((msg as any).body.model).toBe(env.getModels().ask);
+    expect((msg as any).body.messages).toEqual([
       { role: 'system', content: 'persona' },
       { role: 'system', content: 'priority' },
       { role: 'system', content: 'userSystem' },
@@ -96,26 +103,31 @@ describe('ChatGPTService', () => {
   });
 
   it('publishes other request types', async () => {
+    rpc.mockResolvedValueOnce({ type: 'checkInterest', body: null });
+    rpc.mockResolvedValueOnce({ type: 'assessUsers', body: [] });
+    rpc.mockResolvedValueOnce({ type: 'summarizeHistory', body: '' });
     await service.checkInterest([], '');
-    await service.assessUsers([], []);
-    await service.summarize([]);
-    expect(publish).toHaveBeenCalledTimes(3);
-    const types = publish.mock.calls.map(
-      (c) => JSON.parse(c[0] as string).type
+    await service.assessUsers(
+      [{ role: 'user', content: 'msg' } as ChatMessage],
+      [{ username: 'u', attitude: 'bad' }]
     );
+    await service.summarize([{ role: 'assistant', content: 'hi' }], 'prev');
+    expect(rpc).toHaveBeenCalledTimes(3);
+    const types = rpc.mock.calls.map((c) => (c[0] as any).type);
     expect(types).toEqual(['checkInterest', 'assessUsers', 'summarizeHistory']);
   });
 
   it('logPrompt writes only when LOG_PROMPTS=true', async () => {
     const appendSpy = vi.spyOn(fs, 'appendFile').mockResolvedValue();
+    rpc.mockResolvedValue({ type: 'generateMessage', body: 'ok' });
 
     await service.ask([]);
-    await new Promise((r) => setTimeout(r, 0));
+    await sleep(0);
     expect(appendSpy).not.toHaveBeenCalled();
 
     (env.env as any).LOG_PROMPTS = true;
     await service.ask([]);
-    await new Promise((r) => setTimeout(r, 0));
+    await sleep(0);
     expect(appendSpy).toHaveBeenCalled();
   });
 });

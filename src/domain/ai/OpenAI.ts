@@ -1,4 +1,5 @@
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
+import { z } from 'zod';
 
 export const OPENAI_REQUEST_PRIORITY = {
   generateMessage: 3,
@@ -7,40 +8,74 @@ export const OPENAI_REQUEST_PRIORITY = {
   assessUsers: 1,
 } as const;
 
-interface GenerateMessageRequestBody {
-  model: string;
-  messages: ChatCompletionMessageParam[];
-}
+const chatMessageSchema = z.any() as z.ZodType<ChatCompletionMessageParam>;
 
-interface SummarizeHistoryRequestBody {
-  model: string;
-  messages: ChatCompletionMessageParam[];
-}
+const generateMessageRequestSchema = z.object({
+  type: z.literal('generateMessage'),
+  body: z.object({
+    model: z.string(),
+    messages: z.array(chatMessageSchema),
+  }),
+});
 
-interface CheckInterestRequestBody {
-  model: string;
-  messages: ChatCompletionMessageParam[];
-}
+const summarizeHistoryRequestSchema = z.object({
+  type: z.literal('summarizeHistory'),
+  body: z.object({
+    model: z.string(),
+    messages: z.array(chatMessageSchema),
+  }),
+});
 
-interface AssessUsersRequestBody {
-  model: string;
-  messages: ChatCompletionMessageParam[];
-}
+const checkInterestRequestSchema = z.object({
+  type: z.literal('checkInterest'),
+  body: z.object({
+    model: z.string(),
+    messages: z.array(chatMessageSchema),
+  }),
+});
 
-export type OpenAIRequest =
-  | { type: 'generateMessage'; body: GenerateMessageRequestBody }
-  | { type: 'summarizeHistory'; body: SummarizeHistoryRequestBody }
-  | { type: 'checkInterest'; body: CheckInterestRequestBody }
-  | { type: 'assessUsers'; body: AssessUsersRequestBody };
-// eslint-disable-next-line import/no-unused-modules
-export type OpenAIResponse =
-  | { type: 'generateMessage'; body: string }
-  | { type: 'summarizeHistory'; body: string }
-  | {
-      type: 'checkInterest';
-      body: { messageId: string; why: string } | null;
-    }
-  | {
-      type: 'assessUsers';
-      body: { username: string; attitude: string }[];
-    };
+const assessUsersRequestSchema = z.object({
+  type: z.literal('assessUsers'),
+  body: z.object({
+    model: z.string(),
+    messages: z.array(chatMessageSchema),
+  }),
+});
+
+export const openAIRequestSchema = z.discriminatedUnion('type', [
+  generateMessageRequestSchema,
+  summarizeHistoryRequestSchema,
+  checkInterestRequestSchema,
+  assessUsersRequestSchema,
+]);
+
+export type OpenAIRequest = z.infer<typeof openAIRequestSchema>;
+
+const generateMessageResponseSchema = z.object({
+  type: z.literal('generateMessage'),
+  body: z.string(),
+});
+
+const summarizeHistoryResponseSchema = z.object({
+  type: z.literal('summarizeHistory'),
+  body: z.string(),
+});
+
+const checkInterestResponseSchema = z.object({
+  type: z.literal('checkInterest'),
+  body: z.object({ messageId: z.string(), why: z.string() }).nullable(),
+});
+
+const assessUsersResponseSchema = z.object({
+  type: z.literal('assessUsers'),
+  body: z.array(z.object({ username: z.string(), attitude: z.string() })),
+});
+
+export const openAIResponseSchema = z.discriminatedUnion('type', [
+  generateMessageResponseSchema,
+  summarizeHistoryResponseSchema,
+  checkInterestResponseSchema,
+  assessUsersResponseSchema,
+]);
+
+export type OpenAIResponse = z.infer<typeof openAIResponseSchema>;

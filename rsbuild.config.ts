@@ -6,6 +6,7 @@ export default defineConfig({
     entry: {
       index: './src/index.ts',
       migrate: './src/migrate.ts',
+      OpenAIWorker: './src/worker/OpenAIWorker.ts',
     },
     decorators: { version: 'legacy' },
   },
