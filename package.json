@@ -18,7 +18,8 @@
     "prepare": "husky",
     "migration:up": "node scripts/pre-migrate.js && node dist/migrate.js up",
     "migration:down": "node scripts/pre-migrate.js && node dist/migrate.js down",
-    "migration:check": "node scripts/pre-migrate.js && node dist/migrate.js check"
+    "migration:check": "node scripts/pre-migrate.js && node dist/migrate.js check",
+    "worker": "node dist/OpenAIWorker.js"
   },
   "keywords": [],
   "author": "",

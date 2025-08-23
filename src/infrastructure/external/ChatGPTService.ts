@@ -1,5 +1,6 @@
 import { promises as fs } from 'fs';
 import { inject, injectable } from 'inversify';
+import OpenAI from 'openai';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 import type { ChatModel } from 'openai/resources/shared';
 import path from 'path';
@@ -19,6 +20,7 @@ import { RABBITMQ_SERVICE_ID } from '@/application/interfaces/queue/RabbitMQServ
 import {
   OPENAI_REQUEST_PRIORITY,
   type OpenAIRequest,
+  type OpenAIResponse,
 } from '@/domain/ai/OpenAI';
 import type { ChatMessage } from '@/domain/messages/ChatMessage';
 import type { TriggerReason } from '@/domain/triggers/Trigger';
@@ -29,6 +31,7 @@ export class ChatGPTService implements AIService {
   private readonly summaryModel: ChatModel;
   private readonly interestModel: ChatModel;
   private readonly logger: Logger;
+  private readonly openai: OpenAI;
 
   constructor(
     @inject(ENV_SERVICE_ID) private readonly envService: EnvService,
@@ -41,6 +44,7 @@ export class ChatGPTService implements AIService {
     this.summaryModel = models.summary;
     this.interestModel = models.interest;
     this.logger = this.loggerFactory.create('ChatGPTService');
+    this.openai = new OpenAI({ apiKey: this.envService.env.OPENAI_KEY });
     this.logger.debug('ChatGPTService initialized');
   }
 
@@ -287,6 +291,44 @@ export class ChatGPTService implements AIService {
     );
     void this.logPrompt('summarizeHistory', messages);
     return prev ?? '';
+  }
+
+  public async processRequest(request: OpenAIRequest): Promise<OpenAIResponse> {
+    const { model, messages } = request.body as {
+      model: string;
+      messages: ChatCompletionMessageParam[];
+    };
+    const completion = await this.openai.chat.completions.create({
+      model,
+      messages,
+    });
+    const content = completion.choices[0]?.message?.content?.trim() ?? '';
+    await this.logPrompt(request.type, messages, content);
+
+    switch (request.type) {
+      case 'generateMessage':
+        return { type: 'generateMessage', body: content };
+      case 'summarizeHistory':
+        return { type: 'summarizeHistory', body: content };
+      case 'checkInterest': {
+        let parsed: { messageId: string; why: string } | null = null;
+        try {
+          parsed = JSON.parse(content);
+        } catch (err) {
+          this.logger.warn({ err, content }, 'Failed to parse checkInterest');
+        }
+        return { type: 'checkInterest', body: parsed };
+      }
+      case 'assessUsers': {
+        let parsed: { username: string; attitude: string }[] = [];
+        try {
+          parsed = JSON.parse(content);
+        } catch (err) {
+          this.logger.warn({ err, content }, 'Failed to parse assessUsers');
+        }
+        return { type: 'assessUsers', body: parsed };
+      }
+    }
   }
 
   private async logPrompt(

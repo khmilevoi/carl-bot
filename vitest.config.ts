@@ -24,6 +24,7 @@ export default defineConfig({
         'src/infrastructure/config/**',
         'src/view/telegram/**',
         'src/domain/**',
+        'src/worker/**',
       ],
     },
   },
