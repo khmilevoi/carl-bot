@@ -1,6 +1,6 @@
 import { promises as fs } from 'fs';
 import { inject, injectable } from 'inversify';
-import OpenAI from 'openai';
+import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 import type { ChatModel } from 'openai/resources/shared';
 import path from 'path';
 
@@ -14,12 +14,17 @@ import {
 } from '@/application/interfaces/logging/LoggerFactory';
 import type { PromptService } from '@/application/interfaces/prompts/PromptService';
 import { PROMPT_SERVICE_ID } from '@/application/interfaces/prompts/PromptService';
+import type { RabbitMQService } from '@/application/interfaces/queue/RabbitMQService';
+import { RABBITMQ_SERVICE_ID } from '@/application/interfaces/queue/RabbitMQService';
+import {
+  OPENAI_REQUEST_PRIORITY,
+  type OpenAIRequest,
+} from '@/domain/ai/OpenAI';
 import type { ChatMessage } from '@/domain/messages/ChatMessage';
 import type { TriggerReason } from '@/domain/triggers/Trigger';
 
 @injectable()
 export class ChatGPTService implements AIService {
-  private openai: OpenAI;
   private readonly askModel: ChatModel;
   private readonly summaryModel: ChatModel;
   private readonly interestModel: ChatModel;
@@ -28,10 +33,9 @@ export class ChatGPTService implements AIService {
   constructor(
     @inject(ENV_SERVICE_ID) private readonly envService: EnvService,
     @inject(PROMPT_SERVICE_ID) private readonly prompts: PromptService,
-    @inject(LOGGER_FACTORY_ID) private loggerFactory: LoggerFactory
+    @inject(LOGGER_FACTORY_ID) private loggerFactory: LoggerFactory,
+    @inject(RABBITMQ_SERVICE_ID) private readonly rabbit: RabbitMQService
   ) {
-    const env = this.envService.env;
-    this.openai = new OpenAI({ apiKey: env.OPENAI_KEY });
     const models = this.envService.getModels();
     this.askModel = models.ask;
     this.summaryModel = models.summary;
@@ -52,10 +56,10 @@ export class ChatGPTService implements AIService {
         messages: history.length,
         summary: !!summary,
       },
-      'Sending chat completion request'
+      'Publishing generateMessage request'
     );
 
-    const messages: OpenAI.ChatCompletionMessageParam[] = [
+    const messages: ChatCompletionMessageParam[] = [
       { role: 'system', content: persona },
       {
         role: 'system',
@@ -84,7 +88,7 @@ export class ChatGPTService implements AIService {
     }
 
     const historyMessages = await Promise.all(
-      history.map<Promise<OpenAI.ChatCompletionMessageParam>>(async (m) =>
+      history.map<Promise<ChatCompletionMessageParam>>(async (m) =>
         m.role === 'user'
           ? {
               role: 'user',
@@ -102,34 +106,21 @@ export class ChatGPTService implements AIService {
       )
     );
     messages.push(...historyMessages);
-    const start = Date.now();
-    try {
-      const completion = await this.openai.chat.completions.create({
+
+    const request: OpenAIRequest = {
+      type: 'generateMessage',
+      body: {
         model: this.askModel,
         messages,
-      });
-      const elapsedMs = Date.now() - start;
-      this.logger.debug(
-        {
-          model: completion.model,
-          promptTokens: completion.usage?.prompt_tokens,
-          completionTokens: completion.usage?.completion_tokens,
-          totalTokens: completion.usage?.total_tokens,
-          elapsedMs,
-        },
-        'Received chat completion response'
-      );
-      const response = completion.choices[0]?.message?.content ?? '';
-      void this.logPrompt('ask', messages, response);
-      return response;
-    } catch (err) {
-      const elapsedMs = Date.now() - start;
-      this.logger.error(
-        { err, model: this.askModel, messages: messages.length, elapsedMs },
-        'Chat completion request failed'
-      );
-      throw err;
-    }
+      },
+    };
+
+    await this.rabbit.publish(
+      JSON.stringify(request),
+      OPENAI_REQUEST_PRIORITY.generateMessage
+    );
+    void this.logPrompt('generateMessage', messages);
+    return '';
   }
 
   public async checkInterest(
@@ -138,12 +129,12 @@ export class ChatGPTService implements AIService {
   ): Promise<{ messageId: string; why: string } | null> {
     const persona = await this.prompts.getPersona();
     const checkPrompt = await this.prompts.getInterestCheckPrompt();
-    const messages: OpenAI.ChatCompletionMessageParam[] = [
+    const messages: ChatCompletionMessageParam[] = [
       { role: 'system', content: persona },
       { role: 'system', content: checkPrompt },
     ];
     const historyMessages = await Promise.all(
-      history.map<Promise<OpenAI.ChatCompletionMessageParam>>(async (m) =>
+      history.map<Promise<ChatCompletionMessageParam>>(async (m) =>
         m.role === 'user'
           ? {
               role: 'user',
@@ -164,55 +155,21 @@ export class ChatGPTService implements AIService {
       {
         messages: history.length,
       },
-      'Sending interest check request'
+      'Publishing checkInterest request'
     );
-    const start = Date.now();
-    try {
-      const completion = await this.openai.chat.completions.create({
+    const request: OpenAIRequest = {
+      type: 'checkInterest',
+      body: {
         model: this.interestModel,
         messages,
-      });
-      const elapsedMs = Date.now() - start;
-      this.logger.debug(
-        {
-          model: completion.model,
-          promptTokens: completion.usage?.prompt_tokens,
-          completionTokens: completion.usage?.completion_tokens,
-          totalTokens: completion.usage?.total_tokens,
-          elapsedMs,
-        },
-        'Received interest check response'
-      );
-      const content = completion.choices[0]?.message?.content ?? '';
-      void this.logPrompt('interest', messages, content);
-      try {
-        return JSON.parse(content) as {
-          messageId: string;
-          why: string;
-        } | null;
-      } catch (err) {
-        this.logger.error(
-          {
-            err,
-            content,
-          },
-          'Failed to parse interest response'
-        );
-        return null;
-      }
-    } catch (err) {
-      const elapsedMs = Date.now() - start;
-      this.logger.error(
-        {
-          err,
-          model: this.interestModel,
-          messages: messages.length,
-          elapsedMs,
-        },
-        'Interest check request failed'
-      );
-      throw err;
-    }
+      },
+    };
+    await this.rabbit.publish(
+      JSON.stringify(request),
+      OPENAI_REQUEST_PRIORITY.checkInterest
+    );
+    void this.logPrompt('checkInterest', messages);
+    return null;
   }
 
   public async assessUsers(
@@ -221,7 +178,7 @@ export class ChatGPTService implements AIService {
   ): Promise<{ username: string; attitude: string }[]> {
     const persona = await this.prompts.getPersona();
     const systemPrompt = await this.prompts.getAssessUsersPrompt();
-    const reqMessages: OpenAI.ChatCompletionMessageParam[] = [
+    const reqMessages: ChatCompletionMessageParam[] = [
       { role: 'system', content: persona },
       { role: 'system', content: systemPrompt },
     ];
@@ -235,7 +192,7 @@ export class ChatGPTService implements AIService {
       });
     }
     const historyMessages = await Promise.all(
-      messages.map<Promise<OpenAI.ChatCompletionMessageParam>>(async (m) =>
+      messages.map<Promise<ChatCompletionMessageParam>>(async (m) =>
         m.role === 'user'
           ? {
               role: 'user',
@@ -257,59 +214,28 @@ export class ChatGPTService implements AIService {
       {
         messages: messages.length,
       },
-      'Sending user attitude assessment request'
+      'Publishing assessUsers request'
     );
-    const start = Date.now();
-    try {
-      const completion = await this.openai.chat.completions.create({
+    const request: OpenAIRequest = {
+      type: 'assessUsers',
+      body: {
         model: this.summaryModel,
         messages: reqMessages,
-      });
-      const elapsedMs = Date.now() - start;
-      this.logger.debug(
-        {
-          model: completion.model,
-          promptTokens: completion.usage?.prompt_tokens,
-          completionTokens: completion.usage?.completion_tokens,
-          totalTokens: completion.usage?.total_tokens,
-          elapsedMs,
-        },
-        'Received user attitude assessment response'
-      );
-      const content = completion.choices[0]?.message?.content ?? '[]';
-      void this.logPrompt('assessUsers', reqMessages, content);
-      try {
-        return JSON.parse(content) as { username: string; attitude: string }[];
-      } catch (err) {
-        this.logger.error(
-          {
-            err,
-            content,
-          },
-          'Failed to parse assessUsers response'
-        );
-        return [];
-      }
-    } catch (err) {
-      const elapsedMs = Date.now() - start;
-      this.logger.error(
-        {
-          err,
-          model: this.summaryModel,
-          messages: reqMessages.length,
-          elapsedMs,
-        },
-        'User attitude assessment request failed'
-      );
-      throw err;
-    }
+      },
+    };
+    await this.rabbit.publish(
+      JSON.stringify(request),
+      OPENAI_REQUEST_PRIORITY.assessUsers
+    );
+    void this.logPrompt('assessUsers', reqMessages);
+    return [];
   }
 
   public async summarize(
     history: ChatMessage[],
     prev?: string
   ): Promise<string> {
-    const messages: OpenAI.ChatCompletionMessageParam[] = [
+    const messages: ChatCompletionMessageParam[] = [
       {
         role: 'system',
         content: await this.prompts.getSummarizationSystemPrompt(),
@@ -348,39 +274,24 @@ export class ChatGPTService implements AIService {
       role: 'user',
       content: `История диалога:\n${historyText}`,
     });
-    const start = Date.now();
-    try {
-      const completion = await this.openai.chat.completions.create({
+    const request: OpenAIRequest = {
+      type: 'summarizeHistory',
+      body: {
         model: this.summaryModel,
         messages,
-      });
-      const elapsedMs = Date.now() - start;
-      this.logger.debug(
-        {
-          model: completion.model,
-          promptTokens: completion.usage?.prompt_tokens,
-          completionTokens: completion.usage?.completion_tokens,
-          totalTokens: completion.usage?.total_tokens,
-          elapsedMs,
-        },
-        'Received summary response'
-      );
-      const response = completion.choices[0]?.message?.content ?? prev ?? '';
-      void this.logPrompt('summary', messages, response);
-      return response;
-    } catch (err) {
-      const elapsedMs = Date.now() - start;
-      this.logger.error(
-        { err, model: this.summaryModel, messages: messages.length, elapsedMs },
-        'Summarization request failed'
-      );
-      throw err;
-    }
+      },
+    };
+    await this.rabbit.publish(
+      JSON.stringify(request),
+      OPENAI_REQUEST_PRIORITY.summarizeHistory
+    );
+    void this.logPrompt('summarizeHistory', messages);
+    return prev ?? '';
   }
 
   private async logPrompt(
-    type: string,
-    messages: OpenAI.ChatCompletionMessageParam[],
+    type: OpenAIRequest['type'],
+    messages: ChatCompletionMessageParam[],
     response?: string
   ): Promise<void> {
     if (!this.envService.env.LOG_PROMPTS) {
