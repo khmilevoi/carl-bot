@@ -114,8 +114,10 @@ export class TelegramBot {
       .catch((err) =>
         this.logger.warn({ err }, 'Failed to delete existing webhook')
       );
-    await this.bot.launch();
-    this.logger.info('Bot launched');
+    await this.bot
+      .launch()
+      .then(() => this.logger.info('Bot launched'))
+      .catch((err) => this.logger.error({ err }, 'Failed to launch bot'));
   }
 
   public stop(reason: string): void {
