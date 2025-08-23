@@ -18,6 +18,9 @@ export class TestEnvService implements EnvService {
       ADMIN_CHAT_ID: process.env.ADMIN_CHAT_ID ?? '0',
       NODE_ENV: 'test',
       LOG_PROMPTS: process.env.LOG_PROMPTS ?? false,
+      RABBITMQ_URL: process.env.RABBITMQ_URL ?? 'amqp://localhost',
+      RABBITMQ_QUEUE: process.env.RABBITMQ_QUEUE ?? 'test-queue',
+      RABBITMQ_MAX_PRIORITY: process.env.RABBITMQ_MAX_PRIORITY ?? '10',
     });
   }
 

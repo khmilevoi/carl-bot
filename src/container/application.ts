@@ -73,6 +73,10 @@ import {
   type PromptService,
 } from '../application/interfaces/prompts/PromptService';
 import {
+  RABBITMQ_SERVICE_ID,
+  type RabbitMQService,
+} from '../application/interfaces/queue/RabbitMQService';
+import {
   SUMMARY_SERVICE_ID,
   type SummaryService,
 } from '../application/interfaces/summaries/SummaryService';
@@ -96,6 +100,7 @@ import { TestEnvService } from '../infrastructure/config/TestEnvService';
 import { ChatGPTService } from '../infrastructure/external/ChatGPTService';
 import { FilePromptService } from '../infrastructure/external/FilePromptService';
 import { PinoLoggerFactory } from '../infrastructure/logging/PinoLoggerFactory';
+import { AmqplibRabbitMQService } from '../infrastructure/queue/RabbitMQService';
 
 export const register = (container: Container): void => {
   const EnvServiceImpl =
@@ -114,6 +119,11 @@ export const register = (container: Container): void => {
   container
     .bind<PromptService>(PROMPT_SERVICE_ID)
     .to(FilePromptService)
+    .inSingletonScope();
+
+  container
+    .bind<RabbitMQService>(RABBITMQ_SERVICE_ID)
+    .to(AmqplibRabbitMQService)
     .inSingletonScope();
 
   container

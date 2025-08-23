@@ -9,6 +9,9 @@ export interface Env {
   ADMIN_CHAT_ID: number;
   NODE_ENV: string;
   LOG_PROMPTS: boolean;
+  RABBITMQ_URL: string;
+  RABBITMQ_QUEUE: string;
+  RABBITMQ_MAX_PRIORITY: number;
 }
 
 export interface EnvService {
