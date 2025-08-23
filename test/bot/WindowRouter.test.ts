@@ -1,6 +1,7 @@
 import type { Context } from 'telegraf';
 import { Telegraf } from 'telegraf';
 import { describe, expect, it, vi } from 'vitest';
+import { sleep } from '../../src/utils/sleep';
 
 import {
   createButton,
@@ -319,7 +320,7 @@ describe('telegramRouter', () => {
     await router.show(ctx, 'first');
 
     const loadData = vi.fn(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      await sleep(10);
       return ['delayed'];
     });
 

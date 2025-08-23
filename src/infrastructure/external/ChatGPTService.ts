@@ -20,6 +20,7 @@ import {
   OPENAI_REQUEST_PRIORITY,
   type OpenAIRequest,
   type OpenAIResponse,
+  openAIResponseSchema,
 } from '@/domain/ai/OpenAI';
 import type { ChatMessage } from '@/domain/messages/ChatMessage';
 import type { TriggerReason } from '@/domain/triggers/Trigger';
@@ -116,14 +117,15 @@ export class ChatGPTService implements AIService {
       },
     };
 
-    const responseStr = await this.rabbit.rpc(
-      JSON.stringify(request),
-      OPENAI_REQUEST_PRIORITY.generateMessage
+    const response = await this.rabbit.rpc<OpenAIRequest, OpenAIResponse>(
+      request,
+      OPENAI_REQUEST_PRIORITY.generateMessage,
+      openAIResponseSchema
     );
-    const response = JSON.parse(responseStr) as OpenAIResponse & {
-      type: 'generateMessage';
-      body: string;
-    };
+    if (response.type !== 'generateMessage') {
+      this.logger.error({ response }, 'Invalid response type');
+      return '';
+    }
     void this.logPrompt('generateMessage', messages, response.body);
     return response.body;
   }
@@ -169,14 +171,15 @@ export class ChatGPTService implements AIService {
         messages,
       },
     };
-    const responseStr = await this.rabbit.rpc(
-      JSON.stringify(request),
-      OPENAI_REQUEST_PRIORITY.checkInterest
+    const response = await this.rabbit.rpc<OpenAIRequest, OpenAIResponse>(
+      request,
+      OPENAI_REQUEST_PRIORITY.checkInterest,
+      openAIResponseSchema
     );
-    const response = JSON.parse(responseStr) as OpenAIResponse & {
-      type: 'checkInterest';
-      body: { messageId: string; why: string } | null;
-    };
+    if (response.type !== 'checkInterest') {
+      this.logger.error({ response }, 'Invalid response type');
+      return null;
+    }
     void this.logPrompt(
       'checkInterest',
       messages,
@@ -235,14 +238,15 @@ export class ChatGPTService implements AIService {
         messages: reqMessages,
       },
     };
-    const responseStr = await this.rabbit.rpc(
-      JSON.stringify(request),
-      OPENAI_REQUEST_PRIORITY.assessUsers
+    const response = await this.rabbit.rpc<OpenAIRequest, OpenAIResponse>(
+      request,
+      OPENAI_REQUEST_PRIORITY.assessUsers,
+      openAIResponseSchema
     );
-    const response = JSON.parse(responseStr) as OpenAIResponse & {
-      type: 'assessUsers';
-      body: { username: string; attitude: string }[];
-    };
+    if (response.type !== 'assessUsers') {
+      this.logger.error({ response }, 'Invalid response type');
+      return [];
+    }
     void this.logPrompt(
       'assessUsers',
       reqMessages,
@@ -301,14 +305,15 @@ export class ChatGPTService implements AIService {
         messages,
       },
     };
-    const responseStr = await this.rabbit.rpc(
-      JSON.stringify(request),
-      OPENAI_REQUEST_PRIORITY.summarizeHistory
+    const response = await this.rabbit.rpc<OpenAIRequest, OpenAIResponse>(
+      request,
+      OPENAI_REQUEST_PRIORITY.summarizeHistory,
+      openAIResponseSchema
     );
-    const response = JSON.parse(responseStr) as OpenAIResponse & {
-      type: 'summarizeHistory';
-      body: string;
-    };
+    if (response.type !== 'summarizeHistory') {
+      this.logger.error({ response }, 'Invalid response type');
+      return '';
+    }
     void this.logPrompt('summarizeHistory', messages, response.body);
     return response.body;
   }

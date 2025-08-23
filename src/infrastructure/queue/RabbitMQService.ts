@@ -2,6 +2,7 @@
 import amqp, { type Channel, type ConsumeMessage } from 'amqplib';
 import { randomUUID } from 'crypto';
 import { inject, injectable } from 'inversify';
+import type { ZodSchema } from 'zod';
 
 import {
   ENV_SERVICE_ID,
@@ -17,17 +18,18 @@ export class AmqplibRabbitMQService implements RabbitMQService {
     @inject(ENV_SERVICE_ID) private readonly envService: EnvService
   ) {}
 
-  async publish(message: string, priority: number): Promise<void> {
+  async publish<T>(message: T, priority: number): Promise<void> {
     const channel = await this.getChannel();
     channel.sendToQueue(
       this.envService.env.RABBITMQ_QUEUE,
-      Buffer.from(message),
+      Buffer.from(JSON.stringify(message)),
       { priority }
     );
   }
 
-  async consume(
-    onMessage: (message: string, priority: number) => Promise<void>
+  async consume<T>(
+    schema: ZodSchema<T>,
+    onMessage: (message: T, priority: number) => Promise<void>
   ): Promise<void> {
     const channel = await this.getChannel();
     await channel.consume(
@@ -36,36 +38,43 @@ export class AmqplibRabbitMQService implements RabbitMQService {
         if (!msg) {
           return;
         }
-        await onMessage(msg.content.toString(), msg.properties.priority ?? 0);
+        const data = schema.parse(JSON.parse(msg.content.toString()));
+        await onMessage(data, msg.properties.priority ?? 0);
         channel.ack(msg);
       }
     );
   }
 
-  async rpc(message: string, priority: number): Promise<string> {
+  async rpc<TRequest, TResponse>(
+    message: TRequest,
+    priority: number,
+    schema: ZodSchema<TResponse>
+  ): Promise<TResponse> {
     const channel = await this.getChannel();
     const { queue } = await channel.assertQueue('', { exclusive: true });
     const correlationId = randomUUID();
-    return new Promise<string>((resolve) => {
+    return new Promise<TResponse>((resolve) => {
       channel.consume(
         queue,
         (msg: ConsumeMessage | null) => {
           if (msg && msg.properties.correlationId === correlationId) {
-            resolve(msg.content.toString());
+            const parsed = schema.parse(JSON.parse(msg.content.toString()));
+            resolve(parsed);
           }
         },
         { noAck: true }
       );
       channel.sendToQueue(
         this.envService.env.RABBITMQ_QUEUE,
-        Buffer.from(message),
+        Buffer.from(JSON.stringify(message)),
         { priority, correlationId, replyTo: queue }
       );
     });
   }
 
-  async consumeRpc(
-    onMessage: (message: string, priority: number) => Promise<string>
+  async consumeRpc<TRequest, TResponse>(
+    schema: ZodSchema<TRequest>,
+    onMessage: (message: TRequest, priority: number) => Promise<TResponse>
   ): Promise<void> {
     const channel = await this.getChannel();
     await channel.consume(
@@ -74,13 +83,11 @@ export class AmqplibRabbitMQService implements RabbitMQService {
         if (!msg) {
           return;
         }
-        const response = await onMessage(
-          msg.content.toString(),
-          msg.properties.priority ?? 0
-        );
+        const request = schema.parse(JSON.parse(msg.content.toString()));
+        const response = await onMessage(request, msg.properties.priority ?? 0);
         channel.sendToQueue(
           msg.properties.replyTo ?? '',
-          Buffer.from(response),
+          Buffer.from(JSON.stringify(response)),
           { correlationId: msg.properties.correlationId }
         );
         channel.ack(msg);
