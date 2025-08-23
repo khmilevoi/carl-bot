@@ -16,7 +16,6 @@ export default defineConfig({
       externals: {
         sqlite3: 'commonjs sqlite3',
         pino: 'commonjs pino',
-        'pino-pretty': 'commonjs pino-pretty',
       },
     },
     swc: {
@@ -26,7 +25,8 @@ export default defineConfig({
           decorators: true,
         },
         transform: {
-          decoratorMetadata: false,
+          decoratorMetadata: true,
+          legacyDecorator: true,
         },
       },
     },

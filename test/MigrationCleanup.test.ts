@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 let migrateUp: () => Promise<void>;
 
 class MockDb {
-  migrations: string[] = [];
+  migrations = new Set<string>();
   hasMigrationsTable = false;
 
   async get(query: string): Promise<{ name: string } | undefined> {
@@ -18,17 +18,16 @@ class MockDb {
     if (query.startsWith('CREATE TABLE')) {
       this.hasMigrationsTable = true;
     } else if (query.startsWith('INSERT INTO migrations')) {
-      if (id) this.migrations.push(id);
+      if (id) this.migrations.add(id);
       this.hasMigrationsTable = true;
     } else if (query.startsWith('DELETE FROM migrations')) {
-      if (id)
-        this.migrations = this.migrations.filter((existing) => existing !== id);
+      if (id) this.migrations.delete(id);
     }
   }
 
   async all(query: string): Promise<{ id: string }[]> {
     if (query === 'SELECT id FROM migrations') {
-      return this.migrations.map((id) => ({ id }));
+      return Array.from(this.migrations).map((id) => ({ id }));
     }
     return [];
   }
@@ -58,7 +57,7 @@ describe('migrateUp', () => {
     process.env.DATABASE_URL = 'file://test.db';
     await loadMigrateModule();
     await migrateUp();
-    mockDb.migrations.push('999_fake');
+    mockDb.migrations.add('999_fake');
   });
 
   it('removes unknown migrations before applying new ones', async () => {
@@ -68,6 +67,6 @@ describe('migrateUp', () => {
     const migrationFiles = readdirSync('migrations').filter((f) =>
       f.endsWith('.up.sql')
     );
-    expect(ids.length).toBe(migrationFiles.length);
+    expect(ids.size).toBe(migrationFiles.length);
   });
 });
