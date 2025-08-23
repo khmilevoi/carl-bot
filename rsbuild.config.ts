@@ -17,6 +17,15 @@ export default defineConfig({
         sqlite3: 'commonjs sqlite3',
         pino: 'commonjs pino',
       },
+      optimization: {
+        minimize: false,
+      },
+      builtins: {
+        minifyOptions: {
+          keep_classnames: true,
+          keep_fnames: true,
+        },
+      },
     },
     swc: {
       jsc: {
