@@ -9,6 +9,10 @@ import {
   type AIService,
 } from '../application/interfaces/ai/AIService';
 import {
+  OPENAI_CLIENT_ID,
+  type OpenAIClient,
+} from '../application/interfaces/ai/OpenAIClient';
+import {
   CHAT_APPROVAL_SERVICE_ID,
   type ChatApprovalService,
 } from '../application/interfaces/chat/ChatApprovalService';
@@ -99,6 +103,7 @@ import { DefaultEnvService } from '../infrastructure/config/DefaultEnvService';
 import { TestEnvService } from '../infrastructure/config/TestEnvService';
 import { ChatGPTService } from '../infrastructure/external/ChatGPTService';
 import { FilePromptService } from '../infrastructure/external/FilePromptService';
+import { OpenAIClientService } from '../infrastructure/external/OpenAIClient';
 import { PinoLoggerFactory } from '../infrastructure/logging/PinoLoggerFactory';
 import { AmqplibRabbitMQService } from '../infrastructure/queue/RabbitMQService';
 
@@ -124,6 +129,11 @@ export const register = (container: Container): void => {
   container
     .bind<RabbitMQService>(RABBITMQ_SERVICE_ID)
     .to(AmqplibRabbitMQService)
+    .inSingletonScope();
+
+  container
+    .bind<OpenAIClient>(OPENAI_CLIENT_ID)
+    .to(OpenAIClientService)
     .inSingletonScope();
 
   container

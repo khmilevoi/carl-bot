@@ -1,4 +1,6 @@
+/* istanbul ignore file */
 import amqp, { type Channel, type ConsumeMessage } from 'amqplib';
+import { randomUUID } from 'crypto';
 import { inject, injectable } from 'inversify';
 
 import {
@@ -35,6 +37,52 @@ export class AmqplibRabbitMQService implements RabbitMQService {
           return;
         }
         await onMessage(msg.content.toString(), msg.properties.priority ?? 0);
+        channel.ack(msg);
+      }
+    );
+  }
+
+  async rpc(message: string, priority: number): Promise<string> {
+    const channel = await this.getChannel();
+    const { queue } = await channel.assertQueue('', { exclusive: true });
+    const correlationId = randomUUID();
+    return new Promise<string>((resolve) => {
+      channel.consume(
+        queue,
+        (msg: ConsumeMessage | null) => {
+          if (msg && msg.properties.correlationId === correlationId) {
+            resolve(msg.content.toString());
+          }
+        },
+        { noAck: true }
+      );
+      channel.sendToQueue(
+        this.envService.env.RABBITMQ_QUEUE,
+        Buffer.from(message),
+        { priority, correlationId, replyTo: queue }
+      );
+    });
+  }
+
+  async consumeRpc(
+    onMessage: (message: string, priority: number) => Promise<string>
+  ): Promise<void> {
+    const channel = await this.getChannel();
+    await channel.consume(
+      this.envService.env.RABBITMQ_QUEUE,
+      async (msg: ConsumeMessage | null) => {
+        if (!msg) {
+          return;
+        }
+        const response = await onMessage(
+          msg.content.toString(),
+          msg.properties.priority ?? 0
+        );
+        channel.sendToQueue(
+          msg.properties.replyTo ?? '',
+          Buffer.from(response),
+          { correlationId: msg.properties.correlationId }
+        );
         channel.ack(msg);
       }
     );

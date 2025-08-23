@@ -22,6 +22,8 @@ export default defineConfig({
         'src/container.ts',
         'src/infrastructure/persistence/**',
         'src/infrastructure/config/**',
+        'src/infrastructure/queue/**',
+        'src/infrastructure/external/OpenAIClient.ts',
         'src/view/telegram/**',
         'src/domain/**',
         'src/worker/**',

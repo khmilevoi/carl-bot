@@ -1,6 +1,5 @@
 import { promises as fs } from 'fs';
 import { inject, injectable } from 'inversify';
-import OpenAI from 'openai';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 import type { ChatModel } from 'openai/resources/shared';
 import path from 'path';
@@ -31,7 +30,6 @@ export class ChatGPTService implements AIService {
   private readonly summaryModel: ChatModel;
   private readonly interestModel: ChatModel;
   private readonly logger: Logger;
-  private readonly openai: OpenAI;
 
   constructor(
     @inject(ENV_SERVICE_ID) private readonly envService: EnvService,
@@ -44,7 +42,6 @@ export class ChatGPTService implements AIService {
     this.summaryModel = models.summary;
     this.interestModel = models.interest;
     this.logger = this.loggerFactory.create('ChatGPTService');
-    this.openai = new OpenAI({ apiKey: this.envService.env.OPENAI_KEY });
     this.logger.debug('ChatGPTService initialized');
   }
 
@@ -119,12 +116,16 @@ export class ChatGPTService implements AIService {
       },
     };
 
-    await this.rabbit.publish(
+    const responseStr = await this.rabbit.rpc(
       JSON.stringify(request),
       OPENAI_REQUEST_PRIORITY.generateMessage
     );
-    void this.logPrompt('generateMessage', messages);
-    return '';
+    const response = JSON.parse(responseStr) as OpenAIResponse & {
+      type: 'generateMessage';
+      body: string;
+    };
+    void this.logPrompt('generateMessage', messages, response.body);
+    return response.body;
   }
 
   public async checkInterest(
@@ -168,12 +169,20 @@ export class ChatGPTService implements AIService {
         messages,
       },
     };
-    await this.rabbit.publish(
+    const responseStr = await this.rabbit.rpc(
       JSON.stringify(request),
       OPENAI_REQUEST_PRIORITY.checkInterest
     );
-    void this.logPrompt('checkInterest', messages);
-    return null;
+    const response = JSON.parse(responseStr) as OpenAIResponse & {
+      type: 'checkInterest';
+      body: { messageId: string; why: string } | null;
+    };
+    void this.logPrompt(
+      'checkInterest',
+      messages,
+      response.body ? JSON.stringify(response.body) : undefined
+    );
+    return response.body;
   }
 
   public async assessUsers(
@@ -206,8 +215,7 @@ export class ChatGPTService implements AIService {
                 m.username,
                 m.fullName,
                 m.replyText,
-                m.quoteText,
-                m.attitude ?? undefined
+                m.quoteText
               ),
             }
           : { role: 'assistant', content: m.content }
@@ -223,16 +231,24 @@ export class ChatGPTService implements AIService {
     const request: OpenAIRequest = {
       type: 'assessUsers',
       body: {
-        model: this.summaryModel,
+        model: this.interestModel,
         messages: reqMessages,
       },
     };
-    await this.rabbit.publish(
+    const responseStr = await this.rabbit.rpc(
       JSON.stringify(request),
       OPENAI_REQUEST_PRIORITY.assessUsers
     );
-    void this.logPrompt('assessUsers', reqMessages);
-    return [];
+    const response = JSON.parse(responseStr) as OpenAIResponse & {
+      type: 'assessUsers';
+      body: { username: string; attitude: string }[];
+    };
+    void this.logPrompt(
+      'assessUsers',
+      reqMessages,
+      JSON.stringify(response.body)
+    );
+    return response.body;
   }
 
   public async summarize(
@@ -285,50 +301,16 @@ export class ChatGPTService implements AIService {
         messages,
       },
     };
-    await this.rabbit.publish(
+    const responseStr = await this.rabbit.rpc(
       JSON.stringify(request),
       OPENAI_REQUEST_PRIORITY.summarizeHistory
     );
-    void this.logPrompt('summarizeHistory', messages);
-    return prev ?? '';
-  }
-
-  public async processRequest(request: OpenAIRequest): Promise<OpenAIResponse> {
-    const { model, messages } = request.body as {
-      model: string;
-      messages: ChatCompletionMessageParam[];
+    const response = JSON.parse(responseStr) as OpenAIResponse & {
+      type: 'summarizeHistory';
+      body: string;
     };
-    const completion = await this.openai.chat.completions.create({
-      model,
-      messages,
-    });
-    const content = completion.choices[0]?.message?.content?.trim() ?? '';
-    await this.logPrompt(request.type, messages, content);
-
-    switch (request.type) {
-      case 'generateMessage':
-        return { type: 'generateMessage', body: content };
-      case 'summarizeHistory':
-        return { type: 'summarizeHistory', body: content };
-      case 'checkInterest': {
-        let parsed: { messageId: string; why: string } | null = null;
-        try {
-          parsed = JSON.parse(content);
-        } catch (err) {
-          this.logger.warn({ err, content }, 'Failed to parse checkInterest');
-        }
-        return { type: 'checkInterest', body: parsed };
-      }
-      case 'assessUsers': {
-        let parsed: { username: string; attitude: string }[] = [];
-        try {
-          parsed = JSON.parse(content);
-        } catch (err) {
-          this.logger.warn({ err, content }, 'Failed to parse assessUsers');
-        }
-        return { type: 'assessUsers', body: parsed };
-      }
-    }
+    void this.logPrompt('summarizeHistory', messages, response.body);
+    return response.body;
   }
 
   private async logPrompt(
@@ -348,7 +330,7 @@ export class ChatGPTService implements AIService {
     try {
       await fs.appendFile(filePath, entry);
     } catch (err) {
-      this.logger.error({ err }, 'Failed to write prompt log');
+      this.logger.warn({ err }, 'Failed to log prompt');
     }
   }
 }

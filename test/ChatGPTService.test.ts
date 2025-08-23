@@ -10,7 +10,7 @@ import type { ChatMessage } from '../src/domain/messages/ChatMessage';
 import { OPENAI_REQUEST_PRIORITY } from '../src/domain/ai/OpenAI';
 
 describe('ChatGPTService', () => {
-  let publish: ReturnType<typeof vi.fn>;
+  let rpc: ReturnType<typeof vi.fn>;
   let service: ChatGPTService;
   let prompts: Record<string, unknown>;
   let env: TestEnvService;
@@ -18,10 +18,14 @@ describe('ChatGPTService', () => {
 
   beforeEach(async () => {
     vi.resetModules();
-    publish = vi.fn(async () => {});
+    rpc = vi.fn(async () =>
+      JSON.stringify({ type: 'generateMessage', body: 'ok' })
+    );
     const rabbit: RabbitMQService = {
-      publish: publish as unknown as RabbitMQService['publish'],
+      publish: vi.fn(),
       consume: vi.fn(),
+      rpc: rpc as unknown as RabbitMQService['rpc'],
+      consumeRpc: vi.fn(),
     };
 
     prompts = {
@@ -64,6 +68,9 @@ describe('ChatGPTService', () => {
   });
 
   it('publishes generateMessage request', async () => {
+    rpc.mockResolvedValueOnce(
+      JSON.stringify({ type: 'generateMessage', body: 'resp' })
+    );
     const history: ChatMessage[] = [
       {
         role: 'user',
@@ -77,9 +84,13 @@ describe('ChatGPTService', () => {
       },
       { role: 'assistant', content: 'yo' },
     ];
-    await service.ask(history, 'sum', { why: 'why', message: 'msg' });
-    expect(publish).toHaveBeenCalledTimes(1);
-    const [msg, priority] = publish.mock.calls[0];
+    const result = await service.ask(history, 'sum', {
+      why: 'why',
+      message: 'msg',
+    });
+    expect(result).toBe('resp');
+    expect(rpc).toHaveBeenCalledTimes(1);
+    const [msg, priority] = rpc.mock.calls[0];
     expect(priority).toBe(OPENAI_REQUEST_PRIORITY.generateMessage);
     const parsed = JSON.parse(msg as string);
     expect(parsed.type).toBe('generateMessage');
@@ -96,18 +107,31 @@ describe('ChatGPTService', () => {
   });
 
   it('publishes other request types', async () => {
-    await service.checkInterest([], '');
-    await service.assessUsers([], []);
-    await service.summarize([]);
-    expect(publish).toHaveBeenCalledTimes(3);
-    const types = publish.mock.calls.map(
-      (c) => JSON.parse(c[0] as string).type
+    rpc.mockResolvedValueOnce(
+      JSON.stringify({ type: 'checkInterest', body: null })
     );
+    rpc.mockResolvedValueOnce(
+      JSON.stringify({ type: 'assessUsers', body: [] })
+    );
+    rpc.mockResolvedValueOnce(
+      JSON.stringify({ type: 'summarizeHistory', body: '' })
+    );
+    await service.checkInterest([], '');
+    await service.assessUsers(
+      [{ role: 'user', content: 'msg' } as ChatMessage],
+      [{ username: 'u', attitude: 'bad' }]
+    );
+    await service.summarize([{ role: 'assistant', content: 'hi' }], 'prev');
+    expect(rpc).toHaveBeenCalledTimes(3);
+    const types = rpc.mock.calls.map((c) => JSON.parse(c[0] as string).type);
     expect(types).toEqual(['checkInterest', 'assessUsers', 'summarizeHistory']);
   });
 
   it('logPrompt writes only when LOG_PROMPTS=true', async () => {
     const appendSpy = vi.spyOn(fs, 'appendFile').mockResolvedValue();
+    rpc.mockResolvedValue(
+      JSON.stringify({ type: 'generateMessage', body: 'ok' })
+    );
 
     await service.ask([]);
     await new Promise((r) => setTimeout(r, 0));

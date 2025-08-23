@@ -5,6 +5,10 @@ export interface RabbitMQService {
   consume(
     onMessage: (message: string, priority: number) => Promise<void>
   ): Promise<void>;
+  rpc(message: string, priority: number): Promise<string>;
+  consumeRpc(
+    onMessage: (message: string, priority: number) => Promise<string>
+  ): Promise<void>;
 }
 
 export const RABBITMQ_SERVICE_ID = Symbol.for(
