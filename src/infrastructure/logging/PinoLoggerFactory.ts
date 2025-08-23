@@ -3,7 +3,6 @@ import pino, {
   type LevelWithSilent,
   type Logger as Pino,
   type LoggerOptions,
-  type TransportSingleOptions,
 } from 'pino';
 
 import {
@@ -24,19 +23,13 @@ export class PinoLoggerFactory implements LoggerFactory {
       (this.envService.env.LOG_LEVEL as LevelWithSilent | undefined) ??
       (process.env.LOG_LEVEL as LevelWithSilent | undefined) ??
       'info';
-    const isProd =
-      this.envService.env.NODE_ENV === 'production' ||
-      process.env.NODE_ENV === 'production';
-    const isTest =
-      this.envService.env.NODE_ENV === 'test' ||
-      process.env.NODE_ENV === 'test';
-    const options: LoggerOptions = { level };
-    if (!isProd && !isTest) {
-      options.transport = {
+    const options: LoggerOptions = {
+      level,
+      transport: {
         target: 'pino-pretty',
         options: { colorize: true },
-      } satisfies TransportSingleOptions;
-    }
+      },
+    };
     this.root = pino(options);
   }
 
