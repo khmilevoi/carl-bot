@@ -88,7 +88,8 @@ describe('ChatGPTService', () => {
     expect(result).toBe('resp');
     expect(rpc).toHaveBeenCalledTimes(1);
     const [msg, priority] = rpc.mock.calls[0];
-    expect(priority).toBe(OPENAI_REQUEST_PRIORITY.generateMessage);
+    const highestPriority = Math.max(...Object.values(OPENAI_REQUEST_PRIORITY));
+    expect(priority).toBe(highestPriority);
     expect((msg as any).type).toBe('generateMessage');
     expect((msg as any).body.model).toBe(env.getModels().ask);
     expect((msg as any).body.messages).toEqual([

@@ -117,9 +117,10 @@ export class ChatGPTService implements AIService {
       },
     };
 
+    const highestPriority = Math.max(...Object.values(OPENAI_REQUEST_PRIORITY));
     const response = await this.rabbit.rpc<OpenAIRequest, OpenAIResponse>(
       request,
-      OPENAI_REQUEST_PRIORITY.generateMessage,
+      highestPriority,
       openAIResponseSchema
     );
     if (response.type !== 'generateMessage') {
