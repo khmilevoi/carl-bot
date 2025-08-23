@@ -48,9 +48,23 @@
    OPENAI_KEY=your-openai-key
    ADMIN_CHAT_ID=123456         # ID чата администратора для выдачи ключей
    LOG_PROMPTS=false            # логировать запросы и ответы в prompts.log
+   RABBITMQ_URL=amqp://localhost
+   RABBITMQ_QUEUE=bot-queue
+   RABBITMQ_MAX_PRIORITY=10     # максимальный приоритет в очереди
    ```
 
 Если вы добавляете или изменяете переменные окружения, не забудьте обновить файл `.env.example`.
+
+Очередь RabbitMQ используется для фоновых запросов к OpenAI.
+Приоритеты задач задаются константой `OPENAI_REQUEST_PRIORITY`:
+
+- `generateMessage` — 3
+- `summarizeHistory` — 2
+- `checkInterest` — 1
+- `assessUsers` — 1
+
+Задачи с большим приоритетом обрабатываются раньше. Воркера, который
+обрабатывает очередь, запускайте командой `npm run worker`.
 
 3. Запустите в режиме разработки:
 
