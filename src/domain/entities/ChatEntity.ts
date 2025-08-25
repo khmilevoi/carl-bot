@@ -5,7 +5,7 @@ export class ChatEntity {
     public readonly chatId: number,
     title?: string | null
   ) {
-    if (!Number.isInteger(chatId) || chatId <= 0) {
+    if (!Number.isInteger(chatId)) {
       throw new Error('Invalid chat id');
     }
     this._title = title ?? null;
