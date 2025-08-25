@@ -15,7 +15,14 @@ export class SQLiteUserRepository implements UserRepository {
   async upsert(user: UserEntity): Promise<void> {
     const db = await this.dbProvider.get();
     await db.run(
-      'INSERT INTO users (id, username, first_name, last_name, attitude) VALUES (?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET username=excluded.username, first_name=excluded.first_name, last_name=excluded.last_name, attitude=excluded.attitude',
+      `
+        INSERT INTO users (id, username, first_name, last_name, attitude)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(id) DO UPDATE SET username   = excluded.username,
+                                      first_name = excluded.first_name,
+                                      last_name  = excluded.last_name,
+                                      attitude   = COALESCE(NULLIF(TRIM(excluded.attitude), ''), attitude)
+      `,
       user.id,
       user.username ?? null,
       user.firstName ?? null,
