@@ -73,6 +73,10 @@ import {
   type MessageService,
 } from '../application/interfaces/messages/MessageService';
 import {
+  PROMPT_BUILDER_ID,
+  type PromptBuilder,
+} from '../application/interfaces/prompts/PromptBuilder';
+import {
   PROMPT_SERVICE_ID,
   type PromptService,
 } from '../application/interfaces/prompts/PromptService';
@@ -88,6 +92,7 @@ import {
   SUMMARY_SERVICE_ID,
   type SummaryService,
 } from '../application/interfaces/summaries/SummaryService';
+import { PromptBuilder as PromptBuilderImpl } from '../application/services/prompts/PromptBuilder';
 import { AdminServiceImpl } from '../application/use-cases/admin/AdminServiceImpl';
 import { ChatMemoryManager as ChatMemoryManagerImpl } from '../application/use-cases/chat/ChatMemory';
 import { DefaultChatApprovalService } from '../application/use-cases/chat/DefaultChatApprovalService';
@@ -135,6 +140,8 @@ export const register = (container: Container): void => {
     .bind<PromptService>(PROMPT_SERVICE_ID)
     .to(FilePromptService)
     .inSingletonScope();
+
+  container.bind<PromptBuilder>(PROMPT_BUILDER_ID).to(PromptBuilderImpl);
 
   container
     .bind<RabbitMQService>(RABBITMQ_SERVICE_ID)
