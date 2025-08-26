@@ -129,5 +129,5 @@ npm run lint:fix
 
 ## Прогресс тестирования
 
-- Добавлены тесты для `RepositoryMessageService`, `FilePromptService` и `MessageContextExtractor`,
+- Добавлены тесты для `RepositoryMessageService`, `PromptDirector` и `MessageContextExtractor`,
   что повысило их покрытие до более чем 90%.

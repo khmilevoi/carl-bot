@@ -4,13 +4,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ChatMessage } from '../src/domain/messages/ChatMessage';
 import type { ChatGPTService as ChatGPTServiceType } from '../src/infrastructure/external/ChatGPTService';
 import { TestEnvService } from '../src/infrastructure/config/TestEnvService';
-import type { PromptService } from '../src/application/interfaces/prompts/PromptService';
+import type { PromptDirector } from '../src/application/prompts/PromptDirector';
 import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory';
 
 interface ChatGPTServiceConstructor {
   new (
     env: TestEnvService,
-    prompts: PromptService,
+    prompts: PromptDirector,
     logger: LoggerFactory
   ): ChatGPTServiceType;
 }
@@ -21,7 +21,6 @@ describe('ChatGPTService', () => {
   let openaiCreate: ReturnType<typeof vi.fn<[], unknown>>;
   let prompts: Record<string, unknown>;
   let env: TestEnvService;
-  let triggerPrompt: ReturnType<typeof vi.fn>;
   let loggerFactory: LoggerFactory;
 
   beforeEach(async () => {
@@ -31,40 +30,11 @@ describe('ChatGPTService', () => {
     const openaiMock = { chat: { completions: { create: openaiCreate } } };
     vi.doMock('openai', () => ({ default: vi.fn(() => openaiMock) }));
 
-    triggerPrompt = vi
-      .fn()
-      .mockImplementation(
-        async (w?: string, m?: string) => `trigger:${w}:${m}`
-      );
-
     prompts = {
-      getPersona: vi.fn().mockResolvedValue('persona'),
-      getPriorityRulesSystemPrompt: vi.fn().mockResolvedValue('priority'),
-      getUserPromptSystemPrompt: vi.fn().mockResolvedValue('userSystem'),
-      getAskSummaryPrompt: vi
-        .fn()
-        .mockImplementation(async (s: string) => `ask:${s}`),
-      getInterestCheckPrompt: vi.fn().mockResolvedValue('interest'),
-      getUserPrompt: vi
-        .fn()
-        .mockImplementation(async (c: string) => `user:${c}`),
-      getAssessUsersPrompt: vi.fn().mockResolvedValue('assess'),
-      getSummarizationSystemPrompt: vi.fn().mockResolvedValue('sumSystem'),
-      getPreviousSummaryPrompt: vi
-        .fn()
-        .mockImplementation(async (p: string) => `prev:${p}`),
-      getTriggerPrompt: triggerPrompt,
-      getChatUsersPrompt: vi
-        .fn()
-        .mockImplementation(
-          async (users) =>
-            `users\n${users
-              .map(
-                (u: { username: string; fullName: string; attitude: string }) =>
-                  `${u.username}|${u.fullName}|${u.attitude}`
-              )
-              .join('\n')}`
-        ),
+      createAnswerPrompt: vi.fn().mockResolvedValue('answer'),
+      createInterestPrompt: vi.fn().mockResolvedValue('interest'),
+      createAssessUsersPrompt: vi.fn().mockResolvedValue('assess'),
+      createSummaryPrompt: vi.fn().mockResolvedValue('summary'),
     };
 
     env = new TestEnvService();
@@ -82,7 +52,7 @@ describe('ChatGPTService', () => {
     ));
     service = new ChatGPTService(
       env,
-      prompts as unknown as PromptService,
+      prompts as unknown as PromptDirector,
       loggerFactory
     );
   });
@@ -127,22 +97,13 @@ describe('ChatGPTService', () => {
     expect(openaiCreate).toHaveBeenCalledTimes(1);
     expect(openaiCreate).toHaveBeenCalledWith({
       model: env.getModels().ask,
-      messages: [
-        { role: 'system', content: 'persona' },
-        { role: 'system', content: 'priority' },
-        { role: 'system', content: 'userSystem' },
-        { role: 'system', content: 'ask:sum' },
-        { role: 'system', content: 'trigger:why:msg' },
-        { role: 'system', content: 'users\nu|First Last|good' },
-        { role: 'user', content: 'user:hi' },
-        { role: 'assistant', content: 'yo' },
-        { role: 'user', content: 'user:again' },
-      ],
+      messages: [{ role: 'user', content: 'answer' }],
     });
-    expect(triggerPrompt).toHaveBeenCalledWith('why', 'msg');
-    expect(prompts.getChatUsersPrompt).toHaveBeenCalledWith([
-      { username: 'u', fullName: 'First Last', attitude: 'good' },
-    ]);
+    expect(prompts.createAnswerPrompt).toHaveBeenCalledWith(
+      history,
+      'sum',
+      triggerReason
+    );
   });
 
   it('checkInterest parses JSON response and handles errors', async () => {
@@ -162,12 +123,9 @@ describe('ChatGPTService', () => {
     expect(res).toEqual({ messageId: '1', why: 'w' });
     expect(openaiCreate).toHaveBeenCalledWith({
       model: env.getModels().interest,
-      messages: [
-        { role: 'system', content: 'persona' },
-        { role: 'system', content: 'interest' },
-        { role: 'user', content: 'user:m' },
-      ],
+      messages: [{ role: 'user', content: 'interest' }],
     });
+    expect(prompts.createInterestPrompt).toHaveBeenCalledWith(history);
 
     openaiCreate.mockResolvedValueOnce({
       choices: [{ message: { content: 'not-json' } }],
@@ -201,15 +159,10 @@ describe('ChatGPTService', () => {
     expect(res).toEqual([{ username: 'u', attitude: 'new' }]);
     expect(openaiCreate).toHaveBeenCalledWith({
       model: env.getModels().summary,
-      messages: [
-        { role: 'system', content: 'persona' },
-        { role: 'system', content: 'assess' },
-        { role: 'system', content: 'users\nu|First Last|old' },
-        { role: 'user', content: 'user:h' },
-      ],
+      messages: [{ role: 'user', content: 'assess' }],
     });
-    expect(prompts.getChatUsersPrompt).toHaveBeenCalledWith([
-      { username: 'u', fullName: 'First Last', attitude: 'old' },
+    expect(prompts.createAssessUsersPrompt).toHaveBeenCalledWith(history, [
+      { username: 'u', attitude: 'old' },
     ]);
 
     openaiCreate.mockResolvedValueOnce({
@@ -237,15 +190,9 @@ describe('ChatGPTService', () => {
     expect(res).toBe('prev');
     expect(openaiCreate).toHaveBeenCalledWith({
       model: env.getModels().summary,
-      messages: [
-        { role: 'system', content: 'sumSystem' },
-        { role: 'user', content: 'prev:prev' },
-        {
-          role: 'user',
-          content: 'История диалога:\nuser:u1\nАссистент: a1',
-        },
-      ],
+      messages: [{ role: 'user', content: 'summary' }],
     });
+    expect(prompts.createSummaryPrompt).toHaveBeenCalledWith(history, 'prev');
   });
 
   it('ask without optional params and summarize without prev', async () => {
@@ -256,12 +203,13 @@ describe('ChatGPTService', () => {
     expect(resAsk).toBe('resp');
     expect(openaiCreate).toHaveBeenCalledWith({
       model: env.getModels().ask,
-      messages: [
-        { role: 'system', content: 'persona' },
-        { role: 'system', content: 'priority' },
-        { role: 'system', content: 'userSystem' },
-      ],
+      messages: [{ role: 'user', content: 'answer' }],
     });
+    expect(prompts.createAnswerPrompt).toHaveBeenCalledWith(
+      [],
+      undefined,
+      undefined
+    );
 
     openaiCreate.mockResolvedValueOnce({
       choices: [{ message: { content: 'sum' } }],
@@ -270,14 +218,9 @@ describe('ChatGPTService', () => {
     expect(resSum).toBe('sum');
     expect(openaiCreate).toHaveBeenCalledWith({
       model: env.getModels().summary,
-      messages: [
-        { role: 'system', content: 'sumSystem' },
-        {
-          role: 'user',
-          content: 'История диалога:\n',
-        },
-      ],
+      messages: [{ role: 'user', content: 'summary' }],
     });
+    expect(prompts.createSummaryPrompt).toHaveBeenCalledWith([], undefined);
   });
 
   it('logPrompt writes only when LOG_PROMPTS=true', async () => {
@@ -290,7 +233,7 @@ describe('ChatGPTService', () => {
     (env1.env as unknown as { LOG_PROMPTS: boolean }).LOG_PROMPTS = false;
     const service1 = new ChatGPTService(
       env1,
-      prompts as unknown as PromptService,
+      prompts as unknown as PromptDirector,
       loggerFactory
     );
     await service1.ask([]);
@@ -301,7 +244,7 @@ describe('ChatGPTService', () => {
     (env2.env as unknown as { LOG_PROMPTS: boolean }).LOG_PROMPTS = true;
     const service2 = new ChatGPTService(
       env2,
-      prompts as unknown as PromptService,
+      prompts as unknown as PromptDirector,
       loggerFactory
     );
     await service2.ask([]);

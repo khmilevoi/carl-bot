@@ -12,8 +12,8 @@ import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
 } from '@/application/interfaces/logging/LoggerFactory';
-import type { PromptService } from '@/application/interfaces/prompts/PromptService';
-import { PROMPT_SERVICE_ID } from '@/application/interfaces/prompts/PromptService';
+import type { PromptDirector } from '@/application/prompts/PromptDirector';
+import { PROMPT_DIRECTOR_ID } from '@/application/prompts/PromptDirector';
 import type { ChatMessage } from '@/domain/messages/ChatMessage';
 import type { TriggerReason } from '@/domain/triggers/Trigger';
 
@@ -27,7 +27,7 @@ export class ChatGPTService implements AIService {
 
   constructor(
     @inject(ENV_SERVICE_ID) private readonly envService: EnvService,
-    @inject(PROMPT_SERVICE_ID) private readonly prompts: PromptService,
+    @inject(PROMPT_DIRECTOR_ID) private readonly prompts: PromptDirector,
     @inject(LOGGER_FACTORY_ID) private loggerFactory: LoggerFactory
   ) {
     const env = this.envService.env;
@@ -45,8 +45,6 @@ export class ChatGPTService implements AIService {
     summary?: string,
     triggerReason?: TriggerReason
   ): Promise<string> {
-    const persona = await this.prompts.getPersona();
-
     this.logger.debug(
       {
         messages: history.length,
@@ -55,75 +53,14 @@ export class ChatGPTService implements AIService {
       'Sending chat completion request'
     );
 
-    const messages: OpenAI.ChatCompletionMessageParam[] = [
-      { role: 'system', content: persona },
-      {
-        role: 'system',
-        content: await this.prompts.getPriorityRulesSystemPrompt(),
-      },
-      {
-        role: 'system',
-        content: await this.prompts.getUserPromptSystemPrompt(),
-      },
-    ];
-
-    if (summary) {
-      messages.push({
-        role: 'system',
-        content: await this.prompts.getAskSummaryPrompt(summary),
-      });
-    }
-    if (triggerReason) {
-      messages.push({
-        role: 'system',
-        content: await this.prompts.getTriggerPrompt(
-          triggerReason.why,
-          triggerReason.message
-        ),
-      });
-    }
-
-    const infoMap = new Map<string, { fullName: string; attitude: string }>();
-    for (const m of history) {
-      if (m.role === 'user' && m.username && m.attitude) {
-        if (!infoMap.has(m.username)) {
-          const fullName =
-            m.fullName ??
-            ([m.firstName, m.lastName].filter(Boolean).join(' ') || 'N/A');
-          infoMap.set(m.username, { fullName, attitude: m.attitude });
-        }
-      }
-    }
-    const infos = Array.from(infoMap, ([username, v]) => ({
-      username,
-      fullName: v.fullName,
-      attitude: v.attitude,
-    }));
-    if (infos.length > 0) {
-      messages.push({
-        role: 'system',
-        content: await this.prompts.getChatUsersPrompt(infos),
-      });
-    }
-
-    const historyMessages = await Promise.all(
-      history.map<Promise<OpenAI.ChatCompletionMessageParam>>(async (m) =>
-        m.role === 'user'
-          ? {
-              role: 'user',
-              content: await this.prompts.getUserPrompt(
-                m.content,
-                m.messageId?.toString(),
-                m.username,
-                m.fullName,
-                m.replyText,
-                m.quoteText
-              ),
-            }
-          : { role: 'assistant', content: m.content }
-      )
+    const prompt = await this.prompts.createAnswerPrompt(
+      history,
+      summary,
+      triggerReason
     );
-    messages.push(...historyMessages);
+    const messages: OpenAI.ChatCompletionMessageParam[] = [
+      { role: 'user', content: prompt },
+    ];
     const start = Date.now();
     try {
       const completion = await this.openai.chat.completions.create({
@@ -158,30 +95,10 @@ export class ChatGPTService implements AIService {
     history: ChatMessage[],
     _summary: string
   ): Promise<{ messageId: string; why: string } | null> {
-    const persona = await this.prompts.getPersona();
-    const checkPrompt = await this.prompts.getInterestCheckPrompt();
+    const prompt = await this.prompts.createInterestPrompt(history);
     const messages: OpenAI.ChatCompletionMessageParam[] = [
-      { role: 'system', content: persona },
-      { role: 'system', content: checkPrompt },
+      { role: 'user', content: prompt },
     ];
-    const historyMessages = await Promise.all(
-      history.map<Promise<OpenAI.ChatCompletionMessageParam>>(async (m) =>
-        m.role === 'user'
-          ? {
-              role: 'user',
-              content: await this.prompts.getUserPrompt(
-                m.content,
-                m.messageId?.toString(),
-                m.username,
-                m.fullName,
-                m.replyText,
-                m.quoteText
-              ),
-            }
-          : { role: 'assistant', content: m.content }
-      )
-    );
-    messages.push(...historyMessages);
     this.logger.debug(
       {
         messages: history.length,
@@ -241,52 +158,13 @@ export class ChatGPTService implements AIService {
     messages: ChatMessage[],
     prevAttitudes: { username: string; attitude: string }[] = []
   ): Promise<{ username: string; attitude: string }[]> {
-    const persona = await this.prompts.getPersona();
-    const systemPrompt = await this.prompts.getAssessUsersPrompt();
-    const reqMessages: OpenAI.ChatCompletionMessageParam[] = [
-      { role: 'system', content: persona },
-      { role: 'system', content: systemPrompt },
-    ];
-    const nameMap = new Map<string, string>();
-    for (const m of messages) {
-      if (m.role === 'user' && m.username) {
-        if (!nameMap.has(m.username)) {
-          const fullName =
-            m.fullName ??
-            ([m.firstName, m.lastName].filter(Boolean).join(' ') || 'N/A');
-          nameMap.set(m.username, fullName);
-        }
-      }
-    }
-    if (prevAttitudes.length > 0) {
-      const prev = prevAttitudes.map((u) => ({
-        username: u.username,
-        fullName: nameMap.get(u.username) ?? 'N/A',
-        attitude: u.attitude,
-      }));
-      reqMessages.push({
-        role: 'system',
-        content: await this.prompts.getChatUsersPrompt(prev),
-      });
-    }
-    const historyMessages = await Promise.all(
-      messages.map<Promise<OpenAI.ChatCompletionMessageParam>>(async (m) =>
-        m.role === 'user'
-          ? {
-              role: 'user',
-              content: await this.prompts.getUserPrompt(
-                m.content,
-                m.messageId?.toString(),
-                m.username,
-                m.fullName,
-                m.replyText,
-                m.quoteText
-              ),
-            }
-          : { role: 'assistant', content: m.content }
-      )
+    const prompt = await this.prompts.createAssessUsersPrompt(
+      messages,
+      prevAttitudes
     );
-    reqMessages.push(...historyMessages);
+    const reqMessages: OpenAI.ChatCompletionMessageParam[] = [
+      { role: 'user', content: prompt },
+    ];
     this.logger.debug(
       {
         messages: messages.length,
@@ -343,12 +221,6 @@ export class ChatGPTService implements AIService {
     history: ChatMessage[],
     prev?: string
   ): Promise<string> {
-    const messages: OpenAI.ChatCompletionMessageParam[] = [
-      {
-        role: 'system',
-        content: await this.prompts.getSummarizationSystemPrompt(),
-      },
-    ];
     this.logger.debug(
       {
         history: history.length,
@@ -356,32 +228,10 @@ export class ChatGPTService implements AIService {
       },
       'Sending summarization request'
     );
-    if (prev) {
-      messages.push({
-        role: 'user',
-        content: await this.prompts.getPreviousSummaryPrompt(prev),
-      });
-    }
-    const historyText = (
-      await Promise.all(
-        history.map(async (m) =>
-          m.role === 'user'
-            ? await this.prompts.getUserPrompt(
-                m.content,
-                m.messageId?.toString(),
-                m.username,
-                m.fullName,
-                m.replyText,
-                m.quoteText
-              )
-            : `Ассистент: ${m.content}`
-        )
-      )
-    ).join('\n');
-    messages.push({
-      role: 'user',
-      content: `История диалога:\n${historyText}`,
-    });
+    const prompt = await this.prompts.createSummaryPrompt(history, prev);
+    const messages: OpenAI.ChatCompletionMessageParam[] = [
+      { role: 'user', content: prompt },
+    ];
     const start = Date.now();
     try {
       const completion = await this.openai.chat.completions.create({
