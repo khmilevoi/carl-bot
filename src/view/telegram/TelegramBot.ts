@@ -353,6 +353,11 @@ export class TelegramBot {
     const chatId = ctx.chat?.id;
     const userId = ctx.from?.id;
     assert(chatId, 'This is not a chat');
+    if (chatId === this.env.ADMIN_CHAT_ID) {
+      this.logger.info({ chatId, userId }, 'Showing admin menu');
+      await this.router.show(ctx, 'admin_menu');
+      return;
+    }
     this.logger.info({ chatId, userId }, 'Showing user menu');
     await this.router.show(ctx, 'menu');
   }
