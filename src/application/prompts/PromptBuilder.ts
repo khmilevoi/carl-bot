@@ -7,9 +7,7 @@ import {
 
 @injectable()
 export class PromptBuilder {
-  private readonly parts: string[] = [];
-
-  private readonly steps: Array<() => Promise<void>> = [];
+  private readonly steps: Array<() => Promise<string>> = [];
 
   constructor(
     @inject(PROMPT_TEMPLATE_SERVICE_ID)
@@ -19,7 +17,7 @@ export class PromptBuilder {
   addPersona(): this {
     this.steps.push(async () => {
       const persona = await this.templates.loadTemplate('persona');
-      this.parts.push(persona);
+      return persona;
     });
     return this;
   }
@@ -27,7 +25,7 @@ export class PromptBuilder {
   addAskSummary(summary: string): this {
     this.steps.push(async () => {
       const template = await this.templates.loadTemplate('askSummary');
-      this.parts.push(template.replace('{{summary}}', summary));
+      return template.replace('{{summary}}', summary);
     });
     return this;
   }
@@ -35,7 +33,7 @@ export class PromptBuilder {
   addSummarizationSystem(): this {
     this.steps.push(async () => {
       const template = await this.templates.loadTemplate('summarizationSystem');
-      this.parts.push(template);
+      return template;
     });
     return this;
   }
@@ -43,7 +41,7 @@ export class PromptBuilder {
   addPreviousSummary(summary: string): this {
     this.steps.push(async () => {
       const template = await this.templates.loadTemplate('previousSummary');
-      this.parts.push(template.replace('{{prev}}', summary));
+      return template.replace('{{prev}}', summary);
     });
     return this;
   }
@@ -51,7 +49,7 @@ export class PromptBuilder {
   addCheckInterest(): this {
     this.steps.push(async () => {
       const template = await this.templates.loadTemplate('checkInterest');
-      this.parts.push(template);
+      return template;
     });
     return this;
   }
@@ -66,14 +64,13 @@ export class PromptBuilder {
   }): this {
     this.steps.push(async () => {
       const template = await this.templates.loadTemplate('userPrompt');
-      const prompt = template
+      return template
         .replace('{{messageId}}', params.messageId ?? 'N/A')
         .replace('{{userName}}', params.userName ?? 'N/A')
         .replace('{{fullName}}', params.fullName ?? 'N/A')
         .replace('{{replyMessage}}', params.replyMessage ?? 'N/A')
         .replace('{{quoteMessage}}', params.quoteMessage ?? 'N/A')
         .replace('{{userMessage}}', params.userMessage);
-      this.parts.push(prompt);
     });
     return this;
   }
@@ -81,7 +78,7 @@ export class PromptBuilder {
   addUserPromptSystem(): this {
     this.steps.push(async () => {
       const template = await this.templates.loadTemplate('userPromptSystem');
-      this.parts.push(template);
+      return template;
     });
     return this;
   }
@@ -103,7 +100,7 @@ export class PromptBuilder {
             .replace('{{attitude}}', u.attitude)
         )
         .join('\n\n');
-      this.parts.push(`Все пользователи чата:\n${formatted}`);
+      return `Все пользователи чата:\n${formatted}`;
     });
     return this;
   }
@@ -113,7 +110,7 @@ export class PromptBuilder {
       const restrictions = await this.templates.loadTemplate(
         'priorityRulesSystem'
       );
-      this.parts.push(restrictions);
+      return restrictions;
     });
     return this;
   }
@@ -121,7 +118,7 @@ export class PromptBuilder {
   addAssessUsers(): this {
     this.steps.push(async () => {
       const template = await this.templates.loadTemplate('assessUsers');
-      this.parts.push(template);
+      return template;
     });
     return this;
   }
@@ -129,19 +126,18 @@ export class PromptBuilder {
   addReplyTrigger(reason: string, message: string): this {
     this.steps.push(async () => {
       const template = await this.templates.loadTemplate('replyTrigger');
-      const prompt = template
+      return template
         .replace('{{triggerReason}}', reason)
         .replace('{{triggerMessage}}', message);
-      this.parts.push(prompt);
     });
     return this;
   }
 
   async build(): Promise<string> {
-    for (const step of this.steps) {
-      await step();
-    }
-    return this.parts.join('\n\n');
+    const steps = [...this.steps];
+    const parts = await Promise.all(steps.map((step) => step()));
+    this.steps.length = 0;
+    return parts.join('\n\n');
   }
 }
 

@@ -83,4 +83,12 @@ describe('PromptBuilder', () => {
       'persona\n\nВсе пользователи чата:\nU u1 F1 a1\n\nU u2 F2 a2\n\nrules\n\nsum S\n\ntrigger why msg'
     );
   });
+
+  it('clears steps after build', async () => {
+    const builder = new PromptBuilder(templateService);
+    builder.addPersona();
+    await builder.build();
+    builder.addPersona();
+    await expect(builder.build()).resolves.toBe('persona');
+  });
 });
