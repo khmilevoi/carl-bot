@@ -85,6 +85,10 @@ import {
   PromptBuilder,
   type PromptBuilderFactory,
 } from '../application/prompts/PromptBuilder';
+import {
+  PROMPT_DIRECTOR_ID,
+  PromptDirector,
+} from '../application/prompts/PromptDirector';
 import { AdminServiceImpl } from '../application/use-cases/admin/AdminServiceImpl';
 import { ChatMemoryManager as ChatMemoryManagerImpl } from '../application/use-cases/chat/ChatMemory';
 import { DefaultChatApprovalService } from '../application/use-cases/chat/DefaultChatApprovalService';
@@ -131,6 +135,11 @@ export const register = (container: Container): void => {
   container
     .bind<PromptBuilderFactory>(PROMPT_BUILDER_FACTORY_ID)
     .toFactory(() => () => container.get(PromptBuilder));
+
+  container
+    .bind<PromptDirector>(PROMPT_DIRECTOR_ID)
+    .to(PromptDirector)
+    .inSingletonScope();
 
   container
     .bind<PromptService>(PROMPT_SERVICE_ID)

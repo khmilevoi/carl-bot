@@ -4,6 +4,7 @@ import {
   PROMPT_TEMPLATE_SERVICE_ID,
   type PromptTemplateService,
 } from '@/application/interfaces/prompts/PromptTemplateService';
+import type { ChatMessage } from '@/domain/messages/ChatMessage';
 
 @injectable()
 export class PromptBuilder {
@@ -22,7 +23,10 @@ export class PromptBuilder {
     return this;
   }
 
-  addAskSummary(summary: string): this {
+  addAskSummary(summary?: string): this {
+    if (!summary) {
+      return this;
+    }
     this.steps.push(async () => {
       const template = await this.templates.loadTemplate('askSummary');
       return template.replace('{{summary}}', summary);
@@ -38,7 +42,10 @@ export class PromptBuilder {
     return this;
   }
 
-  addPreviousSummary(summary: string): this {
+  addPreviousSummary(summary?: string): this {
+    if (!summary) {
+      return this;
+    }
     this.steps.push(async () => {
       const template = await this.templates.loadTemplate('previousSummary');
       return template.replace('{{prev}}', summary);
@@ -123,13 +130,40 @@ export class PromptBuilder {
     return this;
   }
 
-  addReplyTrigger(reason: string, message: string): this {
+  addReplyTrigger(reason?: string, message?: string): this {
+    if (!reason || !message) {
+      return this;
+    }
     this.steps.push(async () => {
       const template = await this.templates.loadTemplate('replyTrigger');
       return template
         .replace('{{triggerReason}}', reason)
         .replace('{{triggerMessage}}', message);
     });
+    return this;
+  }
+
+  addMessages(messages: ChatMessage[]): this {
+    for (const msg of messages) {
+      if (msg.role === 'user') {
+        this.addUserPrompt({
+          messageId: msg.messageId?.toString(),
+          userName: msg.username,
+          fullName:
+            msg.fullName ??
+            ([msg.firstName, msg.lastName].filter(Boolean).join(' ') ||
+              undefined),
+          replyMessage: msg.replyText,
+          quoteMessage: msg.quoteText,
+          userMessage: msg.content,
+        });
+      } else {
+        this.addUserPrompt({
+          userName: 'Ассистент',
+          userMessage: msg.content,
+        });
+      }
+    }
     return this;
   }
 
