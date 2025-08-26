@@ -7,6 +7,7 @@ import {
   PROMPT_BUILDER_FACTORY_ID,
   type PromptBuilderFactory,
 } from './PromptBuilder';
+import type { PromptMessage } from './PromptMessage';
 
 @injectable()
 export class PromptDirector {
@@ -19,7 +20,7 @@ export class PromptDirector {
     history: ChatMessage[],
     summary?: string,
     trigger?: TriggerReason
-  ): Promise<string> {
+  ): Promise<PromptMessage[]> {
     return this.builderFactory()
       .addPersona()
       .addPriorityRulesSystem()
@@ -34,7 +35,7 @@ export class PromptDirector {
   async createSummaryPrompt(
     history: ChatMessage[],
     previousSummary?: string
-  ): Promise<string> {
+  ): Promise<PromptMessage[]> {
     return this.builderFactory()
       .addSummarizationSystem()
       .addPreviousSummary(previousSummary)
@@ -42,7 +43,7 @@ export class PromptDirector {
       .build();
   }
 
-  async createInterestPrompt(history: ChatMessage[]): Promise<string> {
+  async createInterestPrompt(history: ChatMessage[]): Promise<PromptMessage[]> {
     return this.builderFactory()
       .addPersona()
       .addCheckInterest()
@@ -53,7 +54,7 @@ export class PromptDirector {
   async createAssessUsersPrompt(
     history: ChatMessage[],
     prevAttitudes?: { username: string; attitude: string }[]
-  ): Promise<string> {
+  ): Promise<PromptMessage[]> {
     const prevUsers = this.mapPrevAttitudes(history, prevAttitudes);
     return this.builderFactory()
       .addPersona()
