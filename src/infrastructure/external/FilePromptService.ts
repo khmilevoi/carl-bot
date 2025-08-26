@@ -20,8 +20,7 @@ export class FilePromptService implements PromptService {
   private readonly checkInterestTemplate: () => Promise<string>;
   private readonly userPromptTemplate: () => Promise<string>;
   private readonly userPromptSystemTemplate: () => Promise<string>;
-  private readonly userAttitudesTemplate: () => Promise<string>;
-  private readonly userNamesTemplate: () => Promise<string>;
+  private readonly chatUserTemplate: () => Promise<string>;
   private readonly assessUsersTemplate: () => Promise<string>;
   private readonly priorityRulesSystemTemplate: () => Promise<string>;
   private readonly replyTriggerTemplate: () => Promise<string>;
@@ -54,11 +53,8 @@ export class FilePromptService implements PromptService {
     this.userPromptSystemTemplate = createLazy(() =>
       this.loadTemplate('userPromptSystem', files.userPromptSystem)
     );
-    this.userAttitudesTemplate = createLazy(() =>
-      this.loadTemplate('userAttitudes', files.userAttitudes)
-    );
-    this.userNamesTemplate = createLazy(() =>
-      this.loadTemplate('userNames', files.userNames)
+    this.chatUserTemplate = createLazy(() =>
+      this.loadTemplate('chatUser', files.chatUser)
     );
     this.priorityRulesSystemTemplate = createLazy(() =>
       this.loadTemplate('priorityRulesSystem', files.priorityRulesSystem)
@@ -125,24 +121,19 @@ export class FilePromptService implements PromptService {
     return prompt;
   }
 
-  async getUserAttitudesPrompt(
-    users: { username: string; attitude: string }[]
+  async getChatUsersPrompt(
+    users: { username: string; fullName: string; attitude: string }[]
   ): Promise<string> {
-    const template = await this.userAttitudesTemplate();
-    const attitudes = users
-      .map((u) => `${u.username}: ${u.attitude}`)
-      .join('\n');
-    return template.replace('{{userAttitudes}}', attitudes);
-  }
-
-  async getUserNamesPrompt(
-    users: { username: string; firstName: string; lastName: string }[]
-  ): Promise<string> {
-    const template = await this.userNamesTemplate();
-    const names = users
-      .map((u) => `${u.username}: ${u.firstName} ${u.lastName}`)
-      .join('\n');
-    return template.replace('{{userNames}}', names);
+    const template = await this.chatUserTemplate();
+    const formatted = users
+      .map((u) =>
+        template
+          .replace('{{userName}}', u.username)
+          .replace('{{fullName}}', u.fullName)
+          .replace('{{attitude}}', u.attitude)
+      )
+      .join('\n\n');
+    return `Все пользователи чата:\n${formatted}`;
   }
 
   async getTriggerPrompt(

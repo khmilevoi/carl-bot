@@ -83,42 +83,26 @@ export class ChatGPTService implements AIService {
       });
     }
 
-    const attitudeMap = new Map<string, string>();
-    const nameMap = new Map<string, { firstName: string; lastName: string }>();
+    const infoMap = new Map<string, { fullName: string; attitude: string }>();
     for (const m of history) {
-      if (m.role === 'user' && m.username) {
-        if (m.attitude && !attitudeMap.has(m.username)) {
-          attitudeMap.set(m.username, m.attitude);
-        }
-        if (!nameMap.has(m.username)) {
-          const firstName = m.firstName ?? m.fullName?.split(' ')[0] ?? '';
-          const lastName =
-            m.lastName ?? m.fullName?.split(' ').slice(1).join(' ') ?? '';
-          if (firstName || lastName) {
-            nameMap.set(m.username, { firstName, lastName });
-          }
+      if (m.role === 'user' && m.username && m.attitude) {
+        if (!infoMap.has(m.username)) {
+          const fullName =
+            m.fullName ??
+            ([m.firstName, m.lastName].filter(Boolean).join(' ') || 'N/A');
+          infoMap.set(m.username, { fullName, attitude: m.attitude });
         }
       }
     }
-    const names = Array.from(nameMap, ([username, v]) => ({
+    const infos = Array.from(infoMap, ([username, v]) => ({
       username,
-      firstName: v.firstName,
-      lastName: v.lastName,
+      fullName: v.fullName,
+      attitude: v.attitude,
     }));
-    if (names.length > 0) {
+    if (infos.length > 0) {
       messages.push({
         role: 'system',
-        content: await this.prompts.getUserNamesPrompt(names),
-      });
-    }
-    const attitudes = Array.from(attitudeMap, ([username, attitude]) => ({
-      username,
-      attitude,
-    }));
-    if (attitudes.length > 0) {
-      messages.push({
-        role: 'system',
-        content: await this.prompts.getUserAttitudesPrompt(attitudes),
+        content: await this.prompts.getChatUsersPrompt(infos),
       });
     }
 
@@ -263,34 +247,26 @@ export class ChatGPTService implements AIService {
       { role: 'system', content: persona },
       { role: 'system', content: systemPrompt },
     ];
-    if (prevAttitudes.length > 0) {
-      reqMessages.push({
-        role: 'system',
-        content: await this.prompts.getUserAttitudesPrompt(prevAttitudes),
-      });
-    }
-    const nameMap = new Map<string, { firstName: string; lastName: string }>();
+    const nameMap = new Map<string, string>();
     for (const m of messages) {
       if (m.role === 'user' && m.username) {
         if (!nameMap.has(m.username)) {
-          const firstName = m.firstName ?? m.fullName?.split(' ')[0] ?? '';
-          const lastName =
-            m.lastName ?? m.fullName?.split(' ').slice(1).join(' ') ?? '';
-          if (firstName || lastName) {
-            nameMap.set(m.username, { firstName, lastName });
-          }
+          const fullName =
+            m.fullName ??
+            ([m.firstName, m.lastName].filter(Boolean).join(' ') || 'N/A');
+          nameMap.set(m.username, fullName);
         }
       }
     }
-    const names = Array.from(nameMap, ([username, v]) => ({
-      username,
-      firstName: v.firstName,
-      lastName: v.lastName,
-    }));
-    if (names.length > 0) {
+    if (prevAttitudes.length > 0) {
+      const prev = prevAttitudes.map((u) => ({
+        username: u.username,
+        fullName: nameMap.get(u.username) ?? 'N/A',
+        attitude: u.attitude,
+      }));
       reqMessages.push({
         role: 'system',
-        content: await this.prompts.getUserNamesPrompt(names),
+        content: await this.prompts.getChatUsersPrompt(prev),
       });
     }
     const historyMessages = await Promise.all(

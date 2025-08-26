@@ -22,8 +22,7 @@ export interface EnvService {
     checkInterest: string;
     userPrompt: string;
     userPromptSystem: string;
-    userAttitudes: string;
-    userNames: string;
+    chatUser: string;
     priorityRulesSystem: string;
     assessUsers: string;
     replyTrigger: string;
