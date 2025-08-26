@@ -9,6 +9,7 @@ import type { LoggerFactory } from '../src/application/interfaces/logging/Logger
 import { PromptBuilder } from '../src/application/prompts/PromptBuilder';
 import { FilePromptTemplateService } from '../src/infrastructure/external/FilePromptTemplateService';
 import { TestEnvService } from '../src/infrastructure/config/TestEnvService';
+import type { ChatMessage } from '../src/domain/messages/ChatMessage';
 
 class TempEnvService extends TestEnvService {
   constructor(private dir: string) {
@@ -22,7 +23,7 @@ class TempEnvService extends TestEnvService {
       summarizationSystem: '',
       previousSummary: join(this.dir, 'previous_summary_prompt.md'),
       checkInterest: '',
-      userPrompt: '',
+      userPrompt: join(this.dir, 'user_prompt.md'),
       userPromptSystem: '',
       chatUser: join(this.dir, 'chat_user_prompt.md'),
       priorityRulesSystem: join(this.dir, 'priority_rules_system_prompt.md'),
@@ -48,6 +49,7 @@ describe('PromptBuilder', () => {
       join(dir, 'reply_trigger_prompt.md'),
       'trigger {{triggerReason}} {{triggerMessage}}'
     );
+    writeFileSync(join(dir, 'user_prompt.md'), 'U {{userMessage}}');
 
     const env = new TempEnvService(dir);
     const loggerFactory: LoggerFactory = {
@@ -82,6 +84,16 @@ describe('PromptBuilder', () => {
     await expect(builder.build()).resolves.toBe(
       'persona\n\nВсе пользователи чата:\nU u1 F1 a1\n\nU u2 F2 a2\n\nrules\n\nsum S\n\ntrigger why msg'
     );
+  });
+
+  it('adds messages from history', async () => {
+    const builder = new PromptBuilder(templateService);
+    builder.addMessages([
+      { role: 'user', content: 'hi' } as ChatMessage,
+      { role: 'assistant', content: 'hello' } as ChatMessage,
+    ]);
+
+    await expect(builder.build()).resolves.toBe('U hi\n\nU hello');
   });
 
   it('clears steps after build', async () => {

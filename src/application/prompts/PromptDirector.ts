@@ -20,16 +20,31 @@ export class PromptDirector {
     summary?: string,
     trigger?: TriggerReason
   ): Promise<string> {
-    const builder = this.builderFactory();
-    builder.addPersona().addPriorityRulesSystem().addUserPromptSystem();
+    return this.builderFactory()
+      .addPersona()
+      .addPriorityRulesSystem()
+      .addUserPromptSystem()
+      .addAskSummary(summary)
+      .addReplyTrigger(trigger?.why, trigger?.message)
+      .addChatUsers(this.extractChatUsers(history))
+      .addMessages(history)
+      .build();
+  }
 
-    if (summary) {
-      builder.addAskSummary(summary);
-    }
-    if (trigger) {
-      builder.addReplyTrigger(trigger.why, trigger.message);
-    }
+  async createSummaryPrompt(
+    history: ChatMessage[],
+    previousSummary?: string
+  ): Promise<string> {
+    return this.builderFactory()
+      .addSummarizationSystem()
+      .addPreviousSummary(previousSummary)
+      .addMessages(history)
+      .build();
+  }
 
+  private extractChatUsers(
+    history: ChatMessage[]
+  ): { username: string; fullName: string; attitude: string }[] {
     const infoMap = new Map<string, { fullName: string; attitude: string }>();
     for (const m of history) {
       if (m.role === 'user' && m.username && m.attitude) {
@@ -40,72 +55,11 @@ export class PromptDirector {
         }
       }
     }
-    const infos = Array.from(infoMap, ([username, v]) => ({
+    return Array.from(infoMap, ([username, v]) => ({
       username,
       fullName: v.fullName,
       attitude: v.attitude,
     }));
-    builder.addChatUsers(infos);
-
-    for (const msg of history) {
-      if (msg.role === 'user') {
-        builder.addUserPrompt({
-          messageId: msg.messageId?.toString(),
-          userName: msg.username,
-          fullName:
-            msg.fullName ??
-            ([msg.firstName, msg.lastName].filter(Boolean).join(' ') !== ''
-              ? [msg.firstName, msg.lastName].filter(Boolean).join(' ')
-              : undefined),
-          replyMessage: msg.replyText,
-          quoteMessage: msg.quoteText,
-          userMessage: msg.content,
-        });
-      } else {
-        builder.addUserPrompt({
-          userName: 'Ассистент',
-          userMessage: msg.content,
-        });
-      }
-    }
-
-    return builder.build();
-  }
-
-  async createSummaryPrompt(
-    history: ChatMessage[],
-    previousSummary?: string
-  ): Promise<string> {
-    const builder = this.builderFactory();
-    builder.addSummarizationSystem();
-
-    if (previousSummary) {
-      builder.addPreviousSummary(previousSummary);
-    }
-
-    for (const msg of history) {
-      if (msg.role === 'user') {
-        builder.addUserPrompt({
-          messageId: msg.messageId?.toString(),
-          userName: msg.username,
-          fullName:
-            msg.fullName ??
-            ([msg.firstName, msg.lastName].filter(Boolean).join(' ') !== ''
-              ? [msg.firstName, msg.lastName].filter(Boolean).join(' ')
-              : undefined),
-          replyMessage: msg.replyText,
-          quoteMessage: msg.quoteText,
-          userMessage: msg.content,
-        });
-      } else {
-        builder.addUserPrompt({
-          userName: 'Ассистент',
-          userMessage: msg.content,
-        });
-      }
-    }
-
-    return builder.build();
   }
 }
 

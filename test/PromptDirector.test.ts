@@ -22,12 +22,16 @@ class FakeBuilder {
     this.steps.push('userPromptSystem');
     return this;
   }
-  addAskSummary(summary: string): this {
-    this.steps.push(`askSummary:${summary}`);
+  addAskSummary(summary?: string): this {
+    if (summary) {
+      this.steps.push(`askSummary:${summary}`);
+    }
     return this;
   }
-  addReplyTrigger(reason: string, message: string): this {
-    this.steps.push(`trigger:${reason}:${message}`);
+  addReplyTrigger(reason?: string, message?: string): this {
+    if (reason && message) {
+      this.steps.push(`trigger:${reason}:${message}`);
+    }
     return this;
   }
   addChatUsers(
@@ -40,12 +44,20 @@ class FakeBuilder {
     this.steps.push(`user:${params.userMessage}`);
     return this;
   }
+  addMessages(messages: ChatMessage[]): this {
+    for (const m of messages) {
+      this.addUserPrompt({ userMessage: m.content });
+    }
+    return this;
+  }
   addSummarizationSystem(): this {
     this.steps.push('summarySystem');
     return this;
   }
-  addPreviousSummary(summary: string): this {
-    this.steps.push(`prev:${summary}`);
+  addPreviousSummary(summary?: string): this {
+    if (summary) {
+      this.steps.push(`prev:${summary}`);
+    }
     return this;
   }
   build(): Promise<string> {
