@@ -1,4 +1,4 @@
-import { type Container } from 'inversify';
+import type { Container } from 'inversify';
 
 import {
   ADMIN_SERVICE_ID,
@@ -80,6 +80,11 @@ import {
   SUMMARY_SERVICE_ID,
   type SummaryService,
 } from '../application/interfaces/summaries/SummaryService';
+import {
+  PROMPT_BUILDER_FACTORY_ID,
+  PromptBuilder,
+  type PromptBuilderFactory,
+} from '../application/prompts/PromptBuilder';
 import { AdminServiceImpl } from '../application/use-cases/admin/AdminServiceImpl';
 import { ChatMemoryManager as ChatMemoryManagerImpl } from '../application/use-cases/chat/ChatMemory';
 import { DefaultChatApprovalService } from '../application/use-cases/chat/DefaultChatApprovalService';
@@ -120,6 +125,15 @@ export const register = (container: Container): void => {
     .bind<PromptTemplateService>(PROMPT_TEMPLATE_SERVICE_ID)
     .to(FilePromptTemplateService)
     .inSingletonScope();
+
+  container
+    .bind<PromptBuilderFactory>(PROMPT_BUILDER_FACTORY_ID)
+    .toDynamicValue(() => () => {
+      const templates = container.get<PromptTemplateService>(
+        PROMPT_TEMPLATE_SERVICE_ID
+      );
+      return new PromptBuilder(templates);
+    });
 
   container
     .bind<PromptService>(PROMPT_SERVICE_ID)
