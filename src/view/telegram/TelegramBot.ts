@@ -358,6 +358,8 @@ export class TelegramBot {
       await this.router.show(ctx, 'admin_menu');
       return;
     }
+    const allowed = await this.checkChatStatus(ctx, chatId);
+    if (!allowed) return;
     this.logger.info({ chatId, userId }, 'Showing user menu');
     await this.router.show(ctx, 'menu');
   }
@@ -635,11 +637,10 @@ export class TelegramBot {
     chatId: number
   ): Promise<boolean> {
     const status = await this.approvalService.getStatus(chatId);
-    if (status === 'banned') {
-      this.logger.warn({ chatId }, 'Message from banned chat ignored');
-      return false;
-    }
     if (status !== 'approved') {
+      if (status === 'banned') {
+        this.logger.warn({ chatId }, 'Message from banned chat ignored');
+      }
       await this.router.show(ctx, 'chat_not_approved');
       return false;
     }
