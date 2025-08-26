@@ -126,14 +126,11 @@ export const register = (container: Container): void => {
     .to(FilePromptTemplateService)
     .inSingletonScope();
 
+  container.bind(PromptBuilder).toSelf().inTransientScope();
+
   container
     .bind<PromptBuilderFactory>(PROMPT_BUILDER_FACTORY_ID)
-    .toDynamicValue(() => () => {
-      const templates = container.get<PromptTemplateService>(
-        PROMPT_TEMPLATE_SERVICE_ID
-      );
-      return new PromptBuilder(templates);
-    });
+    .toFactory(() => () => container.get(PromptBuilder));
 
   container
     .bind<PromptService>(PROMPT_SERVICE_ID)
