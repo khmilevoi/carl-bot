@@ -20,6 +20,7 @@ export class FilePromptService implements PromptService {
   private readonly checkInterestTemplate: () => Promise<string>;
   private readonly userPromptTemplate: () => Promise<string>;
   private readonly userPromptSystemTemplate: () => Promise<string>;
+  private readonly userAttitudesTemplate: () => Promise<string>;
   private readonly assessUsersTemplate: () => Promise<string>;
   private readonly priorityRulesSystemTemplate: () => Promise<string>;
   private readonly replyTriggerTemplate: () => Promise<string>;
@@ -51,6 +52,9 @@ export class FilePromptService implements PromptService {
     );
     this.userPromptSystemTemplate = createLazy(() =>
       this.loadTemplate('userPromptSystem', files.userPromptSystem)
+    );
+    this.userAttitudesTemplate = createLazy(() =>
+      this.loadTemplate('userAttitudes', files.userAttitudes)
     );
     this.priorityRulesSystemTemplate = createLazy(() =>
       this.loadTemplate('priorityRulesSystem', files.priorityRulesSystem)
@@ -103,8 +107,7 @@ export class FilePromptService implements PromptService {
     userName?: string,
     fullName?: string,
     replyMessage?: string,
-    quoteMessage?: string,
-    attitude?: string
+    quoteMessage?: string
   ): Promise<string> {
     const template = await this.userPromptTemplate();
     const prompt = template
@@ -113,10 +116,19 @@ export class FilePromptService implements PromptService {
       .replace('{{userName}}', userName ?? 'N/A')
       .replace('{{fullName}}', fullName ?? 'N/A')
       .replace('{{replyMessage}}', replyMessage ?? 'N/A')
-      .replace('{{quoteMessage}}', quoteMessage ?? 'N/A')
-      .replace('{{attitude}}', attitude ?? '');
+      .replace('{{quoteMessage}}', quoteMessage ?? 'N/A');
 
     return prompt;
+  }
+
+  async getUserAttitudesPrompt(
+    users: { username: string; attitude: string }[]
+  ): Promise<string> {
+    const template = await this.userAttitudesTemplate();
+    const attitudes = users
+      .map((u) => `${u.username}: ${u.attitude}`)
+      .join('\n');
+    return template.replace('{{userAttitudes}}', attitudes);
   }
 
   async getTriggerPrompt(

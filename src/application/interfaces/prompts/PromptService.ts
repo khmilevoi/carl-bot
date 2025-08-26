@@ -14,8 +14,10 @@ export interface PromptService {
     userName?: string,
     fullName?: string,
     replyMessage?: string,
-    quoteMessage?: string,
-    attitude?: string
+    quoteMessage?: string
+  ): Promise<string>;
+  getUserAttitudesPrompt(
+    users: { username: string; attitude: string }[]
   ): Promise<string>;
   getTriggerPrompt(
     triggerReason: string,

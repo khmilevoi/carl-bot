@@ -54,6 +54,17 @@ describe('ChatGPTService', () => {
         .fn()
         .mockImplementation(async (p: string) => `prev:${p}`),
       getTriggerPrompt: triggerPrompt,
+      getUserAttitudesPrompt: vi
+        .fn()
+        .mockImplementation(
+          async (users) =>
+            `attitudes\n${users
+              .map(
+                (u: { username: string; attitude: string }) =>
+                  `${u.username}: ${u.attitude}`
+              )
+              .join('\n')}`
+        ),
     };
 
     env = new TestEnvService();
@@ -97,6 +108,14 @@ describe('ChatGPTService', () => {
         attitude: 'good',
       },
       { role: 'assistant', content: 'yo' },
+      {
+        role: 'user',
+        content: 'again',
+        messageId: 2,
+        username: 'u',
+        fullName: 'U',
+        attitude: 'good',
+      },
     ];
     const triggerReason = { why: 'why', message: 'msg' };
     const res = await service.ask(history, 'sum', triggerReason);
@@ -110,11 +129,16 @@ describe('ChatGPTService', () => {
         { role: 'system', content: 'userSystem' },
         { role: 'system', content: 'ask:sum' },
         { role: 'system', content: 'trigger:why:msg' },
+        { role: 'system', content: 'attitudes\nu: good' },
         { role: 'user', content: 'user:hi' },
         { role: 'assistant', content: 'yo' },
+        { role: 'user', content: 'user:again' },
       ],
     });
     expect(triggerPrompt).toHaveBeenCalledWith('why', 'msg');
+    expect(prompts.getUserAttitudesPrompt).toHaveBeenCalledWith([
+      { username: 'u', attitude: 'good' },
+    ]);
   });
 
   it('checkInterest parses JSON response and handles errors', async () => {
@@ -174,13 +198,13 @@ describe('ChatGPTService', () => {
       messages: [
         { role: 'system', content: 'persona' },
         { role: 'system', content: 'assess' },
-        {
-          role: 'system',
-          content: 'Предыдущее отношение бота к пользователям:\nu: old',
-        },
+        { role: 'system', content: 'attitudes\nu: old' },
         { role: 'user', content: 'user:h' },
       ],
     });
+    expect(prompts.getUserAttitudesPrompt).toHaveBeenCalledWith([
+      { username: 'u', attitude: 'old' },
+    ]);
 
     openaiCreate.mockResolvedValueOnce({
       choices: [{ message: { content: 'oops' } }],

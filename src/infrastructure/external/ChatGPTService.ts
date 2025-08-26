@@ -83,6 +83,25 @@ export class ChatGPTService implements AIService {
       });
     }
 
+    const attitudeMap = new Map<string, string>();
+    for (const m of history) {
+      if (m.role === 'user' && m.username && m.attitude) {
+        if (!attitudeMap.has(m.username)) {
+          attitudeMap.set(m.username, m.attitude);
+        }
+      }
+    }
+    const attitudes = Array.from(attitudeMap, ([username, attitude]) => ({
+      username,
+      attitude,
+    }));
+    if (attitudes.length > 0) {
+      messages.push({
+        role: 'system',
+        content: await this.prompts.getUserAttitudesPrompt(attitudes),
+      });
+    }
+
     const historyMessages = await Promise.all(
       history.map<Promise<OpenAI.ChatCompletionMessageParam>>(async (m) =>
         m.role === 'user'
@@ -94,8 +113,7 @@ export class ChatGPTService implements AIService {
                 m.username,
                 m.fullName,
                 m.replyText,
-                m.quoteText,
-                m.attitude ?? undefined
+                m.quoteText
               ),
             }
           : { role: 'assistant', content: m.content }
@@ -226,12 +244,9 @@ export class ChatGPTService implements AIService {
       { role: 'system', content: systemPrompt },
     ];
     if (prevAttitudes.length > 0) {
-      const attitudesText = prevAttitudes
-        .map((a) => `${a.username}: ${a.attitude}`)
-        .join('\n');
       reqMessages.push({
         role: 'system',
-        content: `Предыдущее отношение бота к пользователям:\n${attitudesText}`,
+        content: await this.prompts.getUserAttitudesPrompt(prevAttitudes),
       });
     }
     const historyMessages = await Promise.all(
@@ -245,8 +260,7 @@ export class ChatGPTService implements AIService {
                 m.username,
                 m.fullName,
                 m.replyText,
-                m.quoteText,
-                m.attitude ?? undefined
+                m.quoteText
               ),
             }
           : { role: 'assistant', content: m.content }
