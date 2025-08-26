@@ -84,12 +84,32 @@ export class ChatGPTService implements AIService {
     }
 
     const attitudeMap = new Map<string, string>();
+    const nameMap = new Map<string, { firstName: string; lastName: string }>();
     for (const m of history) {
-      if (m.role === 'user' && m.username && m.attitude) {
-        if (!attitudeMap.has(m.username)) {
+      if (m.role === 'user' && m.username) {
+        if (m.attitude && !attitudeMap.has(m.username)) {
           attitudeMap.set(m.username, m.attitude);
         }
+        if (!nameMap.has(m.username)) {
+          const firstName = m.firstName ?? m.fullName?.split(' ')[0] ?? '';
+          const lastName =
+            m.lastName ?? m.fullName?.split(' ').slice(1).join(' ') ?? '';
+          if (firstName || lastName) {
+            nameMap.set(m.username, { firstName, lastName });
+          }
+        }
       }
+    }
+    const names = Array.from(nameMap, ([username, v]) => ({
+      username,
+      firstName: v.firstName,
+      lastName: v.lastName,
+    }));
+    if (names.length > 0) {
+      messages.push({
+        role: 'system',
+        content: await this.prompts.getUserNamesPrompt(names),
+      });
     }
     const attitudes = Array.from(attitudeMap, ([username, attitude]) => ({
       username,
@@ -247,6 +267,30 @@ export class ChatGPTService implements AIService {
       reqMessages.push({
         role: 'system',
         content: await this.prompts.getUserAttitudesPrompt(prevAttitudes),
+      });
+    }
+    const nameMap = new Map<string, { firstName: string; lastName: string }>();
+    for (const m of messages) {
+      if (m.role === 'user' && m.username) {
+        if (!nameMap.has(m.username)) {
+          const firstName = m.firstName ?? m.fullName?.split(' ')[0] ?? '';
+          const lastName =
+            m.lastName ?? m.fullName?.split(' ').slice(1).join(' ') ?? '';
+          if (firstName || lastName) {
+            nameMap.set(m.username, { firstName, lastName });
+          }
+        }
+      }
+    }
+    const names = Array.from(nameMap, ([username, v]) => ({
+      username,
+      firstName: v.firstName,
+      lastName: v.lastName,
+    }));
+    if (names.length > 0) {
+      reqMessages.push({
+        role: 'system',
+        content: await this.prompts.getUserNamesPrompt(names),
       });
     }
     const historyMessages = await Promise.all(

@@ -7,7 +7,6 @@ export interface PromptService {
   getPreviousSummaryPrompt(prev: string): Promise<string>;
   getInterestCheckPrompt(): Promise<string>;
   getAssessUsersPrompt(): Promise<string>;
-  getTriggerPrompt(why?: string, message?: string): Promise<string>;
   getUserPrompt(
     userMessage: string,
     messageId?: string,
@@ -18,6 +17,9 @@ export interface PromptService {
   ): Promise<string>;
   getUserAttitudesPrompt(
     users: { username: string; attitude: string }[]
+  ): Promise<string>;
+  getUserNamesPrompt(
+    users: { username: string; firstName: string; lastName: string }[]
   ): Promise<string>;
   getTriggerPrompt(
     triggerReason: string,

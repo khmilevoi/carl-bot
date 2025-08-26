@@ -22,6 +22,7 @@ class TempEnvService extends TestEnvService {
     userPrompt: string;
     userPromptSystem: string;
     userAttitudes: string;
+    userNames: string;
     priorityRulesSystem: string;
     assessUsers: string;
     replyTrigger: string;
@@ -35,6 +36,7 @@ class TempEnvService extends TestEnvService {
       userPrompt: join(this.dir, 'user_prompt.md'),
       userPromptSystem: join(this.dir, 'user_prompt_system_prompt.md'),
       userAttitudes: join(this.dir, 'user_attitudes_prompt.md'),
+      userNames: join(this.dir, 'user_names_prompt.md'),
       priorityRulesSystem: join(this.dir, 'priority_rules_system_prompt.md'),
       assessUsers: join(this.dir, 'assess_users_prompt.md'),
       replyTrigger: join(this.dir, 'reply_trigger_prompt.md'),
@@ -50,6 +52,7 @@ describe('FilePromptService', () => {
   let assessUsersPath: string;
   let userPromptSystemPath: string;
   let userAttitudesPath: string;
+  let userNamesPath: string;
   let summarizationPath: string;
   let previousSummaryPath: string;
   let priorityRulesPath: string;
@@ -77,6 +80,8 @@ describe('FilePromptService', () => {
     writeFileSync(userPromptSystemPath, 'system');
     userAttitudesPath = join(dir, 'user_attitudes_prompt.md');
     writeFileSync(userAttitudesPath, 'attitudes\n{{userAttitudes}}');
+    userNamesPath = join(dir, 'user_names_prompt.md');
+    writeFileSync(userNamesPath, 'names\n{{userNames}}');
     priorityRulesPath = join(dir, 'priority_rules_system_prompt.md');
     writeFileSync(priorityRulesPath, 'rules');
     assessUsersPath = join(dir, 'assess_users_prompt.md');
@@ -154,6 +159,22 @@ describe('FilePromptService', () => {
       await service.getUserAttitudesPrompt([{ username: 'u1', attitude: 'a1' }])
     ).toBe('attitudes\nu1: a1');
     expect(readFileSpy).toHaveBeenCalledWith(userAttitudesPath, 'utf-8');
+    expect(readFileSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('getUserNamesPrompt reads file only once and formats list', async () => {
+    expect(
+      await service.getUserNamesPrompt([
+        { username: 'u1', firstName: 'F1', lastName: 'L1' },
+        { username: 'u2', firstName: 'F2', lastName: 'L2' },
+      ])
+    ).toBe('names\nu1: F1 L1\nu2: F2 L2');
+    expect(
+      await service.getUserNamesPrompt([
+        { username: 'u1', firstName: 'F1', lastName: 'L1' },
+      ])
+    ).toBe('names\nu1: F1 L1');
+    expect(readFileSpy).toHaveBeenCalledWith(userNamesPath, 'utf-8');
     expect(readFileSpy).toHaveBeenCalledTimes(1);
   });
 

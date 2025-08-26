@@ -65,6 +65,20 @@ describe('ChatGPTService', () => {
               )
               .join('\n')}`
         ),
+      getUserNamesPrompt: vi
+        .fn()
+        .mockImplementation(
+          async (users) =>
+            `names\n${users
+              .map(
+                (u: {
+                  username: string;
+                  firstName: string;
+                  lastName: string;
+                }) => `${u.username}: ${u.firstName} ${u.lastName}`
+              )
+              .join('\n')}`
+        ),
     };
 
     env = new TestEnvService();
@@ -102,7 +116,9 @@ describe('ChatGPTService', () => {
         content: 'hi',
         messageId: 1,
         username: 'u',
-        fullName: 'U',
+        fullName: 'First Last',
+        firstName: 'First',
+        lastName: 'Last',
         replyText: 'r',
         quoteText: 'q',
         attitude: 'good',
@@ -113,7 +129,9 @@ describe('ChatGPTService', () => {
         content: 'again',
         messageId: 2,
         username: 'u',
-        fullName: 'U',
+        fullName: 'First Last',
+        firstName: 'First',
+        lastName: 'Last',
         attitude: 'good',
       },
     ];
@@ -129,6 +147,7 @@ describe('ChatGPTService', () => {
         { role: 'system', content: 'userSystem' },
         { role: 'system', content: 'ask:sum' },
         { role: 'system', content: 'trigger:why:msg' },
+        { role: 'system', content: 'names\nu: First Last' },
         { role: 'system', content: 'attitudes\nu: good' },
         { role: 'user', content: 'user:hi' },
         { role: 'assistant', content: 'yo' },
@@ -138,6 +157,9 @@ describe('ChatGPTService', () => {
     expect(triggerPrompt).toHaveBeenCalledWith('why', 'msg');
     expect(prompts.getUserAttitudesPrompt).toHaveBeenCalledWith([
       { username: 'u', attitude: 'good' },
+    ]);
+    expect(prompts.getUserNamesPrompt).toHaveBeenCalledWith([
+      { username: 'u', firstName: 'First', lastName: 'Last' },
     ]);
   });
 
@@ -186,7 +208,9 @@ describe('ChatGPTService', () => {
         content: 'h',
         messageId: 1,
         username: 'u',
-        fullName: 'U',
+        fullName: 'First Last',
+        firstName: 'First',
+        lastName: 'Last',
       },
     ];
     const res = await service.assessUsers(history, [
@@ -199,11 +223,15 @@ describe('ChatGPTService', () => {
         { role: 'system', content: 'persona' },
         { role: 'system', content: 'assess' },
         { role: 'system', content: 'attitudes\nu: old' },
+        { role: 'system', content: 'names\nu: First Last' },
         { role: 'user', content: 'user:h' },
       ],
     });
     expect(prompts.getUserAttitudesPrompt).toHaveBeenCalledWith([
       { username: 'u', attitude: 'old' },
+    ]);
+    expect(prompts.getUserNamesPrompt).toHaveBeenCalledWith([
+      { username: 'u', firstName: 'First', lastName: 'Last' },
     ]);
 
     openaiCreate.mockResolvedValueOnce({

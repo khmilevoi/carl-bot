@@ -21,6 +21,7 @@ export class FilePromptService implements PromptService {
   private readonly userPromptTemplate: () => Promise<string>;
   private readonly userPromptSystemTemplate: () => Promise<string>;
   private readonly userAttitudesTemplate: () => Promise<string>;
+  private readonly userNamesTemplate: () => Promise<string>;
   private readonly assessUsersTemplate: () => Promise<string>;
   private readonly priorityRulesSystemTemplate: () => Promise<string>;
   private readonly replyTriggerTemplate: () => Promise<string>;
@@ -55,6 +56,9 @@ export class FilePromptService implements PromptService {
     );
     this.userAttitudesTemplate = createLazy(() =>
       this.loadTemplate('userAttitudes', files.userAttitudes)
+    );
+    this.userNamesTemplate = createLazy(() =>
+      this.loadTemplate('userNames', files.userNames)
     );
     this.priorityRulesSystemTemplate = createLazy(() =>
       this.loadTemplate('priorityRulesSystem', files.priorityRulesSystem)
@@ -129,6 +133,16 @@ export class FilePromptService implements PromptService {
       .map((u) => `${u.username}: ${u.attitude}`)
       .join('\n');
     return template.replace('{{userAttitudes}}', attitudes);
+  }
+
+  async getUserNamesPrompt(
+    users: { username: string; firstName: string; lastName: string }[]
+  ): Promise<string> {
+    const template = await this.userNamesTemplate();
+    const names = users
+      .map((u) => `${u.username}: ${u.firstName} ${u.lastName}`)
+      .join('\n');
+    return template.replace('{{userNames}}', names);
   }
 
   async getTriggerPrompt(

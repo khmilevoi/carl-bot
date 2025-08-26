@@ -129,6 +129,8 @@ describe('SQLite repositories', () => {
         content: 'hi',
         username: 'alice',
         fullName: 'Alice Smith',
+        firstName: 'Alice',
+        lastName: 'Smith',
         userId: 1,
         messageId: 11,
         chatId: 1,
