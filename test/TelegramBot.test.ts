@@ -1232,7 +1232,7 @@ describe('TelegramBot', () => {
     expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'admin_menu');
   });
 
-  it('shows menu regardless of chat status', async () => {
+  it('shows chat_not_approved for unapproved chats', async () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
       .spyOn(
@@ -1263,7 +1263,10 @@ describe('TelegramBot', () => {
     approvalService.getStatus.mockResolvedValueOnce('banned');
     const bannedCtx = { chat: { id: 2 }, reply: vi.fn() } as unknown as Context;
     await botWithRouter.showMenu(bannedCtx);
-    expect(botWithRouter.router.show).toHaveBeenCalledWith(bannedCtx, 'menu');
+    expect(botWithRouter.router.show).toHaveBeenCalledWith(
+      bannedCtx,
+      'chat_not_approved'
+    );
     approvalService.getStatus.mockResolvedValueOnce('pending');
     const pendingCtx = {
       chat: { id: 3 },
@@ -1272,7 +1275,7 @@ describe('TelegramBot', () => {
     await botWithRouter.showMenu(pendingCtx);
     expect(botWithRouter.router.show).toHaveBeenLastCalledWith(
       pendingCtx,
-      'menu'
+      'chat_not_approved'
     );
   });
 
@@ -1370,7 +1373,8 @@ describe('TelegramBot', () => {
       bot as unknown as { handleText: (ctx: Context) => Promise<void> }
     ).handleText(ctxBanned);
     expect(memories.memory.addMessage).not.toHaveBeenCalled();
-    expect(showSpy).toHaveBeenCalledTimes(1);
+    expect(showSpy).toHaveBeenNthCalledWith(2, ctxBanned, 'chat_not_approved');
+    expect(showSpy).toHaveBeenCalledTimes(2);
   });
 
   it('denies export when access is missing', async () => {
@@ -1519,6 +1523,9 @@ describe('TelegramBot', () => {
       },
       'sendChatApprovalRequest'
     );
+    const showSpy = vi
+      .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
+      .mockResolvedValue(undefined);
     const ctx = { chat: { id: 6 } } as unknown as Context;
     const result = await (
       bot as unknown as {
@@ -1527,6 +1534,7 @@ describe('TelegramBot', () => {
     ).checkChatStatus(ctx, 6);
     expect(result).toBe(false);
     expect(sendSpy).not.toHaveBeenCalled();
+    expect(showSpy).toHaveBeenCalledWith(ctx, 'chat_not_approved');
   });
 
   it('checkChatStatus allows approved chat', async () => {
