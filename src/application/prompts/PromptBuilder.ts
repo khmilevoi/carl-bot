@@ -13,7 +13,57 @@ export class PromptBuilder {
     return this;
   }
 
-  async addUsers(
+  async addAskSummary(summary: string): Promise<this> {
+    const template = await this.templates.loadTemplate('askSummary');
+    this.parts.push(template.replace('{{summary}}', summary));
+    return this;
+  }
+
+  async addSummarizationSystem(): Promise<this> {
+    const template = await this.templates.loadTemplate('summarizationSystem');
+    this.parts.push(template);
+    return this;
+  }
+
+  async addPreviousSummary(summary: string): Promise<this> {
+    const template = await this.templates.loadTemplate('previousSummary');
+    this.parts.push(template.replace('{{prev}}', summary));
+    return this;
+  }
+
+  async addCheckInterest(): Promise<this> {
+    const template = await this.templates.loadTemplate('checkInterest');
+    this.parts.push(template);
+    return this;
+  }
+
+  async addUserPrompt(params: {
+    messageId?: string;
+    userName?: string;
+    fullName?: string;
+    replyMessage?: string;
+    quoteMessage?: string;
+    userMessage: string;
+  }): Promise<this> {
+    const template = await this.templates.loadTemplate('userPrompt');
+    const prompt = template
+      .replace('{{messageId}}', params.messageId ?? 'N/A')
+      .replace('{{userName}}', params.userName ?? 'N/A')
+      .replace('{{fullName}}', params.fullName ?? 'N/A')
+      .replace('{{replyMessage}}', params.replyMessage ?? 'N/A')
+      .replace('{{quoteMessage}}', params.quoteMessage ?? 'N/A')
+      .replace('{{userMessage}}', params.userMessage);
+    this.parts.push(prompt);
+    return this;
+  }
+
+  async addUserPromptSystem(): Promise<this> {
+    const template = await this.templates.loadTemplate('userPromptSystem');
+    this.parts.push(template);
+    return this;
+  }
+
+  async addChatUsers(
     users: { username: string; fullName: string; attitude: string }[]
   ): Promise<this> {
     if (users.length === 0) {
@@ -33,7 +83,7 @@ export class PromptBuilder {
     return this;
   }
 
-  async addRestrictions(): Promise<this> {
+  async addPriorityRulesSystem(): Promise<this> {
     const restrictions = await this.templates.loadTemplate(
       'priorityRulesSystem'
     );
@@ -41,13 +91,13 @@ export class PromptBuilder {
     return this;
   }
 
-  async addSummary(summary: string): Promise<this> {
-    const template = await this.templates.loadTemplate('previousSummary');
-    this.parts.push(template.replace('{{prev}}', summary));
+  async addAssessUsers(): Promise<this> {
+    const template = await this.templates.loadTemplate('assessUsers');
+    this.parts.push(template);
     return this;
   }
 
-  async addTrigger(reason: string, message: string): Promise<this> {
+  async addReplyTrigger(reason: string, message: string): Promise<this> {
     const template = await this.templates.loadTemplate('replyTrigger');
     const prompt = template
       .replace('{{triggerReason}}', reason)

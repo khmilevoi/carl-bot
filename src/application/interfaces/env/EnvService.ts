@@ -11,22 +11,24 @@ export interface Env {
   LOG_PROMPTS: boolean;
 }
 
+export interface PromptFiles {
+  persona: string;
+  askSummary: string;
+  summarizationSystem: string;
+  previousSummary: string;
+  checkInterest: string;
+  userPrompt: string;
+  userPromptSystem: string;
+  chatUser: string;
+  priorityRulesSystem: string;
+  assessUsers: string;
+  replyTrigger: string;
+}
+
 export interface EnvService {
   readonly env: Env;
   getModels(): { ask: ChatModel; summary: ChatModel; interest: ChatModel };
-  getPromptFiles(): {
-    persona: string;
-    askSummary: string;
-    summarizationSystem: string;
-    previousSummary: string;
-    checkInterest: string;
-    userPrompt: string;
-    userPromptSystem: string;
-    chatUser: string;
-    priorityRulesSystem: string;
-    assessUsers: string;
-    replyTrigger: string;
-  };
+  getPromptFiles(): PromptFiles;
   getBotName(): string;
   getDialogueTimeoutMs(): number;
   getMigrationsDir(): string;

@@ -3,7 +3,11 @@ import 'dotenv/config';
 import { injectable } from 'inversify';
 import type { ChatModel } from 'openai/resources/shared';
 
-import type { Env, EnvService } from '@/application/interfaces/env/EnvService';
+import type {
+  Env,
+  EnvService,
+  PromptFiles,
+} from '@/application/interfaces/env/EnvService';
 
 import { envSchema } from './envSchema';
 
@@ -23,19 +27,7 @@ export class DefaultEnvService implements EnvService {
     };
   }
 
-  getPromptFiles(): {
-    persona: string;
-    askSummary: string;
-    summarizationSystem: string;
-    previousSummary: string;
-    checkInterest: string;
-    userPrompt: string;
-    userPromptSystem: string;
-    chatUser: string;
-    priorityRulesSystem: string;
-    assessUsers: string;
-    replyTrigger: string;
-  } {
+  getPromptFiles(): PromptFiles {
     return {
       persona: 'prompts/persona.md',
       askSummary: 'prompts/ask_summary_prompt.md',

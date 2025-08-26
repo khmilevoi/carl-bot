@@ -3,6 +3,7 @@ import { tmpdir } from 'os';
 import { join } from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { PromptFiles } from '../src/application/interfaces/env/EnvService';
 import type { PromptTemplateService } from '../src/application/interfaces/prompts/PromptTemplateService';
 import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory';
 import { PromptBuilder } from '../src/application/prompts/PromptBuilder';
@@ -14,7 +15,7 @@ class TempEnvService extends TestEnvService {
     super();
   }
 
-  override getPromptFiles() {
+  override getPromptFiles(): PromptFiles {
     return {
       persona: join(this.dir, 'persona.md'),
       askSummary: '',
@@ -69,13 +70,13 @@ describe('PromptBuilder', () => {
   it('builds prompt', async () => {
     const builder = new PromptBuilder(templateService);
     await builder.addPersona();
-    await builder.addUsers([
+    await builder.addChatUsers([
       { username: 'u1', fullName: 'F1', attitude: 'a1' },
       { username: 'u2', fullName: 'F2', attitude: 'a2' },
     ]);
-    await builder.addRestrictions();
-    await builder.addSummary('S');
-    await builder.addTrigger('why', 'msg');
+    await builder.addPriorityRulesSystem();
+    await builder.addPreviousSummary('S');
+    await builder.addReplyTrigger('why', 'msg');
     expect(builder.build()).toBe(
       'persona\n\nВсе пользователи чата:\nU u1 F1 a1\n\nU u2 F2 a2\n\nrules\n\nsum S\n\ntrigger why msg'
     );
