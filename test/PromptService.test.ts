@@ -7,25 +7,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TestEnvService } from '../src/infrastructure/config/TestEnvService';
 import type { FilePromptService } from '../src/infrastructure/external/FilePromptService';
 import type { LoggerFactory } from '../src/application/interfaces/logging/LoggerFactory';
+import type { PromptFiles } from '../src/application/interfaces/env/EnvService';
 
 class TempEnvService extends TestEnvService {
   constructor(private dir: string) {
     super();
   }
 
-  override getPromptFiles(): {
-    persona: string;
-    askSummary: string;
-    summarizationSystem: string;
-    previousSummary: string;
-    checkInterest: string;
-    userPrompt: string;
-    userPromptSystem: string;
-    chatUser: string;
-    priorityRulesSystem: string;
-    assessUsers: string;
-    replyTrigger: string;
-  } {
+  override getPromptFiles(): PromptFiles {
     return {
       persona: join(this.dir, 'persona.md'),
       askSummary: join(this.dir, 'ask_summary_prompt.md'),
