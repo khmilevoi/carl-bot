@@ -86,6 +86,9 @@ describe('FilePromptService', () => {
     readFileSpy = vi.fn(actual.readFile);
     vi.doMock('fs/promises', () => ({ ...actual, readFile: readFileSpy }));
 
+    const { FilePromptTemplateService } = await import(
+      '../src/infrastructure/prompts/FilePromptTemplateService'
+    );
     const { FilePromptService } = await import(
       '../src/infrastructure/external/FilePromptService'
     );
@@ -99,7 +102,8 @@ describe('FilePromptService', () => {
         child: vi.fn(),
       }),
     } as unknown as LoggerFactory;
-    service = new FilePromptService(env, loggerFactory);
+    const templateService = new FilePromptTemplateService(env, loggerFactory);
+    service = new FilePromptService(templateService);
   });
 
   afterEach(() => {

@@ -77,6 +77,10 @@ import {
   type PromptService,
 } from '../application/interfaces/prompts/PromptService';
 import {
+  PROMPT_TEMPLATE_SERVICE_ID,
+  type PromptTemplateService,
+} from '../application/interfaces/prompts/PromptTemplateService';
+import {
   RABBITMQ_SERVICE_ID,
   type RabbitMQService,
 } from '../application/interfaces/queue/RabbitMQService';
@@ -105,6 +109,7 @@ import { ChatGPTService } from '../infrastructure/external/ChatGPTService';
 import { FilePromptService } from '../infrastructure/external/FilePromptService';
 import { OpenAIClientService } from '../infrastructure/external/OpenAIClient';
 import { PinoLoggerFactory } from '../infrastructure/logging/PinoLoggerFactory';
+import { FilePromptTemplateService } from '../infrastructure/prompts/FilePromptTemplateService';
 import { AmqplibRabbitMQService } from '../infrastructure/queue/RabbitMQService';
 
 export const register = (container: Container): void => {
@@ -119,6 +124,11 @@ export const register = (container: Container): void => {
   container
     .bind<LoggerFactory>(LOGGER_FACTORY_ID)
     .to(PinoLoggerFactory)
+    .inSingletonScope();
+
+  container
+    .bind<PromptTemplateService>(PROMPT_TEMPLATE_SERVICE_ID)
+    .to(FilePromptTemplateService)
     .inSingletonScope();
 
   container
