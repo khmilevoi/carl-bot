@@ -20,6 +20,7 @@ export class FilePromptService implements PromptService {
   private readonly checkInterestTemplate: () => Promise<string>;
   private readonly userPromptTemplate: () => Promise<string>;
   private readonly userPromptSystemTemplate: () => Promise<string>;
+  private readonly chatUserTemplate: () => Promise<string>;
   private readonly assessUsersTemplate: () => Promise<string>;
   private readonly priorityRulesSystemTemplate: () => Promise<string>;
   private readonly replyTriggerTemplate: () => Promise<string>;
@@ -51,6 +52,9 @@ export class FilePromptService implements PromptService {
     );
     this.userPromptSystemTemplate = createLazy(() =>
       this.loadTemplate('userPromptSystem', files.userPromptSystem)
+    );
+    this.chatUserTemplate = createLazy(() =>
+      this.loadTemplate('chatUser', files.chatUser)
     );
     this.priorityRulesSystemTemplate = createLazy(() =>
       this.loadTemplate('priorityRulesSystem', files.priorityRulesSystem)
@@ -103,8 +107,7 @@ export class FilePromptService implements PromptService {
     userName?: string,
     fullName?: string,
     replyMessage?: string,
-    quoteMessage?: string,
-    attitude?: string
+    quoteMessage?: string
   ): Promise<string> {
     const template = await this.userPromptTemplate();
     const prompt = template
@@ -113,10 +116,24 @@ export class FilePromptService implements PromptService {
       .replace('{{userName}}', userName ?? 'N/A')
       .replace('{{fullName}}', fullName ?? 'N/A')
       .replace('{{replyMessage}}', replyMessage ?? 'N/A')
-      .replace('{{quoteMessage}}', quoteMessage ?? 'N/A')
-      .replace('{{attitude}}', attitude ?? '');
+      .replace('{{quoteMessage}}', quoteMessage ?? 'N/A');
 
     return prompt;
+  }
+
+  async getChatUsersPrompt(
+    users: { username: string; fullName: string; attitude: string }[]
+  ): Promise<string> {
+    const template = await this.chatUserTemplate();
+    const formatted = users
+      .map((u) =>
+        template
+          .replace('{{userName}}', u.username)
+          .replace('{{fullName}}', u.fullName)
+          .replace('{{attitude}}', u.attitude)
+      )
+      .join('\n\n');
+    return `Все пользователи чата:\n${formatted}`;
   }
 
   async getTriggerPrompt(

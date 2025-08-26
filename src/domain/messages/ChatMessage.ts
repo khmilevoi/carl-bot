@@ -3,6 +3,8 @@ export interface ChatMessage {
   content: string;
   username?: string;
   fullName?: string;
+  firstName?: string;
+  lastName?: string;
   replyText?: string;
   replyUsername?: string;
   quoteText?: string;

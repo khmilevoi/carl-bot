@@ -60,6 +60,7 @@ describe('EnvService', () => {
       checkInterest: 'prompts/check_interest_prompt.md',
       userPrompt: 'prompts/user_prompt.md',
       userPromptSystem: 'prompts/user_prompt_system_prompt.md',
+      chatUser: 'prompts/chat_user_prompt.md',
       priorityRulesSystem: 'prompts/priority_rules_system_prompt.md',
       assessUsers: 'prompts/assess_users_prompt.md',
       replyTrigger: 'prompts/reply_trigger_prompt.md',

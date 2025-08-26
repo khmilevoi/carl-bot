@@ -7,15 +7,16 @@ export interface PromptService {
   getPreviousSummaryPrompt(prev: string): Promise<string>;
   getInterestCheckPrompt(): Promise<string>;
   getAssessUsersPrompt(): Promise<string>;
-  getTriggerPrompt(why?: string, message?: string): Promise<string>;
   getUserPrompt(
     userMessage: string,
     messageId?: string,
     userName?: string,
     fullName?: string,
     replyMessage?: string,
-    quoteMessage?: string,
-    attitude?: string
+    quoteMessage?: string
+  ): Promise<string>;
+  getChatUsersPrompt(
+    users: { username: string; fullName: string; attitude: string }[]
   ): Promise<string>;
   getTriggerPrompt(
     triggerReason: string,

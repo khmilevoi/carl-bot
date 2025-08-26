@@ -21,6 +21,7 @@ class TempEnvService extends TestEnvService {
     checkInterest: string;
     userPrompt: string;
     userPromptSystem: string;
+    chatUser: string;
     priorityRulesSystem: string;
     assessUsers: string;
     replyTrigger: string;
@@ -33,6 +34,7 @@ class TempEnvService extends TestEnvService {
       checkInterest: join(this.dir, 'check_interest_prompt.md'),
       userPrompt: join(this.dir, 'user_prompt.md'),
       userPromptSystem: join(this.dir, 'user_prompt_system_prompt.md'),
+      chatUser: join(this.dir, 'chat_user_prompt.md'),
       priorityRulesSystem: join(this.dir, 'priority_rules_system_prompt.md'),
       assessUsers: join(this.dir, 'assess_users_prompt.md'),
       replyTrigger: join(this.dir, 'reply_trigger_prompt.md'),
@@ -47,6 +49,7 @@ describe('FilePromptService', () => {
   let checkInterestPath: string;
   let assessUsersPath: string;
   let userPromptSystemPath: string;
+  let chatUserPath: string;
   let summarizationPath: string;
   let previousSummaryPath: string;
   let priorityRulesPath: string;
@@ -68,10 +71,15 @@ describe('FilePromptService', () => {
     writeFileSync(checkInterestPath, 'check');
     writeFileSync(
       join(dir, 'user_prompt.md'),
-      '{{messageId}}|{{userMessage}}|{{userName}}|{{fullName}}|{{replyMessage}}|{{quoteMessage}}|{{attitude}}'
+      '{{messageId}}|{{userMessage}}|{{userName}}|{{fullName}}|{{replyMessage}}|{{quoteMessage}}'
     );
     userPromptSystemPath = join(dir, 'user_prompt_system_prompt.md');
     writeFileSync(userPromptSystemPath, 'system');
+    chatUserPath = join(dir, 'chat_user_prompt.md');
+    writeFileSync(
+      chatUserPath,
+      'Username: {{userName}}\nFull: {{fullName}}\nAtt: {{attitude}}'
+    );
     priorityRulesPath = join(dir, 'priority_rules_system_prompt.md');
     writeFileSync(priorityRulesPath, 'rules');
     assessUsersPath = join(dir, 'assess_users_prompt.md');
@@ -132,18 +140,28 @@ describe('FilePromptService', () => {
   });
 
   it('getUserPrompt substitutes values', async () => {
-    const prompt = await service.getUserPrompt(
-      'm',
-      'id',
-      'u',
-      'f',
-      'r',
-      'q',
-      'a'
-    );
-    expect(prompt).toBe('id|m|u|f|r|q|a');
+    const prompt = await service.getUserPrompt('m', 'id', 'u', 'f', 'r', 'q');
+    expect(prompt).toBe('id|m|u|f|r|q');
     const prompt2 = await service.getUserPrompt('m');
-    expect(prompt2).toBe('N/A|m|N/A|N/A|N/A|N/A|');
+    expect(prompt2).toBe('N/A|m|N/A|N/A|N/A|N/A');
+  });
+
+  it('getChatUsersPrompt reads file only once and formats list', async () => {
+    expect(
+      await service.getChatUsersPrompt([
+        { username: 'u1', fullName: 'F1 L1', attitude: 'a1' },
+        { username: 'u2', fullName: 'F2 L2', attitude: 'a2' },
+      ])
+    ).toBe(
+      'Все пользователи чата:\nUsername: u1\nFull: F1 L1\nAtt: a1\n\nUsername: u2\nFull: F2 L2\nAtt: a2'
+    );
+    expect(
+      await service.getChatUsersPrompt([
+        { username: 'u1', fullName: 'F1 L1', attitude: 'a1' },
+      ])
+    ).toBe('Все пользователи чата:\nUsername: u1\nFull: F1 L1\nAtt: a1');
+    expect(readFileSpy).toHaveBeenCalledWith(chatUserPath, 'utf-8');
+    expect(readFileSpy).toHaveBeenCalledTimes(1);
   });
 
   it('getUserPromptSystemPrompt reads file only once', async () => {

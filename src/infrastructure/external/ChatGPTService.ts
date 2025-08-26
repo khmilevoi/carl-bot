@@ -83,6 +83,29 @@ export class ChatGPTService implements AIService {
       });
     }
 
+    const infoMap = new Map<string, { fullName: string; attitude: string }>();
+    for (const m of history) {
+      if (m.role === 'user' && m.username && m.attitude) {
+        if (!infoMap.has(m.username)) {
+          const fullName =
+            m.fullName ??
+            ([m.firstName, m.lastName].filter(Boolean).join(' ') || 'N/A');
+          infoMap.set(m.username, { fullName, attitude: m.attitude });
+        }
+      }
+    }
+    const infos = Array.from(infoMap, ([username, v]) => ({
+      username,
+      fullName: v.fullName,
+      attitude: v.attitude,
+    }));
+    if (infos.length > 0) {
+      messages.push({
+        role: 'system',
+        content: await this.prompts.getChatUsersPrompt(infos),
+      });
+    }
+
     const historyMessages = await Promise.all(
       history.map<Promise<OpenAI.ChatCompletionMessageParam>>(async (m) =>
         m.role === 'user'
@@ -94,8 +117,7 @@ export class ChatGPTService implements AIService {
                 m.username,
                 m.fullName,
                 m.replyText,
-                m.quoteText,
-                m.attitude ?? undefined
+                m.quoteText
               ),
             }
           : { role: 'assistant', content: m.content }
@@ -225,13 +247,26 @@ export class ChatGPTService implements AIService {
       { role: 'system', content: persona },
       { role: 'system', content: systemPrompt },
     ];
+    const nameMap = new Map<string, string>();
+    for (const m of messages) {
+      if (m.role === 'user' && m.username) {
+        if (!nameMap.has(m.username)) {
+          const fullName =
+            m.fullName ??
+            ([m.firstName, m.lastName].filter(Boolean).join(' ') || 'N/A');
+          nameMap.set(m.username, fullName);
+        }
+      }
+    }
     if (prevAttitudes.length > 0) {
-      const attitudesText = prevAttitudes
-        .map((a) => `${a.username}: ${a.attitude}`)
-        .join('\n');
+      const prev = prevAttitudes.map((u) => ({
+        username: u.username,
+        fullName: nameMap.get(u.username) ?? 'N/A',
+        attitude: u.attitude,
+      }));
       reqMessages.push({
         role: 'system',
-        content: `Предыдущее отношение бота к пользователям:\n${attitudesText}`,
+        content: await this.prompts.getChatUsersPrompt(prev),
       });
     }
     const historyMessages = await Promise.all(
@@ -245,8 +280,7 @@ export class ChatGPTService implements AIService {
                 m.username,
                 m.fullName,
                 m.replyText,
-                m.quoteText,
-                m.attitude ?? undefined
+                m.quoteText
               ),
             }
           : { role: 'assistant', content: m.content }

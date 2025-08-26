@@ -64,6 +64,8 @@ export class SQLiteMessageRepository implements MessageRepository {
           chatId: r.chat_id ?? undefined,
         };
         if (r.username) entry.username = r.username;
+        if (r.first_name) entry.firstName = r.first_name;
+        if (r.last_name) entry.lastName = r.last_name;
         const fullName = [r.first_name, r.last_name].filter(Boolean).join(' ');
         if (fullName) entry.fullName = fullName;
         if (r.reply_text) entry.replyText = r.reply_text;
@@ -117,6 +119,8 @@ export class SQLiteMessageRepository implements MessageRepository {
           chatId: r.chat_id ?? undefined,
         };
         if (r.username) entry.username = r.username;
+        if (r.first_name) entry.firstName = r.first_name;
+        if (r.last_name) entry.lastName = r.last_name;
         const fullName = [r.first_name, r.last_name].filter(Boolean).join(' ');
         if (fullName) entry.fullName = fullName;
         if (r.reply_text) entry.replyText = r.reply_text;
