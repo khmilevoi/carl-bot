@@ -102,6 +102,45 @@ npm run lint:fix
 - Сервисы определяются через интерфейсы и Symbol-ключи Inversify; реализации
   привязываются в `src/container.ts`.
 
+### Архитектура промптов
+
+Система генерации ответов разделена на три слоя:
+
+1. **TemplateService** — загружает шаблоны из файлов каталога `prompts/`.
+2. **PromptBuilder** — объединяет части шаблонов через цепочку методов.
+3. **PromptDirector** — управляет билдерами и собирает промпт для конкретного
+   сценария.
+
+Пример получения промпта ответа:
+
+```ts
+const director = container.get(PROMPT_DIRECTOR_ID);
+const messages = await director.createAnswerPrompt(history, summary, trigger);
+```
+
+Миграция с `FilePromptService`:
+
+1. Замените обращения к `FilePromptService` на `PromptDirector`.
+2. Текстовые заготовки перенесите в каталог `prompts/` и загружайте их через
+   `FilePromptTemplateService`.
+3. Добавляйте новые шаги в цепочку `PromptBuilder` вместо конкатенации строк.
+
+Расширение для будущих сценариев:
+
+- создайте собственный билдер, расширив `PromptBuilder` новыми методами;
+  пример:
+
+```ts
+class WeatherBuilder extends PromptBuilder {
+  addWeather(info: string): this {
+    this.steps.push(async () => [{ role: 'system', content: info }]);
+    return this;
+  }
+}
+```
+
+- добавьте шаблоны в `prompts/` и используйте их в новом билдере или директоре.
+
 ### Маршрутизатор и windowConfig
 
 В `windowConfig` описываются окна меню и их кнопки с помощью `createRoute` и

@@ -40,6 +40,16 @@
   `SQLiteDbProvider` implementation; business logic must use repository interfaces
   and remain database‑agnostic.
 
+## Prompts
+
+- Храните шаблоны промптов в каталоге `prompts/` и загружайте их через
+  `PromptTemplateService` вместо прямого чтения файлов.
+- Собирайте сообщения с помощью `PromptBuilder`, создавая новый билдер для
+  каждого промпта.
+- Логику выбора сценария выносите в `PromptDirector`.
+- Для новых сервисов или билдеров объявляйте интерфейсы и экспортируйте
+  символы Inversify.
+
 ## Code style
 
 - Remove unused parameters when possible; otherwise prefix them with an underscore
