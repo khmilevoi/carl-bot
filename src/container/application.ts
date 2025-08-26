@@ -73,6 +73,10 @@ import {
   type PromptService,
 } from '../application/interfaces/prompts/PromptService';
 import {
+  PROMPT_TEMPLATE_SERVICE_ID,
+  type PromptTemplateService,
+} from '../application/interfaces/prompts/PromptTemplateService';
+import {
   SUMMARY_SERVICE_ID,
   type SummaryService,
 } from '../application/interfaces/summaries/SummaryService';
@@ -95,6 +99,7 @@ import { DefaultEnvService } from '../infrastructure/config/DefaultEnvService';
 import { TestEnvService } from '../infrastructure/config/TestEnvService';
 import { ChatGPTService } from '../infrastructure/external/ChatGPTService';
 import { FilePromptService } from '../infrastructure/external/FilePromptService';
+import { FilePromptTemplateService } from '../infrastructure/external/FilePromptTemplateService';
 import { PinoLoggerFactory } from '../infrastructure/logging/PinoLoggerFactory';
 
 export const register = (container: Container): void => {
@@ -109,6 +114,11 @@ export const register = (container: Container): void => {
   container
     .bind<LoggerFactory>(LOGGER_FACTORY_ID)
     .to(PinoLoggerFactory)
+    .inSingletonScope();
+
+  container
+    .bind<PromptTemplateService>(PROMPT_TEMPLATE_SERVICE_ID)
+    .to(FilePromptTemplateService)
     .inSingletonScope();
 
   container
