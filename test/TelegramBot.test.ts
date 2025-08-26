@@ -1229,7 +1229,7 @@ describe('TelegramBot', () => {
     botWithRouter.router = { show: vi.fn() };
     const ctx = { chat: { id: 1 } } as unknown as Context;
     await botWithRouter.showMenu(ctx);
-    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'menu');
+    expect(botWithRouter.router.show).toHaveBeenCalledWith(ctx, 'admin_menu');
   });
 
   it('shows menu regardless of chat status', async () => {
