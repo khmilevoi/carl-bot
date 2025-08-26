@@ -97,6 +97,9 @@ describe('FilePromptService', () => {
     const { FilePromptService } = await import(
       '../src/infrastructure/external/FilePromptService'
     );
+    const { FilePromptTemplateService } = await import(
+      '../src/infrastructure/external/FilePromptTemplateService'
+    );
     const env = new TempEnvService(dir);
     const loggerFactory: LoggerFactory = {
       create: () => ({
@@ -107,7 +110,8 @@ describe('FilePromptService', () => {
         child: vi.fn(),
       }),
     } as unknown as LoggerFactory;
-    service = new FilePromptService(env, loggerFactory);
+    const templateService = new FilePromptTemplateService(env, loggerFactory);
+    service = new FilePromptService(templateService);
   });
 
   afterEach(() => {
