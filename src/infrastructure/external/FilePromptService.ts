@@ -1,100 +1,48 @@
-import { readFile } from 'fs/promises';
 import { inject, injectable } from 'inversify';
 
-import type { EnvService } from '@/application/interfaces/env/EnvService';
-import { ENV_SERVICE_ID } from '@/application/interfaces/env/EnvService';
-import type { Logger } from '@/application/interfaces/logging/Logger';
-import {
-  LOGGER_FACTORY_ID,
-  type LoggerFactory,
-} from '@/application/interfaces/logging/LoggerFactory';
 import type { PromptService } from '@/application/interfaces/prompts/PromptService';
-import { createLazy } from '@/utils/lazy';
+import type { PromptTemplateService } from '@/application/interfaces/prompts/PromptTemplateService';
+import { PROMPT_TEMPLATE_SERVICE_ID } from '@/application/interfaces/prompts/PromptTemplateService';
 
 @injectable()
 export class FilePromptService implements PromptService {
-  private readonly persona: () => Promise<string>;
-  private readonly askSummaryTemplate: () => Promise<string>;
-  private readonly summarizationSystemTemplate: () => Promise<string>;
-  private readonly previousSummaryTemplate: () => Promise<string>;
-  private readonly checkInterestTemplate: () => Promise<string>;
-  private readonly userPromptTemplate: () => Promise<string>;
-  private readonly userPromptSystemTemplate: () => Promise<string>;
-  private readonly assessUsersTemplate: () => Promise<string>;
-  private readonly priorityRulesSystemTemplate: () => Promise<string>;
-  private readonly replyTriggerTemplate: () => Promise<string>;
-  private readonly logger: Logger;
-
   constructor(
-    @inject(ENV_SERVICE_ID) envService: EnvService,
-    @inject(LOGGER_FACTORY_ID) private loggerFactory: LoggerFactory
-  ) {
-    const files = envService.getPromptFiles();
-    this.logger = this.loggerFactory.create('FilePromptService');
-    this.persona = createLazy(() =>
-      this.loadTemplate('persona', files.persona)
-    );
-    this.askSummaryTemplate = createLazy(() =>
-      this.loadTemplate('askSummary', files.askSummary)
-    );
-    this.summarizationSystemTemplate = createLazy(() =>
-      this.loadTemplate('summarizationSystem', files.summarizationSystem)
-    );
-    this.previousSummaryTemplate = createLazy(() =>
-      this.loadTemplate('previousSummary', files.previousSummary)
-    );
-    this.checkInterestTemplate = createLazy(() =>
-      this.loadTemplate('checkInterest', files.checkInterest)
-    );
-    this.userPromptTemplate = createLazy(() =>
-      this.loadTemplate('userPrompt', files.userPrompt)
-    );
-    this.userPromptSystemTemplate = createLazy(() =>
-      this.loadTemplate('userPromptSystem', files.userPromptSystem)
-    );
-    this.priorityRulesSystemTemplate = createLazy(() =>
-      this.loadTemplate('priorityRulesSystem', files.priorityRulesSystem)
-    );
-    this.assessUsersTemplate = createLazy(() =>
-      this.loadTemplate('assessUsers', files.assessUsers)
-    );
-    this.replyTriggerTemplate = createLazy(() =>
-      this.loadTemplate('replyTrigger', files.replyTrigger)
-    );
-  }
+    @inject(PROMPT_TEMPLATE_SERVICE_ID)
+    private readonly templates: PromptTemplateService
+  ) {}
 
   async getPersona(): Promise<string> {
-    return this.persona();
+    return this.templates.getPersonaTemplate();
   }
 
   async getPriorityRulesSystemPrompt(): Promise<string> {
-    return this.priorityRulesSystemTemplate();
+    return this.templates.getPriorityRulesSystemTemplate();
   }
 
   async getUserPromptSystemPrompt(): Promise<string> {
-    return this.userPromptSystemTemplate();
+    return this.templates.getUserPromptSystemTemplate();
   }
 
   async getAskSummaryPrompt(summary: string): Promise<string> {
-    const template = await this.askSummaryTemplate();
+    const template = await this.templates.getAskSummaryTemplate();
     return template.replace('{{summary}}', summary);
   }
 
   async getSummarizationSystemPrompt(): Promise<string> {
-    return this.summarizationSystemTemplate();
+    return this.templates.getSummarizationSystemTemplate();
   }
 
   async getPreviousSummaryPrompt(prev: string): Promise<string> {
-    const template = await this.previousSummaryTemplate();
+    const template = await this.templates.getPreviousSummaryTemplate();
     return template.replace('{{prev}}', prev);
   }
 
   async getInterestCheckPrompt(): Promise<string> {
-    return this.checkInterestTemplate();
+    return this.templates.getInterestCheckTemplate();
   }
 
   async getAssessUsersPrompt(): Promise<string> {
-    return this.assessUsersTemplate();
+    return this.templates.getAssessUsersTemplate();
   }
 
   async getUserPrompt(
@@ -106,7 +54,7 @@ export class FilePromptService implements PromptService {
     quoteMessage?: string,
     attitude?: string
   ): Promise<string> {
-    const template = await this.userPromptTemplate();
+    const template = await this.templates.getUserPromptTemplate();
     const prompt = template
       .replace('{{messageId}}', messageId ?? 'N/A')
       .replace('{{userMessage}}', userMessage)
@@ -123,20 +71,12 @@ export class FilePromptService implements PromptService {
     triggerReason: string,
     triggerMessage: string
   ): Promise<string> {
-    const template = await this.replyTriggerTemplate();
+    const template = await this.templates.getReplyTriggerTemplate();
 
     const prompt = template
       .replace('{{triggerReason}}', triggerReason)
       .replace('{{triggerMessage}}', triggerMessage);
 
     return prompt;
-  }
-
-  private async loadTemplate(name: string, path: string): Promise<string> {
-    const content = await readFile(path, 'utf-8');
-    this.logger.debug(
-      `Loaded ${name} template from ${path} (${Buffer.byteLength(content)} bytes)`
-    );
-    return content;
   }
 }
