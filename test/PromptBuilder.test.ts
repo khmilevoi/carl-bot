@@ -81,9 +81,16 @@ describe('PromptBuilder', () => {
       .addPreviousSummary('S')
       .addReplyTrigger('why', 'msg');
 
-    await expect(builder.build()).resolves.toBe(
-      'persona\n\nВсе пользователи чата:\nU u1 F1 a1\n\nU u2 F2 a2\n\nrules\n\nsum S\n\ntrigger why msg'
-    );
+    await expect(builder.build()).resolves.toEqual([
+      { role: 'system', content: 'persona' },
+      {
+        role: 'system',
+        content: 'Все пользователи чата:\nU u1 F1 a1\n\nU u2 F2 a2',
+      },
+      { role: 'system', content: 'rules' },
+      { role: 'system', content: 'sum S' },
+      { role: 'system', content: 'trigger why msg' },
+    ]);
   });
 
   it('adds messages from history', async () => {
@@ -93,7 +100,10 @@ describe('PromptBuilder', () => {
       { role: 'assistant', content: 'hello' } as ChatMessage,
     ]);
 
-    await expect(builder.build()).resolves.toBe('U hi\n\nU hello');
+    await expect(builder.build()).resolves.toEqual([
+      { role: 'user', content: 'U hi' },
+      { role: 'assistant', content: 'U hello' },
+    ]);
   });
 
   it('clears steps after build', async () => {
@@ -101,6 +111,8 @@ describe('PromptBuilder', () => {
     builder.addPersona();
     await builder.build();
     builder.addPersona();
-    await expect(builder.build()).resolves.toBe('persona');
+    await expect(builder.build()).resolves.toEqual([
+      { role: 'system', content: 'persona' },
+    ]);
   });
 });

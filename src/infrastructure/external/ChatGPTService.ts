@@ -14,6 +14,7 @@ import {
 } from '@/application/interfaces/logging/LoggerFactory';
 import type { PromptDirector } from '@/application/prompts/PromptDirector';
 import { PROMPT_DIRECTOR_ID } from '@/application/prompts/PromptDirector';
+import type { PromptMessage } from '@/application/prompts/PromptMessage';
 import type { ChatMessage } from '@/domain/messages/ChatMessage';
 import type { TriggerReason } from '@/domain/triggers/Trigger';
 
@@ -58,9 +59,7 @@ export class ChatGPTService implements AIService {
       summary,
       triggerReason
     );
-    const messages: OpenAI.ChatCompletionMessageParam[] = [
-      { role: 'user', content: prompt },
-    ];
+    const messages = this.toOpenAiMessages(prompt);
     const start = Date.now();
     try {
       const completion = await this.openai.chat.completions.create({
@@ -96,9 +95,7 @@ export class ChatGPTService implements AIService {
     _summary: string
   ): Promise<{ messageId: string; why: string } | null> {
     const prompt = await this.prompts.createInterestPrompt(history);
-    const messages: OpenAI.ChatCompletionMessageParam[] = [
-      { role: 'user', content: prompt },
-    ];
+    const messages = this.toOpenAiMessages(prompt);
     this.logger.debug(
       {
         messages: history.length,
@@ -162,9 +159,7 @@ export class ChatGPTService implements AIService {
       messages,
       prevAttitudes
     );
-    const reqMessages: OpenAI.ChatCompletionMessageParam[] = [
-      { role: 'user', content: prompt },
-    ];
+    const reqMessages = this.toOpenAiMessages(prompt);
     this.logger.debug(
       {
         messages: messages.length,
@@ -229,9 +224,7 @@ export class ChatGPTService implements AIService {
       'Sending summarization request'
     );
     const prompt = await this.prompts.createSummaryPrompt(history, prev);
-    const messages: OpenAI.ChatCompletionMessageParam[] = [
-      { role: 'user', content: prompt },
-    ];
+    const messages = this.toOpenAiMessages(prompt);
     const start = Date.now();
     try {
       const completion = await this.openai.chat.completions.create({
@@ -281,5 +274,11 @@ export class ChatGPTService implements AIService {
     } catch (err) {
       this.logger.error({ err }, 'Failed to write prompt log');
     }
+  }
+
+  private toOpenAiMessages(
+    messages: PromptMessage[]
+  ): OpenAI.ChatCompletionMessageParam[] {
+    return messages.map((m) => ({ role: m.role, content: m.content }));
   }
 }

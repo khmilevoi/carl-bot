@@ -31,10 +31,19 @@ describe('ChatGPTService', () => {
     vi.doMock('openai', () => ({ default: vi.fn(() => openaiMock) }));
 
     prompts = {
-      createAnswerPrompt: vi.fn().mockResolvedValue('answer'),
-      createInterestPrompt: vi.fn().mockResolvedValue('interest'),
-      createAssessUsersPrompt: vi.fn().mockResolvedValue('assess'),
-      createSummaryPrompt: vi.fn().mockResolvedValue('summary'),
+      createAnswerPrompt: vi.fn().mockResolvedValue([
+        { role: 'system', content: 'sys' },
+        { role: 'user', content: 'answer' },
+      ]),
+      createInterestPrompt: vi
+        .fn()
+        .mockResolvedValue([{ role: 'user', content: 'interest' }]),
+      createAssessUsersPrompt: vi
+        .fn()
+        .mockResolvedValue([{ role: 'user', content: 'assess' }]),
+      createSummaryPrompt: vi
+        .fn()
+        .mockResolvedValue([{ role: 'user', content: 'summary' }]),
     };
 
     env = new TestEnvService();
@@ -97,7 +106,10 @@ describe('ChatGPTService', () => {
     expect(openaiCreate).toHaveBeenCalledTimes(1);
     expect(openaiCreate).toHaveBeenCalledWith({
       model: env.getModels().ask,
-      messages: [{ role: 'user', content: 'answer' }],
+      messages: [
+        { role: 'system', content: 'sys' },
+        { role: 'user', content: 'answer' },
+      ],
     });
     expect(prompts.createAnswerPrompt).toHaveBeenCalledWith(
       history,
@@ -203,7 +215,10 @@ describe('ChatGPTService', () => {
     expect(resAsk).toBe('resp');
     expect(openaiCreate).toHaveBeenCalledWith({
       model: env.getModels().ask,
-      messages: [{ role: 'user', content: 'answer' }],
+      messages: [
+        { role: 'system', content: 'sys' },
+        { role: 'user', content: 'answer' },
+      ],
     });
     expect(prompts.createAnswerPrompt).toHaveBeenCalledWith(
       [],
