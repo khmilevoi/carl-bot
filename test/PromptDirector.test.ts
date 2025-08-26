@@ -22,6 +22,10 @@ class FakeBuilder {
     this.steps.push('userPromptSystem');
     return this;
   }
+  addCheckInterest(): this {
+    this.steps.push('checkInterest');
+    return this;
+  }
   addAskSummary(summary?: string): this {
     if (summary) {
       this.steps.push(`askSummary:${summary}`);
@@ -58,6 +62,10 @@ class FakeBuilder {
     if (summary) {
       this.steps.push(`prev:${summary}`);
     }
+    return this;
+  }
+  addAssessUsers(): this {
+    this.steps.push('assessUsers');
     return this;
   }
   build(): Promise<string> {
@@ -102,5 +110,39 @@ describe('PromptDirector', () => {
     ];
     const result = await director.createSummaryPrompt(history, 'prev');
     expect(result).toBe('summarySystem|prev:prev|user:hi|user:hello');
+  });
+
+  it('creates interest prompt', async () => {
+    const director = new PromptDirector(factory);
+    const history: ChatMessage[] = [
+      {
+        role: 'user',
+        content: 'hi',
+        username: 'u1',
+        attitude: 'a1',
+        messageId: 1,
+      },
+      { role: 'assistant', content: 'hello' },
+    ];
+    const result = await director.createInterestPrompt(history);
+    expect(result).toBe('persona|checkInterest|user:hi|user:hello');
+  });
+
+  it('creates assess users prompt', async () => {
+    const director = new PromptDirector(factory);
+    const history: ChatMessage[] = [
+      {
+        role: 'user',
+        content: 'hi',
+        username: 'u1',
+        attitude: 'a1',
+        messageId: 1,
+        fullName: 'F1',
+      },
+      { role: 'assistant', content: 'hello' },
+    ];
+    const prev = [{ username: 'u1', attitude: 'old' }];
+    const result = await director.createAssessUsersPrompt(history, prev);
+    expect(result).toBe('persona|assessUsers|chatUsers:u1|user:hi|user:hello');
   });
 });
