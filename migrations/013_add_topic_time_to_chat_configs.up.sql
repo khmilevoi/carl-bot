@@ -1,0 +1,1 @@
+ALTER TABLE chat_configs ADD COLUMN topic_time TEXT DEFAULT NULL;
