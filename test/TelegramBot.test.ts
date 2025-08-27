@@ -91,6 +91,9 @@ class DummyChatConfigService {
   getConfig = vi.fn();
   setHistoryLimit = vi.fn(async () => {});
   setInterestInterval = vi.fn(async () => {});
+  setTopicTime = vi.fn(
+    async (_chatId: number, _topicTime: string | null) => {}
+  );
 }
 
 describe('TelegramBot', () => {
@@ -124,6 +127,7 @@ describe('TelegramBot', () => {
       chatId: 2,
       historyLimit: 50,
       interestInterval: 25,
+      topicTime: '09:00',
     });
     const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,
@@ -645,6 +649,7 @@ describe('TelegramBot', () => {
       chatId: 42,
       historyLimit: 50,
       interestInterval: 25,
+      topicTime: '09:00',
     });
     const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,
@@ -722,6 +727,7 @@ describe('TelegramBot', () => {
       chatId: 7,
       historyLimit: 50,
       interestInterval: 25,
+      topicTime: '09:00',
     });
     const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,
@@ -787,6 +793,7 @@ describe('TelegramBot', () => {
       chatId: 7,
       historyLimit: 50,
       interestInterval: 25,
+      topicTime: '09:00',
     });
     const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,

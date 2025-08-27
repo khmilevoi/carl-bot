@@ -212,6 +212,40 @@ export class ChatGPTService implements AIService {
     }
   }
 
+  public async generateTopicOfDay(): Promise<string> {
+    const prompt = await this.prompts.createTopicOfDayPrompt();
+    const messages = this.toOpenAiMessages(prompt);
+    this.logger.debug('Sending topic of day request');
+    const start = Date.now();
+    try {
+      const completion = await this.openai.chat.completions.create({
+        model: this.askModel,
+        messages,
+      });
+      const elapsedMs = Date.now() - start;
+      this.logger.debug(
+        {
+          model: completion.model,
+          promptTokens: completion.usage?.prompt_tokens,
+          completionTokens: completion.usage?.completion_tokens,
+          totalTokens: completion.usage?.total_tokens,
+          elapsedMs,
+        },
+        'Received topic of day response'
+      );
+      const response = completion.choices[0]?.message?.content ?? '';
+      void this.logPrompt('topicOfDay', messages, response);
+      return response;
+    } catch (err) {
+      const elapsedMs = Date.now() - start;
+      this.logger.error(
+        { err, model: this.askModel, messages: messages.length, elapsedMs },
+        'Topic of day request failed'
+      );
+      throw err;
+    }
+  }
+
   public async summarize(
     history: ChatMessage[],
     prev?: string

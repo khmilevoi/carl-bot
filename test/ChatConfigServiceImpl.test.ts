@@ -16,6 +16,7 @@ describe('RepositoryChatConfigService', () => {
       chatId: 1,
       historyLimit: 50,
       interestInterval: 25,
+      topicTime: '09:00',
     });
     expect(repo.upsert).toHaveBeenCalledWith(config);
   });
@@ -25,6 +26,7 @@ describe('RepositoryChatConfigService', () => {
       chatId: 1,
       historyLimit: 50,
       interestInterval: 25,
+      topicTime: '09:00',
     };
     const repo: ChatConfigRepository = {
       findById: vi.fn(async () => existing),
@@ -40,6 +42,7 @@ describe('RepositoryChatConfigService', () => {
       chatId: 1,
       historyLimit: 50,
       interestInterval: 25,
+      topicTime: '09:00',
     };
     const repo: ChatConfigRepository = {
       findById: vi.fn(async () => existing),
@@ -50,6 +53,44 @@ describe('RepositoryChatConfigService', () => {
     expect(repo.upsert).toHaveBeenCalledWith({
       ...existing,
       interestInterval: 20,
+    });
+  });
+
+  it('sets topic time', async () => {
+    const existing: ChatConfigEntity = {
+      chatId: 1,
+      historyLimit: 50,
+      interestInterval: 25,
+      topicTime: '09:00',
+    };
+    const repo: ChatConfigRepository = {
+      findById: vi.fn(async () => existing),
+      upsert: vi.fn(async () => {}),
+    };
+    const service = new RepositoryChatConfigService(repo);
+    await service.setTopicTime(1, '10:30');
+    expect(repo.upsert).toHaveBeenCalledWith({
+      ...existing,
+      topicTime: '10:30',
+    });
+  });
+
+  it('clears topic time when null', async () => {
+    const existing: ChatConfigEntity = {
+      chatId: 1,
+      historyLimit: 50,
+      interestInterval: 25,
+      topicTime: '09:00',
+    };
+    const repo: ChatConfigRepository = {
+      findById: vi.fn(async () => existing),
+      upsert: vi.fn(async () => {}),
+    };
+    const service = new RepositoryChatConfigService(repo);
+    await service.setTopicTime(1, null);
+    expect(repo.upsert).toHaveBeenCalledWith({
+      ...existing,
+      topicTime: null,
     });
   });
 });

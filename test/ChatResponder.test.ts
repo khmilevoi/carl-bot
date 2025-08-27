@@ -26,6 +26,9 @@ class MockAIService implements AIService {
   async checkInterest(): Promise<{ messageId: string; why: string } | null> {
     return null;
   }
+  async generateTopicOfDay(): Promise<string> {
+    return '';
+  }
 }
 
 class ThrowingAIService implements AIService {
@@ -37,6 +40,9 @@ class ThrowingAIService implements AIService {
   }
   async checkInterest(): Promise<{ messageId: string; why: string } | null> {
     return null;
+  }
+  async generateTopicOfDay(): Promise<string> {
+    return '';
   }
 }
 

@@ -19,6 +19,7 @@ class MockAIService implements AIService {
       return [{ username: 'user1', attitude: 'positive' }];
     }
   );
+  generateTopicOfDay = vi.fn(async () => '');
 }
 
 class MockMessageService implements MessageService {

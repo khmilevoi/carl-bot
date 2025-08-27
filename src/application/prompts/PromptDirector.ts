@@ -64,6 +64,10 @@ export class PromptDirector {
       .build();
   }
 
+  async createTopicOfDayPrompt(): Promise<PromptMessage[]> {
+    return this.builderFactory().addPersona().addTopicOfDaySystem().build();
+  }
+
   private extractChatUsers(
     history: ChatMessage[]
   ): { username: string; fullName: string; attitude: string }[] {

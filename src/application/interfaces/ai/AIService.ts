@@ -16,6 +16,7 @@ export interface AIService {
     messages: ChatMessage[],
     prevAttitudes?: { username: string; attitude: string }[]
   ): Promise<{ username: string; attitude: string }[]>;
+  generateTopicOfDay(): Promise<string>;
 }
 
 import type { ServiceIdentifier } from 'inversify';

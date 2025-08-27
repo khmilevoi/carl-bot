@@ -44,6 +44,9 @@ describe('ChatGPTService', () => {
       createSummaryPrompt: vi
         .fn()
         .mockResolvedValue([{ role: 'user', content: 'summary' }]),
+      createTopicOfDayPrompt: vi
+        .fn()
+        .mockResolvedValue([{ role: 'user', content: 'topic' }]),
     };
 
     env = new TestEnvService();
@@ -182,6 +185,19 @@ describe('ChatGPTService', () => {
     });
     const res2 = await service.assessUsers(history);
     expect(res2).toEqual([]);
+  });
+
+  it('generateTopicOfDay sends prompt', async () => {
+    openaiCreate.mockResolvedValue({
+      choices: [{ message: { content: 'article' } }],
+    });
+    const res = await service.generateTopicOfDay();
+    expect(res).toBe('article');
+    expect(openaiCreate).toHaveBeenCalledWith({
+      model: env.getModels().ask,
+      messages: [{ role: 'user', content: 'topic' }],
+    });
+    expect(prompts.createTopicOfDayPrompt).toHaveBeenCalled();
   });
 
   it('summarize builds history and uses previous summary', async () => {

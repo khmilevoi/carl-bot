@@ -29,6 +29,7 @@ describe('FilePromptTemplateService', () => {
       priorityRulesSystem: '',
       assessUsers: '',
       replyTrigger: '',
+      topicOfDaySystem: '',
     };
     const env: EnvService = {
       env: {} as any,

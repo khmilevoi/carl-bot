@@ -7,6 +7,7 @@ import { message } from 'telegraf/filters';
 
 import type { AdminService } from '@/application/interfaces/admin/AdminService';
 import { ADMIN_SERVICE_ID } from '@/application/interfaces/admin/AdminService';
+import type { BotService } from '@/application/interfaces/bot/BotService';
 import type { ChatApprovalService } from '@/application/interfaces/chat/ChatApprovalService';
 import { CHAT_APPROVAL_SERVICE_ID } from '@/application/interfaces/chat/ChatApprovalService';
 import type { ChatConfigService } from '@/application/interfaces/chat/ChatConfigService';
@@ -61,7 +62,7 @@ export async function withTyping(
 }
 
 @injectable()
-export class TelegramBot {
+export class TelegramBot implements BotService {
   private bot: Telegraf;
   private env: Env;
   private router: ReturnType<typeof registerRoutes<WindowId>>;
@@ -123,6 +124,10 @@ export class TelegramBot {
   public stop(reason: string): void {
     this.logger.info({ reason }, 'Stopping bot');
     this.bot.stop(reason);
+  }
+
+  public async sendMessage(chatId: number, text: string): Promise<void> {
+    await this.bot.telegram.sendMessage(chatId, text);
   }
 
   public async sendChatApprovalRequest(
