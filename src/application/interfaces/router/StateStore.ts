@@ -18,9 +18,9 @@ export type RouterState = {
 };
 
 export interface StateStore {
-  get(key: string): Promise<RouterState | undefined>;
-  set(key: string, state: RouterState): Promise<void>;
-  delete(key: string): Promise<void>;
+  get(chatId: number, userId: number): Promise<RouterState | undefined>;
+  set(chatId: number, userId: number, state: RouterState): Promise<void>;
+  delete(chatId: number, userId: number): Promise<void>;
 }
 
 export const ROUTER_STATE_STORE_ID = Symbol('RouterStateStore');

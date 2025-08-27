@@ -38,6 +38,7 @@ import type { MessageContextExtractor } from '@/application/interfaces/messages/
 import { MESSAGE_CONTEXT_EXTRACTOR_ID } from '@/application/interfaces/messages/MessageContextExtractor';
 import {
   ROUTER_STATE_STORE_ID,
+  type RouterState,
   type StateStore,
 } from '@/application/interfaces/router/StateStore';
 import {
@@ -51,11 +52,11 @@ import { registerRoutes } from './telegramRouter';
 import { createWindows, type WindowId } from './windowConfig';
 
 const defaultStateStore: StateStore = {
-  async get() {
+  async get(_chatId: number, _userId: number) {
     return undefined;
   },
-  async set() {},
-  async delete() {},
+  async set(_chatId: number, _userId: number, _state: RouterState) {},
+  async delete(_chatId: number, _userId: number) {},
 };
 
 export async function withTyping(

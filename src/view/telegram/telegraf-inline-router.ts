@@ -261,25 +261,25 @@ export const DSL = {
 
 /** Асинхронное хранилище состояния роутера. Реализуйте адаптер под Redis/DB. */
 export interface StateStore {
-  /** Получить состояние по ключу `chatId:userId` */
-  get(key: string): Promise<RouterState | undefined>;
+  /** Получить состояние по идентификаторам чата и пользователя */
+  get(chatId: number, userId: number): Promise<RouterState | undefined>;
   /** Сохранить состояние */
-  set(key: string, state: RouterState): Promise<void>;
+  set(chatId: number, userId: number, state: RouterState): Promise<void>;
   /** Удалить состояние */
-  delete(key: string): Promise<void>;
+  delete(chatId: number, userId: number): Promise<void>;
 }
 
 /** In-memory реализация StateStore (для разработки/одиночного инстанса). */
 class InMemoryStateStore implements StateStore {
   private map = new Map<string, RouterState>();
-  async get(key: string): Promise<RouterState | undefined> {
-    return this.map.get(key);
+  async get(chatId: number, userId: number): Promise<RouterState | undefined> {
+    return this.map.get(`${chatId}:${userId}`);
   }
-  async set(key: string, state: RouterState): Promise<void> {
-    this.map.set(key, state);
+  async set(chatId: number, userId: number, state: RouterState): Promise<void> {
+    this.map.set(`${chatId}:${userId}`, state);
   }
-  async delete(key: string): Promise<void> {
-    this.map.delete(key);
+  async delete(chatId: number, userId: number): Promise<void> {
+    this.map.delete(`${chatId}:${userId}`);
   }
 }
 
@@ -538,19 +538,26 @@ export function createRouter<A = unknown>(
   const mutex = new SimpleMutex();
 
   // --- state keyed by chat+user in external store
-  const getKey = (ctx: Context): string =>
-    `${ctx.chat?.id ?? 'p'}:${ctx.from?.id ?? 'p'}`;
+  const getIds = (ctx: Context): { chatId: number; userId: number } => ({
+    chatId: ctx.chat?.id ?? 0,
+    userId: ctx.from?.id ?? 0,
+  });
+  const getKey = (ctx: Context): string => {
+    const { chatId, userId } = getIds(ctx);
+    return `${chatId}:${userId}`;
+  };
   const getState = async (ctx: Context): Promise<RouterState> => {
-    const key = getKey(ctx);
-    let state = await options.stateStore.get(key);
+    const { chatId, userId } = getIds(ctx);
+    let state = await options.stateStore.get(chatId, userId);
     if (!state) {
       state = { stack: [], params: {}, messages: [] };
-      await options.stateStore.set(key, state);
+      await options.stateStore.set(chatId, userId, state);
     }
     return state;
   };
   const setState = async (ctx: Context, state: RouterState): Promise<void> => {
-    await options.stateStore.set(getKey(ctx), state);
+    const { chatId, userId } = getIds(ctx);
+    await options.stateStore.set(chatId, userId, state);
   };
 
   const getEntry = (routeId?: string): Entry | undefined =>
