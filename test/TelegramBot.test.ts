@@ -93,7 +93,11 @@ class DummyChatConfigService {
   setHistoryLimit = vi.fn(async () => {});
   setInterestInterval = vi.fn(async () => {});
   setTopicTime = vi.fn(
-    async (_chatId: number, _topicTime: string | null) => {}
+    async (
+      _chatId: number,
+      _topicTime: string | null,
+      _topicTimezone: string
+    ) => {}
   );
 }
 
@@ -130,6 +134,7 @@ describe('TelegramBot', () => {
       historyLimit: 50,
       interestInterval: 25,
       topicTime: '09:00',
+      topicTimezone: 'UTC',
     });
     const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,
@@ -231,7 +236,7 @@ describe('TelegramBot', () => {
     await (
       bot as unknown as { handleText: (ctx: Context) => Promise<void> }
     ).handleText(ctxText);
-    expect(config.setTopicTime).toHaveBeenCalledWith(14, 'bad');
+    expect(config.setTopicTime).toHaveBeenCalledWith(14, 'bad', 'UTC');
     expect(ctxText.reply).toHaveBeenCalledWith(
       '❌ Время статьи должно быть в формате HH:MM'
     );
@@ -305,7 +310,7 @@ describe('TelegramBot', () => {
     await (
       bot as unknown as { handleText: (ctx: Context) => Promise<void> }
     ).handleText(ctxText);
-    expect(config.setTopicTime).toHaveBeenCalledWith(30, '10:30');
+    expect(config.setTopicTime).toHaveBeenCalledWith(30, '10:30', 'UTC');
     expect(ctxText.reply).toHaveBeenCalledWith('✅ Время статьи обновлено');
     expect(showSpy).toHaveBeenCalledWith(ctxText, 'menu');
   });
@@ -534,7 +539,7 @@ describe('TelegramBot', () => {
     await (
       bot as unknown as { handleText: (ctx: Context) => Promise<void> }
     ).handleText(ctxText);
-    expect(config.setTopicTime).toHaveBeenCalledWith(50, '08:00');
+    expect(config.setTopicTime).toHaveBeenCalledWith(50, '08:00', 'UTC');
     expect(ctxText.reply).toHaveBeenCalledWith('✅ Время статьи обновлено');
     expect(showSpy).toHaveBeenCalledWith(ctxText, 50);
   });
@@ -694,7 +699,7 @@ describe('TelegramBot', () => {
     await (
       bot as unknown as { handleText: (ctx: Context) => Promise<void> }
     ).handleText(ctxText);
-    expect(config.setTopicTime).toHaveBeenCalledWith(46, 'bad');
+    expect(config.setTopicTime).toHaveBeenCalledWith(46, 'bad', 'UTC');
     expect(ctxText.reply).toHaveBeenCalledWith(
       '❌ Время статьи должно быть в формате HH:MM'
     );
@@ -828,6 +833,7 @@ describe('TelegramBot', () => {
       historyLimit: 50,
       interestInterval: 25,
       topicTime: '09:00',
+      topicTimezone: 'UTC',
     });
     const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,
@@ -912,6 +918,7 @@ describe('TelegramBot', () => {
       historyLimit: 50,
       interestInterval: 25,
       topicTime: '09:00',
+      topicTimezone: 'UTC',
     });
     const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,
@@ -978,6 +985,7 @@ describe('TelegramBot', () => {
       historyLimit: 50,
       interestInterval: 25,
       topicTime: '09:00',
+      topicTimezone: 'UTC',
     });
     const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,

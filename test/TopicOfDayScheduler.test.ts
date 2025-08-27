@@ -9,7 +9,7 @@ describe('TopicOfDayScheduler', () => {
   it('schedules cron jobs and sends article', async () => {
     const chatConfig = {
       getTopicOfDaySchedules: vi.fn(
-        async () => new Map([[1, { time: '09:00', timezone: 'UTC' }]])
+        async () => new Map([[1, { cron: '0 0 9 * * *', timezone: 'UTC' }]])
       ),
     };
     const ai = { generateTopicOfDay: vi.fn(async () => 'article') };

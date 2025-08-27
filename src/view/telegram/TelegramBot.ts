@@ -397,6 +397,7 @@ export class TelegramBot implements BotService {
         historyLimit: number;
         interestInterval: number;
         topicTime: string | null;
+        topicTimezone: string;
       };
     }> => ({
       chatId,
@@ -670,7 +671,7 @@ export class TelegramBot implements BotService {
         await ctx.reply('✅ Интервал интереса обновлён');
       } else {
         const time = text ?? '';
-        await this.chatConfig.setTopicTime(awaiting.chatId, time);
+        await this.chatConfig.setTopicTime(awaiting.chatId, time, 'UTC');
         await ctx.reply('✅ Время статьи обновлено');
       }
     } catch (error) {

@@ -9,6 +9,7 @@ describe('RepositoryChatConfigService', () => {
     const repo: ChatConfigRepository = {
       findById: vi.fn(async () => undefined),
       upsert: vi.fn(async () => {}),
+      findAll: vi.fn(async () => []),
     };
     const service = new RepositoryChatConfigService(repo);
     const config = await service.getConfig(1);
@@ -17,6 +18,7 @@ describe('RepositoryChatConfigService', () => {
       historyLimit: 50,
       interestInterval: 25,
       topicTime: '09:00',
+      topicTimezone: 'UTC',
     });
     expect(repo.upsert).toHaveBeenCalledWith(config);
   });
@@ -27,10 +29,12 @@ describe('RepositoryChatConfigService', () => {
       historyLimit: 50,
       interestInterval: 25,
       topicTime: '09:00',
+      topicTimezone: 'UTC',
     };
     const repo: ChatConfigRepository = {
       findById: vi.fn(async () => existing),
       upsert: vi.fn(async () => {}),
+      findAll: vi.fn(async () => []),
     };
     const service = new RepositoryChatConfigService(repo);
     await service.setHistoryLimit(1, 10);
@@ -43,10 +47,12 @@ describe('RepositoryChatConfigService', () => {
       historyLimit: 50,
       interestInterval: 25,
       topicTime: '09:00',
+      topicTimezone: 'UTC',
     };
     const repo: ChatConfigRepository = {
       findById: vi.fn(async () => existing),
       upsert: vi.fn(async () => {}),
+      findAll: vi.fn(async () => []),
     };
     const service = new RepositoryChatConfigService(repo);
     await service.setInterestInterval(1, 20);
@@ -62,16 +68,19 @@ describe('RepositoryChatConfigService', () => {
       historyLimit: 50,
       interestInterval: 25,
       topicTime: '09:00',
+      topicTimezone: 'UTC',
     };
     const repo: ChatConfigRepository = {
       findById: vi.fn(async () => existing),
       upsert: vi.fn(async () => {}),
+      findAll: vi.fn(async () => []),
     };
     const service = new RepositoryChatConfigService(repo);
-    await service.setTopicTime(1, '10:30');
+    await service.setTopicTime(1, '10:30', 'Europe/Moscow');
     expect(repo.upsert).toHaveBeenCalledWith({
       ...existing,
       topicTime: '10:30',
+      topicTimezone: 'Europe/Moscow',
     });
   });
 
@@ -81,16 +90,47 @@ describe('RepositoryChatConfigService', () => {
       historyLimit: 50,
       interestInterval: 25,
       topicTime: '09:00',
+      topicTimezone: 'UTC',
     };
     const repo: ChatConfigRepository = {
       findById: vi.fn(async () => existing),
       upsert: vi.fn(async () => {}),
+      findAll: vi.fn(async () => []),
     };
     const service = new RepositoryChatConfigService(repo);
-    await service.setTopicTime(1, null);
+    await service.setTopicTime(1, null, 'UTC');
     expect(repo.upsert).toHaveBeenCalledWith({
       ...existing,
       topicTime: null,
+      topicTimezone: 'UTC',
     });
+  });
+
+  it('returns topic of day schedules', async () => {
+    const repo: ChatConfigRepository = {
+      findById: vi.fn(),
+      upsert: vi.fn(),
+      findAll: vi.fn(async () => [
+        {
+          chatId: 1,
+          historyLimit: 50,
+          interestInterval: 25,
+          topicTime: '10:30',
+          topicTimezone: 'UTC',
+        },
+        {
+          chatId: 2,
+          historyLimit: 50,
+          interestInterval: 25,
+          topicTime: null,
+          topicTimezone: 'UTC',
+        },
+      ]),
+    } as unknown as ChatConfigRepository;
+    const service = new RepositoryChatConfigService(repo);
+    const schedules = await service.getTopicOfDaySchedules();
+    expect(schedules).toEqual(
+      new Map([[1, { cron: '0 30 10 * * *', timezone: 'UTC' }]])
+    );
   });
 });

@@ -191,12 +191,13 @@ describe('ChatMemoryManager', () => {
         historyLimit: this.historyLimit,
         interestInterval: 0,
         topicTime: '09:00',
+        topicTimezone: 'UTC',
       })
     );
     setHistoryLimit = vi.fn(async () => {});
     setInterestInterval = vi.fn(async () => {});
     setTopicTime = vi.fn(
-      async (_chatId: number, _topicTime: string | null) => {}
+      async (_chatId: number, _topicTime: string | null, _tz: string) => {}
     );
   }
 
