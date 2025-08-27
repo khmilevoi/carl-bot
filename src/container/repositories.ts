@@ -1,6 +1,10 @@
 import { type Container } from 'inversify';
 
 import {
+  ROUTER_STATE_STORE_ID,
+  type StateStore,
+} from '../application/interfaces/router/StateStore';
+import {
   ACCESS_KEY_REPOSITORY_ID,
   type AccessKeyRepository,
 } from '../domain/repositories/AccessKeyRepository';
@@ -43,6 +47,7 @@ import { SQLiteChatConfigRepository } from '../infrastructure/persistence/sqlite
 import { SQLiteChatRepository } from '../infrastructure/persistence/sqlite/SQLiteChatRepository';
 import { SQLiteChatUserRepository } from '../infrastructure/persistence/sqlite/SQLiteChatUserRepository';
 import { SQLiteMessageRepository } from '../infrastructure/persistence/sqlite/SQLiteMessageRepository';
+import { SQLiteRouterStateStore } from '../infrastructure/persistence/sqlite/SQLiteRouterStateStore';
 import { SQLiteSummaryRepository } from '../infrastructure/persistence/sqlite/SQLiteSummaryRepository';
 import { SQLiteUserRepository } from '../infrastructure/persistence/sqlite/SQLiteUserRepository';
 
@@ -82,5 +87,9 @@ export const register = (container: Container): void => {
   container
     .bind<ChatConfigRepository>(CHAT_CONFIG_REPOSITORY_ID)
     .to(SQLiteChatConfigRepository)
+    .inSingletonScope();
+  container
+    .bind<StateStore>(ROUTER_STATE_STORE_ID)
+    .to(SQLiteRouterStateStore)
     .inSingletonScope();
 };
