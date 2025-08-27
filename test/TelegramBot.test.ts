@@ -16,6 +16,7 @@ import type { ChatConfigService } from '../src/application/interfaces/chat/ChatC
 import {
   InvalidInterestIntervalError,
   InvalidHistoryLimitError,
+  InvalidTopicTimeError,
 } from '../src/application/interfaces/chat/ChatConfigService.errors';
 import type {
   MessageContext,
@@ -107,6 +108,7 @@ describe('TelegramBot', () => {
       showChatSettings: vi.fn(),
       configHistoryLimit: vi.fn(),
       configInterestInterval: vi.fn(),
+      configTopicTime: vi.fn(),
     });
     const menu = windows.find((w) => w.id === 'menu');
     if (!menu) throw new Error('route not found');
@@ -195,6 +197,47 @@ describe('TelegramBot', () => {
     expect(showSpy).toHaveBeenCalledWith(ctxText, 'menu');
   });
 
+  it('handles invalid topic time input', async () => {
+    const memories = new MockChatMemoryManager();
+    const config = new DummyChatConfigService();
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      new DummyApprovalService() as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatInfoService() as unknown as ChatInfoService,
+      config as unknown as ChatConfigService,
+      createLoggerFactory()
+    );
+    const showSpy = vi
+      .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
+      .mockResolvedValue(undefined);
+    await (
+      bot as unknown as {
+        handleConfigTopicTime: (ctx: Context) => Promise<void>;
+      }
+    ).handleConfigTopicTime({ chat: { id: 14 } } as Context);
+    const ctxText = {
+      chat: { id: 14 },
+      message: { text: 'bad' },
+      reply: vi.fn(),
+    } as unknown as Context;
+    config.setTopicTime.mockImplementationOnce(async () => {
+      throw new InvalidTopicTimeError('Invalid topic time');
+    });
+    await (
+      bot as unknown as { handleText: (ctx: Context) => Promise<void> }
+    ).handleText(ctxText);
+    expect(config.setTopicTime).toHaveBeenCalledWith(14, 'bad');
+    expect(ctxText.reply).toHaveBeenCalledWith(
+      '❌ Время статьи должно быть в формате HH:MM'
+    );
+    expect(showSpy).toHaveBeenCalledWith(ctxText, 'menu');
+  });
+
   it('updates interest interval on valid input', async () => {
     const memories = new MockChatMemoryManager();
     const config = new DummyChatConfigService();
@@ -228,6 +271,42 @@ describe('TelegramBot', () => {
     ).handleText(ctxText);
     expect(config.setInterestInterval).toHaveBeenCalledWith(11, 15);
     expect(ctxText.reply).toHaveBeenCalledWith('✅ Интервал интереса обновлён');
+    expect(showSpy).toHaveBeenCalledWith(ctxText, 'menu');
+  });
+
+  it('updates topic time on valid input', async () => {
+    const memories = new MockChatMemoryManager();
+    const config = new DummyChatConfigService();
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      new DummyApprovalService() as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatInfoService() as unknown as ChatInfoService,
+      config as unknown as ChatConfigService,
+      createLoggerFactory()
+    );
+    const showSpy = vi
+      .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
+      .mockResolvedValue(undefined);
+    await (
+      bot as unknown as {
+        handleConfigTopicTime: (ctx: Context) => Promise<void>;
+      }
+    ).handleConfigTopicTime({ chat: { id: 30 } } as Context);
+    const ctxText = {
+      chat: { id: 30 },
+      message: { text: '10:30' },
+      reply: vi.fn(),
+    } as unknown as Context;
+    await (
+      bot as unknown as { handleText: (ctx: Context) => Promise<void> }
+    ).handleText(ctxText);
+    expect(config.setTopicTime).toHaveBeenCalledWith(30, '10:30');
+    expect(ctxText.reply).toHaveBeenCalledWith('✅ Время статьи обновлено');
     expect(showSpy).toHaveBeenCalledWith(ctxText, 'menu');
   });
 
@@ -413,6 +492,53 @@ describe('TelegramBot', () => {
     expect(showSpy).toHaveBeenCalledWith(ctxText, 43);
   });
 
+  it('admin updates topic time on valid input', async () => {
+    const memories = new MockChatMemoryManager();
+    const config = new DummyChatConfigService();
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      new DummyApprovalService() as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatInfoService() as unknown as ChatInfoService,
+      config as unknown as ChatConfigService,
+      createLoggerFactory()
+    );
+    const showSpy = vi
+      .spyOn(
+        bot as unknown as {
+          showAdminChat: (ctx: Context, id: number) => Promise<void>;
+        },
+        'showAdminChat'
+      )
+      .mockResolvedValue(undefined);
+    await (
+      bot as unknown as {
+        handleAdminConfigTopicTime: (
+          ctx: Context,
+          chatId: number
+        ) => Promise<void>;
+      }
+    ).handleAdminConfigTopicTime(
+      { chat: { id: 1 }, reply: vi.fn() } as Context,
+      50
+    );
+    const ctxText = {
+      chat: { id: 1 },
+      message: { text: '08:00' },
+      reply: vi.fn(),
+    } as unknown as Context;
+    await (
+      bot as unknown as { handleText: (ctx: Context) => Promise<void> }
+    ).handleText(ctxText);
+    expect(config.setTopicTime).toHaveBeenCalledWith(50, '08:00');
+    expect(ctxText.reply).toHaveBeenCalledWith('✅ Время статьи обновлено');
+    expect(showSpy).toHaveBeenCalledWith(ctxText, 50);
+  });
+
   it('admin handles invalid history limit input', async () => {
     const memories = new MockChatMemoryManager();
     const admin = new DummyAdmin();
@@ -521,6 +647,58 @@ describe('TelegramBot', () => {
       '❌ Интервал интереса должен быть целым числом от 1 до 50'
     );
     expect(showSpy).toHaveBeenCalledWith(ctxText, 45);
+  });
+
+  it('admin handles invalid topic time input', async () => {
+    const memories = new MockChatMemoryManager();
+    const config = new DummyChatConfigService();
+    const bot = new TelegramBot(
+      new MockEnvService() as unknown as EnvService,
+      memories as unknown as ChatMemoryManager,
+      new DummyAdmin() as unknown as AdminService,
+      new DummyApprovalService() as unknown as ChatApprovalService,
+      new DummyExtractor() as unknown as MessageContextExtractor,
+      new DummyPipeline() as unknown as TriggerPipeline,
+      new DummyResponder() as unknown as ChatResponder,
+      new DummyChatInfoService() as unknown as ChatInfoService,
+      config as unknown as ChatConfigService,
+      createLoggerFactory()
+    );
+    const showSpy = vi
+      .spyOn(
+        bot as unknown as {
+          showAdminChat: (ctx: Context, id: number) => Promise<void>;
+        },
+        'showAdminChat'
+      )
+      .mockResolvedValue(undefined);
+    await (
+      bot as unknown as {
+        handleAdminConfigTopicTime: (
+          ctx: Context,
+          chatId: number
+        ) => Promise<void>;
+      }
+    ).handleAdminConfigTopicTime(
+      { chat: { id: 1 }, reply: vi.fn() } as Context,
+      46
+    );
+    const ctxText = {
+      chat: { id: 1 },
+      message: { text: 'bad' },
+      reply: vi.fn(),
+    } as unknown as Context;
+    config.setTopicTime.mockImplementationOnce(async () => {
+      throw new InvalidTopicTimeError('Invalid topic time');
+    });
+    await (
+      bot as unknown as { handleText: (ctx: Context) => Promise<void> }
+    ).handleText(ctxText);
+    expect(config.setTopicTime).toHaveBeenCalledWith(46, 'bad');
+    expect(ctxText.reply).toHaveBeenCalledWith(
+      '❌ Время статьи должно быть в формате HH:MM'
+    );
+    expect(showSpy).toHaveBeenCalledWith(ctxText, 46);
   });
 
   it('stores user messages via ChatMemoryManager', async () => {
@@ -711,6 +889,12 @@ describe('TelegramBot', () => {
               callback_data: 'admin_chat_interest_interval:42',
             },
           ],
+          [
+            {
+              text: '📝 Время статьи (09:00)',
+              callback_data: 'admin_chat_topic_time:42',
+            },
+          ],
         ],
       },
     });
@@ -861,6 +1045,12 @@ describe('TelegramBot', () => {
             {
               text: '✨ Интервал интереса (25)',
               callback_data: 'admin_chat_interest_interval:7',
+            },
+          ],
+          [
+            {
+              text: '📝 Время статьи (09:00)',
+              callback_data: 'admin_chat_topic_time:7',
             },
           ],
         ],
