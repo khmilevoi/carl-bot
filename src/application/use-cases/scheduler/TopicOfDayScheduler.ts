@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import * as cron from 'node-cron';
+import cron from 'node-cron';
 
 import {
   AI_SERVICE_ID,
@@ -39,11 +39,16 @@ export class TopicOfDaySchedulerImpl implements TopicOfDayScheduler {
       this.logger.debug('No topic of day schedules');
       return;
     }
-    for (const [chatId, expr] of schedules) {
-      cron.schedule(expr, () => {
-        void this.execute(chatId);
-      });
-      this.logger.debug({ chatId, cron: expr }, 'Registered topic of day job');
+    for (const [chatId, { time, timezone }] of schedules) {
+      const [hourStr, minuteStr] = time.split(':');
+      const hour = Number(hourStr);
+      const minute = Number(minuteStr);
+      const expr = `0 ${minute} ${hour} * * *`;
+      cron.schedule(expr, () => void this.execute(chatId), { timezone });
+      this.logger.debug(
+        { chatId, cron: expr, timezone },
+        'Registered topic of day job'
+      );
     }
   }
 
