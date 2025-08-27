@@ -59,4 +59,8 @@ export class RepositoryChatConfigService implements ChatConfigService {
     const config = await this.getConfig(chatId);
     await this.repo.upsert({ ...config, interestInterval });
   }
+
+  async getTopicOfDaySchedules(): Promise<Map<number, string>> {
+    return new Map();
+  }
 }

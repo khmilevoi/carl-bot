@@ -132,6 +132,14 @@ export class PromptBuilder {
     return this;
   }
 
+  addTopicOfDaySystem(): this {
+    this.steps.push(async () => {
+      const template = await this.templates.loadTemplate('topicOfDaySystem');
+      return [{ role: 'system', content: template }];
+    });
+    return this;
+  }
+
   addAssessUsers(): this {
     this.steps.push(async () => {
       const template = await this.templates.loadTemplate('assessUsers');

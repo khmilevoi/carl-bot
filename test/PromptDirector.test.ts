@@ -60,6 +60,10 @@ function createBuilder() {
       calls.push('addAssessUsers');
       return builder;
     }),
+    addTopicOfDaySystem: vi.fn(() => {
+      calls.push('addTopicOfDaySystem');
+      return builder;
+    }),
     build: vi.fn(async () => {
       calls.push('build');
       return 'result';
@@ -185,6 +189,19 @@ describe('PromptDirector', () => {
     ]);
     expect(builder.addChatUsers).toHaveBeenCalledWith([
       { username: 'u1', fullName: 'F1', attitude: 'old' },
+    ]);
+  });
+
+  it('creates topic of day prompt', async () => {
+    const builder = createBuilder();
+    const factory: PromptBuilderFactory = () => builder;
+    const director = new PromptDirector(factory);
+    await director.createTopicOfDayPrompt();
+
+    expect(builder.calls).toEqual([
+      'addPersona',
+      'addTopicOfDaySystem',
+      'build',
     ]);
   });
 });

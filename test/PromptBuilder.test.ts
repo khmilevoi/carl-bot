@@ -15,6 +15,7 @@ describe('PromptBuilder', () => {
       previousSummary: 'sum {{prev}}',
       replyTrigger: 'trigger {{triggerReason}} {{triggerMessage}}',
       userPrompt: 'U {{userMessage}}',
+      topicOfDaySystem: 'topic',
     };
     templates = {
       loadTemplate: vi.fn((name: string) => Promise.resolve(map[name])),
@@ -34,6 +35,7 @@ describe('PromptBuilder', () => {
         { username: 'u2', fullName: 'F2', attitude: 'a2' },
       ])
       .addPriorityRulesSystem()
+      .addTopicOfDaySystem()
       .addPreviousSummary('S')
       .addReplyTrigger('why', 'msg')
       .build();
@@ -45,6 +47,7 @@ describe('PromptBuilder', () => {
         content: 'Все пользователи чата:\nU u1 F1 a1\n\nU u2 F2 a2',
       },
       { role: 'system', content: 'rules' },
+      { role: 'system', content: 'topic' },
       { role: 'system', content: 'sum S' },
       { role: 'system', content: 'trigger why msg' },
     ]);
