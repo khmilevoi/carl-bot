@@ -40,6 +40,7 @@ export class DefaultEnvService implements EnvService {
       priorityRulesSystem: 'prompts/priority_rules_system_prompt.md',
       assessUsers: 'prompts/assess_users_prompt.md',
       replyTrigger: 'prompts/reply_trigger_prompt.md',
+      topicOfDaySystem: 'prompts/topic_of_day_system_prompt.md',
     };
   }
 

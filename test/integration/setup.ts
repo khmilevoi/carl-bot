@@ -44,6 +44,10 @@ class MockAIService implements AIService {
   ): Promise<{ username: string; attitude: string }[]> {
     return [];
   }
+
+  async generateTopicOfDay(): Promise<string> {
+    return '';
+  }
 }
 
 // Stable mock for Telegram API

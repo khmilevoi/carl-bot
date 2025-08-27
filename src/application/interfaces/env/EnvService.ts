@@ -23,6 +23,7 @@ export interface PromptFiles {
   priorityRulesSystem: string;
   assessUsers: string;
   replyTrigger: string;
+  topicOfDaySystem: string;
 }
 
 export interface EnvService {

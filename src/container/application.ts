@@ -73,6 +73,10 @@ import {
   type PromptTemplateService,
 } from '../application/interfaces/prompts/PromptTemplateService';
 import {
+  TOPIC_OF_DAY_SCHEDULER_ID,
+  type TopicOfDayScheduler,
+} from '../application/interfaces/scheduler/TopicOfDayScheduler';
+import {
   SUMMARY_SERVICE_ID,
   type SummaryService,
 } from '../application/interfaces/summaries/SummaryService';
@@ -99,6 +103,7 @@ import { DefaultInterestChecker } from '../application/use-cases/interest/Defaul
 import { DefaultMessageContextExtractor } from '../application/use-cases/messages/DefaultMessageContextExtractor';
 import { InMemoryInterestMessageStore } from '../application/use-cases/messages/InMemoryInterestMessageStore';
 import { RepositoryMessageService } from '../application/use-cases/messages/RepositoryMessageService';
+import { TopicOfDaySchedulerImpl } from '../application/use-cases/scheduler/TopicOfDayScheduler';
 import { RepositorySummaryService } from '../application/use-cases/summaries/RepositorySummaryService';
 import { DefaultEnvService } from '../infrastructure/config/DefaultEnvService';
 import { TestEnvService } from '../infrastructure/config/TestEnvService';
@@ -214,5 +219,10 @@ export const register = (container: Container): void => {
   container
     .bind<ChatResponder>(CHAT_RESPONDER_ID)
     .to(DefaultChatResponder)
+    .inSingletonScope();
+
+  container
+    .bind<TopicOfDayScheduler>(TOPIC_OF_DAY_SCHEDULER_ID)
+    .to(TopicOfDaySchedulerImpl)
     .inSingletonScope();
 };
