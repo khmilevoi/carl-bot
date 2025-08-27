@@ -55,9 +55,12 @@ function createChecker(opts: {
       chatId,
       historyLimit: 0,
       interestInterval: interval,
+      topicTime: null,
+      topicTimezone: 'UTC',
     }),
     setHistoryLimit: vi.fn(),
     setInterestInterval: vi.fn(),
+    setTopicTime: vi.fn(),
   } as unknown as ChatConfigService;
   return {
     checker: new DefaultInterestChecker(

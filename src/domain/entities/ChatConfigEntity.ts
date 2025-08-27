@@ -3,4 +3,5 @@ export interface ChatConfigEntity {
   historyLimit: number;
   interestInterval: number;
   topicTime: string | null;
+  topicTimezone: string;
 }

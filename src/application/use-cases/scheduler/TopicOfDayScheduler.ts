@@ -39,11 +39,7 @@ export class TopicOfDaySchedulerImpl implements TopicOfDayScheduler {
       this.logger.debug('No topic of day schedules');
       return;
     }
-    for (const [chatId, { time, timezone }] of schedules) {
-      const [hourStr, minuteStr] = time.split(':');
-      const hour = Number(hourStr);
-      const minute = Number(minuteStr);
-      const expr = `0 ${minute} ${hour} * * *`;
+    for (const [chatId, { cron: expr, timezone }] of schedules) {
       cron.schedule(expr, () => void this.execute(chatId), { timezone });
       this.logger.debug(
         { chatId, cron: expr, timezone },

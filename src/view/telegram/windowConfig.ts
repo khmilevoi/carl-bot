@@ -61,6 +61,7 @@ export function createWindows(actions: WindowActions): RouteApi<WindowId>[] {
         historyLimit: number;
         interestInterval: number;
         topicTime: string | null;
+        topicTimezone: string;
       };
       return {
         text: 'Выберите настройку:',
@@ -134,6 +135,7 @@ export function createWindows(actions: WindowActions): RouteApi<WindowId>[] {
           historyLimit: number;
           interestInterval: number;
           topicTime: string | null;
+          topicTimezone: string;
         };
       };
       return {

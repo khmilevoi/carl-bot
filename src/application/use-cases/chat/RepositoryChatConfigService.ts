@@ -15,6 +15,7 @@ import {
 const DEFAULT_HISTORY_LIMIT = 50;
 const DEFAULT_INTEREST_INTERVAL = 25;
 const DEFAULT_TOPIC_TIME = '09:00';
+const DEFAULT_TOPIC_TIMEZONE = 'UTC';
 const TOPIC_TIME_REGEX = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 
 @injectable()
@@ -31,6 +32,7 @@ export class RepositoryChatConfigService implements ChatConfigService {
         historyLimit: DEFAULT_HISTORY_LIMIT,
         interestInterval: DEFAULT_INTEREST_INTERVAL,
         topicTime: DEFAULT_TOPIC_TIME,
+        topicTimezone: DEFAULT_TOPIC_TIMEZONE,
       };
       await this.repo.upsert(config);
     }
@@ -65,16 +67,28 @@ export class RepositoryChatConfigService implements ChatConfigService {
   }
 
   async getTopicOfDaySchedules(): Promise<
-    Map<number, { time: string; timezone: string }>
+    Map<number, { cron: string; timezone: string }>
   > {
-    return new Map();
+    const configs = await this.repo.findAll();
+    const schedules = new Map<number, { cron: string; timezone: string }>();
+    for (const { chatId, topicTime, topicTimezone } of configs) {
+      if (!topicTime) continue;
+      const [hourStr, minuteStr] = topicTime.split(':');
+      const cron = `0 ${minuteStr} ${hourStr} * * *`;
+      schedules.set(chatId, { cron, timezone: topicTimezone });
+    }
+    return schedules;
   }
 
-  async setTopicTime(chatId: number, topicTime: string | null): Promise<void> {
+  async setTopicTime(
+    chatId: number,
+    topicTime: string | null,
+    topicTimezone: string
+  ): Promise<void> {
     if (topicTime !== null && !TOPIC_TIME_REGEX.test(topicTime)) {
       throw new InvalidTopicTimeError('Invalid topic time');
     }
     const config = await this.getConfig(chatId);
-    await this.repo.upsert({ ...config, topicTime });
+    await this.repo.upsert({ ...config, topicTime, topicTimezone });
   }
 }
