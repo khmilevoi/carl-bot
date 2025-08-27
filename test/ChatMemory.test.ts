@@ -190,10 +190,12 @@ describe('ChatMemoryManager', () => {
         chatId,
         historyLimit: this.historyLimit,
         interestInterval: 0,
+        topicTime: '09:00',
       })
     );
     setHistoryLimit = vi.fn(async () => {});
     setInterestInterval = vi.fn(async () => {});
+    setTopicTime = vi.fn(async () => {});
   }
 
   it('creates ChatMemory with limit from ChatConfigService', async () => {
