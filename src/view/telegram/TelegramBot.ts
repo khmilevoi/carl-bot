@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 
-import { inject, injectable } from 'inversify';
+import { inject, injectable, optional } from 'inversify';
 import type { Context } from 'telegraf';
 import { Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
@@ -36,6 +36,10 @@ import {
 } from '@/application/interfaces/logging/LoggerFactory';
 import type { MessageContextExtractor } from '@/application/interfaces/messages/MessageContextExtractor';
 import { MESSAGE_CONTEXT_EXTRACTOR_ID } from '@/application/interfaces/messages/MessageContextExtractor';
+import {
+  TOPIC_OF_DAY_SCHEDULER_ID,
+  type TopicOfDayScheduler,
+} from '@/application/interfaces/scheduler/TopicOfDayScheduler';
 import { MessageFactory } from '@/application/use-cases/messages/MessageFactory';
 import type { TriggerContext } from '@/domain/triggers/Trigger';
 
@@ -85,7 +89,10 @@ export class TelegramBot implements BotService {
     @inject(CHAT_RESPONDER_ID) private responder: ChatResponder,
     @inject(CHAT_INFO_SERVICE_ID) private chatInfo: ChatInfoService,
     @inject(CHAT_CONFIG_SERVICE_ID) private chatConfig: ChatConfigService,
-    @inject(LOGGER_FACTORY_ID) loggerFactory: LoggerFactory
+    @inject(LOGGER_FACTORY_ID) loggerFactory: LoggerFactory,
+    @inject(TOPIC_OF_DAY_SCHEDULER_ID)
+    @optional()
+    private scheduler?: TopicOfDayScheduler
   ) {
     this.env = envService.env;
     this.bot = new Telegraf(this.env.BOT_TOKEN);
@@ -672,6 +679,7 @@ export class TelegramBot implements BotService {
       } else {
         const time = text ?? '';
         await this.chatConfig.setTopicTime(awaiting.chatId, time, 'UTC');
+        await this.scheduler?.reschedule(awaiting.chatId);
         await ctx.reply('✅ Время статьи обновлено');
       }
     } catch (error) {

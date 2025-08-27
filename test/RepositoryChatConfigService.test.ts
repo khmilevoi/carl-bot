@@ -1,18 +1,17 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { ChatConfigServiceImpl } from '../src/application/use-cases/chat/ChatConfigServiceImpl';
+import { RepositoryChatConfigService } from '../src/application/use-cases/chat/RepositoryChatConfigService';
 import type { ChatConfigEntity } from '../src/domain/entities/ChatConfigEntity';
 import type { ChatConfigRepository } from '../src/domain/repositories/ChatConfigRepository';
 
-describe('ChatConfigServiceImpl', () => {
+describe('RepositoryChatConfigService', () => {
   it('creates default config when missing', async () => {
     const repo: ChatConfigRepository = {
       findById: vi.fn(async () => undefined),
       upsert: vi.fn(async () => {}),
       findAll: vi.fn(async () => []),
     };
-    const scheduler = { reschedule: vi.fn(async () => {}) };
-    const service = new ChatConfigServiceImpl(repo, scheduler as any);
+    const service = new RepositoryChatConfigService(repo);
     const config = await service.getConfig(1);
     expect(config).toEqual({
       chatId: 1,
@@ -37,8 +36,7 @@ describe('ChatConfigServiceImpl', () => {
       upsert: vi.fn(async () => {}),
       findAll: vi.fn(async () => []),
     };
-    const scheduler = { reschedule: vi.fn(async () => {}) };
-    const service = new ChatConfigServiceImpl(repo, scheduler as any);
+    const service = new RepositoryChatConfigService(repo);
     await service.setHistoryLimit(1, 10);
     expect(repo.upsert).toHaveBeenCalledWith({ ...existing, historyLimit: 10 });
   });
@@ -56,8 +54,7 @@ describe('ChatConfigServiceImpl', () => {
       upsert: vi.fn(async () => {}),
       findAll: vi.fn(async () => []),
     };
-    const scheduler = { reschedule: vi.fn(async () => {}) };
-    const service = new ChatConfigServiceImpl(repo, scheduler as any);
+    const service = new RepositoryChatConfigService(repo);
     await service.setInterestInterval(1, 20);
     expect(repo.upsert).toHaveBeenCalledWith({
       ...existing,
@@ -78,15 +75,13 @@ describe('ChatConfigServiceImpl', () => {
       upsert: vi.fn(async () => {}),
       findAll: vi.fn(async () => []),
     };
-    const scheduler = { reschedule: vi.fn(async () => {}) };
-    const service = new ChatConfigServiceImpl(repo, scheduler as any);
+    const service = new RepositoryChatConfigService(repo);
     await service.setTopicTime(1, '10:30', 'Europe/Moscow');
     expect(repo.upsert).toHaveBeenCalledWith({
       ...existing,
       topicTime: '10:30',
       topicTimezone: 'Europe/Moscow',
     });
-    expect(scheduler.reschedule).toHaveBeenCalledWith(1);
   });
 
   it('clears topic time when null', async () => {
@@ -102,15 +97,13 @@ describe('ChatConfigServiceImpl', () => {
       upsert: vi.fn(async () => {}),
       findAll: vi.fn(async () => []),
     };
-    const scheduler = { reschedule: vi.fn(async () => {}) };
-    const service = new ChatConfigServiceImpl(repo, scheduler as any);
+    const service = new RepositoryChatConfigService(repo);
     await service.setTopicTime(1, null, 'UTC');
     expect(repo.upsert).toHaveBeenCalledWith({
       ...existing,
       topicTime: null,
       topicTimezone: 'UTC',
     });
-    expect(scheduler.reschedule).toHaveBeenCalledWith(1);
   });
 
   it('returns topic of day schedules', async () => {
@@ -134,8 +127,7 @@ describe('ChatConfigServiceImpl', () => {
         },
       ]),
     } as unknown as ChatConfigRepository;
-    const scheduler = { reschedule: vi.fn(async () => {}) };
-    const service = new ChatConfigServiceImpl(repo, scheduler as any);
+    const service = new RepositoryChatConfigService(repo);
     const schedules = await service.getTopicOfDaySchedules();
     expect(schedules).toEqual(
       new Map([[1, { cron: '0 30 10 * * *', timezone: 'UTC' }]])
