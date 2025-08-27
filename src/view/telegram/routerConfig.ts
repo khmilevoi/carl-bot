@@ -17,41 +17,27 @@ interface AdminChatParams {
 
 // eslint-disable-next-line import/no-unused-modules
 export interface Actions {
-  exportData(ctx: Context): Promise<void> | void;
-  resetMemory(ctx: Context): Promise<void> | void;
-  requestChatAccess(ctx: Context): Promise<void> | void;
-  requestUserAccess(ctx: Context): Promise<void> | void;
-  showAdminChats(ctx: Context): Promise<void> | void;
-  showChatSettings(ctx: Context): Promise<void> | void;
-  configHistoryLimit(ctx: Context): Promise<void> | void;
-  configInterestInterval(ctx: Context): Promise<void> | void;
-  configTopicTime(ctx: Context): Promise<void> | void;
-  showAdminChat(ctx: Context, chatId: number): Promise<void> | void;
-  handleAdminConfigHistoryLimit(
-    ctx: Context,
-    chatId: number
-  ): Promise<void> | void;
-  handleAdminConfigInterestInterval(
-    ctx: Context,
-    chatId: number
-  ): Promise<void> | void;
-  handleAdminConfigTopicTime(
-    ctx: Context,
-    chatId: number
-  ): Promise<void> | void;
-  approveChat(ctx: Context, chatId: number): Promise<void> | void;
-  banChat(ctx: Context, chatId: number): Promise<void> | void;
-  unbanChat(ctx: Context, chatId: number): Promise<void> | void;
-  approveUser(
-    ctx: Context,
-    chatId: number,
-    userId: number
-  ): Promise<void> | void;
+  // Detached from Telegram ctx
+  exportData(): Promise<void>;
+  resetMemory(): Promise<void>;
+  requestChatAccess(): Promise<void>;
+  requestUserAccess(): Promise<void>;
+
+  // Data loaders for views
+  loadChatSettings(): Promise<ChatConfigParams>;
+  loadAdminChats(): Promise<{ id: number; title: string }[]>;
+  loadAdminChat(chatId: number): Promise<AdminChatParams>;
+
+  // Admin actions
+  approveChat(chatId: number): Promise<void>;
+  banChat(chatId: number): Promise<void>;
+  unbanChat(chatId: number): Promise<void>;
+  approveUser(chatId: number, userId: number): Promise<void>;
 }
 
 const { row, rows } = DSL;
 
-const menu = route<Actions>({
+const Menu = route<Actions>({
   id: 'menu',
   async action({ actions }) {
     return {
@@ -61,21 +47,24 @@ const menu = route<Actions>({
           button({
             text: '📊 Загрузить данные',
             callback: cb('export_data'),
-            action: ({ ctx }) => actions.exportData(ctx),
+            action: async () => actions.exportData(),
           })
         ),
         row(
           button({
             text: '🔄 Сбросить память',
             callback: cb('reset_memory'),
-            action: ({ ctx }) => actions.resetMemory(ctx),
+            action: async () => actions.resetMemory(),
           })
         ),
         row(
           button({
             text: '⚙️ Настройки',
             callback: cb('chat_settings'),
-            action: ({ ctx }) => actions.showChatSettings(ctx),
+            action: async ({ actions, navigate }) => {
+              const config = await actions.loadChatSettings();
+              await navigate(ChatSettings, config);
+            },
           })
         )
       ),
@@ -83,9 +72,9 @@ const menu = route<Actions>({
   },
 });
 
-const chatSettings = route<Actions, ChatConfigParams>({
+const ChatSettings = route<Actions, ChatConfigParams>({
   id: 'chat_settings',
-  async action({ params, actions }) {
+  async action({ params }) {
     const config = params;
     return {
       text: 'Выберите настройку:',
@@ -94,21 +83,21 @@ const chatSettings = route<Actions, ChatConfigParams>({
           button({
             text: `🕒 Лимит истории (${config.historyLimit})`,
             callback: cb('config_history_limit'),
-            action: ({ ctx }) => actions.configHistoryLimit(ctx),
+            action: async ({ navigate }) => navigate(ChatHistoryLimit),
           })
         ),
         row(
           button({
             text: `✨ Интервал интереса (${config.interestInterval})`,
             callback: cb('config_interest_interval'),
-            action: ({ ctx }) => actions.configInterestInterval(ctx),
+            action: async ({ navigate }) => navigate(ChatInterestInterval),
           })
         ),
         row(
           button({
             text: `📝 Время статьи (${config.topicTime ?? '—'})`,
             callback: cb('config_topic_time'),
-            action: ({ ctx }) => actions.configTopicTime(ctx),
+            action: async ({ navigate }) => navigate(ChatTopicTime),
           })
         )
       ),
@@ -116,7 +105,7 @@ const chatSettings = route<Actions, ChatConfigParams>({
   },
 });
 
-const chatHistoryLimit = route<Actions>({
+const ChatHistoryLimit = route<Actions>({
   id: 'chat_history_limit',
   waitForText: true,
   async action() {
@@ -124,7 +113,7 @@ const chatHistoryLimit = route<Actions>({
   },
 });
 
-const chatInterestInterval = route<Actions>({
+const ChatInterestInterval = route<Actions>({
   id: 'chat_interest_interval',
   waitForText: true,
   async action() {
@@ -132,7 +121,7 @@ const chatInterestInterval = route<Actions>({
   },
 });
 
-const chatTopicTime = route<Actions>({
+const ChatTopicTime = route<Actions>({
   id: 'chat_topic_time',
   waitForText: true,
   async action() {
@@ -140,7 +129,7 @@ const chatTopicTime = route<Actions>({
   },
 });
 
-const chatTopicTimezone = route<Actions, { timezone: string }>({
+const ChatTopicTimezone = route<Actions, { timezone: string }>({
   id: 'chat_topic_timezone',
   waitForText: true,
   async action({ params }) {
@@ -151,7 +140,7 @@ const chatTopicTimezone = route<Actions, { timezone: string }>({
   },
 });
 
-const adminMenu = route<Actions>({
+const AdminMenu = route<Actions>({
   id: 'admin_menu',
   async action({ actions }) {
     return {
@@ -161,14 +150,17 @@ const adminMenu = route<Actions>({
           button({
             text: '📊 Загрузить данные',
             callback: cb('admin_export_data'),
-            action: ({ ctx }) => actions.exportData(ctx),
+            action: async () => actions.exportData(),
           })
         ),
         row(
           button({
             text: '💬 Чаты',
             callback: cb('admin_chats'),
-            action: ({ ctx }) => actions.showAdminChats(ctx),
+            action: async ({ actions, navigate }) => {
+              const chats = await actions.loadAdminChats();
+              await navigate(AdminChats, chats);
+            },
           })
         )
       ),
@@ -176,9 +168,9 @@ const adminMenu = route<Actions>({
   },
 });
 
-const adminChats = route<Actions, { id: number; title: string }[]>({
+const AdminChats = route<Actions, { id: number; title: string }[]>({
   id: 'admin_chats',
-  async action({ params, actions }) {
+  async action({ params }) {
     const chats = params;
     if (!chats?.length) {
       return { text: 'Нет доступных чатов', buttons: [] };
@@ -188,10 +180,13 @@ const adminChats = route<Actions, { id: number; title: string }[]>({
       buttons: rows(
         ...chats.map((chat) =>
           row(
-            button({
+            button<Actions>({
               text: `${chat.title} (${chat.id})`,
               callback: cb('admin_chat', [chat.id]),
-              action: ({ ctx }) => actions.showAdminChat(ctx, chat.id),
+              action: async ({ actions, navigate }) => {
+                const data = await actions.loadAdminChat(chat.id);
+                await navigate(AdminChat, data);
+              },
             })
           )
         )
@@ -200,15 +195,15 @@ const adminChats = route<Actions, { id: number; title: string }[]>({
   },
 });
 
-const adminChat = route<Actions, AdminChatParams | void>({
+const AdminChat = route<Actions, AdminChatParams | void>({
   id: 'admin_chat',
   async action({ ctx, params, actions }) {
-    if (!params) {
+    let p = params;
+    if (!p) {
       const chatId = Number((ctx as Context & { match?: string[] }).match?.[1]);
-      await actions.showAdminChat(ctx, chatId);
-      return;
+      p = await actions.loadAdminChat(chatId);
     }
-    const { chatId, status, config } = params;
+    const { chatId, status, config } = p as AdminChatParams;
     return {
       text: `Статус чата ${chatId}: ${status}`,
       buttons: rows(
@@ -218,34 +213,34 @@ const adminChat = route<Actions, AdminChatParams | void>({
             callback: cb(status === 'banned' ? 'chat_unban' : 'chat_ban', [
               chatId,
             ]),
-            action: ({ ctx }) =>
+            action: async ({ actions }) =>
               status === 'banned'
-                ? actions.unbanChat(ctx, chatId)
-                : actions.banChat(ctx, chatId),
+                ? actions.unbanChat(chatId)
+                : actions.banChat(chatId),
           })
         ),
         row(
           button({
             text: `🕒 Лимит истории (${config.historyLimit})`,
             callback: cb('admin_chat_history_limit', [chatId]),
-            action: ({ ctx }) =>
-              actions.handleAdminConfigHistoryLimit(ctx, chatId),
+            action: async ({ navigate }) =>
+              navigate(AdminChatHistoryLimit, { chatId }),
           })
         ),
         row(
           button({
             text: `✨ Интервал интереса (${config.interestInterval})`,
             callback: cb('admin_chat_interest_interval', [chatId]),
-            action: ({ ctx }) =>
-              actions.handleAdminConfigInterestInterval(ctx, chatId),
+            action: async ({ navigate }) =>
+              navigate(AdminChatInterestInterval, { chatId }),
           })
         ),
         row(
           button({
             text: `📝 Время статьи (${config.topicTime ?? '—'})`,
             callback: cb('admin_chat_topic_time', [chatId]),
-            action: ({ ctx }) =>
-              actions.handleAdminConfigTopicTime(ctx, chatId),
+            action: async ({ navigate }) =>
+              navigate(AdminChatTopicTime, { chatId }),
           })
         )
       ),
@@ -253,14 +248,16 @@ const adminChat = route<Actions, AdminChatParams | void>({
   },
 });
 
-const adminChatHistoryLimit = route<Actions, { chatId: number } | void>({
+const AdminChatHistoryLimit = route<Actions, { chatId: number } | void>({
   id: 'admin_chat_history_limit',
   waitForText: true,
-  async action({ ctx, params, actions }) {
+  async action({ ctx, params }) {
     if (!params) {
       const chatId = Number((ctx as Context & { match?: string[] }).match?.[1]);
-      await actions.handleAdminConfigHistoryLimit(ctx, chatId);
-      return;
+      return {
+        text: `Введите новый лимит истории для чата ${chatId}:`,
+        buttons: [],
+      };
     }
     return {
       text: `Введите новый лимит истории для чата ${params.chatId}:`,
@@ -269,14 +266,16 @@ const adminChatHistoryLimit = route<Actions, { chatId: number } | void>({
   },
 });
 
-const adminChatInterestInterval = route<Actions, { chatId: number } | void>({
+const AdminChatInterestInterval = route<Actions, { chatId: number } | void>({
   id: 'admin_chat_interest_interval',
   waitForText: true,
-  async action({ ctx, params, actions }) {
+  async action({ ctx, params }) {
     if (!params) {
       const chatId = Number((ctx as Context & { match?: string[] }).match?.[1]);
-      await actions.handleAdminConfigInterestInterval(ctx, chatId);
-      return;
+      return {
+        text: `Введите новый интервал интереса для чата ${chatId}:`,
+        buttons: [],
+      };
     }
     return {
       text: `Введите новый интервал интереса для чата ${params.chatId}:`,
@@ -285,14 +284,16 @@ const adminChatInterestInterval = route<Actions, { chatId: number } | void>({
   },
 });
 
-const adminChatTopicTime = route<Actions, { chatId: number } | void>({
+const AdminChatTopicTime = route<Actions, { chatId: number } | void>({
   id: 'admin_chat_topic_time',
   waitForText: true,
-  async action({ ctx, params, actions }) {
+  async action({ ctx, params }) {
     if (!params) {
       const chatId = Number((ctx as Context & { match?: string[] }).match?.[1]);
-      await actions.handleAdminConfigTopicTime(ctx, chatId);
-      return;
+      return {
+        text: `Введите время статьи для чата ${chatId} (HH:MM):`,
+        buttons: [],
+      };
     }
     return {
       text: `Введите время статьи для чата ${params.chatId} (HH:MM):`,
@@ -301,7 +302,7 @@ const adminChatTopicTime = route<Actions, { chatId: number } | void>({
   },
 });
 
-const adminChatTopicTimezone = route<
+const AdminChatTopicTimezone = route<
   Actions,
   { chatId: number; timezone: string }
 >({
@@ -316,7 +317,7 @@ const adminChatTopicTimezone = route<
   },
 });
 
-const chatNotApproved = route<Actions>({
+const ChatNotApproved = route<Actions>({
   id: 'chat_not_approved',
   async action({ actions }) {
     return {
@@ -326,7 +327,7 @@ const chatNotApproved = route<Actions>({
           button({
             text: 'Запросить доступ',
             callback: cb('chat_request'),
-            action: ({ ctx }) => actions.requestChatAccess(ctx),
+            action: async () => actions.requestChatAccess(),
           })
         )
       ),
@@ -334,7 +335,7 @@ const chatNotApproved = route<Actions>({
   },
 });
 
-const noAccess = route<Actions>({
+const NoAccess = route<Actions>({
   id: 'no_access',
   async action({ actions }) {
     return {
@@ -344,7 +345,7 @@ const noAccess = route<Actions>({
           button({
             text: '🔑 Запросить доступ',
             callback: cb('request_access'),
-            action: ({ ctx }) => actions.requestUserAccess(ctx),
+            action: async () => actions.requestUserAccess(),
           })
         )
       ),
@@ -352,9 +353,9 @@ const noAccess = route<Actions>({
   },
 });
 
-const chatApprovalRequest = route<Actions, { name: string; chatId: number }>({
+const ChatApprovalRequest = route<Actions, { name: string; chatId: number }>({
   id: 'chat_approval_request',
-  async action({ params, actions }) {
+  async action({ params }) {
     return {
       text: `${params.name} запросил доступ`,
       buttons: rows(
@@ -362,12 +363,12 @@ const chatApprovalRequest = route<Actions, { name: string; chatId: number }>({
           button({
             text: 'Разрешить',
             callback: cb('chat_approve', [params.chatId]),
-            action: ({ ctx }) => actions.approveChat(ctx, params.chatId),
+            action: async ({ actions }) => actions.approveChat(params.chatId),
           }),
           button({
             text: 'Забанить',
             callback: cb('chat_ban', [params.chatId]),
-            action: ({ ctx }) => actions.banChat(ctx, params.chatId),
+            action: async ({ actions }) => actions.banChat(params.chatId),
           })
         )
       ),
@@ -375,7 +376,7 @@ const chatApprovalRequest = route<Actions, { name: string; chatId: number }>({
   },
 });
 
-const userAccessRequest = route<
+const UserAccessRequest = route<
   Actions,
   {
     msg: string;
@@ -384,7 +385,7 @@ const userAccessRequest = route<
   }
 >({
   id: 'user_access_request',
-  async action({ params, actions }) {
+  async action({ params }) {
     return {
       text: params.msg,
       buttons: rows(
@@ -392,15 +393,15 @@ const userAccessRequest = route<
           button({
             text: 'Одобрить',
             callback: cb('user_approve', [params.chatId, params.userId]),
-            action: ({ ctx }) =>
-              actions.approveUser(ctx, params.chatId, params.userId),
+            action: async ({ actions }) =>
+              actions.approveUser(params.chatId, params.userId),
           })
         ),
         row(
           button({
             text: 'Забанить чат',
             callback: cb('chat_ban', [params.chatId]),
-            action: ({ ctx }) => actions.banChat(ctx, params.chatId),
+            action: async ({ actions }) => actions.banChat(params.chatId),
           })
         )
       ),
@@ -408,84 +409,84 @@ const userAccessRequest = route<
   },
 });
 
-const chatApprove = route<Actions>({
+const ChatApprove = route<Actions>({
   id: 'chat_approve',
   async action({ ctx, actions }) {
     const chatId = Number((ctx as Context & { match?: string[] }).match?.[1]);
-    await actions.approveChat(ctx, chatId);
+    await actions.approveChat(chatId);
   },
 });
 
-const chatBan = route<Actions>({
+const ChatBan = route<Actions>({
   id: 'chat_ban',
   async action({ ctx, actions }) {
     const chatId = Number((ctx as Context & { match?: string[] }).match?.[1]);
-    await actions.banChat(ctx, chatId);
+    await actions.banChat(chatId);
   },
 });
 
-const chatUnban = route<Actions>({
+const ChatUnban = route<Actions>({
   id: 'chat_unban',
   async action({ ctx, actions }) {
     const chatId = Number((ctx as Context & { match?: string[] }).match?.[1]);
-    await actions.unbanChat(ctx, chatId);
+    await actions.unbanChat(chatId);
   },
 });
 
-const userApprove = route<Actions>({
+const UserApprove = route<Actions>({
   id: 'user_approve',
   async action({ ctx, actions }) {
     const match = (ctx as Context & { match?: string[] }).match;
     const chatId = Number(match?.[1]);
     const userId = Number(match?.[2]);
-    await actions.approveUser(ctx, chatId, userId);
+    await actions.approveUser(chatId, userId);
   },
 });
 
 // eslint-disable-next-line import/no-unused-modules
 export const routes = [
   {
-    route: menu,
+    route: Menu,
     children: [
       {
-        route: chatSettings,
+        route: ChatSettings,
         hasBack: true,
         children: [
-          chatHistoryLimit,
-          chatInterestInterval,
-          chatTopicTime,
-          chatTopicTimezone,
+          ChatHistoryLimit,
+          ChatInterestInterval,
+          ChatTopicTime,
+          ChatTopicTimezone,
         ],
       },
     ],
   },
   {
-    route: adminMenu,
+    route: AdminMenu,
     children: [
       {
-        route: adminChats,
+        route: AdminChats,
         hasBack: true,
         children: [
           {
-            route: adminChat,
+            route: AdminChat,
             hasBack: true,
             children: [
-              adminChatHistoryLimit,
-              adminChatInterestInterval,
-              adminChatTopicTime,
-              adminChatTopicTimezone,
+              AdminChatHistoryLimit,
+              AdminChatInterestInterval,
+              AdminChatTopicTime,
+              AdminChatTopicTimezone,
             ],
           },
         ],
       },
     ],
   },
-  { route: chatNotApproved },
-  { route: noAccess },
-  { route: chatApprovalRequest },
-  { route: userAccessRequest },
-  { route: chatApprove },
-  { route: chatBan },
-  { route: chatUnban },
-  { route: userApprove },
+  { route: ChatNotApproved },
+  { route: NoAccess },
+  { route: ChatApprovalRequest },
+  { route: UserAccessRequest },
+  { route: ChatApprove },
+  { route: ChatBan },
+  { route: ChatUnban },
+  { route: UserApprove },
 ];
