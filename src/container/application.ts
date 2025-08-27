@@ -90,6 +90,7 @@ import {
   PromptDirector,
 } from '../application/prompts/PromptDirector';
 import { AdminServiceImpl } from '../application/use-cases/admin/AdminServiceImpl';
+import { ChatConfigServiceImpl } from '../application/use-cases/chat/ChatConfigServiceImpl';
 import { ChatMemoryManager as ChatMemoryManagerImpl } from '../application/use-cases/chat/ChatMemory';
 import { DefaultChatApprovalService } from '../application/use-cases/chat/DefaultChatApprovalService';
 import { DefaultChatResetService } from '../application/use-cases/chat/DefaultChatResetService';
@@ -97,7 +98,6 @@ import { DefaultChatResponder } from '../application/use-cases/chat/DefaultChatR
 import { DefaultDialogueManager } from '../application/use-cases/chat/DefaultDialogueManager';
 import { DefaultHistorySummarizer } from '../application/use-cases/chat/DefaultHistorySummarizer';
 import { DefaultTriggerPipeline } from '../application/use-cases/chat/DefaultTriggerPipeline';
-import { RepositoryChatConfigService } from '../application/use-cases/chat/RepositoryChatConfigService';
 import { RepositoryChatInfoService } from '../application/use-cases/chat/RepositoryChatInfoService';
 import { DefaultInterestChecker } from '../application/use-cases/interest/DefaultInterestChecker';
 import { DefaultMessageContextExtractor } from '../application/use-cases/messages/DefaultMessageContextExtractor';
@@ -178,7 +178,7 @@ export const register = (container: Container): void => {
 
   container
     .bind<ChatConfigService>(CHAT_CONFIG_SERVICE_ID)
-    .to(RepositoryChatConfigService)
+    .to(ChatConfigServiceImpl)
     .inSingletonScope();
 
   container

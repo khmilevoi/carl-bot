@@ -1,4 +1,4 @@
-import { inject, injectable, LazyServiceIdentifier } from 'inversify';
+import { inject, injectable } from 'inversify';
 
 import { type ChatConfigService } from '@/application/interfaces/chat/ChatConfigService';
 import {
@@ -6,10 +6,6 @@ import {
   InvalidInterestIntervalError,
   InvalidTopicTimeError,
 } from '@/application/interfaces/chat/ChatConfigService.errors';
-import {
-  TOPIC_OF_DAY_SCHEDULER_ID,
-  type TopicOfDayScheduler,
-} from '@/application/interfaces/scheduler/TopicOfDayScheduler';
 import type { ChatConfigEntity } from '@/domain/entities/ChatConfigEntity';
 import {
   CHAT_CONFIG_REPOSITORY_ID,
@@ -25,9 +21,7 @@ const TOPIC_TIME_REGEX = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 @injectable()
 export class RepositoryChatConfigService implements ChatConfigService {
   constructor(
-    @inject(CHAT_CONFIG_REPOSITORY_ID) private repo: ChatConfigRepository,
-    @inject(new LazyServiceIdentifier(() => TOPIC_OF_DAY_SCHEDULER_ID))
-    private readonly scheduler: TopicOfDayScheduler
+    @inject(CHAT_CONFIG_REPOSITORY_ID) private repo: ChatConfigRepository
   ) {}
 
   async getConfig(chatId: number): Promise<ChatConfigEntity> {
@@ -96,6 +90,5 @@ export class RepositoryChatConfigService implements ChatConfigService {
     }
     const config = await this.getConfig(chatId);
     await this.repo.upsert({ ...config, topicTime, topicTimezone });
-    await this.scheduler.reschedule(chatId);
   }
 }

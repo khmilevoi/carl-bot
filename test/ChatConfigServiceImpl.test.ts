@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { RepositoryChatConfigService } from '../src/application/use-cases/chat/RepositoryChatConfigService';
+import { ChatConfigServiceImpl } from '../src/application/use-cases/chat/ChatConfigServiceImpl';
 import type { ChatConfigEntity } from '../src/domain/entities/ChatConfigEntity';
 import type { ChatConfigRepository } from '../src/domain/repositories/ChatConfigRepository';
 
-describe('RepositoryChatConfigService', () => {
+describe('ChatConfigServiceImpl', () => {
   it('creates default config when missing', async () => {
     const repo: ChatConfigRepository = {
       findById: vi.fn(async () => undefined),
@@ -12,7 +12,7 @@ describe('RepositoryChatConfigService', () => {
       findAll: vi.fn(async () => []),
     };
     const scheduler = { reschedule: vi.fn(async () => {}) };
-    const service = new RepositoryChatConfigService(repo, scheduler as any);
+    const service = new ChatConfigServiceImpl(repo, scheduler as any);
     const config = await service.getConfig(1);
     expect(config).toEqual({
       chatId: 1,
@@ -38,7 +38,7 @@ describe('RepositoryChatConfigService', () => {
       findAll: vi.fn(async () => []),
     };
     const scheduler = { reschedule: vi.fn(async () => {}) };
-    const service = new RepositoryChatConfigService(repo, scheduler as any);
+    const service = new ChatConfigServiceImpl(repo, scheduler as any);
     await service.setHistoryLimit(1, 10);
     expect(repo.upsert).toHaveBeenCalledWith({ ...existing, historyLimit: 10 });
   });
@@ -57,7 +57,7 @@ describe('RepositoryChatConfigService', () => {
       findAll: vi.fn(async () => []),
     };
     const scheduler = { reschedule: vi.fn(async () => {}) };
-    const service = new RepositoryChatConfigService(repo, scheduler as any);
+    const service = new ChatConfigServiceImpl(repo, scheduler as any);
     await service.setInterestInterval(1, 20);
     expect(repo.upsert).toHaveBeenCalledWith({
       ...existing,
@@ -79,7 +79,7 @@ describe('RepositoryChatConfigService', () => {
       findAll: vi.fn(async () => []),
     };
     const scheduler = { reschedule: vi.fn(async () => {}) };
-    const service = new RepositoryChatConfigService(repo, scheduler as any);
+    const service = new ChatConfigServiceImpl(repo, scheduler as any);
     await service.setTopicTime(1, '10:30', 'Europe/Moscow');
     expect(repo.upsert).toHaveBeenCalledWith({
       ...existing,
@@ -103,7 +103,7 @@ describe('RepositoryChatConfigService', () => {
       findAll: vi.fn(async () => []),
     };
     const scheduler = { reschedule: vi.fn(async () => {}) };
-    const service = new RepositoryChatConfigService(repo, scheduler as any);
+    const service = new ChatConfigServiceImpl(repo, scheduler as any);
     await service.setTopicTime(1, null, 'UTC');
     expect(repo.upsert).toHaveBeenCalledWith({
       ...existing,
@@ -135,7 +135,7 @@ describe('RepositoryChatConfigService', () => {
       ]),
     } as unknown as ChatConfigRepository;
     const scheduler = { reschedule: vi.fn(async () => {}) };
-    const service = new RepositoryChatConfigService(repo, scheduler as any);
+    const service = new ChatConfigServiceImpl(repo, scheduler as any);
     const schedules = await service.getTopicOfDaySchedules();
     expect(schedules).toEqual(
       new Map([[1, { cron: '0 30 10 * * *', timezone: 'UTC' }]])
