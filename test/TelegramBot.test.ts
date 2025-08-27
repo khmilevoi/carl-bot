@@ -231,9 +231,23 @@ describe('TelegramBot', () => {
         handleConfigTopicTime: (ctx: Context) => Promise<void>;
       }
     ).handleConfigTopicTime({ chat: { id: 14 } } as Context);
-    const ctxText = {
+    const ctxTime = {
       chat: { id: 14 },
       message: { text: 'bad' },
+      reply: vi.fn(),
+    } as unknown as Context;
+    await (
+      bot as unknown as { handleText: (ctx: Context) => Promise<void> }
+    ).handleText(ctxTime);
+    expect(showSpy).toHaveBeenNthCalledWith(
+      2,
+      ctxTime,
+      'chat_topic_timezone',
+      expect.anything()
+    );
+    const ctxZone = {
+      chat: { id: 14 },
+      message: { text: 'UTC' },
       reply: vi.fn(),
     } as unknown as Context;
     config.setTopicTime.mockImplementationOnce(async () => {
@@ -241,12 +255,12 @@ describe('TelegramBot', () => {
     });
     await (
       bot as unknown as { handleText: (ctx: Context) => Promise<void> }
-    ).handleText(ctxText);
+    ).handleText(ctxZone);
     expect(config.setTopicTime).toHaveBeenCalledWith(14, 'bad', 'UTC');
-    expect(ctxText.reply).toHaveBeenCalledWith(
+    expect(ctxZone.reply).toHaveBeenCalledWith(
       '❌ Время статьи должно быть в формате HH:MM'
     );
-    expect(showSpy).toHaveBeenCalledWith(ctxText, 'menu');
+    expect(showSpy).toHaveBeenNthCalledWith(3, ctxZone, 'menu');
   });
 
   it('updates interest interval on valid input', async () => {
@@ -312,17 +326,31 @@ describe('TelegramBot', () => {
         handleConfigTopicTime: (ctx: Context) => Promise<void>;
       }
     ).handleConfigTopicTime({ chat: { id: 30 } } as Context);
-    const ctxText = {
+    const ctxTime = {
       chat: { id: 30 },
       message: { text: '10:30' },
       reply: vi.fn(),
     } as unknown as Context;
     await (
       bot as unknown as { handleText: (ctx: Context) => Promise<void> }
-    ).handleText(ctxText);
+    ).handleText(ctxTime);
+    expect(showSpy).toHaveBeenNthCalledWith(
+      2,
+      ctxTime,
+      'chat_topic_timezone',
+      expect.anything()
+    );
+    const ctxZone = {
+      chat: { id: 30 },
+      message: { text: 'UTC' },
+      reply: vi.fn(),
+    } as unknown as Context;
+    await (
+      bot as unknown as { handleText: (ctx: Context) => Promise<void> }
+    ).handleText(ctxZone);
     expect(config.setTopicTime).toHaveBeenCalledWith(30, '10:30', 'UTC');
-    expect(ctxText.reply).toHaveBeenCalledWith('✅ Время статьи обновлено');
-    expect(showSpy).toHaveBeenCalledWith(ctxText, 'menu');
+    expect(ctxZone.reply).toHaveBeenCalledWith('✅ Время статьи обновлено');
+    expect(showSpy).toHaveBeenNthCalledWith(3, ctxZone, 'menu');
     expect(scheduler.reschedule).toHaveBeenCalledWith(30);
   });
 
@@ -527,6 +555,9 @@ describe('TelegramBot', () => {
       createLoggerFactory(),
       scheduler as unknown as TopicOfDayScheduler
     );
+    const routeSpy = vi
+      .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
+      .mockResolvedValue(undefined);
     const showSpy = vi
       .spyOn(
         bot as unknown as {
@@ -546,17 +577,31 @@ describe('TelegramBot', () => {
       { chat: { id: 1 }, reply: vi.fn() } as Context,
       50
     );
-    const ctxText = {
+    const ctxTime = {
       chat: { id: 1 },
       message: { text: '08:00' },
       reply: vi.fn(),
     } as unknown as Context;
     await (
       bot as unknown as { handleText: (ctx: Context) => Promise<void> }
-    ).handleText(ctxText);
+    ).handleText(ctxTime);
+    expect(routeSpy).toHaveBeenNthCalledWith(
+      2,
+      ctxTime,
+      'admin_chat_topic_timezone',
+      expect.anything()
+    );
+    const ctxZone = {
+      chat: { id: 1 },
+      message: { text: 'UTC' },
+      reply: vi.fn(),
+    } as unknown as Context;
+    await (
+      bot as unknown as { handleText: (ctx: Context) => Promise<void> }
+    ).handleText(ctxZone);
     expect(config.setTopicTime).toHaveBeenCalledWith(50, '08:00', 'UTC');
-    expect(ctxText.reply).toHaveBeenCalledWith('✅ Время статьи обновлено');
-    expect(showSpy).toHaveBeenCalledWith(ctxText, 50);
+    expect(ctxZone.reply).toHaveBeenCalledWith('✅ Время статьи обновлено');
+    expect(showSpy).toHaveBeenCalledWith(ctxZone, 50);
     expect(scheduler.reschedule).toHaveBeenCalledWith(50);
   });
 
@@ -687,6 +732,9 @@ describe('TelegramBot', () => {
       createLoggerFactory(),
       scheduler as unknown as TopicOfDayScheduler
     );
+    const routeSpy = vi
+      .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
+      .mockResolvedValue(undefined);
     const showSpy = vi
       .spyOn(
         bot as unknown as {
@@ -706,9 +754,23 @@ describe('TelegramBot', () => {
       { chat: { id: 1 }, reply: vi.fn() } as Context,
       46
     );
-    const ctxText = {
+    const ctxTime = {
       chat: { id: 1 },
       message: { text: 'bad' },
+      reply: vi.fn(),
+    } as unknown as Context;
+    await (
+      bot as unknown as { handleText: (ctx: Context) => Promise<void> }
+    ).handleText(ctxTime);
+    expect(routeSpy).toHaveBeenNthCalledWith(
+      2,
+      ctxTime,
+      'admin_chat_topic_timezone',
+      expect.anything()
+    );
+    const ctxZone = {
+      chat: { id: 1 },
+      message: { text: 'UTC' },
       reply: vi.fn(),
     } as unknown as Context;
     config.setTopicTime.mockImplementationOnce(async () => {
@@ -716,12 +778,12 @@ describe('TelegramBot', () => {
     });
     await (
       bot as unknown as { handleText: (ctx: Context) => Promise<void> }
-    ).handleText(ctxText);
+    ).handleText(ctxZone);
     expect(config.setTopicTime).toHaveBeenCalledWith(46, 'bad', 'UTC');
-    expect(ctxText.reply).toHaveBeenCalledWith(
+    expect(ctxZone.reply).toHaveBeenCalledWith(
       '❌ Время статьи должно быть в формате HH:MM'
     );
-    expect(showSpy).toHaveBeenCalledWith(ctxText, 46);
+    expect(showSpy).toHaveBeenCalledWith(ctxZone, 46);
     expect(scheduler.reschedule).not.toHaveBeenCalled();
   });
 
