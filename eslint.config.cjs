@@ -81,6 +81,9 @@ module.exports = [
             'src/index.ts',
             'src/infrastructure/persistence/sqlite/DbProvider.ts',
             'test/**',
+            // Router is a standalone utility with many exported helpers/types
+            // that may not be imported elsewhere in this repo
+            'src/view/telegram/telegraf-inline-router.ts',
           ],
         },
       ],
@@ -122,6 +125,7 @@ module.exports = [
       'vitest.config.ts',
       'rsbuild.config.ts',
       'scripts/**',
+      'coverage/**',
     ],
   },
 ];

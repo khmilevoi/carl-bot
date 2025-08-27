@@ -59,6 +59,12 @@
 - When exporting or iterating over object properties (e.g. building CSV rows),
   type header arrays with `keyof` instead of casting entities to `any` or
   `Record<string, unknown>`. If a key cannot be typed, prefer `Reflect.get`.
+- Avoid one-letter or abbreviated variable names across the project. Use
+  descriptive identifiers (e.g. `state`, `entry`, `messageId`, `keyboardMarkup`)
+  instead of `st`, `e`, `mid`, `kb`, etc. Generic parameter names in public
+  types may remain concise.
+- Avoid double casts like `as unknown as` in production code. Prefer proper
+  typing and narrowing, or a single, well-targeted assertion when necessary.
 
 ## Troubleshooting
 
