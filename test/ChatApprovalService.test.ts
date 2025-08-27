@@ -47,7 +47,7 @@ describe('DefaultChatApprovalService', () => {
     await service.pending(1);
     expect(repo.setStatus).toHaveBeenCalledWith(1, 'pending');
     // Примечание: метод pending только устанавливает статус, не отправляет сообщения
-    // Отправка сообщений происходит в TelegramBot.sendChatApprovalRequest
+    // Отправка сообщений происходит в MainService.sendChatApprovalRequest
   });
 
   it('updates chat status', async () => {

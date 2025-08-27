@@ -25,6 +25,10 @@ import {
   type ChatMemoryManager as ChatMemoryManagerInterface,
 } from '../application/interfaces/chat/ChatMemoryManager';
 import {
+  CHAT_MESSENGER_ID,
+  type ChatMessenger,
+} from '../application/interfaces/chat/ChatMessenger';
+import {
   CHAT_RESET_SERVICE_ID,
   type ChatResetService,
 } from '../application/interfaces/chat/ChatResetService';
@@ -110,6 +114,7 @@ import { TestEnvService } from '../infrastructure/config/TestEnvService';
 import { ChatGPTService } from '../infrastructure/external/ChatGPTService';
 import { FilePromptTemplateService } from '../infrastructure/external/FilePromptTemplateService';
 import { PinoLoggerFactory } from '../infrastructure/logging/PinoLoggerFactory';
+import { TelegramMessenger } from '../view/telegram/TelegramMessenger';
 
 export const register = (container: Container): void => {
   const EnvServiceImpl =
@@ -219,6 +224,11 @@ export const register = (container: Container): void => {
   container
     .bind<ChatResponder>(CHAT_RESPONDER_ID)
     .to(DefaultChatResponder)
+    .inSingletonScope();
+
+  container
+    .bind<ChatMessenger>(CHAT_MESSENGER_ID)
+    .to(TelegramMessenger)
     .inSingletonScope();
 
   container

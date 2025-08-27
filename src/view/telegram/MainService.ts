@@ -1,13 +1,11 @@
 import assert from 'node:assert';
 
-import { inject, injectable, LazyServiceIdentifier, optional } from 'inversify';
-import type { Context } from 'telegraf';
-import { Telegraf } from 'telegraf';
+import { inject, injectable, LazyServiceIdentifier } from 'inversify';
+import type { Context, Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
 
 import type { AdminService } from '@/application/interfaces/admin/AdminService';
 import { ADMIN_SERVICE_ID } from '@/application/interfaces/admin/AdminService';
-import type { BotService } from '@/application/interfaces/bot/BotService';
 import type { ChatApprovalService } from '@/application/interfaces/chat/ChatApprovalService';
 import { CHAT_APPROVAL_SERVICE_ID } from '@/application/interfaces/chat/ChatApprovalService';
 import type { ChatConfigService } from '@/application/interfaces/chat/ChatConfigService';
@@ -23,6 +21,8 @@ import {
 } from '@/application/interfaces/chat/ChatInfoService';
 import type { ChatMemoryManager } from '@/application/interfaces/chat/ChatMemoryManager';
 import { CHAT_MEMORY_MANAGER_ID } from '@/application/interfaces/chat/ChatMemoryManager';
+import type { ChatMessenger } from '@/application/interfaces/chat/ChatMessenger';
+import { CHAT_MESSENGER_ID } from '@/application/interfaces/chat/ChatMessenger';
 import type { ChatResponder } from '@/application/interfaces/chat/ChatResponder';
 import { CHAT_RESPONDER_ID } from '@/application/interfaces/chat/ChatResponder';
 import type { TriggerPipeline } from '@/application/interfaces/chat/TriggerPipeline';
@@ -67,8 +67,8 @@ export async function withTyping(
 }
 
 @injectable()
-export class TelegramBot implements BotService {
-  private bot: Telegraf;
+export class MainService {
+  private readonly bot: Telegraf;
   private env: Env;
   private router: ReturnType<typeof registerRoutes<WindowId>>;
   private awaitingConfig = new Map<
@@ -82,6 +82,8 @@ export class TelegramBot implements BotService {
     }
   >();
   private readonly logger: Logger;
+  private readonly messenger: ChatMessenger;
+  private readonly scheduler: TopicOfDayScheduler;
 
   constructor(
     @inject(ENV_SERVICE_ID) envService: EnvService,
@@ -97,12 +99,15 @@ export class TelegramBot implements BotService {
     @inject(CHAT_CONFIG_SERVICE_ID) private chatConfig: ChatConfigService,
     @inject(LOGGER_FACTORY_ID) loggerFactory: LoggerFactory,
     @inject(new LazyServiceIdentifier(() => TOPIC_OF_DAY_SCHEDULER_ID))
-    @optional()
-    private scheduler?: TopicOfDayScheduler
+    scheduler: TopicOfDayScheduler,
+    @inject(CHAT_MESSENGER_ID)
+    messenger: ChatMessenger
   ) {
     this.env = envService.env;
-    this.bot = new Telegraf(this.env.BOT_TOKEN);
-    this.logger = loggerFactory.create('TelegramBot');
+    this.messenger = messenger;
+    this.bot = messenger.bot;
+    this.scheduler = scheduler;
+    this.logger = loggerFactory.create('MainService');
     const actions = {
       exportData: (ctx: Context) => this.handleExportData(ctx),
       resetMemory: (ctx: Context) => this.handleResetMemory(ctx),
@@ -124,25 +129,12 @@ export class TelegramBot implements BotService {
   }
 
   public async launch(): Promise<void> {
-    this.logger.info('Launching bot');
-    await this.bot.telegram
-      .deleteWebhook()
-      .catch((err) =>
-        this.logger.warn({ err }, 'Failed to delete existing webhook')
-      );
-    await this.bot
-      .launch()
-      .then(() => this.logger.info('Bot launched'))
-      .catch((err) => this.logger.error({ err }, 'Failed to launch bot'));
+    await this.messenger.launch();
+    void this.scheduler.start();
   }
 
   public stop(reason: string): void {
-    this.logger.info({ reason }, 'Stopping bot');
-    this.bot.stop(reason);
-  }
-
-  public async sendMessage(chatId: number, text: string): Promise<void> {
-    await this.bot.telegram.sendMessage(chatId, text);
+    this.messenger.stop(reason);
   }
 
   public async sendChatApprovalRequest(
@@ -154,7 +146,7 @@ export class TelegramBot implements BotService {
     const ctx = {
       chat: { id: this.env.ADMIN_CHAT_ID },
       reply: (text: string, extra?: object) =>
-        this.bot.telegram.sendMessage(this.env.ADMIN_CHAT_ID, text, extra),
+        this.messenger.sendMessage(this.env.ADMIN_CHAT_ID, text, extra),
     } as unknown as Context;
     await this.router.show(ctx, 'chat_approval_request', {
       loadData: () => ({ name, chatId }),
@@ -298,7 +290,7 @@ export class TelegramBot implements BotService {
       try {
         await this.approvalService.approve(chatId);
         await ctx.answerCbQuery('Чат одобрен');
-        await ctx.telegram.sendMessage(chatId, 'Доступ разрешён');
+        await this.messenger.sendMessage(chatId, 'Доступ разрешён');
         this.logger.info({ chatId }, 'Chat access approved successfully');
       } catch (error) {
         this.logger.error({ error, chatId }, 'Failed to approve chat access');
@@ -321,7 +313,7 @@ export class TelegramBot implements BotService {
       try {
         await this.approvalService.ban(chatId);
         await ctx.answerCbQuery('Чат забанен');
-        await ctx.telegram.sendMessage(chatId, 'Доступ запрещён');
+        await this.messenger.sendMessage(chatId, 'Доступ запрещён');
         await ctx.deleteMessage().catch(() => {});
         await this.showAdminChat(ctx, chatId);
         this.logger.info({ chatId }, 'Chat access banned successfully');
@@ -341,7 +333,7 @@ export class TelegramBot implements BotService {
       try {
         await this.approvalService.unban(chatId);
         await ctx.answerCbQuery('Чат разбанен');
-        await ctx.telegram.sendMessage(chatId, 'Доступ разрешён');
+        await this.messenger.sendMessage(chatId, 'Доступ разрешён');
         await ctx.deleteMessage().catch(() => {});
         await this.showAdminChat(ctx, chatId);
       } catch (error) {
@@ -362,7 +354,7 @@ export class TelegramBot implements BotService {
         const expiresAt = await this.admin.createAccessKey(chatId, userId);
         await ctx.answerCbQuery('Доступ одобрен');
         await ctx.reply(`Одобрено для чата ${chatId} и пользователя ${userId}`);
-        await ctx.telegram.sendMessage(
+        await this.messenger.sendMessage(
           chatId,
           `Доступ к данным разрешен для пользователя ${userId} до ${expiresAt.toISOString()}. Используйте меню для экспорта и сброса`
         );
@@ -456,7 +448,7 @@ export class TelegramBot implements BotService {
     const adminCtx = {
       chat: { id: this.env.ADMIN_CHAT_ID },
       reply: (text: string, extra?: object) =>
-        this.bot.telegram.sendMessage(this.env.ADMIN_CHAT_ID, text, extra),
+        this.messenger.sendMessage(this.env.ADMIN_CHAT_ID, text, extra),
     } as unknown as Context;
     await this.router.show(adminCtx, 'user_access_request', {
       loadData: () => ({ msg, chatId, userId }),

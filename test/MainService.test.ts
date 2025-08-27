@@ -2,8 +2,8 @@ import type { Context } from 'telegraf';
 import { Telegraf } from 'telegraf';
 import { describe, expect, it, vi } from 'vitest';
 
-import { TelegramBot } from '../src/view/telegram/TelegramBot';
-import * as TelegramBotModule from '../src/view/telegram/TelegramBot';
+import { MainService } from '../src/view/telegram/MainService';
+import * as MainServiceModule from '../src/view/telegram/MainService';
 import { createWindows } from '../src/view/telegram/windowConfig';
 import type { ChatInfoService } from '../src/application/interfaces/chat/ChatInfoService';
 import type { AdminService } from '../src/application/interfaces/admin/AdminService';
@@ -102,7 +102,18 @@ class DummyChatConfigService {
   );
 }
 
-describe('TelegramBot', () => {
+class DummyScheduler {
+  start = vi.fn(async () => {});
+}
+
+class DummyMessenger {
+  bot = new Telegraf('');
+  launch = vi.fn(async () => {});
+  stop = vi.fn();
+  sendMessage = vi.fn(async () => {});
+}
+
+describe('MainService', () => {
   it('contains settings menu item', async () => {
     const windows = createWindows({
       exportData: vi.fn(),
@@ -125,7 +136,7 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
       .spyOn(
-        TelegramBot.prototype as unknown as Record<string, unknown>,
+        MainService.prototype as unknown as Record<string, unknown>,
         'configure'
       )
       .mockImplementation(() => {});
@@ -137,7 +148,8 @@ describe('TelegramBot', () => {
       topicTime: '09:00',
       topicTimezone: 'UTC',
     });
-    const bot = new TelegramBot(
+    const messenger = new DummyMessenger();
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -147,7 +159,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      messenger as unknown as ChatMessenger
     );
     configureSpy.mockRestore();
     const botWithRouter = bot as unknown as {
@@ -171,7 +185,7 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const config = new DummyChatConfigService();
     const scheduler = { reschedule: vi.fn() };
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -182,7 +196,8 @@ describe('TelegramBot', () => {
       new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
       createLoggerFactory(),
-      scheduler as unknown as TopicOfDayScheduler
+      scheduler as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     const showSpy = vi
       .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
@@ -210,7 +225,7 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const config = new DummyChatConfigService();
     const scheduler = { reschedule: vi.fn() };
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -221,7 +236,8 @@ describe('TelegramBot', () => {
       new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
       createLoggerFactory(),
-      scheduler as unknown as TopicOfDayScheduler
+      scheduler as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     const showSpy = vi
       .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
@@ -267,7 +283,7 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const config = new DummyChatConfigService();
     const scheduler = { reschedule: vi.fn() };
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -278,7 +294,8 @@ describe('TelegramBot', () => {
       new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
       createLoggerFactory(),
-      scheduler as unknown as TopicOfDayScheduler
+      scheduler as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     const showSpy = vi
       .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
@@ -305,7 +322,7 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const config = new DummyChatConfigService();
     const scheduler = { reschedule: vi.fn() };
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -316,7 +333,8 @@ describe('TelegramBot', () => {
       new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
       createLoggerFactory(),
-      scheduler as unknown as TopicOfDayScheduler
+      scheduler as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     const showSpy = vi
       .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
@@ -358,7 +376,7 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const config = new DummyChatConfigService();
     const scheduler = { reschedule: vi.fn() };
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -369,7 +387,8 @@ describe('TelegramBot', () => {
       new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
       createLoggerFactory(),
-      scheduler as unknown as TopicOfDayScheduler
+      scheduler as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     const showSpy = vi
       .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
@@ -400,7 +419,7 @@ describe('TelegramBot', () => {
   it('handles invalid interest interval input', async () => {
     const memories = new MockChatMemoryManager();
     const config = new DummyChatConfigService();
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -410,7 +429,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     const showSpy = vi
       .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
@@ -441,7 +462,7 @@ describe('TelegramBot', () => {
   it('admin updates history limit on valid input', async () => {
     const memories = new MockChatMemoryManager();
     const admin = new DummyAdmin();
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       admin as unknown as AdminService,
@@ -451,7 +472,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     const showSpy = vi
       .spyOn(
@@ -491,7 +514,7 @@ describe('TelegramBot', () => {
   it('admin updates interest interval on valid input', async () => {
     const memories = new MockChatMemoryManager();
     const admin = new DummyAdmin();
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       admin as unknown as AdminService,
@@ -501,7 +524,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     const showSpy = vi
       .spyOn(
@@ -542,7 +567,7 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const config = new DummyChatConfigService();
     const scheduler = { reschedule: vi.fn() };
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -553,7 +578,8 @@ describe('TelegramBot', () => {
       new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
       createLoggerFactory(),
-      scheduler as unknown as TopicOfDayScheduler
+      scheduler as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     const routeSpy = vi
       .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
@@ -608,7 +634,7 @@ describe('TelegramBot', () => {
   it('admin handles invalid history limit input', async () => {
     const memories = new MockChatMemoryManager();
     const admin = new DummyAdmin();
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       admin as unknown as AdminService,
@@ -618,7 +644,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     const showSpy = vi
       .spyOn(
@@ -663,7 +691,7 @@ describe('TelegramBot', () => {
   it('admin handles invalid interest interval input', async () => {
     const memories = new MockChatMemoryManager();
     const admin = new DummyAdmin();
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       admin as unknown as AdminService,
@@ -673,7 +701,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     const showSpy = vi
       .spyOn(
@@ -719,7 +749,7 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const config = new DummyChatConfigService();
     const scheduler = { reschedule: vi.fn() };
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -730,7 +760,8 @@ describe('TelegramBot', () => {
       new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
       createLoggerFactory(),
-      scheduler as unknown as TopicOfDayScheduler
+      scheduler as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     const routeSpy = vi
       .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
@@ -791,7 +822,7 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
       .spyOn(
-        TelegramBot.prototype as unknown as Record<string, unknown>,
+        MainService.prototype as unknown as Record<string, unknown>,
         'configure'
       )
       .mockImplementation(() => {});
@@ -802,7 +833,7 @@ describe('TelegramBot', () => {
       getStatus: vi.fn(async () => 'approved'),
     };
 
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -812,7 +843,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     configureSpy.mockRestore();
 
@@ -838,7 +871,7 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
       .spyOn(
-        TelegramBot.prototype as unknown as Record<string, unknown>,
+        MainService.prototype as unknown as Record<string, unknown>,
         'configure'
       )
       .mockImplementation(() => {});
@@ -852,7 +885,7 @@ describe('TelegramBot', () => {
     chatRepo.getChat.mockResolvedValue({ chatId: 42, title: 'Test Chat' });
 
     const actionSpy = vi.spyOn(Telegraf.prototype, 'action');
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -862,7 +895,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       chatRepo as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     await new Promise((resolve) => setImmediate(resolve));
     const call = actionSpy.mock.calls.find(
@@ -916,7 +951,8 @@ describe('TelegramBot', () => {
       topicTime: '09:00',
       topicTimezone: 'UTC',
     });
-    const bot = new TelegramBot(
+    const messenger = new DummyMessenger();
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -926,7 +962,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      messenger as unknown as ChatMessenger
     );
 
     const call = actionSpy.mock.calls.find(
@@ -1001,7 +1039,8 @@ describe('TelegramBot', () => {
       topicTime: '09:00',
       topicTimezone: 'UTC',
     });
-    const bot = new TelegramBot(
+    const messenger = new DummyMessenger();
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -1011,7 +1050,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      messenger as unknown as ChatMessenger
     );
     await new Promise((resolve) => setImmediate(resolve));
 
@@ -1068,7 +1109,8 @@ describe('TelegramBot', () => {
       topicTime: '09:00',
       topicTimezone: 'UTC',
     });
-    const bot = new TelegramBot(
+    const messenger = new DummyMessenger();
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -1078,7 +1120,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      messenger as unknown as ChatMessenger
     );
 
     const call = actionSpy.mock.calls.find(
@@ -1118,7 +1162,7 @@ describe('TelegramBot', () => {
     await handler(ctx);
 
     expect(approvalService.ban).toHaveBeenCalledWith(7);
-    expect(ctx.telegram.sendMessage).toHaveBeenCalledWith(7, 'Доступ запрещён');
+    expect(messenger.sendMessage).toHaveBeenCalledWith(7, 'Доступ запрещён');
     expect(ctx.deleteMessage).toHaveBeenCalled();
     expect(ctx.reply).toHaveBeenCalledWith('Статус чата 7: banned', {
       reply_markup: {
@@ -1151,14 +1195,15 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
       .spyOn(
-        TelegramBot.prototype as unknown as Record<string, unknown>,
+        MainService.prototype as unknown as Record<string, unknown>,
         'configure'
       )
       .mockImplementation(() => {});
 
     const approvalService = new DummyApprovalService();
     const admin = new DummyAdmin();
-    const bot = new TelegramBot(
+    const messenger = new DummyMessenger();
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       admin as unknown as AdminService,
@@ -1168,13 +1213,13 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      messenger as unknown as ChatMessenger
     );
     configureSpy.mockRestore();
 
-    const sendMessageSpy = vi
-      .spyOn((bot as unknown as { bot: Telegraf }).bot.telegram, 'sendMessage')
-      .mockResolvedValue(undefined as never);
+    const sendMessageSpy = vi.spyOn(messenger, 'sendMessage');
 
     const ctx = {
       chat: { id: 42, title: 'Test' },
@@ -1198,12 +1243,13 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
       .spyOn(
-        TelegramBot.prototype as unknown as Record<string, unknown>,
+        MainService.prototype as unknown as Record<string, unknown>,
         'configure'
       )
       .mockImplementation(() => {});
 
-    const bot = new TelegramBot(
+    const messenger = new DummyMessenger();
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -1213,13 +1259,13 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      messenger as unknown as ChatMessenger
     );
     configureSpy.mockRestore();
 
-    const sendMessageSpy = vi
-      .spyOn((bot as unknown as { bot: Telegraf }).bot.telegram, 'sendMessage')
-      .mockResolvedValue(undefined as never);
+    const sendMessageSpy = vi.spyOn(messenger, 'sendMessage');
 
     const ctx = {
       chat: { id: 5 },
@@ -1251,7 +1297,8 @@ describe('TelegramBot', () => {
     admin.createAccessKey.mockResolvedValue(approveDate);
     const actionSpy = vi.spyOn(Telegraf.prototype, 'action');
 
-    new TelegramBot(
+    const messenger = new DummyMessenger();
+    new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       admin as unknown as AdminService,
@@ -1261,7 +1308,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      messenger as unknown as ChatMessenger
     );
 
     const call = actionSpy.mock.calls.find(
@@ -1290,7 +1339,7 @@ describe('TelegramBot', () => {
     expect(ctx.reply).toHaveBeenCalledWith(
       'Одобрено для чата 5 и пользователя 6'
     );
-    expect(ctx.telegram.sendMessage).toHaveBeenCalledWith(
+    expect(messenger.sendMessage).toHaveBeenCalledWith(
       5,
       `Доступ к данным разрешен для пользователя 6 до ${approveDate.toISOString()}. Используйте меню для экспорта и сброса`
     );
@@ -1300,7 +1349,7 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
       .spyOn(
-        TelegramBot.prototype as unknown as Record<string, unknown>,
+        MainService.prototype as unknown as Record<string, unknown>,
         'configure'
       )
       .mockImplementation(() => {});
@@ -1309,7 +1358,7 @@ describe('TelegramBot', () => {
     const file = { buffer: Buffer.from('data'), filename: 'file.csv' };
     admin.exportChatData.mockResolvedValue([file]);
 
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       admin as unknown as AdminService,
@@ -1319,7 +1368,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     configureSpy.mockRestore();
 
@@ -1353,7 +1404,7 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
       .spyOn(
-        TelegramBot.prototype as unknown as Record<string, unknown>,
+        MainService.prototype as unknown as Record<string, unknown>,
         'configure'
       )
       .mockImplementation(() => {});
@@ -1361,7 +1412,7 @@ describe('TelegramBot', () => {
     const admin = new DummyAdmin();
     admin.exportChatData.mockRejectedValue(new Error('fail'));
 
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       admin as unknown as AdminService,
@@ -1371,7 +1422,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     configureSpy.mockRestore();
 
@@ -1400,14 +1453,14 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
       .spyOn(
-        TelegramBot.prototype as unknown as Record<string, unknown>,
+        MainService.prototype as unknown as Record<string, unknown>,
         'configure'
       )
       .mockImplementation(() => {});
 
     const admin = new DummyAdmin();
 
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       admin as unknown as AdminService,
@@ -1417,7 +1470,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     configureSpy.mockRestore();
 
@@ -1444,7 +1499,7 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
       .spyOn(
-        TelegramBot.prototype as unknown as Record<string, unknown>,
+        MainService.prototype as unknown as Record<string, unknown>,
         'configure'
       )
       .mockImplementation(() => {});
@@ -1452,7 +1507,7 @@ describe('TelegramBot', () => {
     const admin = new DummyAdmin();
     memories.reset.mockRejectedValue(new Error('fail'));
 
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       admin as unknown as AdminService,
@@ -1462,7 +1517,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     configureSpy.mockRestore();
 
@@ -1489,13 +1546,13 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
       .spyOn(
-        TelegramBot.prototype as unknown as Record<string, unknown>,
+        MainService.prototype as unknown as Record<string, unknown>,
         'configure'
       )
       .mockImplementation(() => {});
     const approvalService = new DummyApprovalService();
     const admin = new DummyAdmin();
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       admin as unknown as AdminService,
@@ -1505,7 +1562,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     configureSpy.mockRestore();
     const botWithRouter = bot as unknown as {
@@ -1522,13 +1581,13 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
       .spyOn(
-        TelegramBot.prototype as unknown as Record<string, unknown>,
+        MainService.prototype as unknown as Record<string, unknown>,
         'configure'
       )
       .mockImplementation(() => {});
     const approvalService = new DummyApprovalService();
     const admin = new DummyAdmin();
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       admin as unknown as AdminService,
@@ -1538,7 +1597,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     configureSpy.mockRestore();
     const botWithRouter = bot as unknown as {
@@ -1569,14 +1630,14 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
       .spyOn(
-        TelegramBot.prototype as unknown as Record<string, unknown>,
+        MainService.prototype as unknown as Record<string, unknown>,
         'configure'
       )
       .mockImplementation(() => {});
     const approvalService = new DummyApprovalService();
     const admin = new DummyAdmin();
     admin.hasAccess.mockResolvedValue(false);
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       admin as unknown as AdminService,
@@ -1586,7 +1647,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     configureSpy.mockRestore();
     const botWithRouter = bot as unknown as {
@@ -1603,7 +1666,7 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
       .spyOn(
-        TelegramBot.prototype as unknown as Record<string, unknown>,
+        MainService.prototype as unknown as Record<string, unknown>,
         'configure'
       )
       .mockImplementation(() => {});
@@ -1611,7 +1674,7 @@ describe('TelegramBot', () => {
     const admin = new DummyAdmin();
     approvalService.getStatus.mockResolvedValueOnce('pending');
     approvalService.getStatus.mockResolvedValueOnce('banned');
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       admin as unknown as AdminService,
@@ -1621,7 +1684,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     configureSpy.mockRestore();
     const sendRequest = vi
@@ -1667,13 +1732,13 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
       .spyOn(
-        TelegramBot.prototype as unknown as Record<string, unknown>,
+        MainService.prototype as unknown as Record<string, unknown>,
         'configure'
       )
       .mockImplementation(() => {});
     const admin = new DummyAdmin();
     admin.hasAccess.mockResolvedValue(false);
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       admin as unknown as AdminService,
@@ -1683,7 +1748,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     configureSpy.mockRestore();
     const botWithRouter = bot as unknown as {
@@ -1706,7 +1773,7 @@ describe('TelegramBot', () => {
   it('handleAwaitingConfig updates history limit', async () => {
     const memories = new MockChatMemoryManager();
     const config = new DummyChatConfigService();
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -1716,7 +1783,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     const showSpy = vi
       .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
@@ -1747,7 +1816,7 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const approval = new DummyApprovalService();
     approval.getStatus.mockResolvedValue('pending');
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -1757,7 +1826,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     const sendSpy = vi
       .spyOn(
@@ -1788,7 +1859,7 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const approval = new DummyApprovalService();
     approval.getStatus.mockResolvedValue('banned');
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -1798,7 +1869,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     const sendSpy = vi.spyOn(
       bot as unknown as {
@@ -1827,7 +1900,7 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const approval = new DummyApprovalService();
     approval.getStatus.mockResolvedValue('approved');
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -1837,7 +1910,9 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     const ctx = { chat: { id: 7 } } as unknown as Context;
     const result = await (
@@ -1853,7 +1928,7 @@ describe('TelegramBot', () => {
     const pipeline = new DummyPipeline();
     pipeline.shouldRespond.mockResolvedValue(null);
     const responder = new DummyResponder();
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -1863,7 +1938,9 @@ describe('TelegramBot', () => {
       responder as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     const ctx = {
       chat: { id: 1 },
@@ -1891,7 +1968,7 @@ describe('TelegramBot', () => {
     });
     const responder = new DummyResponder();
     responder.generate.mockResolvedValue('answer');
-    const bot = new TelegramBot(
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -1901,7 +1978,9 @@ describe('TelegramBot', () => {
       responder as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      new DummyMessenger() as unknown as ChatMessenger
     );
     const ctx = {
       chat: { id: 1 },
@@ -1925,11 +2004,12 @@ describe('TelegramBot', () => {
     const memories = new MockChatMemoryManager();
     const configureSpy = vi
       .spyOn(
-        TelegramBot.prototype as unknown as Record<string, unknown>,
+        MainService.prototype as unknown as Record<string, unknown>,
         'configure'
       )
       .mockImplementation(() => {});
-    const bot = new TelegramBot(
+    const messenger = new DummyMessenger();
+    const bot = new MainService(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
       new DummyAdmin() as unknown as AdminService,
@@ -1939,24 +2019,17 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       new DummyChatConfigService() as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      new DummyScheduler() as unknown as TopicOfDayScheduler,
+      messenger as unknown as ChatMessenger
     );
     configureSpy.mockRestore();
-    const deleteWebhook = vi
-      .spyOn(
-        (bot as unknown as { bot: Telegraf }).bot.telegram,
-        'deleteWebhook'
-      )
-      .mockResolvedValue(undefined as never);
     const launch = vi
-      .spyOn((bot as unknown as { bot: Telegraf }).bot, 'launch')
+      .spyOn(messenger, 'launch')
       .mockResolvedValue(undefined as never);
     await bot.launch();
-    expect(deleteWebhook).toHaveBeenCalled();
     expect(launch).toHaveBeenCalled();
-    const stop = vi
-      .spyOn((bot as unknown as { bot: Telegraf }).bot, 'stop')
-      .mockImplementation(() => {});
+    const stop = vi.spyOn(messenger, 'stop').mockImplementation(() => {});
     bot.stop('test');
     expect(stop).toHaveBeenCalledWith('test');
   });
@@ -1979,7 +2052,7 @@ describe('TelegramBot', () => {
     );
 
     const promise = (
-      TelegramBotModule as unknown as {
+      MainServiceModule as unknown as {
         withTyping: (ctx: Context, fn: () => Promise<void>) => Promise<void>;
       }
     ).withTyping(ctx, fn);
