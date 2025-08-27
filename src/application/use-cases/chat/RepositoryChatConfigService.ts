@@ -4,6 +4,7 @@ import { type ChatConfigService } from '@/application/interfaces/chat/ChatConfig
 import {
   InvalidHistoryLimitError,
   InvalidInterestIntervalError,
+  InvalidTopicTimeError,
 } from '@/application/interfaces/chat/ChatConfigService.errors';
 import type { ChatConfigEntity } from '@/domain/entities/ChatConfigEntity';
 import {
@@ -13,6 +14,8 @@ import {
 
 const DEFAULT_HISTORY_LIMIT = 50;
 const DEFAULT_INTEREST_INTERVAL = 25;
+const DEFAULT_TOPIC_TIME = '09:00';
+const TOPIC_TIME_REGEX = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 
 @injectable()
 export class RepositoryChatConfigService implements ChatConfigService {
@@ -27,6 +30,7 @@ export class RepositoryChatConfigService implements ChatConfigService {
         chatId,
         historyLimit: DEFAULT_HISTORY_LIMIT,
         interestInterval: DEFAULT_INTEREST_INTERVAL,
+        topicTime: DEFAULT_TOPIC_TIME,
       };
       await this.repo.upsert(config);
     }
@@ -62,5 +66,13 @@ export class RepositoryChatConfigService implements ChatConfigService {
 
   async getTopicOfDaySchedules(): Promise<Map<number, string>> {
     return new Map();
+  }
+
+  async setTopicTime(chatId: number, topicTime: string): Promise<void> {
+    if (!TOPIC_TIME_REGEX.test(topicTime)) {
+      throw new InvalidTopicTimeError('Invalid topic time');
+    }
+    const config = await this.getConfig(chatId);
+    await this.repo.upsert({ ...config, topicTime });
   }
 }
