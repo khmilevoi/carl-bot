@@ -37,6 +37,11 @@ import {
 import type { MessageContextExtractor } from '@/application/interfaces/messages/MessageContextExtractor';
 import { MESSAGE_CONTEXT_EXTRACTOR_ID } from '@/application/interfaces/messages/MessageContextExtractor';
 import {
+  ROUTER_STATE_STORE_ID,
+  type RouterState,
+  type StateStore,
+} from '@/application/interfaces/router/StateStore';
+import {
   TOPIC_OF_DAY_SCHEDULER_ID,
   type TopicOfDayScheduler,
 } from '@/application/interfaces/scheduler/TopicOfDayScheduler';
@@ -45,6 +50,14 @@ import type { TriggerContext } from '@/domain/triggers/Trigger';
 
 import { registerRoutes } from './telegramRouter';
 import { createWindows, type WindowId } from './windowConfig';
+
+const defaultStateStore: StateStore = {
+  async get(_chatId: number, _userId: number) {
+    return undefined;
+  },
+  async set(_chatId: number, _userId: number, _state: RouterState) {},
+  async delete(_chatId: number, _userId: number) {},
+};
 
 export async function withTyping(
   ctx: Context,
@@ -84,6 +97,7 @@ export class MainService {
   private readonly logger: Logger;
   private readonly messenger: ChatMessenger;
   private readonly scheduler: TopicOfDayScheduler;
+  private readonly _stateStore: StateStore;
 
   constructor(
     @inject(ENV_SERVICE_ID) envService: EnvService,
@@ -101,12 +115,14 @@ export class MainService {
     @inject(new LazyServiceIdentifier(() => TOPIC_OF_DAY_SCHEDULER_ID))
     scheduler: TopicOfDayScheduler,
     @inject(CHAT_MESSENGER_ID)
-    messenger: ChatMessenger
+    messenger: ChatMessenger,
+    @inject(ROUTER_STATE_STORE_ID) stateStore: StateStore = defaultStateStore
   ) {
     this.env = envService.env;
     this.messenger = messenger;
     this.bot = messenger.bot;
     this.scheduler = scheduler;
+    this._stateStore = stateStore;
     this.logger = loggerFactory.create('MainService');
     const actions = {
       exportData: (ctx: Context) => this.handleExportData(ctx),
