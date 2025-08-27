@@ -7,11 +7,13 @@ export type WindowId =
   | 'chat_settings'
   | 'chat_history_limit'
   | 'chat_interest_interval'
+  | 'chat_topic_time'
   | 'admin_menu'
   | 'admin_chats'
   | 'admin_chat'
   | 'admin_chat_history_limit'
   | 'admin_chat_interest_interval'
+  | 'admin_chat_topic_time'
   | 'chat_not_approved'
   | 'no_access'
   | 'chat_approval_request'
@@ -29,6 +31,7 @@ interface WindowActions {
   showChatSettings(ctx: Context): Promise<void> | void;
   configHistoryLimit(ctx: Context): Promise<void> | void;
   configInterestInterval(ctx: Context): Promise<void> | void;
+  configTopicTime(ctx: Context): Promise<void> | void;
 }
 
 export function createWindows(actions: WindowActions): RouteApi<WindowId>[] {
@@ -57,6 +60,7 @@ export function createWindows(actions: WindowActions): RouteApi<WindowId>[] {
       const config = (await loadData()) as {
         historyLimit: number;
         interestInterval: number;
+        topicTime: string | null;
       };
       return {
         text: 'Выберите настройку:',
@@ -71,6 +75,11 @@ export function createWindows(actions: WindowActions): RouteApi<WindowId>[] {
             callback: 'config_interest_interval',
             action: actions.configInterestInterval,
           }),
+          b({
+            text: `📝 Время статьи (${config.topicTime ?? '—'})`,
+            callback: 'config_topic_time',
+            action: actions.configTopicTime,
+          }),
         ],
       };
     }),
@@ -80,6 +89,10 @@ export function createWindows(actions: WindowActions): RouteApi<WindowId>[] {
     })),
     r('chat_interest_interval', async () => ({
       text: 'Введите новый интервал интереса:',
+      buttons: [],
+    })),
+    r('chat_topic_time', async () => ({
+      text: 'Введите время статьи (HH:MM):',
       buttons: [],
     })),
     r('admin_menu', async () => ({
@@ -117,7 +130,11 @@ export function createWindows(actions: WindowActions): RouteApi<WindowId>[] {
       const { chatId, status, config } = (await loadData()) as {
         chatId: number;
         status: string;
-        config: { historyLimit: number; interestInterval: number };
+        config: {
+          historyLimit: number;
+          interestInterval: number;
+          topicTime: string | null;
+        };
       };
       return {
         text: `Статус чата ${chatId}: ${status}`,
@@ -137,6 +154,10 @@ export function createWindows(actions: WindowActions): RouteApi<WindowId>[] {
             text: `✨ Интервал интереса (${config.interestInterval})`,
             callback: `admin_chat_interest_interval:${chatId}`,
           }),
+          b({
+            text: `📝 Время статьи (${config.topicTime ?? '—'})`,
+            callback: `admin_chat_topic_time:${chatId}`,
+          }),
         ],
       };
     }),
@@ -151,6 +172,13 @@ export function createWindows(actions: WindowActions): RouteApi<WindowId>[] {
       const { chatId } = (await loadData()) as { chatId: number };
       return {
         text: `Введите новый интервал интереса для чата ${chatId}:`,
+        buttons: [],
+      };
+    }),
+    r('admin_chat_topic_time', async ({ loadData }) => {
+      const { chatId } = (await loadData()) as { chatId: number };
+      return {
+        text: `Введите время статьи для чата ${chatId} (HH:MM):`,
         buttons: [],
       };
     }),

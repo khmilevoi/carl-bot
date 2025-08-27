@@ -15,6 +15,7 @@ import { CHAT_CONFIG_SERVICE_ID } from '@/application/interfaces/chat/ChatConfig
 import {
   InvalidHistoryLimitError,
   InvalidInterestIntervalError,
+  InvalidTopicTimeError,
 } from '@/application/interfaces/chat/ChatConfigService.errors';
 import {
   CHAT_INFO_SERVICE_ID,
@@ -68,7 +69,7 @@ export class TelegramBot implements BotService {
   private router: ReturnType<typeof registerRoutes<WindowId>>;
   private awaitingConfig = new Map<
     number,
-    { type: 'history' | 'interest'; chatId: number; admin: boolean }
+    { type: 'history' | 'interest' | 'topic'; chatId: number; admin: boolean }
   >();
   private readonly logger: Logger;
 
@@ -102,6 +103,7 @@ export class TelegramBot implements BotService {
       configHistoryLimit: (ctx: Context) => this.handleConfigHistoryLimit(ctx),
       configInterestInterval: (ctx: Context) =>
         this.handleConfigInterestInterval(ctx),
+      configTopicTime: (ctx: Context) => this.handleConfigTopicTime(ctx),
     };
     const windows = createWindows(actions);
     this.router = registerRoutes<WindowId>(this.bot, windows);
@@ -250,6 +252,24 @@ export class TelegramBot implements BotService {
       }
     });
 
+    this.bot.action(/^admin_chat_topic_time:(\S+)$/, async (ctx) => {
+      const adminChatId = this.env.ADMIN_CHAT_ID;
+      if (ctx.chat?.id !== adminChatId) {
+        await ctx.answerCbQuery();
+        return;
+      }
+      const chatId = Number(ctx.match[1]);
+      try {
+        await ctx.answerCbQuery();
+        await this.handleAdminConfigTopicTime(ctx, chatId);
+      } catch (error) {
+        this.logger.error(
+          { error, chatId, adminChatId },
+          'Failed to handle admin topic time'
+        );
+      }
+    });
+
     this.bot.action(/^chat_approve:(\S+)$/, async (ctx) => {
       const adminChatId = this.env.ADMIN_CHAT_ID;
       if (ctx.chat?.id !== adminChatId) {
@@ -373,7 +393,11 @@ export class TelegramBot implements BotService {
     const load = async (): Promise<{
       chatId: number;
       status: string;
-      config: { historyLimit: number; interestInterval: number };
+      config: {
+        historyLimit: number;
+        interestInterval: number;
+        topicTime: string | null;
+      };
     }> => ({
       chatId,
       status: await this.approvalService.getStatus(chatId),
@@ -513,6 +537,17 @@ export class TelegramBot implements BotService {
     await this.router.show(ctx, 'chat_interest_interval');
   }
 
+  private async handleConfigTopicTime(ctx: Context): Promise<void> {
+    const chatId = ctx.chat?.id;
+    assert(chatId, 'This is not a chat');
+    this.awaitingConfig.set(chatId, {
+      type: 'topic',
+      chatId,
+      admin: false,
+    });
+    await this.router.show(ctx, 'chat_topic_time');
+  }
+
   private async handleAdminConfigHistoryLimit(
     ctx: Context,
     targetChatId: number
@@ -541,6 +576,22 @@ export class TelegramBot implements BotService {
       admin: true,
     });
     await this.router.show(ctx, 'admin_chat_interest_interval', {
+      loadData: async () => ({ chatId: targetChatId }),
+    });
+  }
+
+  private async handleAdminConfigTopicTime(
+    ctx: Context,
+    targetChatId: number
+  ): Promise<void> {
+    const adminChatId = ctx.chat?.id;
+    assert(adminChatId, 'This is not a chat');
+    this.awaitingConfig.set(adminChatId, {
+      type: 'topic',
+      chatId: targetChatId,
+      admin: true,
+    });
+    await this.router.show(ctx, 'admin_chat_topic_time', {
       loadData: async () => ({ chatId: targetChatId }),
     });
   }
@@ -593,7 +644,11 @@ export class TelegramBot implements BotService {
 
   private async handleAwaitingConfig(
     ctx: Context,
-    awaiting: { type: 'history' | 'interest'; chatId: number; admin: boolean }
+    awaiting: {
+      type: 'history' | 'interest' | 'topic';
+      chatId: number;
+      admin: boolean;
+    }
   ): Promise<void> {
     const text =
       ctx.message && 'text' in ctx.message ? ctx.message.text : undefined;
@@ -606,13 +661,17 @@ export class TelegramBot implements BotService {
           await this.chatConfig.setHistoryLimit(awaiting.chatId, value);
         }
         await ctx.reply('✅ Лимит истории обновлён');
-      } else {
+      } else if (awaiting.type === 'interest') {
         if (awaiting.admin) {
           await this.admin.setInterestInterval(awaiting.chatId, value);
         } else {
           await this.chatConfig.setInterestInterval(awaiting.chatId, value);
         }
         await ctx.reply('✅ Интервал интереса обновлён');
+      } else {
+        const time = text ?? '';
+        await this.chatConfig.setTopicTime(awaiting.chatId, time);
+        await ctx.reply('✅ Время статьи обновлено');
       }
     } catch (error) {
       this.logger.error(
@@ -625,6 +684,9 @@ export class TelegramBot implements BotService {
         }
         if (error instanceof InvalidInterestIntervalError) {
           return '❌ Интервал интереса должен быть целым числом от 1 до 50';
+        }
+        if (error instanceof InvalidTopicTimeError) {
+          return '❌ Время статьи должно быть в формате HH:MM';
         }
         return '❌ Ошибка при обновлении параметра';
       })();
