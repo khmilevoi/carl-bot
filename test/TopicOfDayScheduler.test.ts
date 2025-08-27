@@ -47,4 +47,80 @@ describe('TopicOfDayScheduler', () => {
     expect(ai.generateTopicOfDay).toHaveBeenCalled();
     expect(bot.sendMessage).toHaveBeenCalledWith(1, 'article');
   });
+
+  it('reschedules job when topic time changes', async () => {
+    const tasks: { stop: ReturnType<typeof vi.fn>; fire: () => void }[] = [];
+    const scheduleMock = vi.mocked(cron.schedule);
+    scheduleMock.mockReset();
+    scheduleMock.mockImplementation((_expr, cb, _opts) => {
+      let stopped = false;
+      const task = {
+        stop: vi.fn(() => {
+          stopped = true;
+        }),
+        fire: () => {
+          if (!stopped) cb();
+        },
+      } as any;
+      tasks.push(task);
+      return task;
+    });
+
+    const repoConfig = {
+      chatId: 1,
+      historyLimit: 50,
+      interestInterval: 25,
+      topicTime: '09:00',
+      topicTimezone: 'UTC',
+    };
+    const chatConfig = {
+      getTopicOfDaySchedules: vi.fn(
+        async () => new Map([[1, { cron: '0 0 9 * * *', timezone: 'UTC' }]])
+      ),
+      getConfig: vi.fn(async () => ({
+        ...repoConfig,
+        topicTime: '10:30',
+      })),
+    };
+    const ai = { generateTopicOfDay: vi.fn(async () => 'article') };
+    const bot = { sendMessage: vi.fn(async () => {}) };
+    const loggerFactory = {
+      create: () => ({
+        debug: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        child: vi.fn(),
+      }),
+    };
+
+    const scheduler = new TopicOfDaySchedulerImpl(
+      chatConfig as any,
+      ai as any,
+      bot as any,
+      loggerFactory as any
+    );
+
+    await scheduler.start();
+    expect(scheduleMock).toHaveBeenCalledTimes(1);
+
+    await scheduler.reschedule(1);
+
+    expect(tasks[0].stop).toHaveBeenCalled();
+    expect(scheduleMock).toHaveBeenLastCalledWith(
+      '0 30 10 * * *',
+      expect.any(Function),
+      { timezone: 'UTC' }
+    );
+
+    // old task should not run
+    tasks[0].fire();
+    expect(bot.sendMessage).not.toHaveBeenCalled();
+
+    // new task runs
+    tasks[1].fire();
+    await vi.waitFor(() =>
+      expect(bot.sendMessage).toHaveBeenCalledWith(1, 'article')
+    );
+  });
 });
