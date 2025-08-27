@@ -95,7 +95,7 @@ npm run lint:fix
 ## Структура проекта
 
 - `src/index.ts` — точка входа приложения.
-- `src/view/telegram/TelegramBot.ts` — логика бота и обработка сообщений.
+- `src/view/telegram/MainService.ts` — логика бота и обработка сообщений.
 - `src/infrastructure/external/ChatGPTService.ts` — взаимодействие c OpenAI.
 - `src/application/use-cases/chat/ChatMemory.ts` — хранение истории и её суммаризация.
 - `dist/` — собранные файлы.

@@ -4,21 +4,15 @@ import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
 } from './application/interfaces/logging/LoggerFactory';
-import {
-  TOPIC_OF_DAY_SCHEDULER_ID,
-  type TopicOfDayScheduler,
-} from './application/interfaces/scheduler/TopicOfDayScheduler';
 import { container } from './container';
-import { TelegramBot } from './view/telegram/TelegramBot';
+import { MainService } from './view/telegram/MainService';
 
 const loggerFactory = container.get<LoggerFactory>(LOGGER_FACTORY_ID);
 const logger = loggerFactory.create('index');
-const bot = container.get<TelegramBot>(TelegramBot);
-const scheduler = container.get<TopicOfDayScheduler>(TOPIC_OF_DAY_SCHEDULER_ID);
+const main = container.get<MainService>(MainService);
 
 logger.info('Starting application');
-bot.launch();
-void scheduler.start();
+void main.launch();
 
 http
   .createServer((_, res) => {
@@ -29,9 +23,9 @@ http
 
 process.once('SIGINT', () => {
   logger.info('SIGINT received');
-  bot.stop('SIGINT');
+  main.stop('SIGINT');
 });
 process.once('SIGTERM', () => {
   logger.info('SIGTERM received');
-  bot.stop('SIGTERM');
+  main.stop('SIGTERM');
 });

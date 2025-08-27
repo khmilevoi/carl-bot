@@ -1,12 +1,8 @@
 import { type Container } from 'inversify';
 import type { Context } from 'telegraf';
 
-import {
-  BOT_SERVICE_ID,
-  type BotService,
-} from '../application/interfaces/bot/BotService';
 import { type Trigger, TRIGGER_ID } from '../domain/triggers/Trigger';
-import { TelegramBot } from '../view/telegram/TelegramBot';
+import { MainService } from '../view/telegram/MainService';
 import { InterestTrigger } from '../view/telegram/triggers/InterestTrigger';
 import { MentionTrigger } from '../view/telegram/triggers/MentionTrigger';
 import { NameTrigger } from '../view/telegram/triggers/NameTrigger';
@@ -30,6 +26,5 @@ export const register = (container: Container): void => {
     .to(InterestTrigger)
     .inSingletonScope();
 
-  container.bind(TelegramBot).toSelf().inSingletonScope();
-  container.bind<BotService>(BOT_SERVICE_ID).toService(TelegramBot);
+  container.bind(MainService).toSelf().inSingletonScope();
 };

@@ -6,13 +6,13 @@ import {
   type AIService,
 } from '@/application/interfaces/ai/AIService';
 import {
-  BOT_SERVICE_ID,
-  type BotService,
-} from '@/application/interfaces/bot/BotService';
-import {
   CHAT_CONFIG_SERVICE_ID,
   type ChatConfigService,
 } from '@/application/interfaces/chat/ChatConfigService';
+import {
+  CHAT_MESSENGER_ID,
+  type ChatMessenger,
+} from '@/application/interfaces/chat/ChatMessenger';
 import type { Logger } from '@/application/interfaces/logging/Logger';
 import {
   LOGGER_FACTORY_ID,
@@ -28,7 +28,7 @@ export class TopicOfDaySchedulerImpl implements TopicOfDayScheduler {
     @inject(CHAT_CONFIG_SERVICE_ID)
     private readonly chatConfig: ChatConfigService,
     @inject(AI_SERVICE_ID) private readonly ai: AIService,
-    @inject(BOT_SERVICE_ID) private readonly bot: BotService,
+    @inject(CHAT_MESSENGER_ID) private readonly messenger: ChatMessenger,
     @inject(LOGGER_FACTORY_ID) loggerFactory: LoggerFactory
   ) {
     this.logger = loggerFactory.create('TopicOfDayScheduler');
@@ -77,7 +77,7 @@ export class TopicOfDaySchedulerImpl implements TopicOfDayScheduler {
   private async execute(chatId: number): Promise<void> {
     try {
       const article = await this.ai.generateTopicOfDay();
-      await this.bot.sendMessage(chatId, article);
+      await this.messenger.sendMessage(chatId, article);
     } catch (err) {
       this.logger.error({ err, chatId }, 'Failed to send topic of day');
     }
