@@ -1,5 +1,5 @@
 import { inject, injectable } from 'inversify';
-import cron from 'node-cron';
+import cron, { type ScheduledTask } from 'node-cron';
 
 import {
   AI_SERVICE_ID,
@@ -23,6 +23,7 @@ import { type TopicOfDayScheduler } from '@/application/interfaces/scheduler/Top
 @injectable()
 export class TopicOfDaySchedulerImpl implements TopicOfDayScheduler {
   private readonly logger: Logger;
+  private readonly tasks = new Map<number, ScheduledTask>();
   constructor(
     @inject(CHAT_CONFIG_SERVICE_ID)
     private readonly chatConfig: ChatConfigService,
@@ -40,12 +41,37 @@ export class TopicOfDaySchedulerImpl implements TopicOfDayScheduler {
       return;
     }
     for (const [chatId, { cron: expr, timezone }] of schedules) {
-      cron.schedule(expr, () => void this.execute(chatId), { timezone });
+      const task = cron.schedule(expr, () => void this.execute(chatId), {
+        timezone,
+      });
+      this.tasks.set(chatId, task);
       this.logger.debug(
         { chatId, cron: expr, timezone },
         'Registered topic of day job'
       );
     }
+  }
+
+  async reschedule(chatId: number): Promise<void> {
+    const existing = this.tasks.get(chatId);
+    if (existing) {
+      existing.stop();
+      this.tasks.delete(chatId);
+      this.logger.debug({ chatId }, 'Unregistered topic of day job');
+    }
+
+    const config = await this.chatConfig.getConfig(chatId);
+    if (!config.topicTime) return;
+    const [hourStr, minuteStr] = config.topicTime.split(':');
+    const expr = `0 ${minuteStr} ${hourStr} * * *`;
+    const task = cron.schedule(expr, () => void this.execute(chatId), {
+      timezone: config.topicTimezone,
+    });
+    this.tasks.set(chatId, task);
+    this.logger.debug(
+      { chatId, cron: expr, timezone: config.topicTimezone },
+      'Registered topic of day job'
+    );
   }
 
   private async execute(chatId: number): Promise<void> {

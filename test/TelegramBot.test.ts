@@ -18,6 +18,7 @@ import {
   InvalidHistoryLimitError,
   InvalidTopicTimeError,
 } from '../src/application/interfaces/chat/ChatConfigService.errors';
+import type { TopicOfDayScheduler } from '../src/application/interfaces/scheduler/TopicOfDayScheduler';
 import type {
   MessageContext,
   MessageContextExtractor,
@@ -169,6 +170,7 @@ describe('TelegramBot', () => {
   it('updates history limit on valid input', async () => {
     const memories = new MockChatMemoryManager();
     const config = new DummyChatConfigService();
+    const scheduler = { reschedule: vi.fn() };
     const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
@@ -179,7 +181,8 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      scheduler as unknown as TopicOfDayScheduler
     );
     const showSpy = vi
       .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
@@ -200,11 +203,13 @@ describe('TelegramBot', () => {
     expect(config.setHistoryLimit).toHaveBeenCalledWith(10, 5);
     expect(ctxText.reply).toHaveBeenCalledWith('✅ Лимит истории обновлён');
     expect(showSpy).toHaveBeenCalledWith(ctxText, 'menu');
+    expect(scheduler.reschedule).not.toHaveBeenCalled();
   });
 
   it('handles invalid topic time input', async () => {
     const memories = new MockChatMemoryManager();
     const config = new DummyChatConfigService();
+    const scheduler = { reschedule: vi.fn() };
     const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
@@ -215,7 +220,8 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      scheduler as unknown as TopicOfDayScheduler
     );
     const showSpy = vi
       .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
@@ -246,6 +252,7 @@ describe('TelegramBot', () => {
   it('updates interest interval on valid input', async () => {
     const memories = new MockChatMemoryManager();
     const config = new DummyChatConfigService();
+    const scheduler = { reschedule: vi.fn() };
     const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
@@ -256,7 +263,8 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      scheduler as unknown as TopicOfDayScheduler
     );
     const showSpy = vi
       .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
@@ -282,6 +290,7 @@ describe('TelegramBot', () => {
   it('updates topic time on valid input', async () => {
     const memories = new MockChatMemoryManager();
     const config = new DummyChatConfigService();
+    const scheduler = { reschedule: vi.fn() };
     const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
@@ -292,7 +301,8 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      scheduler as unknown as TopicOfDayScheduler
     );
     const showSpy = vi
       .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
@@ -313,11 +323,13 @@ describe('TelegramBot', () => {
     expect(config.setTopicTime).toHaveBeenCalledWith(30, '10:30', 'UTC');
     expect(ctxText.reply).toHaveBeenCalledWith('✅ Время статьи обновлено');
     expect(showSpy).toHaveBeenCalledWith(ctxText, 'menu');
+    expect(scheduler.reschedule).toHaveBeenCalledWith(30);
   });
 
   it('handles invalid history limit input', async () => {
     const memories = new MockChatMemoryManager();
     const config = new DummyChatConfigService();
+    const scheduler = { reschedule: vi.fn() };
     const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
@@ -328,7 +340,8 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      scheduler as unknown as TopicOfDayScheduler
     );
     const showSpy = vi
       .spyOn((bot as unknown as { router: { show: Function } }).router, 'show')
@@ -500,6 +513,7 @@ describe('TelegramBot', () => {
   it('admin updates topic time on valid input', async () => {
     const memories = new MockChatMemoryManager();
     const config = new DummyChatConfigService();
+    const scheduler = { reschedule: vi.fn() };
     const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
@@ -510,7 +524,8 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      scheduler as unknown as TopicOfDayScheduler
     );
     const showSpy = vi
       .spyOn(
@@ -542,6 +557,7 @@ describe('TelegramBot', () => {
     expect(config.setTopicTime).toHaveBeenCalledWith(50, '08:00', 'UTC');
     expect(ctxText.reply).toHaveBeenCalledWith('✅ Время статьи обновлено');
     expect(showSpy).toHaveBeenCalledWith(ctxText, 50);
+    expect(scheduler.reschedule).toHaveBeenCalledWith(50);
   });
 
   it('admin handles invalid history limit input', async () => {
@@ -657,6 +673,7 @@ describe('TelegramBot', () => {
   it('admin handles invalid topic time input', async () => {
     const memories = new MockChatMemoryManager();
     const config = new DummyChatConfigService();
+    const scheduler = { reschedule: vi.fn() };
     const bot = new TelegramBot(
       new MockEnvService() as unknown as EnvService,
       memories as unknown as ChatMemoryManager,
@@ -667,7 +684,8 @@ describe('TelegramBot', () => {
       new DummyResponder() as unknown as ChatResponder,
       new DummyChatInfoService() as unknown as ChatInfoService,
       config as unknown as ChatConfigService,
-      createLoggerFactory()
+      createLoggerFactory(),
+      scheduler as unknown as TopicOfDayScheduler
     );
     const showSpy = vi
       .spyOn(
@@ -704,6 +722,7 @@ describe('TelegramBot', () => {
       '❌ Время статьи должно быть в формате HH:MM'
     );
     expect(showSpy).toHaveBeenCalledWith(ctxText, 46);
+    expect(scheduler.reschedule).not.toHaveBeenCalled();
   });
 
   it('stores user messages via ChatMemoryManager', async () => {
