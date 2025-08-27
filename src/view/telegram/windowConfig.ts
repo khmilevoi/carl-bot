@@ -8,12 +8,14 @@ export type WindowId =
   | 'chat_history_limit'
   | 'chat_interest_interval'
   | 'chat_topic_time'
+  | 'chat_topic_timezone'
   | 'admin_menu'
   | 'admin_chats'
   | 'admin_chat'
   | 'admin_chat_history_limit'
   | 'admin_chat_interest_interval'
   | 'admin_chat_topic_time'
+  | 'admin_chat_topic_timezone'
   | 'chat_not_approved'
   | 'no_access'
   | 'chat_approval_request'
@@ -96,6 +98,13 @@ export function createWindows(actions: WindowActions): RouteApi<WindowId>[] {
       text: 'Введите время статьи (HH:MM):',
       buttons: [],
     })),
+    r('chat_topic_timezone', async ({ loadData }) => {
+      const { timezone } = (await loadData()) as { timezone: string };
+      return {
+        text: `Часовой пояс (${timezone}). Введите другой, если нужно:`,
+        buttons: [],
+      };
+    }),
     r('admin_menu', async () => ({
       text: 'Выберите действие:',
       buttons: [
@@ -181,6 +190,16 @@ export function createWindows(actions: WindowActions): RouteApi<WindowId>[] {
       const { chatId } = (await loadData()) as { chatId: number };
       return {
         text: `Введите время статьи для чата ${chatId} (HH:MM):`,
+        buttons: [],
+      };
+    }),
+    r('admin_chat_topic_timezone', async ({ loadData }) => {
+      const { chatId, timezone } = (await loadData()) as {
+        chatId: number;
+        timezone: string;
+      };
+      return {
+        text: `Часовой пояс для чата ${chatId} (${timezone}). Введите другой, если нужно:`,
         buttons: [],
       };
     }),

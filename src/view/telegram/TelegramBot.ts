@@ -73,7 +73,13 @@ export class TelegramBot implements BotService {
   private router: ReturnType<typeof registerRoutes<WindowId>>;
   private awaitingConfig = new Map<
     number,
-    { type: 'history' | 'interest' | 'topic'; chatId: number; admin: boolean }
+    {
+      type: 'history' | 'interest' | 'topic';
+      chatId: number;
+      admin: boolean;
+      topicTime?: string;
+      topicTimezone?: string;
+    }
   >();
   private readonly logger: Logger;
 
@@ -656,6 +662,8 @@ export class TelegramBot implements BotService {
       type: 'history' | 'interest' | 'topic';
       chatId: number;
       admin: boolean;
+      topicTime?: string;
+      topicTimezone?: string;
     }
   ): Promise<void> {
     const text =
@@ -677,8 +685,38 @@ export class TelegramBot implements BotService {
         }
         await ctx.reply('✅ Интервал интереса обновлён');
       } else {
-        const time = text ?? '';
-        await this.chatConfig.setTopicTime(awaiting.chatId, time, 'UTC');
+        if (!awaiting.topicTime) {
+          const time = text ?? '';
+          const date =
+            ctx.message && 'date' in ctx.message
+              ? new Date(ctx.message.date * 1000)
+              : new Date();
+          const offset = -date.getTimezoneOffset();
+          const hours = Math.floor(offset / 60);
+          const sign = hours >= 0 ? '+' : '-';
+          const timezone = `UTC${sign}${String(Math.abs(hours)).padStart(2, '0')}`;
+          const key = ctx.chat?.id;
+          assert(key, 'This is not a chat');
+          this.awaitingConfig.set(key, {
+            ...awaiting,
+            topicTime: time,
+            topicTimezone: timezone,
+          });
+          const windowId = awaiting.admin
+            ? 'admin_chat_topic_timezone'
+            : 'chat_topic_timezone';
+          await this.router.show(ctx, windowId, {
+            loadData: async () =>
+              awaiting.admin
+                ? { chatId: awaiting.chatId, timezone }
+                : { timezone },
+          });
+          return;
+        }
+        const time = awaiting.topicTime;
+        const timezone =
+          text && text.trim() !== '' ? text : (awaiting.topicTimezone ?? 'UTC');
+        await this.chatConfig.setTopicTime(awaiting.chatId, time, timezone);
         await this.scheduler?.reschedule(awaiting.chatId);
         await ctx.reply('✅ Время статьи обновлено');
       }
