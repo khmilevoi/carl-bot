@@ -7,7 +7,9 @@ export interface ChatConfigService {
   setHistoryLimit(chatId: number, historyLimit: number): Promise<void>;
   setInterestInterval(chatId: number, interestInterval: number): Promise<void>;
   setTopicTime(chatId: number, topicTime: string | null): Promise<void>;
-  getTopicOfDaySchedules?(): Promise<Map<number, string>>;
+  getTopicOfDaySchedules?(): Promise<
+    Map<number, { time: string; timezone: string }>
+  >;
 }
 
 export const CHAT_CONFIG_SERVICE_ID = Symbol.for(
