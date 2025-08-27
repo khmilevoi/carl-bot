@@ -1,6 +1,6 @@
 import assert from 'node:assert';
 
-import { inject, injectable, optional } from 'inversify';
+import { inject, injectable, LazyServiceIdentifier, optional } from 'inversify';
 import type { Context } from 'telegraf';
 import { Telegraf } from 'telegraf';
 import { message } from 'telegraf/filters';
@@ -96,7 +96,7 @@ export class TelegramBot implements BotService {
     @inject(CHAT_INFO_SERVICE_ID) private chatInfo: ChatInfoService,
     @inject(CHAT_CONFIG_SERVICE_ID) private chatConfig: ChatConfigService,
     @inject(LOGGER_FACTORY_ID) loggerFactory: LoggerFactory,
-    @inject(TOPIC_OF_DAY_SCHEDULER_ID)
+    @inject(new LazyServiceIdentifier(() => TOPIC_OF_DAY_SCHEDULER_ID))
     @optional()
     private scheduler?: TopicOfDayScheduler
   ) {
