@@ -6,7 +6,7 @@ export interface ChatConfigService {
   getConfig(chatId: number): Promise<ChatConfigEntity>;
   setHistoryLimit(chatId: number, historyLimit: number): Promise<void>;
   setInterestInterval(chatId: number, interestInterval: number): Promise<void>;
-  setTopicTime(chatId: number, topicTime: string): Promise<void>;
+  setTopicTime(chatId: number, topicTime: string | null): Promise<void>;
   getTopicOfDaySchedules?(): Promise<Map<number, string>>;
 }
 

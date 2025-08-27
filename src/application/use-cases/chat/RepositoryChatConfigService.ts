@@ -68,8 +68,8 @@ export class RepositoryChatConfigService implements ChatConfigService {
     return new Map();
   }
 
-  async setTopicTime(chatId: number, topicTime: string): Promise<void> {
-    if (!TOPIC_TIME_REGEX.test(topicTime)) {
+  async setTopicTime(chatId: number, topicTime: string | null): Promise<void> {
+    if (topicTime !== null && !TOPIC_TIME_REGEX.test(topicTime)) {
       throw new InvalidTopicTimeError('Invalid topic time');
     }
     const config = await this.getConfig(chatId);

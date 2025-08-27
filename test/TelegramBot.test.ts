@@ -91,7 +91,9 @@ class DummyChatConfigService {
   getConfig = vi.fn();
   setHistoryLimit = vi.fn(async () => {});
   setInterestInterval = vi.fn(async () => {});
-  setTopicTime = vi.fn(async () => {});
+  setTopicTime = vi.fn(
+    async (_chatId: number, _topicTime: string | null) => {}
+  );
 }
 
 describe('TelegramBot', () => {

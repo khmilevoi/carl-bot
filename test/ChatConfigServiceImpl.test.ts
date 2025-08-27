@@ -74,4 +74,23 @@ describe('RepositoryChatConfigService', () => {
       topicTime: '10:30',
     });
   });
+
+  it('clears topic time when null', async () => {
+    const existing: ChatConfigEntity = {
+      chatId: 1,
+      historyLimit: 50,
+      interestInterval: 25,
+      topicTime: '09:00',
+    };
+    const repo: ChatConfigRepository = {
+      findById: vi.fn(async () => existing),
+      upsert: vi.fn(async () => {}),
+    };
+    const service = new RepositoryChatConfigService(repo);
+    await service.setTopicTime(1, null);
+    expect(repo.upsert).toHaveBeenCalledWith({
+      ...existing,
+      topicTime: null,
+    });
+  });
 });

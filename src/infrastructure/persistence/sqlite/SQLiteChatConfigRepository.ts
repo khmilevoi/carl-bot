@@ -35,7 +35,7 @@ export class SQLiteChatConfigRepository implements ChatConfigRepository {
       chat_id: number;
       history_limit: number;
       interest_interval: number;
-      topic_time: string;
+      topic_time: string | null;
     }>(
       'SELECT chat_id, history_limit, interest_interval, topic_time FROM chat_configs WHERE chat_id = ?',
       chatId
