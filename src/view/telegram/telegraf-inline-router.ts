@@ -84,6 +84,10 @@ export type Route<A = unknown, P = unknown> = {
   action: (
     args: RouteActionArgs<A, P>
   ) => Promise<void | RouteView<A>> | void | RouteView<A>;
+  /** Обработчик текстового ввода после выполнения action */
+  onText?: (
+    args: RouteActionArgs<A, P>
+  ) => Promise<void | RouteView<A>> | void | RouteView<A>;
 };
 
 /**
@@ -143,7 +147,7 @@ export type RouterState = {
  * @template A Тип actions
  */
 export type StartOptions = {
-  /** Текст подсказки для ввода, когда waitForText=true */
+  /** Текст подсказки для ввода при ожидании текста */
   inputPrompt?: string;
   /** Подпись кнопки «Назад» */
   backLabel?: string;
@@ -831,21 +835,9 @@ export function createRouter<A = unknown>(
     if (!e) throw new Error(`Route not found: ${route.id}`);
     const inheritedShowBack = e.hasBackEffective && !!e.parentId;
 
-    if (route.waitForText) {
-      state.awaitingTextRouteId = route.id;
-      const inheritedShowCancel = options.showCancelOnWait === true;
-      await renderView(
-        ctx,
-        { text: options.inputPrompt, buttons: [] },
-        inheritedShowBack,
-        inheritedShowCancel
-      );
-      await setState(ctx, state);
-      return;
-    }
-
     state.awaitingTextRouteId = undefined;
     await setState(ctx, state);
+    const showCancel = route.onText ? options.showCancelOnWait === true : false;
     try {
       function navigateImpl<NP = unknown>(
         r: Route<A, NP>,
@@ -862,9 +854,18 @@ export function createRouter<A = unknown>(
         state,
       });
       if (view)
-        await renderView(ctx, view as RouteView<A>, inheritedShowBack, false);
+        await renderView(
+          ctx,
+          view as RouteView<A>,
+          inheritedShowBack,
+          showCancel
+        );
+      if (route.onText) {
+        state.awaitingTextRouteId = route.id;
+        await setState(ctx, state);
+      }
     } catch (err) {
-      await handleError(ctx, err, inheritedShowBack, false);
+      await handleError(ctx, err, inheritedShowBack, showCancel);
     }
   }
 
@@ -890,20 +891,7 @@ export function createRouter<A = unknown>(
     const route = e.route;
     const params = state.params[currentId];
     const inheritedShowBack = e.hasBackEffective && !!e.parentId;
-
-    if (route.waitForText) {
-      const inheritedShowCancel = options.showCancelOnWait === true;
-      await renderView(
-        ctx,
-        { text: options.inputPrompt },
-        inheritedShowBack,
-        inheritedShowCancel
-      );
-      state.awaitingTextRouteId = currentId;
-      await setState(ctx, state);
-      return;
-    }
-
+    const showCancel = route.onText ? options.showCancelOnWait === true : false;
     try {
       function navigateImpl<NP = unknown>(
         r: Route<A, NP>,
@@ -920,9 +908,18 @@ export function createRouter<A = unknown>(
         state,
       });
       if (view)
-        await renderView(ctx, view as RouteView<A>, inheritedShowBack, false);
+        await renderView(
+          ctx,
+          view as RouteView<A>,
+          inheritedShowBack,
+          showCancel
+        );
+      if (route.onText) {
+        state.awaitingTextRouteId = currentId;
+        await setState(ctx, state);
+      }
     } catch (err) {
-      await handleError(ctx, err, inheritedShowBack, false);
+      await handleError(ctx, err, inheritedShowBack, showCancel);
     }
   }
 
@@ -1125,6 +1122,10 @@ export function createRouter<A = unknown>(
             return;
           }
           const route = e.route;
+          if (!route.onText) {
+            await next();
+            return;
+          }
           const params = state.params[rid];
           try {
             function navigateImpl<NP = unknown>(
@@ -1133,7 +1134,7 @@ export function createRouter<A = unknown>(
             ): Promise<void> {
               return _navigate(ctx, r, p);
             }
-            const result = await route.action({
+            const result = await route.onText({
               ctx,
               actions: currentActions as A,
               params,
