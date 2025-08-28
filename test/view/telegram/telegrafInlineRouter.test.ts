@@ -464,6 +464,48 @@ describe('inline-router', () => {
     expect(onError.mock.calls[0][0]).toBeInstanceOf(Error);
   });
 
+  it('runs navigate sequentially for the same ctx', async () => {
+    const firstRoute = route({
+      id: 'first',
+      async action() {
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        return { text: 'first', buttons: [] };
+      },
+    });
+    const secondRoute = route({
+      id: 'second',
+      async action() {
+        return { text: 'second', buttons: [] };
+      },
+    });
+
+    const { run } = createRouter([firstRoute, secondRoute], {});
+    const bot = new Telegraf<Context>('token');
+    const router = run(bot, {});
+    const ctx = {
+      chat: { id: 1 },
+      from: { id: 1 },
+      reply: vi
+        .fn()
+        .mockResolvedValueOnce({ message_id: 1 })
+        .mockResolvedValueOnce({ message_id: 2 }),
+      deleteMessage: vi.fn(async () => {}),
+      editMessageText: vi.fn(async () => {}),
+      editMessageReplyMarkup: vi.fn(async () => {}),
+    } as unknown as Context;
+
+    const order: string[] = [];
+    const p1 = router.navigate(ctx, firstRoute).then(() => {
+      order.push('first');
+    });
+    const p2 = router.navigate(ctx, secondRoute).then(() => {
+      order.push('second');
+    });
+    await Promise.all([p1, p2]);
+
+    expect(order).toEqual(['first', 'second']);
+  });
+
   it('calls text fallback when no route awaiting text', async () => {
     const r = route({
       id: 'root',
