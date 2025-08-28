@@ -112,6 +112,7 @@ const ChatSettings = route<Actions, ChatConfigParams>({
 
 const ChatHistoryLimit = route<Actions>({
   id: 'chat_history_limit',
+  showCancelOnWait: true,
   async action() {
     return { text: 'Введите новый лимит истории:', buttons: [] };
   },
@@ -126,6 +127,7 @@ const ChatHistoryLimit = route<Actions>({
 
 const ChatInterestInterval = route<Actions>({
   id: 'chat_interest_interval',
+  showCancelOnWait: true,
   async action() {
     return { text: 'Введите новый интервал интереса:', buttons: [] };
   },
@@ -140,6 +142,7 @@ const ChatInterestInterval = route<Actions>({
 
 const ChatTopicTime = route<Actions>({
   id: 'chat_topic_time',
+  showCancelOnWait: true,
   async action() {
     return { text: 'Введите время статьи (HH:MM):', buttons: [] };
   },
@@ -158,6 +161,7 @@ const ChatTopicTime = route<Actions>({
 
 const ChatTopicTimezone = route<Actions, { time: string; timezone: string }>({
   id: 'chat_topic_timezone',
+  showCancelOnWait: true,
   async action({ params }) {
     return {
       text: `Часовой пояс (${params.timezone}). Введите другой, если нужно:`,
@@ -285,6 +289,7 @@ const AdminChat = route<Actions, AdminChatParams | void>({
 
 const AdminChatHistoryLimit = route<Actions, { chatId: number } | void>({
   id: 'admin_chat_history_limit',
+  showCancelOnWait: true,
   async action({ ctx, params }) {
     if (!params) {
       const chatId = Number((ctx as Context & { match?: string[] }).match?.[1]);
@@ -309,6 +314,7 @@ const AdminChatHistoryLimit = route<Actions, { chatId: number } | void>({
 
 const AdminChatInterestInterval = route<Actions, { chatId: number } | void>({
   id: 'admin_chat_interest_interval',
+  showCancelOnWait: true,
   async action({ ctx, params }) {
     if (!params) {
       const chatId = Number((ctx as Context & { match?: string[] }).match?.[1]);
@@ -333,6 +339,7 @@ const AdminChatInterestInterval = route<Actions, { chatId: number } | void>({
 
 const AdminChatTopicTime = route<Actions, { chatId: number } | void>({
   id: 'admin_chat_topic_time',
+  showCancelOnWait: true,
   async action({ ctx, params }) {
     if (!params) {
       const chatId = Number((ctx as Context & { match?: string[] }).match?.[1]);
@@ -367,6 +374,7 @@ const AdminChatTopicTimezone = route<
   { chatId: number; time: string; timezone: string }
 >({
   id: 'admin_chat_topic_timezone',
+  showCancelOnWait: true,
   async action({ params }) {
     const { chatId, timezone } = params;
     return {
