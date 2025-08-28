@@ -1,3 +1,4 @@
+/* eslint-disable import/no-unused-modules */
 import type { Context } from 'telegraf';
 
 import { button, cb, createRouter, DSL, route } from './inline-router';
@@ -15,7 +16,6 @@ interface AdminChatParams {
   config: ChatConfigParams;
 }
 
-// eslint-disable-next-line import/no-unused-modules
 export interface Actions {
   // Detached from Telegram ctx
   exportData(): Promise<void>;
@@ -42,7 +42,7 @@ export interface Actions {
 
 const { row, rows } = DSL;
 
-const Menu = route<Actions>({
+export const Menu = route<Actions>({
   id: 'menu',
   async action({ actions }) {
     return {
@@ -77,7 +77,7 @@ const Menu = route<Actions>({
   },
 });
 
-const ChatSettings = route<Actions, ChatConfigParams>({
+export const ChatSettings = route<Actions, ChatConfigParams>({
   id: 'chat_settings',
   async action({ params }) {
     const config = params;
@@ -110,7 +110,7 @@ const ChatSettings = route<Actions, ChatConfigParams>({
   },
 });
 
-const ChatHistoryLimit = route<Actions>({
+export const ChatHistoryLimit = route<Actions>({
   id: 'chat_history_limit',
   showCancelOnWait: true,
   async action() {
@@ -125,7 +125,7 @@ const ChatHistoryLimit = route<Actions>({
   },
 });
 
-const ChatInterestInterval = route<Actions>({
+export const ChatInterestInterval = route<Actions>({
   id: 'chat_interest_interval',
   showCancelOnWait: true,
   async action() {
@@ -140,7 +140,7 @@ const ChatInterestInterval = route<Actions>({
   },
 });
 
-const ChatTopicTime = route<Actions>({
+export const ChatTopicTime = route<Actions>({
   id: 'chat_topic_time',
   showCancelOnWait: true,
   async action() {
@@ -159,7 +159,10 @@ const ChatTopicTime = route<Actions>({
   },
 });
 
-const ChatTopicTimezone = route<Actions, { time: string; timezone: string }>({
+export const ChatTopicTimezone = route<
+  Actions,
+  { time: string; timezone: string }
+>({
   id: 'chat_topic_timezone',
   showCancelOnWait: true,
   async action({ params }) {
@@ -178,7 +181,7 @@ const ChatTopicTimezone = route<Actions, { time: string; timezone: string }>({
   },
 });
 
-const AdminMenu = route<Actions>({
+export const AdminMenu = route<Actions>({
   id: 'admin_menu',
   async action({ actions }) {
     return {
@@ -206,7 +209,7 @@ const AdminMenu = route<Actions>({
   },
 });
 
-const AdminChats = route<Actions, { id: number; title: string }[]>({
+export const AdminChats = route<Actions, { id: number; title: string }[]>({
   id: 'admin_chats',
   async action({ params }) {
     const chats = params;
@@ -233,7 +236,7 @@ const AdminChats = route<Actions, { id: number; title: string }[]>({
   },
 });
 
-const AdminChat = route<Actions, AdminChatParams | void>({
+export const AdminChat = route<Actions, AdminChatParams | void>({
   id: 'admin_chat',
   async action({ ctx, params, actions }) {
     let p = params;
@@ -286,7 +289,7 @@ const AdminChat = route<Actions, AdminChatParams | void>({
   },
 });
 
-const AdminChatHistoryLimit = route<Actions, { chatId: number } | void>({
+export const AdminChatHistoryLimit = route<Actions, { chatId: number } | void>({
   id: 'admin_chat_history_limit',
   showCancelOnWait: true,
   async action({ ctx, params }) {
@@ -309,7 +312,10 @@ const AdminChatHistoryLimit = route<Actions, { chatId: number } | void>({
   },
 });
 
-const AdminChatInterestInterval = route<Actions, { chatId: number } | void>({
+export const AdminChatInterestInterval = route<
+  Actions,
+  { chatId: number } | void
+>({
   id: 'admin_chat_interest_interval',
   showCancelOnWait: true,
   async action({ ctx, params }) {
@@ -332,7 +338,7 @@ const AdminChatInterestInterval = route<Actions, { chatId: number } | void>({
   },
 });
 
-const AdminChatTopicTime = route<Actions, { chatId: number } | void>({
+export const AdminChatTopicTime = route<Actions, { chatId: number } | void>({
   id: 'admin_chat_topic_time',
   showCancelOnWait: true,
   async action({ ctx, params }) {
@@ -362,7 +368,7 @@ const AdminChatTopicTime = route<Actions, { chatId: number } | void>({
   },
 });
 
-const AdminChatTopicTimezone = route<
+export const AdminChatTopicTimezone = route<
   Actions,
   { chatId: number; time: string; timezone: string }
 >({
@@ -382,7 +388,7 @@ const AdminChatTopicTimezone = route<
   },
 });
 
-const ChatNotApproved = route<Actions>({
+export const ChatNotApproved = route<Actions>({
   id: 'chat_not_approved',
   async action({ actions }) {
     return {
@@ -400,7 +406,7 @@ const ChatNotApproved = route<Actions>({
   },
 });
 
-const NoAccess = route<Actions>({
+export const NoAccess = route<Actions>({
   id: 'no_access',
   async action({ actions }) {
     return {
@@ -418,7 +424,10 @@ const NoAccess = route<Actions>({
   },
 });
 
-const ChatApprovalRequest = route<Actions, { name: string; chatId: number }>({
+export const ChatApprovalRequest = route<
+  Actions,
+  { name: string; chatId: number }
+>({
   id: 'chat_approval_request',
   async action({ params }) {
     return {
@@ -441,7 +450,7 @@ const ChatApprovalRequest = route<Actions, { name: string; chatId: number }>({
   },
 });
 
-const UserAccessRequest = route<
+export const UserAccessRequest = route<
   Actions,
   {
     msg: string;
@@ -474,7 +483,7 @@ const UserAccessRequest = route<
   },
 });
 
-const ChatApprove = route<Actions>({
+export const ChatApprove = route<Actions>({
   id: 'chat_approve',
   async action({ ctx, actions }) {
     const chatId = Number((ctx as Context & { match?: string[] }).match?.[1]);
@@ -482,7 +491,7 @@ const ChatApprove = route<Actions>({
   },
 });
 
-const ChatBan = route<Actions>({
+export const ChatBan = route<Actions>({
   id: 'chat_ban',
   async action({ ctx, actions }) {
     const chatId = Number((ctx as Context & { match?: string[] }).match?.[1]);
@@ -490,7 +499,7 @@ const ChatBan = route<Actions>({
   },
 });
 
-const ChatUnban = route<Actions>({
+export const ChatUnban = route<Actions>({
   id: 'chat_unban',
   async action({ ctx, actions }) {
     const chatId = Number((ctx as Context & { match?: string[] }).match?.[1]);
@@ -498,7 +507,7 @@ const ChatUnban = route<Actions>({
   },
 });
 
-const UserApprove = route<Actions>({
+export const UserApprove = route<Actions>({
   id: 'user_approve',
   async action({ ctx, actions }) {
     const match = (ctx as Context & { match?: string[] }).match;
@@ -508,7 +517,6 @@ const UserApprove = route<Actions>({
   },
 });
 
-// eslint-disable-next-line import/no-unused-modules
 export const router = createRouter([
   {
     route: Menu,
