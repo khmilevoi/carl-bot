@@ -2,7 +2,7 @@ import type { Context } from 'telegraf';
 import { Telegraf } from 'telegraf';
 import { describe, expect, it, vi } from 'vitest';
 
-import { createRouter, route } from '@/view/telegram/inline-router';
+import { createRouter, route, button, cb } from '@/view/telegram/inline-router';
 
 describe('inline-router', () => {
   it('renders inputPrompt when action returns nothing', async () => {
@@ -252,5 +252,59 @@ describe('inline-router', () => {
     await cbHandler(ctxCb);
     const st = (await stateStore.get(1, 1)) as { stack: unknown[] } | undefined;
     expect(st?.stack.length).toBe(0);
+  });
+
+  it('calls button action and answers callback query', async () => {
+    const action = vi.fn(async () => {});
+    const r = route({
+      id: 'root',
+      async action() {
+        return {
+          text: 'hello',
+          buttons: [
+            button({
+              text: 'do',
+              callback: cb('do'),
+              action,
+              answer: { text: 'done', showAlert: true },
+            }),
+          ],
+        };
+      },
+    });
+    const { run } = createRouter([r]);
+    const bot = new Telegraf<Context>('token');
+    const onSpy = vi.spyOn(bot, 'on');
+    const router = run(bot, {});
+    const cbHandler = onSpy.mock.calls.find(
+      ([e]) => e === 'callback_query'
+    )?.[1] as ((ctx: Context) => Promise<void>) | undefined;
+    onSpy.mockRestore();
+    if (!cbHandler) throw new Error('callback handler not registered');
+    const ctx = {
+      chat: { id: 1 },
+      from: { id: 1 },
+      reply: vi.fn(async () => ({ message_id: 1 })),
+      deleteMessage: vi.fn(async () => {}),
+      editMessageText: vi.fn(async () => {}),
+      editMessageReplyMarkup: vi.fn(async () => {}),
+      answerCbQuery: vi.fn(async () => {}),
+    } as unknown as Context;
+
+    await router.navigate(ctx, r);
+    const ctxCb = {
+      ...ctx,
+      callbackQuery: { data: cb('do'), message: { message_id: 1 } },
+    } as Context & {
+      callbackQuery: { data: string; message: { message_id: number } };
+    };
+    await cbHandler(ctxCb);
+    expect(action).toHaveBeenCalledWith(
+      expect.objectContaining({ ctx: ctxCb })
+    );
+    expect(ctx.answerCbQuery).toHaveBeenCalledWith(
+      'done',
+      expect.objectContaining({ show_alert: true })
+    );
   });
 });

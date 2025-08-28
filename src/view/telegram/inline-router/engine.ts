@@ -498,17 +498,21 @@ export function createRouter<A = unknown>(
             ...parsed.args,
           ];
 
-          try {
-            await ctx.answerCbQuery();
-          } catch {
-            /* ignore */
-          }
-
           if (data === options.cancelCallbackData) {
+            try {
+              await ctx.answerCbQuery();
+            } catch {
+              /* ignore */
+            }
             await _cancelWait(ctx);
             return;
           }
           if (data === options.backCallbackData) {
+            try {
+              await ctx.answerCbQuery();
+            } catch {
+              /* ignore */
+            }
             await _navigateBack(ctx);
             return;
           }
@@ -569,15 +573,39 @@ export function createRouter<A = unknown>(
               const inheritedShowBack = !!e?.hasBackEffective && !!e?.parentId;
               await handleError(ctx, err, inheritedShowBack, false);
             }
+            try {
+              if (matched.answer) {
+                await ctx.answerCbQuery(matched.answer.text, {
+                  show_alert: matched.answer.showAlert,
+                  url: matched.answer.url,
+                  cache_time: matched.answer.cacheTimeSec,
+                });
+              } else {
+                await ctx.answerCbQuery();
+              }
+            } catch {
+              /* ignore */
+            }
             return;
           }
 
           const rid = parsed.routeId;
           const e = getEntry(rid);
           if (e) {
+            try {
+              await ctx.answerCbQuery();
+            } catch {
+              /* ignore */
+            }
             const params = state.params[rid];
             await _navigate(ctx, e.route, params);
             return;
+          }
+
+          try {
+            await ctx.answerCbQuery();
+          } catch {
+            /* ignore */
           }
         });
       });
