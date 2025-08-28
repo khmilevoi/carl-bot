@@ -102,4 +102,130 @@ describe('inline-router', () => {
       ],
     ]);
   });
+
+  it.each([true, false])(
+    'cancels on /cancel (showCancelOnWait: %s)',
+    async (showCancelOnWait) => {
+      const state: Record<string, unknown> = {};
+      const stateStore = {
+        async get(_chatId: number, _userId: number) {
+          return state.value as unknown;
+        },
+        async set(_chatId: number, _userId: number, s: unknown) {
+          state.value = s;
+        },
+        async delete(_chatId: number, _userId: number) {
+          state.value = undefined;
+        },
+      };
+      const r = route({
+        id: 'input',
+        async action() {
+          return { text: 'prompt', buttons: [] };
+        },
+        async onText() {
+          return { text: 'done', buttons: [] };
+        },
+      });
+      const { run } = createRouter([r], { showCancelOnWait, stateStore });
+      const bot = new Telegraf<Context>('token');
+      const onSpy = vi.spyOn(bot, 'on');
+      const router = run(bot, {});
+      const textHandler = onSpy.mock.calls.find(([e]) => e === 'text')?.[1] as
+        | ((ctx: Context, next: () => Promise<void>) => Promise<void>)
+        | undefined;
+      onSpy.mockRestore();
+      if (!textHandler) throw new Error('text handler not registered');
+      const ctx = {
+        chat: { id: 1 },
+        from: { id: 1 },
+        reply: vi.fn(async () => ({ message_id: 1 })),
+        deleteMessage: vi.fn(async () => {}),
+        editMessageText: vi.fn(async () => {}),
+        editMessageReplyMarkup: vi.fn(async () => {}),
+      } as unknown as Context;
+
+      await router.navigate(ctx, r);
+      const kb = (
+        ctx.reply.mock.calls[0][1] as {
+          reply_markup: { inline_keyboard: unknown[] };
+        }
+      ).reply_markup.inline_keyboard;
+      if (showCancelOnWait) {
+        expect(kb).toEqual([
+          [
+            expect.objectContaining({
+              text: '✖️ Отмена',
+              callback_data: '__router_cancel__',
+            }),
+          ],
+        ]);
+      } else {
+        expect(kb).toEqual([]);
+      }
+
+      const ctxText = {
+        ...ctx,
+        message: { text: '/cancel', date: 0 },
+      } as Context & { message: { text: string; date: number } };
+      await textHandler(ctxText, async () => {});
+      const st = (await stateStore.get(1, 1)) as
+        | { stack: unknown[] }
+        | undefined;
+      expect(st?.stack.length).toBe(0);
+    }
+  );
+
+  it('cancels on cancel button', async () => {
+    const state: Record<string, unknown> = {};
+    const stateStore = {
+      async get(_chatId: number, _userId: number) {
+        return state.value as unknown;
+      },
+      async set(_chatId: number, _userId: number, s: unknown) {
+        state.value = s;
+      },
+      async delete(_chatId: number, _userId: number) {
+        state.value = undefined;
+      },
+    };
+    const r = route({
+      id: 'input',
+      async action() {
+        return { text: 'prompt', buttons: [] };
+      },
+      async onText() {
+        return { text: 'done', buttons: [] };
+      },
+    });
+    const { run } = createRouter([r], { showCancelOnWait: true, stateStore });
+    const bot = new Telegraf<Context>('token');
+    const onSpy = vi.spyOn(bot, 'on');
+    const router = run(bot, {});
+    const cbHandler = onSpy.mock.calls.find(
+      ([e]) => e === 'callback_query'
+    )?.[1] as ((ctx: Context) => Promise<void>) | undefined;
+    onSpy.mockRestore();
+    if (!cbHandler) throw new Error('callback handler not registered');
+    const ctx = {
+      chat: { id: 1 },
+      from: { id: 1 },
+      reply: vi.fn(async () => ({ message_id: 1 })),
+      deleteMessage: vi.fn(async () => {}),
+      editMessageText: vi.fn(async () => {}),
+      editMessageReplyMarkup: vi.fn(async () => {}),
+      answerCbQuery: vi.fn(async () => {}),
+    } as unknown as Context;
+
+    await router.navigate(ctx, r);
+    const ctxCb = {
+      ...ctx,
+      callbackQuery: { data: '__router_cancel__', message: { message_id: 1 } },
+    } as Context & {
+      callbackQuery: { data: string; message: { message_id: number } };
+    };
+    await cbHandler(ctxCb);
+    const st = (await stateStore.get(1, 1)) as { stack: unknown[] } | undefined;
+    expect(st?.stack.length).toBe(0);
+  });
 });
