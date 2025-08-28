@@ -86,6 +86,8 @@ export type Route<A = unknown, P = unknown> = {
   onText?: (
     args: RouteActionArgs<A, P> & { text: string }
   ) => Promise<void | RouteView<A>> | void | RouteView<A>;
+  /** Показывать кнопку «Отмена» при ожидании ввода текста для этого роута */
+  showCancelOnWait?: boolean;
 };
 
 /**
@@ -835,7 +837,11 @@ export function createRouter<A = unknown>(
 
     state.awaitingTextRouteId = undefined;
     await setState(ctx, state);
-    const showCancel = route.onText ? options.showCancelOnWait === true : false;
+    const showCancel = route.onText
+      ? typeof route.showCancelOnWait === 'boolean'
+        ? route.showCancelOnWait
+        : options.showCancelOnWait === true
+      : false;
     try {
       function navigateImpl<NP = unknown>(
         r: Route<A, NP>,
@@ -897,7 +903,11 @@ export function createRouter<A = unknown>(
     const route = e.route;
     const params = state.params[currentId];
     const inheritedShowBack = e.hasBackEffective && !!e.parentId;
-    const showCancel = route.onText ? options.showCancelOnWait === true : false;
+    const showCancel = route.onText
+      ? typeof route.showCancelOnWait === 'boolean'
+        ? route.showCancelOnWait
+        : options.showCancelOnWait === true
+      : false;
     try {
       function navigateImpl<NP = unknown>(
         r: Route<A, NP>,
