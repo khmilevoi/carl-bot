@@ -59,4 +59,87 @@ describe('navigation stack', () => {
     state = await stateStore.get(1, 1);
     expect(state?.stack).toEqual([]);
   });
+
+  it('shows back button for child inheriting hasBack', async () => {
+    const root = route({
+      id: 'root',
+      async action() {
+        return { text: 'root', buttons: [] };
+      },
+    });
+    const child = route({
+      id: 'child',
+      async action() {
+        return { text: 'child', buttons: [] };
+      },
+    });
+
+    const { run } = createRouter(
+      [{ route: root, hasBack: true, children: [child] }],
+      {}
+    );
+    const bot = new Telegraf<Context>('token');
+    const router = run(bot, {});
+    const ctx = {
+      chat: { id: 1 },
+      from: { id: 1 },
+      reply: vi.fn(async () => ({ message_id: 1 })),
+      deleteMessage: vi.fn(async () => {}),
+      editMessageText: vi.fn(async () => {}),
+      editMessageReplyMarkup: vi.fn(async () => {}),
+    } as unknown as Context;
+
+    await router.navigate(ctx, child);
+    const kb = (
+      ctx.reply.mock.calls[0][1] as {
+        reply_markup: { inline_keyboard: unknown[] };
+      }
+    ).reply_markup.inline_keyboard;
+    expect(kb).toEqual([
+      [
+        expect.objectContaining({
+          text: '⬅️ Назад',
+          callback_data: '__router_back__',
+        }),
+      ],
+    ]);
+  });
+
+  it('hides back button when showBack is false', async () => {
+    const root = route({
+      id: 'root',
+      async action() {
+        return { text: 'root', buttons: [] };
+      },
+    });
+    const child = route({
+      id: 'child',
+      async action() {
+        return { text: 'child', buttons: [], showBack: false };
+      },
+    });
+
+    const { run } = createRouter(
+      [{ route: root, hasBack: true, children: [child] }],
+      {}
+    );
+    const bot = new Telegraf<Context>('token');
+    const router = run(bot, {});
+    const ctx = {
+      chat: { id: 1 },
+      from: { id: 1 },
+      reply: vi.fn(async () => ({ message_id: 1 })),
+      deleteMessage: vi.fn(async () => {}),
+      editMessageText: vi.fn(async () => {}),
+      editMessageReplyMarkup: vi.fn(async () => {}),
+    } as unknown as Context;
+
+    await router.navigate(ctx, child);
+    const kb = (
+      ctx.reply.mock.calls[0][1] as {
+        reply_markup: { inline_keyboard: unknown[] };
+      }
+    ).reply_markup.inline_keyboard;
+    expect(kb).toEqual([]);
+  });
 });
