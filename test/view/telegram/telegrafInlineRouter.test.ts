@@ -253,4 +253,160 @@ describe('inline-router', () => {
     const st = (await stateStore.get(1, 1)) as { stack: unknown[] } | undefined;
     expect(st?.stack.length).toBe(0);
   });
+
+  it('skips editMessageText when content is unchanged in smart mode', async () => {
+    const state: Record<string, unknown> = {};
+    const stateStore = {
+      async get(_chatId: number, _userId: number) {
+        return state.value as unknown;
+      },
+      async set(_chatId: number, _userId: number, value: unknown) {
+        state.value = value;
+      },
+      async delete(_chatId: number, _userId: number) {
+        state.value = undefined;
+      },
+    };
+    const r = route({
+      id: 'root',
+      async action() {
+        return { text: 'hello', buttons: [] };
+      },
+    });
+    const { run } = createRouter([r], { stateStore });
+    const bot = new Telegraf<Context>('token');
+    const router = run(bot, {});
+    const ctx = {
+      chat: { id: 1 },
+      from: { id: 1 },
+      reply: vi.fn(async () => ({ message_id: 1 })),
+      deleteMessage: vi.fn(async () => {}),
+      editMessageText: vi.fn(async () => {}),
+      editMessageReplyMarkup: vi.fn(async () => {}),
+    } as unknown as Context;
+
+    await router.navigate(ctx, r);
+    const ctxCb = {
+      ...ctx,
+      callbackQuery: { message: { message_id: 1 }, data: 'cb' },
+    } as Context & {
+      callbackQuery: { message: { message_id: number }; data: string };
+    };
+    await router.navigate(ctxCb, r);
+    expect(ctx.editMessageText).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['edit', { editMessageText: 1, deleteMessage: 0, reply: 1 }],
+    ['replace', { editMessageText: 0, deleteMessage: 1, reply: 2 }],
+    ['append', { editMessageText: 0, deleteMessage: 0, reply: 1 }],
+  ])(
+    'uses correct Telegram methods for %s mode',
+    async (renderMode, expectedCalls) => {
+      const state: Record<string, unknown> = {};
+      const stateStore = {
+        async get(_chatId: number, _userId: number) {
+          return state.value as unknown;
+        },
+        async set(_chatId: number, _userId: number, value: unknown) {
+          state.value = value;
+        },
+        async delete(_chatId: number, _userId: number) {
+          state.value = undefined;
+        },
+      };
+      const r = route({
+        id: 'root',
+        async action() {
+          return { text: 'hello', buttons: [] };
+        },
+      });
+      const { run } = createRouter([r], { stateStore, renderMode });
+      const bot = new Telegraf<Context>('token');
+      const router = run(bot, {});
+      const ctx = {
+        chat: { id: 1 },
+        from: { id: 1 },
+        reply: vi.fn(async () => ({ message_id: 1 })),
+        deleteMessage: vi.fn(async () => {}),
+        editMessageText: vi.fn(async () => {}),
+        editMessageReplyMarkup: vi.fn(async () => {}),
+      } as unknown as Context;
+
+      await router.navigate(ctx, r);
+      if (renderMode !== 'append') {
+        const ctxCb = {
+          ...ctx,
+          callbackQuery: { message: { message_id: 1 }, data: 'cb' },
+        } as Context & {
+          callbackQuery: { message: { message_id: number }; data: string };
+        };
+        await router.navigate(ctxCb, r);
+      }
+      expect(ctx.editMessageText.mock.calls.length).toBe(
+        expectedCalls.editMessageText
+      );
+      expect(ctx.deleteMessage.mock.calls.length).toBe(
+        expectedCalls.deleteMessage
+      );
+      expect(ctx.reply.mock.calls.length).toBe(expectedCalls.reply);
+    }
+  );
+
+  it.each([
+    ['reply', { reply: 2, deleteMessage: 0 }],
+    ['replace', { reply: 2, deleteMessage: 1 }],
+    ['ignore', { reply: 1, deleteMessage: 0 }],
+  ])(
+    'handles editMessageText errors with onEditFail=%s',
+    async (onEditFail, expectedCalls) => {
+      const state: Record<string, unknown> = {};
+      const stateStore = {
+        async get(_chatId: number, _userId: number) {
+          return state.value as unknown;
+        },
+        async set(_chatId: number, _userId: number, value: unknown) {
+          state.value = value;
+        },
+        async delete(_chatId: number, _userId: number) {
+          state.value = undefined;
+        },
+      };
+      let updated = false;
+      const r = route({
+        id: 'root',
+        async action() {
+          if (updated) return { text: 'new', buttons: [] };
+          updated = true;
+          return { text: 'old', buttons: [] };
+        },
+      });
+      const { run } = createRouter([r], { stateStore, onEditFail });
+      const bot = new Telegraf<Context>('token');
+      const router = run(bot, {});
+      const ctx = {
+        chat: { id: 1 },
+        from: { id: 1 },
+        reply: vi.fn(async () => ({ message_id: 1 })),
+        deleteMessage: vi.fn(async () => {}),
+        editMessageText: vi
+          .fn(async () => ({ message_id: 1 }))
+          .mockRejectedValueOnce(new Error('fail')),
+        editMessageReplyMarkup: vi.fn(async () => {}),
+      } as unknown as Context;
+
+      await router.navigate(ctx, r);
+      const ctxCb = {
+        ...ctx,
+        callbackQuery: { message: { message_id: 1 }, data: 'cb' },
+      } as Context & {
+        callbackQuery: { message: { message_id: number }; data: string };
+      };
+      await router.navigate(ctxCb, r);
+      expect(ctx.reply.mock.calls.length).toBe(expectedCalls.reply);
+      expect(ctx.deleteMessage.mock.calls.length).toBe(
+        expectedCalls.deleteMessage
+      );
+    }
+  );
 });
