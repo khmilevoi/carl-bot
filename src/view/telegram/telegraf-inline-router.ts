@@ -78,15 +78,13 @@ export type RouteActionArgs<A = unknown, P = unknown> = {
 export type Route<A = unknown, P = unknown> = {
   /** Уникальный ID роута */
   id: string;
-  /** Если true — роут ожидает текстового ввода */
-  waitForText?: boolean;
   /** Экшен роута: возвращает View (для рендера) или ничего (если сам навигирует) */
   action: (
     args: RouteActionArgs<A, P>
   ) => Promise<void | RouteView<A>> | void | RouteView<A>;
   /** Обработчик текстового ввода после выполнения action */
   onText?: (
-    args: RouteActionArgs<A, P>
+    args: RouteActionArgs<A, P> & { text: string }
   ) => Promise<void | RouteView<A>> | void | RouteView<A>;
 };
 
@@ -853,13 +851,21 @@ export function createRouter<A = unknown>(
         navigateBack: () => _navigateBack(ctx),
         state,
       });
-      if (view)
+      if (view) {
         await renderView(
           ctx,
           view as RouteView<A>,
           inheritedShowBack,
           showCancel
         );
+      } else if (route.onText) {
+        await renderView(
+          ctx,
+          { text: options.inputPrompt, buttons: [] },
+          inheritedShowBack,
+          showCancel
+        );
+      }
       if (route.onText) {
         state.awaitingTextRouteId = route.id;
         await setState(ctx, state);
@@ -907,13 +913,21 @@ export function createRouter<A = unknown>(
         navigateBack: () => _navigateBack(ctx),
         state,
       });
-      if (view)
+      if (view) {
         await renderView(
           ctx,
           view as RouteView<A>,
           inheritedShowBack,
           showCancel
         );
+      } else if (route.onText) {
+        await renderView(
+          ctx,
+          { text: options.inputPrompt, buttons: [] },
+          inheritedShowBack,
+          showCancel
+        );
+      }
       if (route.onText) {
         state.awaitingTextRouteId = currentId;
         await setState(ctx, state);
@@ -1141,7 +1155,12 @@ export function createRouter<A = unknown>(
               navigate: navigateImpl,
               navigateBack: () => _navigateBack(ctx),
               state: state,
+              text: txt ?? '',
             });
+            const newState = await getState(ctx);
+            if (newState.awaitingTextRouteId !== rid) {
+              return;
+            }
             if (result) {
               const inheritedShowBack = e.hasBackEffective && !!e.parentId;
               await renderView(
@@ -1150,8 +1169,8 @@ export function createRouter<A = unknown>(
                 inheritedShowBack,
                 false
               );
-              state.awaitingTextRouteId = undefined;
-              await setState(ctx, state);
+              newState.awaitingTextRouteId = undefined;
+              await setState(ctx, newState);
             } else {
               await _navigateBack(ctx);
             }

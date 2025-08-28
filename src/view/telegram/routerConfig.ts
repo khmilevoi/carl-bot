@@ -23,6 +23,11 @@ export interface Actions {
   requestChatAccess(): Promise<void>;
   requestUserAccess(): Promise<void>;
 
+  setHistoryLimit(chatId: number, value: number): Promise<void>;
+  setInterestInterval(chatId: number, value: number): Promise<void>;
+  setTopicTime(chatId: number, time: string, timezone: string): Promise<void>;
+  rescheduleTopic(chatId: number): Promise<void>;
+
   // Data loaders for views
   loadChatSettings(): Promise<ChatConfigParams>;
   loadAdminChats(): Promise<{ id: number; title: string }[]>;
@@ -107,36 +112,66 @@ const ChatSettings = route<Actions, ChatConfigParams>({
 
 const ChatHistoryLimit = route<Actions>({
   id: 'chat_history_limit',
-  waitForText: true,
   async action() {
     return { text: 'Введите новый лимит истории:', buttons: [] };
+  },
+  async onText({ ctx, actions, text }) {
+    const chatId = ctx.chat?.id;
+    if (typeof chatId === 'number') {
+      await actions.setHistoryLimit(chatId, Number(text));
+      return { text: '✅ Лимит истории обновлён', buttons: [] };
+    }
   },
 });
 
 const ChatInterestInterval = route<Actions>({
   id: 'chat_interest_interval',
-  waitForText: true,
   async action() {
     return { text: 'Введите новый интервал интереса:', buttons: [] };
+  },
+  async onText({ ctx, actions, text }) {
+    const chatId = ctx.chat?.id;
+    if (typeof chatId === 'number') {
+      await actions.setInterestInterval(chatId, Number(text));
+      return { text: '✅ Интервал интереса обновлён', buttons: [] };
+    }
   },
 });
 
 const ChatTopicTime = route<Actions>({
   id: 'chat_topic_time',
-  waitForText: true,
   async action() {
     return { text: 'Введите время статьи (HH:MM):', buttons: [] };
   },
+  async onText({ ctx, text, navigate }) {
+    const date =
+      ctx.message && 'date' in ctx.message
+        ? new Date(ctx.message.date * 1000)
+        : new Date();
+    const offset = -date.getTimezoneOffset();
+    const hours = Math.floor(offset / 60);
+    const sign = hours >= 0 ? '+' : '-';
+    const timezone = `UTC${sign}${String(Math.abs(hours)).padStart(2, '0')}`;
+    await navigate(ChatTopicTimezone, { time: text, timezone });
+  },
 });
 
-const ChatTopicTimezone = route<Actions, { timezone: string }>({
+const ChatTopicTimezone = route<Actions, { time: string; timezone: string }>({
   id: 'chat_topic_timezone',
-  waitForText: true,
   async action({ params }) {
     return {
       text: `Часовой пояс (${params.timezone}). Введите другой, если нужно:`,
       buttons: [],
     };
+  },
+  async onText({ ctx, actions, params, text }) {
+    const chatId = ctx.chat?.id;
+    if (typeof chatId === 'number') {
+      const tz = text.trim() === '' ? params.timezone : text.trim();
+      await actions.setTopicTime(chatId, params.time, tz);
+      await actions.rescheduleTopic(chatId);
+      return { text: '✅ Время статьи обновлено', buttons: [] };
+    }
   },
 });
 
@@ -250,7 +285,6 @@ const AdminChat = route<Actions, AdminChatParams | void>({
 
 const AdminChatHistoryLimit = route<Actions, { chatId: number } | void>({
   id: 'admin_chat_history_limit',
-  waitForText: true,
   async action({ ctx, params }) {
     if (!params) {
       const chatId = Number((ctx as Context & { match?: string[] }).match?.[1]);
@@ -264,11 +298,17 @@ const AdminChatHistoryLimit = route<Actions, { chatId: number } | void>({
       buttons: [],
     };
   },
+  async onText({ ctx, actions, params, text }) {
+    const chatId =
+      params?.chatId ??
+      Number((ctx as Context & { match?: string[] }).match?.[1]);
+    await actions.setHistoryLimit(chatId, Number(text));
+    return { text: '✅ Лимит истории обновлён', buttons: [] };
+  },
 });
 
 const AdminChatInterestInterval = route<Actions, { chatId: number } | void>({
   id: 'admin_chat_interest_interval',
-  waitForText: true,
   async action({ ctx, params }) {
     if (!params) {
       const chatId = Number((ctx as Context & { match?: string[] }).match?.[1]);
@@ -282,11 +322,17 @@ const AdminChatInterestInterval = route<Actions, { chatId: number } | void>({
       buttons: [],
     };
   },
+  async onText({ ctx, actions, params, text }) {
+    const chatId =
+      params?.chatId ??
+      Number((ctx as Context & { match?: string[] }).match?.[1]);
+    await actions.setInterestInterval(chatId, Number(text));
+    return { text: '✅ Интервал интереса обновлён', buttons: [] };
+  },
 });
 
 const AdminChatTopicTime = route<Actions, { chatId: number } | void>({
   id: 'admin_chat_topic_time',
-  waitForText: true,
   async action({ ctx, params }) {
     if (!params) {
       const chatId = Number((ctx as Context & { match?: string[] }).match?.[1]);
@@ -300,20 +346,39 @@ const AdminChatTopicTime = route<Actions, { chatId: number } | void>({
       buttons: [],
     };
   },
+  async onText({ ctx, params, text, navigate }) {
+    const chatId =
+      params?.chatId ??
+      Number((ctx as Context & { match?: string[] }).match?.[1]);
+    const date =
+      ctx.message && 'date' in ctx.message
+        ? new Date(ctx.message.date * 1000)
+        : new Date();
+    const offset = -date.getTimezoneOffset();
+    const hours = Math.floor(offset / 60);
+    const sign = hours >= 0 ? '+' : '-';
+    const timezone = `UTC${sign}${String(Math.abs(hours)).padStart(2, '0')}`;
+    await navigate(AdminChatTopicTimezone, { chatId, time: text, timezone });
+  },
 });
 
 const AdminChatTopicTimezone = route<
   Actions,
-  { chatId: number; timezone: string }
+  { chatId: number; time: string; timezone: string }
 >({
   id: 'admin_chat_topic_timezone',
-  waitForText: true,
   async action({ params }) {
     const { chatId, timezone } = params;
     return {
       text: `Часовой пояс для чата ${chatId} (${timezone}). Введите другой, если нужно:`,
       buttons: [],
     };
+  },
+  async onText({ actions, params, text }) {
+    const tz = text.trim() === '' ? params.timezone : text.trim();
+    await actions.setTopicTime(params.chatId, params.time, tz);
+    await actions.rescheduleTopic(params.chatId);
+    return { text: '✅ Время статьи обновлено', buttons: [] };
   },
 });
 
