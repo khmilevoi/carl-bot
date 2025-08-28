@@ -83,7 +83,7 @@ module.exports = [
             'test/**',
             // Router is a standalone utility with many exported helpers/types
             // that may not be imported elsewhere in this repo
-            'src/view/telegram/telegraf-inline-router.ts',
+            'src/view/telegram/inline-router/**',
           ],
         },
       ],

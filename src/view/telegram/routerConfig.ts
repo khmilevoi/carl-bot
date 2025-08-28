@@ -1,6 +1,6 @@
 import type { Context } from 'telegraf';
 
-import { button, cb, DSL, route } from './telegraf-inline-router';
+import { button, cb, createRouter, DSL, route } from './inline-router';
 
 interface ChatConfigParams {
   historyLimit: number;
@@ -165,7 +165,6 @@ const ChatTopicTimezone = route<Actions, { time: string; timezone: string }>({
   async action({ params }) {
     return {
       text: `Часовой пояс (${params.timezone}). Введите другой, если нужно:`,
-      buttons: [],
     };
   },
   async onText({ ctx, actions, params, text }) {
@@ -295,12 +294,10 @@ const AdminChatHistoryLimit = route<Actions, { chatId: number } | void>({
       const chatId = Number((ctx as Context & { match?: string[] }).match?.[1]);
       return {
         text: `Введите новый лимит истории для чата ${chatId}:`,
-        buttons: [],
       };
     }
     return {
       text: `Введите новый лимит истории для чата ${params.chatId}:`,
-      buttons: [],
     };
   },
   async onText({ ctx, actions, params, text }) {
@@ -320,12 +317,10 @@ const AdminChatInterestInterval = route<Actions, { chatId: number } | void>({
       const chatId = Number((ctx as Context & { match?: string[] }).match?.[1]);
       return {
         text: `Введите новый интервал интереса для чата ${chatId}:`,
-        buttons: [],
       };
     }
     return {
       text: `Введите новый интервал интереса для чата ${params.chatId}:`,
-      buttons: [],
     };
   },
   async onText({ ctx, actions, params, text }) {
@@ -345,12 +340,10 @@ const AdminChatTopicTime = route<Actions, { chatId: number } | void>({
       const chatId = Number((ctx as Context & { match?: string[] }).match?.[1]);
       return {
         text: `Введите время статьи для чата ${chatId} (HH:MM):`,
-        buttons: [],
       };
     }
     return {
       text: `Введите время статьи для чата ${params.chatId} (HH:MM):`,
-      buttons: [],
     };
   },
   async onText({ ctx, params, text, navigate }) {
@@ -379,7 +372,6 @@ const AdminChatTopicTimezone = route<
     const { chatId, timezone } = params;
     return {
       text: `Часовой пояс для чата ${chatId} (${timezone}). Введите другой, если нужно:`,
-      buttons: [],
     };
   },
   async onText({ actions, params, text }) {
@@ -517,7 +509,7 @@ const UserApprove = route<Actions>({
 });
 
 // eslint-disable-next-line import/no-unused-modules
-export const routes = [
+export const router = createRouter([
   {
     route: Menu,
     children: [
@@ -562,4 +554,4 @@ export const routes = [
   { route: ChatBan },
   { route: ChatUnban },
   { route: UserApprove },
-];
+]);

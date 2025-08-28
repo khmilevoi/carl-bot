@@ -2,12 +2,9 @@ import type { Context } from 'telegraf';
 import { Telegraf } from 'telegraf';
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  createRouter,
-  route,
-} from '../../../src/view/telegram/telegraf-inline-router';
+import { createRouter, route } from '@/view/telegram/inline-router';
 
-describe('telegraf-inline-router', () => {
+describe('inline-router', () => {
   it('shows cancel on wait and hides it after text', async () => {
     const r = route({
       id: 'input',

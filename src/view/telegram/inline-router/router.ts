@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // telegraf-inline-router.ts (v10)
 // Router for Telegraf inline keyboards with typed routes, text-input flows, back navigation,
 // render modes (incl. smart), cancel flow, improved state key, user-friendly error handling,
@@ -112,11 +113,11 @@ export type Button<A = unknown> = {
  * Узел дерева роутинга (для сборки иерархии и наследования hasBack).
  */
 export type RouteNode<A = unknown> = {
-  route: Route<A, unknown>;
+  route: Route<A, any>;
   /** Добавить «Назад» для этого узла и всех «простых» детей */
   hasBack?: boolean; // default: false
   /** Дочерние роуты (можно передавать как Route или как RouteNode) */
-  children?: Array<RouteNode<A> | Route<A, unknown>>;
+  children?: Array<RouteNode<A> | Route<A, any>>;
 };
 
 /**
