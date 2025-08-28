@@ -2,7 +2,14 @@ import type { Context } from 'telegraf';
 import { Telegraf } from 'telegraf';
 import { describe, expect, it, vi } from 'vitest';
 
-import { createRouter, route, button, cb } from '@/view/telegram/inline-router';
+import {
+  createRouter,
+  route,
+  button,
+  cb,
+  type RouterState,
+  type StateStore,
+} from '@/view/telegram/inline-router';
 
 describe('inline-router', () => {
   it('renders inputPrompt when action returns nothing', async () => {
@@ -306,5 +313,60 @@ describe('inline-router', () => {
       'done',
       expect.objectContaining({ show_alert: true })
     );
+  });
+
+  it('drops oldest messages when maxMessages limit is exceeded', async () => {
+    const firstRoute = route({
+      id: 'first',
+      async action() {
+        return { text: 'first', buttons: [], renderMode: 'append' };
+      },
+    });
+    const secondRoute = route({
+      id: 'second',
+      async action() {
+        return { text: 'second', buttons: [], renderMode: 'append' };
+      },
+    });
+
+    const stateStore: StateStore & { map: Map<string, RouterState> } = {
+      map: new Map<string, RouterState>(),
+      async get(chatId, userId) {
+        return this.map.get(`${chatId}:${userId}`);
+      },
+      async set(chatId, userId, state) {
+        this.map.set(`${chatId}:${userId}`, state);
+      },
+      async delete(chatId, userId) {
+        this.map.delete(`${chatId}:${userId}`);
+      },
+    } as unknown as StateStore & { map: Map<string, RouterState> };
+
+    const { run } = createRouter([firstRoute, secondRoute], {
+      maxMessages: 1,
+      stateStore,
+    });
+    const bot = new Telegraf<Context>('token');
+    const router = run(bot, {});
+    const ctx = {
+      chat: { id: 1 },
+      from: { id: 1 },
+      reply: vi
+        .fn()
+        .mockResolvedValueOnce({ message_id: 1 })
+        .mockResolvedValueOnce({ message_id: 2 }),
+      deleteMessage: vi.fn(async () => {}),
+      editMessageText: vi.fn(async () => {}),
+      editMessageReplyMarkup: vi.fn(async () => {}),
+    } as unknown as Context;
+
+    await router.navigate(ctx, firstRoute);
+    await router.navigate(ctx, secondRoute);
+
+    expect(ctx.deleteMessage).toHaveBeenCalledWith(1);
+    const state = await stateStore.get(1, 1);
+    expect(state?.messages).toEqual([
+      expect.objectContaining({ messageId: 2 }),
+    ]);
   });
 });
