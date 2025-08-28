@@ -5,6 +5,31 @@ import { describe, expect, it, vi } from 'vitest';
 import { createRouter, route } from '@/view/telegram/inline-router';
 
 describe('inline-router', () => {
+  it('renders inputPrompt when action returns nothing', async () => {
+    const r = route({
+      id: 'input',
+      async action() {},
+      async onText() {},
+    });
+    const { run } = createRouter([r], {
+      inputPrompt: 'enter text',
+      showCancelOnWait: false,
+    });
+    const bot = new Telegraf<Context>('token');
+    const router = run(bot, {});
+    const ctx = {
+      chat: { id: 1 },
+      from: { id: 1 },
+      reply: vi.fn(async () => ({ message_id: 1 })),
+      deleteMessage: vi.fn(async () => {}),
+      editMessageText: vi.fn(async () => {}),
+      editMessageReplyMarkup: vi.fn(async () => {}),
+    } as unknown as Context;
+
+    await router.navigate(ctx, r);
+    expect(ctx.reply.mock.calls[0][0]).toBe('enter text');
+  });
+
   it('shows cancel on wait and hides it after text', async () => {
     const r = route({
       id: 'input',
