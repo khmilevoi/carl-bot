@@ -8,6 +8,13 @@ export type NavigateFn<A = unknown> = <NP = unknown>(
   params?: NP
 ) => Promise<void>;
 
+export type ButtonAnswer = {
+  text?: string;
+  showAlert?: boolean;
+  url?: string;
+  cacheTimeSec?: number;
+};
+
 export type Button<A = unknown> = {
   text: string;
   callback: string;
@@ -17,6 +24,7 @@ export type Button<A = unknown> = {
     navigate: NavigateFn<A>;
     navigateBack: () => Promise<void>;
   }) => Promise<void> | void;
+  answer?: ButtonAnswer;
 };
 
 export type RouteView<A = unknown> = {
