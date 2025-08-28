@@ -53,11 +53,16 @@ describe('inline-router', () => {
     const bot = new Telegraf<Context>('token');
     const onSpy = vi.spyOn(bot, 'on');
     const router = run(bot, {});
-    const textHandler = onSpy.mock.calls.find(([e]) => e === 'text')?.[1] as
-      | ((ctx: Context, next: () => Promise<void>) => Promise<void>)
-      | undefined;
+    const handlers = onSpy.mock.calls
+      .filter(([e]) => e === 'text')
+      .map(
+        ([, h]) =>
+          h as (ctx: Context, next?: () => Promise<void>) => Promise<void>
+      );
     onSpy.mockRestore();
-    if (!textHandler) throw new Error('text handler not registered');
+    const [textHandler, fallbackHandler] = handlers;
+    if (!textHandler || !fallbackHandler)
+      throw new Error('text handler not registered');
     const ctx = {
       chat: { id: 1 },
       from: { id: 1 },
@@ -86,7 +91,7 @@ describe('inline-router', () => {
       ...ctx,
       message: { text: 'hello', date: 0 },
     } as Context & { message: { text: string; date: number } };
-    await textHandler(ctxText, async () => {});
+    await textHandler(ctxText, () => fallbackHandler(ctxText));
     const lastCall = ctx.reply.mock.calls.at(-1);
     expect(lastCall?.[0]).toBe('done');
     const lastKeyboard = (
@@ -385,11 +390,16 @@ describe('inline-router', () => {
     const bot = new Telegraf<Context>('token');
     const onSpy = vi.spyOn(bot, 'on');
     const router = run(bot, {});
-    const textHandler = onSpy.mock.calls.find(([e]) => e === 'text')?.[1] as
-      | ((ctx: Context, next: () => Promise<void>) => Promise<void>)
-      | undefined;
+    const handlers = onSpy.mock.calls
+      .filter(([e]) => e === 'text')
+      .map(
+        ([, h]) =>
+          h as (ctx: Context, next?: () => Promise<void>) => Promise<void>
+      );
     onSpy.mockRestore();
-    if (!textHandler) throw new Error('text handler not registered');
+    const [textHandler, fallbackHandler] = handlers;
+    if (!textHandler || !fallbackHandler)
+      throw new Error('text handler not registered');
     const ctx = {
       chat: { id: 1 },
       from: { id: 1 },
@@ -404,7 +414,7 @@ describe('inline-router', () => {
       ...ctx,
       message: { text: 'hello', date: 0 },
     } as Context & { message: { text: string; date: number } };
-    await textHandler(ctxText, async () => {});
+    await textHandler(ctxText, () => fallbackHandler(ctxText));
     const lastCall = ctx.reply.mock.calls.at(-1);
     expect(lastCall?.[0]).toBe('error');
   });
@@ -494,5 +504,91 @@ describe('inline-router', () => {
     await Promise.all([p1, p2]);
 
     expect(order).toEqual(['first', 'second']);
+  });
+
+  it('calls text fallback when no route awaiting text', async () => {
+    const r = route({
+      id: 'root',
+      async action() {
+        return { text: 'hello', buttons: [] };
+      },
+    });
+    const { run } = createRouter([r], { showCancelOnWait: false });
+    const bot = new Telegraf<Context>('token');
+    const onSpy = vi.spyOn(bot, 'on');
+    const router = run(bot, {});
+    const handlers = onSpy.mock.calls
+      .filter(([e]) => e === 'text')
+      .map(
+        ([, h]) =>
+          h as (ctx: Context, next?: () => Promise<void>) => Promise<void>
+      );
+    onSpy.mockRestore();
+    const [textHandler, fallbackHandler] = handlers;
+    if (!textHandler || !fallbackHandler)
+      throw new Error('text handler not registered');
+    const fallback = vi.fn();
+    router.onText(fallback);
+    const ctx = {
+      chat: { id: 1 },
+      from: { id: 1 },
+      reply: vi.fn(async () => ({ message_id: 1 })),
+      deleteMessage: vi.fn(async () => {}),
+      editMessageText: vi.fn(async () => {}),
+      editMessageReplyMarkup: vi.fn(async () => {}),
+    } as unknown as Context;
+    await router.navigate(ctx, r);
+    const ctxText = {
+      ...ctx,
+      message: { text: 'hi', date: 0 },
+    } as Context & { message: { text: string; date: number } };
+    await textHandler(ctxText, () => fallbackHandler(ctxText));
+    expect(fallback).toHaveBeenCalledOnce();
+    expect(fallback).toHaveBeenCalledWith(ctxText);
+  });
+
+  it('does not call text fallback when awaiting text', async () => {
+    const onText = vi.fn();
+    const r = route({
+      id: 'input',
+      async action() {
+        return { text: 'enter', buttons: [] };
+      },
+      async onText(args) {
+        onText(args);
+      },
+    });
+    const { run } = createRouter([r], { showCancelOnWait: false });
+    const bot = new Telegraf<Context>('token');
+    const onSpy = vi.spyOn(bot, 'on');
+    const router = run(bot, {});
+    const handlers = onSpy.mock.calls
+      .filter(([e]) => e === 'text')
+      .map(
+        ([, h]) =>
+          h as (ctx: Context, next?: () => Promise<void>) => Promise<void>
+      );
+    onSpy.mockRestore();
+    const [textHandler, fallbackHandler] = handlers;
+    if (!textHandler || !fallbackHandler)
+      throw new Error('text handler not registered');
+    const fallback = vi.fn();
+    router.onText(fallback);
+    const ctx = {
+      chat: { id: 1 },
+      from: { id: 1 },
+      reply: vi.fn(async () => ({ message_id: 1 })),
+      deleteMessage: vi.fn(async () => {}),
+      editMessageText: vi.fn(async () => {}),
+      editMessageReplyMarkup: vi.fn(async () => {}),
+    } as unknown as Context;
+    await router.navigate(ctx, r);
+    const ctxText = {
+      ...ctx,
+      message: { text: 'hello', date: 0 },
+    } as Context & { message: { text: string; date: number } };
+    await textHandler(ctxText, () => fallbackHandler(ctxText));
+    expect(onText).toHaveBeenCalledOnce();
+    expect(fallback).not.toHaveBeenCalled();
   });
 });
