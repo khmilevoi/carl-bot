@@ -343,11 +343,11 @@ export function createRouter<A = unknown>(
 
   const mutex = new SimpleMutex();
 
-  const getIds = (ctx: Context) => ({
+  const getIds = (ctx: Context): { chatId: number; userId: number } => ({
     chatId: ctx.chat?.id ?? 0,
     userId: ctx.from?.id ?? 0,
   });
-  const getKey = (ctx: Context) => {
+  const getKey = (ctx: Context): string => {
     const { chatId, userId } = getIds(ctx);
     return `${chatId}:${userId}`;
   };
@@ -360,13 +360,15 @@ export function createRouter<A = unknown>(
     }
     return st;
   };
-  const setState = async (ctx: Context, state: RouterState) => {
+  const setState = async (ctx: Context, state: RouterState): Promise<void> => {
     const { chatId, userId } = getIds(ctx);
     await options.stateStore.set(chatId, userId, state);
   };
 
-  const getEntry = (rid?: string) => (rid ? entries.get(rid) : undefined);
-  const topRouteId = (st: RouterState) => st.stack[st.stack.length - 1];
+  const getEntry = (rid?: string): Entry | undefined =>
+    rid ? entries.get(rid) : undefined;
+  const topRouteId = (st: RouterState): string | undefined =>
+    st.stack[st.stack.length - 1];
 
   const rowsFrom = (
     buttons?: Array<Button<A> | Button<A>[]>
@@ -419,7 +421,7 @@ export function createRouter<A = unknown>(
     return { inline_keyboard } as unknown as InlineKeyboardMarkup;
   };
 
-  async function pruneOverflow(ctx: Context, st: RouterState) {
+  async function pruneOverflow(ctx: Context, st: RouterState): Promise<void> {
     const limit = options.maxMessages;
     const overflow = Math.max(0, st.messages.length - limit);
     if (overflow <= 0) return;
@@ -427,7 +429,9 @@ export function createRouter<A = unknown>(
     for (const m of drop) {
       try {
         await ctx.deleteMessage(m.messageId);
-      } catch {}
+      } catch {
+        /* noop */
+      }
     }
     st.messages = st.messages.slice(overflow);
     await setState(ctx, st);
@@ -438,7 +442,7 @@ export function createRouter<A = unknown>(
     view: RouteView<A> | undefined,
     inheritedBack: boolean,
     inheritedCancel: boolean
-  ) {
+  ): Promise<void> {
     const st = await getState(ctx);
     const rows = rowsFrom(view?.buttons);
     const showBack =
@@ -451,7 +455,7 @@ export function createRouter<A = unknown>(
     const mid = (
       ctx as Context & { callbackQuery?: { message?: { message_id?: number } } }
     ).callbackQuery?.message?.message_id;
-    const remember = async (messageId: number) => {
+    const remember = async (messageId: number): Promise<void> => {
       const entry = {
         messageId,
         text: view?.text ?? '',
@@ -483,7 +487,9 @@ export function createRouter<A = unknown>(
           await ctx.deleteMessage(target);
           st.messages = st.messages.filter((m) => m.messageId !== target);
           await setState(ctx, st);
-        } catch {}
+        } catch {
+          /* noop */
+        }
       }
       const sent = await ctx.reply(view?.text ?? '', {
         reply_markup,
@@ -511,13 +517,17 @@ export function createRouter<A = unknown>(
         });
         await remember(mid);
         return;
-      } catch {}
+      } catch {
+        /* noop */
+      }
       if (options.onEditFail === 'replace') {
         try {
           await ctx.deleteMessage(mid);
           st.messages = st.messages.filter((m) => m.messageId !== mid);
           await setState(ctx, st);
-        } catch {}
+        } catch {
+          /* noop */
+        }
       } else if (options.onEditFail === 'ignore') {
         return;
       }
@@ -538,13 +548,17 @@ export function createRouter<A = unknown>(
         });
         await remember(mid);
         return;
-      } catch {}
+      } catch {
+        /* noop */
+      }
       if (options.onEditFail === 'replace') {
         try {
           await ctx.deleteMessage(mid);
           st.messages = st.messages.filter((m) => m.messageId !== mid);
           await setState(ctx, st);
-        } catch {}
+        } catch {
+          /* noop */
+        }
       } else if (options.onEditFail === 'ignore') {
         return;
       }
@@ -569,7 +583,7 @@ export function createRouter<A = unknown>(
     ctx: Context,
     r: Route<A, NP>,
     params?: NP
-  ) {
+  ): Promise<void> {
     const st = await getState(ctx);
     st.stack.push(r.id);
     st.params[r.id] = params as unknown;
@@ -605,7 +619,7 @@ export function createRouter<A = unknown>(
     }
   }
 
-  async function _navigateBack(ctx: Context) {
+  async function _navigateBack(ctx: Context): Promise<void> {
     const st = await getState(ctx);
     st.stack.pop();
     st.awaitingTextRouteId = undefined;
@@ -614,7 +628,9 @@ export function createRouter<A = unknown>(
     if (!cur) {
       try {
         await ctx.editMessageReplyMarkup(undefined);
-      } catch {}
+      } catch {
+        /* noop */
+      }
       return;
     }
     const e = getEntry(cur);
@@ -647,7 +663,7 @@ export function createRouter<A = unknown>(
     }
   }
 
-  async function _cancelWait(ctx: Context) {
+  async function _cancelWait(ctx: Context): Promise<void> {
     const st = await getState(ctx);
     if (st.awaitingTextRouteId) {
       const rid = st.awaitingTextRouteId;
@@ -663,7 +679,7 @@ export function createRouter<A = unknown>(
     err: unknown,
     inheritedBack: boolean,
     awaiting: boolean
-  ) {
+  ): Promise<void> {
     const st = await getState(ctx);
     options.onError?.(err, ctx, st);
     if (err instanceof RouterUserError) {
@@ -736,7 +752,9 @@ export function createRouter<A = unknown>(
               await _navigate(ctx, r);
               try {
                 await ctx.answerCbQuery();
-              } catch {}
+              } catch {
+                /* noop */
+              }
             });
           });
       }
@@ -796,7 +814,9 @@ export function createRouter<A = unknown>(
             } else {
               await ctx.answerCbQuery();
             }
-          } catch {}
+          } catch {
+            /* noop */
+          }
 
           if (data === options.cancelCallbackData) {
             await _cancelWait(ctx);
@@ -817,9 +837,14 @@ export function createRouter<A = unknown>(
               });
             } catch (err) {
               const curId = topRouteId(st);
-              const e = getEntry(curId!);
-              const inheritedBack = !!e?.hasBackEffective && !!e?.parentId;
-              await handleError(ctx, err, inheritedBack, false);
+              if (curId) {
+                const entry = getEntry(curId);
+                const inheritedBack =
+                  !!entry?.hasBackEffective && !!entry?.parentId;
+                await handleError(ctx, err, inheritedBack, false);
+              } else {
+                await handleError(ctx, err, false, false);
+              }
             }
             return;
           }
