@@ -8,7 +8,7 @@ import {
   type Route,
   type RouteNode,
   type StartOptions,
-} from '../src/view/telegram/inline-router/inline-router';
+} from '../src/view/telegram/inline-router';
 
 describe('inline-router render modes and errors', () => {
   let bot: any;
