@@ -1,8 +1,7 @@
 import assert from 'node:assert';
 
 import { inject, injectable, LazyServiceIdentifier } from 'inversify';
-import type { Context, Telegraf } from 'telegraf';
-import { message } from 'telegraf/filters';
+import type { Context } from 'telegraf';
 
 import type { AdminService } from '@/application/interfaces/admin/AdminService';
 import { ADMIN_SERVICE_ID } from '@/application/interfaces/admin/AdminService';
@@ -39,7 +38,8 @@ import {
 import { MessageFactory } from '@/application/use-cases/messages/MessageFactory';
 import type { TriggerContext } from '@/domain/triggers/Trigger';
 
-import type { Actions } from './routerConfig';
+import type { RunningRouter } from './inline-router';
+import { type Actions, router } from './routerConfig';
 
 async function withTyping(
   ctx: Context,
@@ -155,7 +155,7 @@ export class MainService {
       );
     },
   };
-  private readonly bot: Telegraf;
+  private readonly router: RunningRouter<Actions>;
   private env: Env;
   private awaitingConfig = new Map<
     number,
@@ -189,7 +189,8 @@ export class MainService {
   ) {
     this.env = envService.env;
     this.messenger = messenger;
-    this.bot = messenger.bot;
+    const actions = this.actions;
+    this.router = router.run(messenger.bot, actions);
     this.scheduler = scheduler;
     this.logger = loggerFactory.create('MainService');
     this.configure();
@@ -217,7 +218,8 @@ export class MainService {
   }
 
   private configure(): void {
-    this.bot.start(async (ctx) => {
+    const bot = this.messenger.bot;
+    bot.start(async (ctx) => {
       try {
         await ctx.reply('Бот запущен');
       } catch (error) {
@@ -227,7 +229,7 @@ export class MainService {
         );
       }
     });
-    this.bot.command('menu', async (ctx) => {
+    bot.command('menu', async (ctx) => {
       try {
         await ctx.reply('Меню отключено');
       } catch (error) {
@@ -238,11 +240,11 @@ export class MainService {
       }
     });
 
-    this.bot.telegram
+    bot.telegram
       .setMyCommands([{ command: 'menu', description: 'Показать меню' }])
       .catch((err) => this.logger.error({ err }, 'Failed to set bot commands'));
 
-    this.bot.on('my_chat_member', async (ctx) => {
+    bot.on('my_chat_member', async (ctx) => {
       const chatId = ctx.chat?.id;
       assert(chatId, 'This is not a chat');
       this.logger.info({ chatId }, 'Bot added to chat');
@@ -263,7 +265,7 @@ export class MainService {
       }
     });
 
-    this.bot.action(/^admin_chat_history_limit:(\S+)$/, async (ctx) => {
+    bot.action(/^admin_chat_history_limit:(\S+)$/, async (ctx) => {
       const adminChatId = this.env.ADMIN_CHAT_ID;
       if (ctx.chat?.id !== adminChatId) {
         await ctx.answerCbQuery();
@@ -281,7 +283,7 @@ export class MainService {
       }
     });
 
-    this.bot.action(/^admin_chat_interest_interval:(\S+)$/, async (ctx) => {
+    bot.action(/^admin_chat_interest_interval:(\S+)$/, async (ctx) => {
       const adminChatId = this.env.ADMIN_CHAT_ID;
       if (ctx.chat?.id !== adminChatId) {
         await ctx.answerCbQuery();
@@ -299,7 +301,7 @@ export class MainService {
       }
     });
 
-    this.bot.action(/^admin_chat_topic_time:(\S+)$/, async (ctx) => {
+    bot.action(/^admin_chat_topic_time:(\S+)$/, async (ctx) => {
       const adminChatId = this.env.ADMIN_CHAT_ID;
       if (ctx.chat?.id !== adminChatId) {
         await ctx.answerCbQuery();
@@ -317,7 +319,7 @@ export class MainService {
       }
     });
 
-    this.bot.action(/^chat_approve:(\S+)$/, async (ctx) => {
+    bot.action(/^chat_approve:(\S+)$/, async (ctx) => {
       const adminChatId = this.env.ADMIN_CHAT_ID;
       if (ctx.chat?.id !== adminChatId) {
         this.logger.warn(
@@ -340,7 +342,7 @@ export class MainService {
       }
     });
 
-    this.bot.action(/^chat_ban:(\S+)$/, async (ctx) => {
+    bot.action(/^chat_ban:(\S+)$/, async (ctx) => {
       const adminChatId = this.env.ADMIN_CHAT_ID;
       if (ctx.chat?.id !== adminChatId) {
         this.logger.warn(
@@ -364,7 +366,7 @@ export class MainService {
       }
     });
 
-    this.bot.action(/^chat_unban:(\S+)$/, async (ctx) => {
+    bot.action(/^chat_unban:(\S+)$/, async (ctx) => {
       const adminChatId = this.env.ADMIN_CHAT_ID;
       if (ctx.chat?.id !== adminChatId) {
         await ctx.answerCbQuery();
@@ -382,7 +384,7 @@ export class MainService {
       }
     });
 
-    this.bot.action(/^user_approve:(\S+):(\S+)$/, async (ctx) => {
+    bot.action(/^user_approve:(\S+):(\S+)$/, async (ctx) => {
       const adminChatId = this.env.ADMIN_CHAT_ID;
       if (ctx.chat?.id !== adminChatId) {
         await ctx.answerCbQuery();
@@ -407,7 +409,7 @@ export class MainService {
       }
     });
 
-    this.bot.on(message('text'), async (ctx) => {
+    this.router.onText(async (ctx) => {
       try {
         await this.handleText(ctx);
       } catch (error) {
