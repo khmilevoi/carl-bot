@@ -171,4 +171,54 @@ describe('inline-router runtime API (initially failing)', () => {
     });
     expect(r.action).toHaveBeenCalledTimes(2);
   });
+
+  it('supports onText flow: shows prompt and handles text and cancel', async () => {
+    const onText = vi.fn().mockResolvedValue({ text: 'Saved' });
+    const r: Route = {
+      id: 'ask',
+      actionName: 'ask',
+      action: vi.fn().mockResolvedValue(undefined),
+      onText,
+    };
+    const router = createRouter([r], { inputPrompt: 'Type here:' });
+    router.run(bot, {});
+
+    const ctx: any = {
+      chat: { id: 1 },
+      from: { id: 2 },
+      reply: vi.fn().mockResolvedValue({ message_id: 21 }),
+      answerCbQuery: vi.fn(),
+      editMessageReplyMarkup: vi.fn(),
+    };
+
+    // Start route via command -> should show input prompt + cancel button
+    const cmd = vi
+      .mocked(bot.command)
+      .mock.calls.find((c) => c[0] === 'ask')?.[1];
+    await cmd!(ctx);
+    const firstCall = vi.mocked(ctx.reply).mock.calls[0];
+    expect(firstCall[0]).toBe('Type here:');
+    const keyboard = firstCall[1]?.reply_markup?.inline_keyboard as Array<
+      Array<{ callback_data: string }>
+    >;
+    expect(
+      keyboard.flat().some((b) => b.callback_data === '__router_cancel__')
+    ).toBe(true);
+
+    // Provide a text -> onText returns a view and router replies
+    const onTextHandler = vi
+      .mocked(bot.on)
+      .mock.calls.find((c) => c[0] === 'text')?.[1];
+    expect(onTextHandler).toBeTypeOf('function');
+    const textCtx = { ...ctx, message: { text: 'hello' } };
+    await onTextHandler!(textCtx, vi.fn());
+    expect(onText).toHaveBeenCalled();
+    expect(ctx.reply).toHaveBeenCalledWith('Saved', expect.any(Object));
+
+    // Start again and cancel via text command
+    await cmd!(ctx);
+    const cancelCtx = { ...ctx, message: { text: '/cancel' } };
+    await onTextHandler!(cancelCtx, vi.fn());
+    // Should not throw; navigateBack handled silently
+  });
 });
