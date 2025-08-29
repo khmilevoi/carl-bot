@@ -1,4 +1,6 @@
 /* eslint-disable import/no-unused-modules */
+import assert from 'node:assert';
+
 import type { Context } from 'telegraf';
 
 import { button, cb, createRouter, DSL, route } from './inline-router';
@@ -18,10 +20,11 @@ interface AdminChatParams {
 
 export interface Actions {
   // Detached from Telegram ctx
-  exportData(): Promise<void>;
-  resetMemory(): Promise<void>;
-  requestChatAccess(): Promise<void>;
-  requestUserAccess(): Promise<void>;
+  hasAccess(chatId: number, userId: number): Promise<boolean>;
+  exportData(chatId: number): Promise<{ buffer: Buffer; filename: string }[]>;
+  resetMemory(chatId: number): Promise<void>;
+  sendChatApprovalRequest(chatId: number, title?: string): Promise<void>;
+  sendAdminMessage(msg: string): Promise<void>;
 
   setHistoryLimit(chatId: number, value: number): Promise<void>;
   setInterestInterval(chatId: number, value: number): Promise<void>;
@@ -29,7 +32,7 @@ export interface Actions {
   rescheduleTopic(chatId: number): Promise<void>;
 
   // Data loaders for views
-  loadChatSettings(): Promise<ChatConfigParams>;
+  loadChatSettings(chatId: number): Promise<ChatConfigParams>;
   loadAdminChats(): Promise<{ id: number; title: string }[]>;
   loadAdminChat(chatId: number): Promise<AdminChatParams>;
 
@@ -42,9 +45,97 @@ export interface Actions {
 
 const { row, rows } = DSL;
 
+async function exportData(ctx: Context, actions: Actions): Promise<void> {
+  const chatId = ctx.chat?.id;
+  const userId = ctx.from?.id;
+  assert(typeof chatId === 'number', 'This is not a chat');
+  assert(typeof userId === 'number', 'No user id');
+
+  const allowed = await actions.hasAccess(chatId, userId);
+  if (!allowed) {
+    await ctx.answerCbQuery('Нет доступа или ключ просрочен');
+    await ctx.reply('Нет доступа');
+    return;
+  }
+
+  await ctx.answerCbQuery('Начинаю загрузку данных...');
+
+  try {
+    const files = await actions.exportData(chatId);
+    if (files.length === 0) {
+      await ctx.reply('Нет данных для экспорта');
+      return;
+    }
+    await ctx.reply(
+      `Найдено ${files.length} таблиц для экспорта. Начинаю загрузку...`
+    );
+    for (const f of files) {
+      await ctx.replyWithDocument({
+        source: f.buffer,
+        filename: f.filename,
+      });
+      await new Promise<void>((resolve) => setImmediate(resolve));
+    }
+    await ctx.reply('✅ Загрузка данных завершена!');
+  } catch {
+    await ctx.reply('❌ Ошибка при загрузке данных. Попробуйте позже.');
+  }
+}
+
+async function resetMemory(ctx: Context, actions: Actions): Promise<void> {
+  const chatId = ctx.chat?.id;
+  const userId = ctx.from?.id;
+  assert(typeof chatId === 'number', 'This is not a chat');
+  assert(typeof userId === 'number', 'No user id');
+
+  const allowed = await actions.hasAccess(chatId, userId);
+  if (!allowed) {
+    await ctx.answerCbQuery('Нет доступа или ключ просрочен');
+    return;
+  }
+
+  await ctx.answerCbQuery('Сбрасываю память диалога...');
+
+  try {
+    await actions.resetMemory(chatId);
+    await ctx.reply('✅ Контекст диалога сброшен!');
+  } catch {
+    await ctx.reply('❌ Ошибка при сбросе памяти. Попробуйте позже.');
+  }
+}
+
+async function requestChatAccess(
+  ctx: Context,
+  actions: Actions
+): Promise<void> {
+  const chatId = ctx.chat?.id;
+  assert(typeof chatId === 'number', 'This is not a chat');
+  const title = ctx.chat && 'title' in ctx.chat ? ctx.chat.title : undefined;
+  await actions.sendChatApprovalRequest(chatId, title);
+  await ctx.reply('Запрос отправлен');
+}
+
+async function requestUserAccess(
+  ctx: Context,
+  actions: Actions
+): Promise<void> {
+  const chatId = ctx.chat?.id;
+  const userId = ctx.from?.id;
+  assert(typeof chatId === 'number', 'This is not a chat');
+  assert(typeof userId === 'number', 'No user id');
+  const firstName = ctx.from?.first_name;
+  const lastName = ctx.from?.last_name;
+  const username = ctx.from?.username;
+  const fullName = [firstName, lastName].filter(Boolean).join(' ');
+  const usernamePart = username ? ` @${username}` : '';
+  const msg = `Chat ${chatId} user ${userId} (${fullName}${usernamePart}) requests data access.`;
+  await actions.sendAdminMessage(msg);
+  await ctx.reply('Запрос отправлен администратору.');
+}
+
 export const Menu = route<Actions>({
   id: 'menu',
-  async action({ actions }) {
+  async action() {
     return {
       text: 'Выберите действие:',
       buttons: rows(
@@ -52,23 +143,26 @@ export const Menu = route<Actions>({
           button({
             text: '📊 Загрузить данные',
             callback: cb('export_data'),
-            action: async () => actions.exportData(),
+            action: async ({ ctx, actions }) => exportData(ctx, actions),
           })
         ),
         row(
           button({
             text: '🔄 Сбросить память',
             callback: cb('reset_memory'),
-            action: async () => actions.resetMemory(),
+            action: async ({ ctx, actions }) => resetMemory(ctx, actions),
           })
         ),
         row(
           button({
             text: '⚙️ Настройки',
             callback: cb('chat_settings'),
-            action: async ({ actions, navigate }) => {
-              const config = await actions.loadChatSettings();
-              await navigate(ChatSettings, config);
+            action: async ({ ctx, actions, navigate }) => {
+              const chatId = ctx.chat?.id;
+              if (typeof chatId === 'number') {
+                const config = await actions.loadChatSettings(chatId);
+                await navigate(ChatSettings, config);
+              }
             },
           })
         )
@@ -120,7 +214,7 @@ export const ChatHistoryLimit = route<Actions>({
     const chatId = ctx.chat?.id;
     if (typeof chatId === 'number') {
       await actions.setHistoryLimit(chatId, Number(text));
-      const config = await actions.loadChatSettings();
+      const config = await actions.loadChatSettings(chatId);
       await navigate(ChatSettings, config);
     }
   },
@@ -136,7 +230,7 @@ export const ChatInterestInterval = route<Actions>({
     const chatId = ctx.chat?.id;
     if (typeof chatId === 'number') {
       await actions.setInterestInterval(chatId, Number(text));
-      const config = await actions.loadChatSettings();
+      const config = await actions.loadChatSettings(chatId);
       await navigate(ChatSettings, config);
     }
   },
@@ -178,7 +272,7 @@ export const ChatTopicTimezone = route<
       const tz = text.trim() === '' ? params.timezone : text.trim();
       await actions.setTopicTime(chatId, params.time, tz);
       await actions.rescheduleTopic(chatId);
-      const config = await actions.loadChatSettings();
+      const config = await actions.loadChatSettings(chatId);
       await navigate(ChatSettings, config);
     }
   },
@@ -186,7 +280,7 @@ export const ChatTopicTimezone = route<
 
 export const AdminMenu = route<Actions>({
   id: 'admin_menu',
-  async action({ actions }) {
+  async action() {
     return {
       text: 'Выберите действие:',
       buttons: rows(
@@ -194,7 +288,7 @@ export const AdminMenu = route<Actions>({
           button({
             text: '📊 Загрузить данные',
             callback: cb('admin_export_data'),
-            action: async () => actions.exportData(),
+            action: async ({ ctx, actions }) => exportData(ctx, actions),
           })
         ),
         row(
@@ -396,7 +490,7 @@ export const AdminChatTopicTimezone = route<
 
 export const ChatNotApproved = route<Actions>({
   id: 'chat_not_approved',
-  async action({ actions }) {
+  async action() {
     return {
       text: 'Этот чат не находится в списке разрешённых.',
       buttons: rows(
@@ -404,7 +498,7 @@ export const ChatNotApproved = route<Actions>({
           button({
             text: 'Запросить доступ',
             callback: cb('chat_request'),
-            action: async () => actions.requestChatAccess(),
+            action: async ({ ctx, actions }) => requestChatAccess(ctx, actions),
           })
         )
       ),
@@ -414,7 +508,7 @@ export const ChatNotApproved = route<Actions>({
 
 export const NoAccess = route<Actions>({
   id: 'no_access',
-  async action({ actions }) {
+  async action() {
     return {
       text: 'Для работы с данными нужен доступ.',
       buttons: rows(
@@ -422,7 +516,7 @@ export const NoAccess = route<Actions>({
           button({
             text: '🔑 Запросить доступ',
             callback: cb('request_access'),
-            action: async () => actions.requestUserAccess(),
+            action: async ({ ctx, actions }) => requestUserAccess(ctx, actions),
           })
         )
       ),

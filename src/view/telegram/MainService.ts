@@ -64,21 +64,23 @@ async function withTyping(
 @injectable()
 export class MainService {
   public readonly actions: Actions = {
-    exportData: async () => {
-      const ctx = this.ensureCtx();
-      await this.handleExportData(ctx);
+    hasAccess: async (chatId, userId) => {
+      if (chatId === this.env.ADMIN_CHAT_ID) return true;
+      return this.admin.hasAccess(chatId, userId);
     },
-    resetMemory: async () => {
-      const ctx = this.ensureCtx();
-      await this.handleResetMemory(ctx);
+    exportData: async (chatId) => {
+      return chatId === this.env.ADMIN_CHAT_ID
+        ? this.admin.exportTables()
+        : this.admin.exportChatData(chatId);
     },
-    requestChatAccess: async () => {
-      const ctx = this.ensureCtx();
-      await this.handleChatRequest(ctx);
+    resetMemory: async (chatId) => {
+      await this.memories.reset(chatId);
     },
-    requestUserAccess: async () => {
-      const ctx = this.ensureCtx();
-      await this.handleRequestAccess(ctx);
+    sendChatApprovalRequest: async (chatId, title) => {
+      await this.sendChatApprovalRequest(chatId, title);
+    },
+    sendAdminMessage: async (msg) => {
+      await this.messenger.sendMessage(this.env.ADMIN_CHAT_ID, msg);
     },
     setHistoryLimit: async (chatId, value) => {
       await this.admin.setHistoryLimit(chatId, value);
@@ -92,10 +94,7 @@ export class MainService {
     rescheduleTopic: async (chatId) => {
       await this.scheduler.reschedule(chatId);
     },
-    loadChatSettings: async () => {
-      const ctx = this.ensureCtx();
-      const chatId = ctx.chat?.id;
-      assert(chatId, 'This is not a chat');
+    loadChatSettings: async (chatId) => {
       const config = await this.chatConfig.getConfig(chatId);
       return {
         historyLimit: config.historyLimit,
@@ -171,7 +170,6 @@ export class MainService {
   private readonly logger: Logger;
   private readonly messenger: ChatMessenger;
   private readonly scheduler: TopicOfDayScheduler;
-  private ctx?: Context;
   constructor(
     @inject(ENV_SERVICE_ID) envService: EnvService,
     @inject(CHAT_MEMORY_MANAGER_ID) private memories: ChatMemoryManager,
@@ -218,16 +216,7 @@ export class MainService {
     );
   }
 
-  private ensureCtx(): Context {
-    assert(this.ctx, 'No context');
-    return this.ctx;
-  }
-
   private configure(): void {
-    this.bot.use((ctx, next) => {
-      this.ctx = ctx;
-      return next();
-    });
     this.bot.start(async (ctx) => {
       try {
         await ctx.reply('Бот запущен');
@@ -430,84 +419,6 @@ export class MainService {
     });
   }
 
-  private async handleChatRequest(ctx: Context): Promise<void> {
-    const chatId = ctx.chat?.id;
-    assert(chatId, 'This is not a chat');
-    const title = ctx.chat && 'title' in ctx.chat ? ctx.chat.title : undefined;
-    this.logger.info({ chatId, title }, 'Chat access request received');
-    await this.sendChatApprovalRequest(chatId, title);
-    await ctx.reply('Запрос отправлен');
-    this.logger.info({ chatId }, 'Chat access request sent to admin');
-  }
-
-  private async handleRequestAccess(ctx: Context): Promise<void> {
-    const chatId = ctx.chat?.id;
-    const userId = ctx.from?.id;
-    assert(chatId, 'This is not a chat');
-    assert(userId, 'No user id');
-    const firstName = ctx.from?.first_name;
-    const lastName = ctx.from?.last_name;
-    const username = ctx.from?.username;
-    const fullName = [firstName, lastName].filter(Boolean).join(' ');
-    const usernamePart = username ? ` @${username}` : '';
-    const msg = `Chat ${chatId} user ${userId} (${fullName}${usernamePart}) requests data access.`;
-    await this.messenger.sendMessage(this.env.ADMIN_CHAT_ID, msg);
-    await ctx.reply('Запрос отправлен администратору.');
-  }
-
-  private async handleExportData(ctx: Context): Promise<void> {
-    const chatId = ctx.chat?.id;
-    const userId = ctx.from?.id;
-    assert(chatId, 'This is not a chat');
-    assert(userId, 'No user id');
-    this.logger.info({ chatId, userId }, 'Export data requested');
-
-    if (chatId !== this.env.ADMIN_CHAT_ID) {
-      const allowed = await this.admin.hasAccess(chatId, userId);
-      if (!allowed) {
-        this.logger.warn({ chatId, userId }, 'Export data access denied');
-        await ctx.answerCbQuery('Нет доступа или ключ просрочен');
-        await ctx.reply('Нет доступа');
-        return;
-      }
-    }
-
-    await ctx.answerCbQuery('Начинаю загрузку данных...');
-
-    try {
-      const files =
-        chatId === this.env.ADMIN_CHAT_ID
-          ? await this.admin.exportTables()
-          : await this.admin.exportChatData(chatId);
-      if (files.length === 0) {
-        this.logger.info({ chatId, userId }, 'No data to export');
-        await ctx.reply('Нет данных для экспорта');
-        return;
-      }
-
-      await ctx.reply(
-        `Найдено ${files.length} таблиц для экспорта. Начинаю загрузку...`
-      );
-
-      for (const f of files) {
-        await ctx.replyWithDocument({
-          source: f.buffer,
-          filename: f.filename,
-        });
-        await new Promise<void>((resolve) => setImmediate(resolve));
-      }
-
-      await ctx.reply('✅ Загрузка данных завершена!');
-      this.logger.info(
-        { chatId, userId, tables: files.length },
-        'Data export completed'
-      );
-    } catch (error) {
-      this.logger.error({ error, chatId, userId }, 'Failed to export data');
-      await ctx.reply('❌ Ошибка при загрузке данных. Попробуйте позже.');
-    }
-  }
-
   private async handleConfigHistoryLimit(ctx: Context): Promise<void> {
     const chatId = ctx.chat?.id;
     const userId = ctx.from?.id;
@@ -584,31 +495,6 @@ export class MainService {
       admin: true,
     });
     await ctx.reply(`Введите новое время темы для чата ${targetChatId}`);
-  }
-
-  private async handleResetMemory(ctx: Context): Promise<void> {
-    const chatId = ctx.chat?.id;
-    const userId = ctx.from?.id;
-    assert(chatId, 'This is not a chat');
-    assert(userId, 'No user id');
-
-    if (chatId !== this.env.ADMIN_CHAT_ID) {
-      const allowed = await this.admin.hasAccess(chatId, userId);
-      if (!allowed) {
-        await ctx.answerCbQuery('Нет доступа или ключ просрочен');
-        return;
-      }
-    }
-
-    await ctx.answerCbQuery('Сбрасываю память диалога...');
-
-    try {
-      await this.memories.reset(chatId);
-      await ctx.reply('✅ Контекст диалога сброшен!');
-    } catch (error) {
-      this.logger.error({ error, chatId }, 'Failed to reset memory');
-      await ctx.reply('❌ Ошибка при сбросе памяти. Попробуйте позже.');
-    }
   }
 
   private async handleText(ctx: Context): Promise<void> {
