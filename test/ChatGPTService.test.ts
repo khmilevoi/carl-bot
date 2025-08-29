@@ -200,6 +200,23 @@ describe('ChatGPTService', () => {
     expect(prompts.createTopicOfDayPrompt).toHaveBeenCalled();
   });
 
+  it('generateTopicOfDay passes context params to director', async () => {
+    openaiCreate.mockResolvedValue({
+      choices: [{ message: { content: 'article' } }],
+    });
+    const res = await service.generateTopicOfDay({
+      chatTitle: 'Chat',
+      summary: 'S',
+      users: [{ username: 'u', fullName: 'F', attitude: 'a' }],
+    });
+    expect(res).toBe('article');
+    expect(prompts.createTopicOfDayPrompt).toHaveBeenCalledWith({
+      chatTitle: 'Chat',
+      users: [{ username: 'u', fullName: 'F', attitude: 'a' }],
+      summary: 'S',
+    });
+  });
+
   it('summarize builds history and uses previous summary', async () => {
     openaiCreate.mockResolvedValueOnce({
       choices: [{ message: { content: undefined } }],
