@@ -116,6 +116,7 @@ module.exports = [
   {
     ignores: [
       'dist/**',
+      'coverage/**',
       'node_modules/**',
       'eslint.config.cjs',
       'test/**',
