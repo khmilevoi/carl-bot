@@ -7,6 +7,7 @@ import {
 import type { ChatMessage } from '@/domain/messages/ChatMessage';
 
 import type { PromptMessage } from './PromptMessage';
+import type { PromptChatUser } from './PromptTypes';
 
 @injectable()
 export class PromptBuilder {
@@ -98,9 +99,7 @@ export class PromptBuilder {
     return this;
   }
 
-  addChatUsers(
-    users: { username: string; fullName: string; attitude: string }[]
-  ): this {
+  addChatUsers(users: PromptChatUser[]): this {
     if (users.length === 0) {
       return this;
     }
@@ -132,10 +131,14 @@ export class PromptBuilder {
     return this;
   }
 
-  addTopicOfDaySystem(): this {
+  addTopicOfDaySystem(params?: { chatTitle?: string }): this {
     this.steps.push(async () => {
       const template = await this.templates.loadTemplate('topicOfDaySystem');
-      return [{ role: 'system', content: template }];
+      const content = template.replace(
+        '{{chatTitle}}',
+        params?.chatTitle ?? 'этого чата'
+      );
+      return [{ role: 'system', content }];
     });
     return this;
   }

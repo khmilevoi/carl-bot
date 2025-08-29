@@ -34,6 +34,7 @@ interface WindowActions {
   configHistoryLimit(ctx: Context): Promise<void> | void;
   configInterestInterval(ctx: Context): Promise<void> | void;
   configTopicTime(ctx: Context): Promise<void> | void;
+  acceptTopicTimezone(ctx: Context): Promise<void> | void;
 }
 
 export function createWindows(actions: WindowActions): RouteApi<WindowId>[] {
@@ -102,7 +103,13 @@ export function createWindows(actions: WindowActions): RouteApi<WindowId>[] {
       const { timezone } = (await loadData()) as { timezone: string };
       return {
         text: `Часовой пояс (${timezone}). Введите другой, если нужно:`,
-        buttons: [],
+        buttons: [
+          b({
+            text: `Оставить автоматически (${timezone})`,
+            callback: 'accept_topic_timezone',
+            action: actions.acceptTopicTimezone,
+          }),
+        ],
       };
     }),
     r('admin_menu', async () => ({
@@ -200,7 +207,13 @@ export function createWindows(actions: WindowActions): RouteApi<WindowId>[] {
       };
       return {
         text: `Часовой пояс для чата ${chatId} (${timezone}). Введите другой, если нужно:`,
-        buttons: [],
+        buttons: [
+          b({
+            text: `Оставить автоматически (${timezone})`,
+            callback: 'accept_topic_timezone',
+            action: actions.acceptTopicTimezone,
+          }),
+        ],
       };
     }),
     r('chat_not_approved', async () => ({

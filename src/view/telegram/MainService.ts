@@ -122,6 +122,8 @@ export class MainService {
       configInterestInterval: (ctx: Context) =>
         this.handleConfigInterestInterval(ctx),
       configTopicTime: (ctx: Context) => this.handleConfigTopicTime(ctx),
+      acceptTopicTimezone: (ctx: Context) =>
+        this.handleAcceptTopicTimezone(ctx),
     };
     const windows = createWindows(actions);
     this.router = registerRoutes<WindowId>(this.bot, windows);
@@ -129,8 +131,10 @@ export class MainService {
   }
 
   public async launch(): Promise<void> {
-    await this.messenger.launch();
-    void this.scheduler.start();
+    await Promise.all([
+      this.messenger.launch().catch((error) => this.logger.error(error)),
+      this.scheduler.start().catch((error) => this.logger.error(error)),
+    ]);
   }
 
   public stop(reason: string): void {
@@ -731,6 +735,39 @@ export class MainService {
       })();
       await ctx.reply(message);
     }
+    if (awaiting.admin) {
+      await this.showAdminChat(ctx, awaiting.chatId);
+    } else {
+      await this.router.show(ctx, 'menu');
+    }
+  }
+
+  private async handleAcceptTopicTimezone(ctx: Context): Promise<void> {
+    const chatId = ctx.chat?.id;
+    assert(chatId, 'This is not a chat');
+    const awaiting = this.awaitingConfig.get(chatId);
+    if (!awaiting || awaiting.type !== 'topic' || !awaiting.topicTime) {
+      await ctx.answerCbQuery().catch(() => {});
+      await this.showMenu(ctx);
+      return;
+    }
+
+    try {
+      const time = awaiting.topicTime;
+      const timezone = awaiting.topicTimezone ?? 'UTC';
+      await this.chatConfig.setTopicTime(awaiting.chatId, time, timezone);
+      await this.scheduler?.reschedule(awaiting.chatId);
+      await ctx.reply('✅ Время статьи обновлено');
+    } catch (error) {
+      this.logger.error(
+        { error, chatId: awaiting.chatId },
+        'Failed to accept detected timezone'
+      );
+      await ctx.reply('❌ Не удалось применить часовой пояс');
+    } finally {
+      this.awaitingConfig.delete(chatId);
+    }
+
     if (awaiting.admin) {
       await this.showAdminChat(ctx, awaiting.chatId);
     } else {

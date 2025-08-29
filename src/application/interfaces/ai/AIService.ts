@@ -1,3 +1,6 @@
+import type { ServiceIdentifier } from 'inversify';
+
+import type { PromptChatUser } from '@/application/prompts/PromptTypes';
 import type { ChatMessage } from '@/domain/messages/ChatMessage';
 import type { TriggerReason } from '@/domain/triggers/Trigger';
 
@@ -16,10 +19,12 @@ export interface AIService {
     messages: ChatMessage[],
     prevAttitudes?: { username: string; attitude: string }[]
   ): Promise<{ username: string; attitude: string }[]>;
-  generateTopicOfDay(): Promise<string>;
+  generateTopicOfDay(params?: {
+    chatTitle?: string;
+    summary?: string;
+    users?: PromptChatUser[];
+  }): Promise<string>;
 }
-
-import type { ServiceIdentifier } from 'inversify';
 
 export const AI_SERVICE_ID = Symbol.for(
   'AIService'
