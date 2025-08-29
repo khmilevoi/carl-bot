@@ -9,25 +9,23 @@ describe('RepositoryChatUserService', () => {
       listByChat: vi.fn(async () => [1, 2]),
     };
     const users = {
-      findById: vi
-        .fn()
-        .mockImplementation(async (id: number) =>
-          id === 1
-            ? {
-                id: 1,
-                username: 'u1',
-                firstName: 'F1',
-                lastName: 'L1',
-                attitude: 'a1',
-              }
-            : {
-                id: 2,
-                username: 'u2',
-                firstName: 'F2',
-                lastName: 'L2',
-                attitude: 'a2',
-              }
-        ),
+      findById: vi.fn().mockImplementation(async (id: number) =>
+        id === 1
+          ? {
+              id: 1,
+              username: 'u1',
+              firstName: 'F1',
+              lastName: 'L1',
+              attitude: 'a1',
+            }
+          : {
+              id: 2,
+              username: 'u2',
+              firstName: 'F2',
+              lastName: 'L2',
+              attitude: 'a2',
+            }
+      ),
     };
     const service = new RepositoryChatUserService(
       chatUsers as any,
