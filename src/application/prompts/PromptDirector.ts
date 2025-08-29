@@ -8,6 +8,7 @@ import {
   type PromptBuilderFactory,
 } from './PromptBuilder';
 import type { PromptMessage } from './PromptMessage';
+import type { PromptChatUser } from './PromptTypes';
 
 @injectable()
 export class PromptDirector {
@@ -64,8 +65,21 @@ export class PromptDirector {
       .build();
   }
 
-  async createTopicOfDayPrompt(): Promise<PromptMessage[]> {
-    return this.builderFactory().addPersona().addTopicOfDaySystem().build();
+  async createTopicOfDayPrompt(params?: {
+    chatTitle?: string;
+    users?: PromptChatUser[];
+    summary?: string;
+  }): Promise<PromptMessage[]> {
+    const builder = this.builderFactory()
+      .addPersona()
+      .addTopicOfDaySystem({ chatTitle: params?.chatTitle });
+    if (params?.summary) {
+      builder.addAskSummary(params.summary);
+    }
+    if (params?.users && params.users.length > 0) {
+      builder.addChatUsers(params.users);
+    }
+    return builder.build();
   }
 
   private extractChatUsers(

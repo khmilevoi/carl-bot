@@ -7,6 +7,10 @@ import {
   CHAT_CONFIG_SERVICE_ID,
   type ChatConfigService,
 } from '@/application/interfaces/chat/ChatConfigService';
+import {
+  CHAT_USER_SERVICE_ID,
+  type ChatUserService,
+} from '@/application/interfaces/chat/ChatUserService';
 import type { Logger } from '@/application/interfaces/logging/Logger';
 import {
   LOGGER_FACTORY_ID,
@@ -18,10 +22,6 @@ import {
   ACCESS_KEY_REPOSITORY_ID,
   type AccessKeyRepository,
 } from '@/domain/repositories/AccessKeyRepository';
-import {
-  CHAT_USER_REPOSITORY_ID,
-  type ChatUserRepository,
-} from '@/domain/repositories/ChatUserRepository';
 import {
   DB_PROVIDER_ID,
   type DbProvider,
@@ -35,10 +35,7 @@ import {
   SUMMARY_REPOSITORY_ID,
   type SummaryRepository,
 } from '@/domain/repositories/SummaryRepository';
-import {
-  USER_REPOSITORY_ID,
-  type UserRepository,
-} from '@/domain/repositories/UserRepository';
+//
 
 @injectable()
 export class AdminServiceImpl implements AdminService {
@@ -50,8 +47,7 @@ export class AdminServiceImpl implements AdminService {
     private accessKeyRepo: AccessKeyRepository,
     @inject(MESSAGE_REPOSITORY_ID) private messageRepo: MessageRepository,
     @inject(SUMMARY_REPOSITORY_ID) private summaryRepo: SummaryRepository,
-    @inject(CHAT_USER_REPOSITORY_ID) private chatUserRepo: ChatUserRepository,
-    @inject(USER_REPOSITORY_ID) private userRepo: UserRepository,
+    @inject(CHAT_USER_SERVICE_ID) private chatUsers: ChatUserService,
     @inject(CHAT_CONFIG_SERVICE_ID) private chatConfig: ChatConfigService,
     @inject(LOGGER_FACTORY_ID) private loggerFactory: LoggerFactory
   ) {
@@ -132,26 +128,20 @@ export class AdminServiceImpl implements AdminService {
       files.push({ filename: 'summaries.csv', buffer: Buffer.from(csv) });
     }
 
-    const userIds = await this.chatUserRepo.listByChat(chatId);
-    if (userIds.length > 0) {
-      const users = await Promise.all(
-        userIds.map((id) => this.userRepo.findById(id))
+    const existing = await this.chatUsers.listUsers(chatId);
+    if (existing.length > 0) {
+      const header: (keyof UserEntity)[] = [
+        'id',
+        'username',
+        'firstName',
+        'lastName',
+        'attitude',
+      ];
+      const lines = existing.map((u) =>
+        header.map((h) => JSON.stringify(u[h] ?? '')).join(',')
       );
-      const existing = users.filter((u): u is UserEntity => u !== undefined);
-      if (existing.length > 0) {
-        const header: (keyof UserEntity)[] = [
-          'id',
-          'username',
-          'firstName',
-          'lastName',
-          'attitude',
-        ];
-        const lines = existing.map((u) =>
-          header.map((h) => JSON.stringify(u[h] ?? '')).join(',')
-        );
-        const csv = header.join(',') + '\n' + lines.join('\n');
-        files.push({ filename: 'users.csv', buffer: Buffer.from(csv) });
-      }
+      const csv = header.join(',') + '\n' + lines.join('\n');
+      files.push({ filename: 'users.csv', buffer: Buffer.from(csv) });
     }
     this.logger.info({ chatId, count: files.length }, 'Exported chat data');
     return files;

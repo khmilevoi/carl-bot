@@ -5,10 +5,10 @@ import type {
   SqlDatabase,
 } from '../src/domain/repositories/DbProvider';
 import type { AccessKeyRepository } from '../src/domain/repositories/AccessKeyRepository';
-import type { ChatUserRepository } from '../src/domain/repositories/ChatUserRepository';
+import type { ChatUserService } from '../src/application/interfaces/chat/ChatUserService';
 import type { MessageRepository } from '../src/domain/repositories/MessageRepository';
 import type { SummaryRepository } from '../src/domain/repositories/SummaryRepository';
-import type { UserRepository } from '../src/domain/repositories/UserRepository';
+//
 import { UserEntity } from '../src/domain/entities/UserEntity';
 import { AdminServiceImpl } from '../src/application/use-cases/admin/AdminServiceImpl';
 import type { ChatConfigService } from '../src/application/interfaces/chat/ChatConfigService';
@@ -43,8 +43,7 @@ describe('AdminServiceImpl', () => {
       accessRepo,
       {} as unknown as MessageRepository,
       {} as unknown as SummaryRepository,
-      {} as unknown as ChatUserRepository,
-      {} as unknown as UserRepository,
+      {} as unknown as ChatUserService,
       {} as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -68,8 +67,7 @@ describe('AdminServiceImpl', () => {
       accessRepo,
       {} as unknown as MessageRepository,
       {} as unknown as SummaryRepository,
-      {} as unknown as ChatUserRepository,
-      {} as unknown as UserRepository,
+      {} as unknown as ChatUserService,
       {} as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -94,8 +92,7 @@ describe('AdminServiceImpl', () => {
       {} as unknown as AccessKeyRepository,
       {} as unknown as MessageRepository,
       {} as unknown as SummaryRepository,
-      {} as unknown as ChatUserRepository,
-      {} as unknown as UserRepository,
+      {} as unknown as ChatUserService,
       {} as unknown as ChatConfigService,
       createLoggerFactory()
     );
@@ -123,17 +120,15 @@ describe('AdminServiceImpl', () => {
       ]),
     };
     const summaryRepo = { findById: vi.fn(async () => 's') };
-    const chatUserRepo = { listByChat: vi.fn(async () => [1]) };
-    const userRepo = {
-      findById: vi.fn(async () => new UserEntity(1, 'u', 'F', 'L', null)),
-    };
+    const chatUserService = {
+      listUsers: vi.fn(async () => [new UserEntity(1, 'u', 'F', 'L', null)]),
+    } as unknown as ChatUserService;
     const admin = new AdminServiceImpl(
       { get: vi.fn(), listTables: vi.fn() } as unknown as DbProvider,
       {} as unknown as AccessKeyRepository,
       messageRepo as unknown as MessageRepository,
       summaryRepo as unknown as SummaryRepository,
-      chatUserRepo as unknown as ChatUserRepository,
-      userRepo as unknown as UserRepository,
+      chatUserService,
       {} as unknown as ChatConfigService,
       createLoggerFactory()
     );

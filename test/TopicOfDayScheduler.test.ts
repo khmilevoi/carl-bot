@@ -23,11 +23,17 @@ describe('TopicOfDayScheduler', () => {
         child: vi.fn(),
       }),
     };
+    const chatUsers = { listUsers: vi.fn(async () => []) };
+    const chatInfo = { getChat: vi.fn(async () => ({ title: 'Chat' })) };
+    const summaries = { getSummary: vi.fn(async () => '') };
 
     const scheduler = new TopicOfDaySchedulerImpl(
       chatConfig as any,
       ai as any,
       bot as any,
+      chatUsers as any,
+      chatInfo as any,
+      summaries as any,
       loggerFactory as any
     );
 
@@ -46,6 +52,85 @@ describe('TopicOfDayScheduler', () => {
     await (scheduler as any).execute(1);
     expect(ai.generateTopicOfDay).toHaveBeenCalled();
     expect(bot.sendMessage).toHaveBeenCalledWith(1, 'article');
+  });
+
+  it('normalizes UTC offset timezones for scheduling', async () => {
+    const chatConfig = {
+      getTopicOfDaySchedules: vi.fn(
+        async () => new Map([[1, { cron: '0 0 9 * * *', timezone: 'UTC+02' }]])
+      ),
+    };
+    const ai = { generateTopicOfDay: vi.fn(async () => 'article') };
+    const bot = { sendMessage: vi.fn(async () => {}) };
+    const loggerFactory = {
+      create: () => ({
+        debug: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        child: vi.fn(),
+      }),
+    };
+    const chatUsers = { listUsers: vi.fn(async () => []) };
+    const chatInfo = { getChat: vi.fn(async () => ({ title: 'Chat' })) };
+    const summaries = { getSummary: vi.fn(async () => '') };
+
+    const scheduler = new TopicOfDaySchedulerImpl(
+      chatConfig as any,
+      ai as any,
+      bot as any,
+      chatUsers as any,
+      chatInfo as any,
+      summaries as any,
+      loggerFactory as any
+    );
+
+    const scheduleMock = vi.mocked(cron.schedule);
+    scheduleMock.mockImplementation((_expr, _cb, _opts) => {
+      return {} as any;
+    });
+
+    await scheduler.start();
+    expect(scheduleMock).toHaveBeenCalledWith(
+      '0 0 9 * * *',
+      expect.any(Function),
+      { timezone: 'Etc/GMT-2' }
+    );
+  });
+
+  it('skips sending when topic is empty', async () => {
+    const chatConfig = {
+      getTopicOfDaySchedules: vi.fn(
+        async () => new Map([[1, { cron: '0 0 9 * * *', timezone: 'UTC' }]])
+      ),
+    };
+    const ai = { generateTopicOfDay: vi.fn(async () => '   ') };
+    const bot = { sendMessage: vi.fn(async () => {}) };
+    const loggerFactory = {
+      create: () => ({
+        debug: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+        child: vi.fn(),
+      }),
+    };
+    const chatUsers = { listUsers: vi.fn(async () => []) };
+    const chatInfo = { getChat: vi.fn(async () => ({ title: 'Chat' })) };
+    const summaries = { getSummary: vi.fn(async () => '') };
+
+    const scheduler = new TopicOfDaySchedulerImpl(
+      chatConfig as any,
+      ai as any,
+      bot as any,
+      chatUsers as any,
+      chatInfo as any,
+      summaries as any,
+      loggerFactory as any
+    );
+
+    await (scheduler as any).execute(1);
+    expect(bot.sendMessage).not.toHaveBeenCalled();
   });
 
   it('reschedules job when topic time changes', async () => {
@@ -93,11 +178,17 @@ describe('TopicOfDayScheduler', () => {
         child: vi.fn(),
       }),
     };
+    const chatUsers = { listUsers: vi.fn(async () => []) };
+    const chatInfo = { getChat: vi.fn(async () => ({ title: 'Chat' })) };
+    const summaries = { getSummary: vi.fn(async () => '') };
 
     const scheduler = new TopicOfDaySchedulerImpl(
       chatConfig as any,
       ai as any,
       bot as any,
+      chatUsers as any,
+      chatInfo as any,
+      summaries as any,
       loggerFactory as any
     );
 

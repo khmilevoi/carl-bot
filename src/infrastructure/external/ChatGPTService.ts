@@ -212,8 +212,16 @@ export class ChatGPTService implements AIService {
     }
   }
 
-  public async generateTopicOfDay(): Promise<string> {
-    const prompt = await this.prompts.createTopicOfDayPrompt();
+  public async generateTopicOfDay(params?: {
+    chatTitle?: string;
+    summary?: string;
+    users?: { username: string; fullName: string; attitude: string }[];
+  }): Promise<string> {
+    const prompt = await this.prompts.createTopicOfDayPrompt({
+      chatTitle: params?.chatTitle,
+      users: params?.users,
+      summary: params?.summary,
+    });
     const messages = this.toOpenAiMessages(prompt);
     this.logger.debug('Sending topic of day request');
     const start = Date.now();

@@ -129,8 +129,10 @@ export class MainService {
   }
 
   public async launch(): Promise<void> {
-    await this.messenger.launch();
-    void this.scheduler.start();
+    await Promise.all([
+      this.messenger.launch().catch((error) => this.logger.error(error)),
+      this.scheduler.start().catch((error) => this.logger.error(error)),
+    ]);
   }
 
   public stop(reason: string): void {

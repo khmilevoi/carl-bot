@@ -37,6 +37,10 @@ import {
   type ChatResponder,
 } from '../application/interfaces/chat/ChatResponder';
 import {
+  CHAT_USER_SERVICE_ID,
+  type ChatUserService,
+} from '../application/interfaces/chat/ChatUserService';
+import {
   DIALOGUE_MANAGER_ID,
   type DialogueManager,
 } from '../application/interfaces/chat/DialogueManager';
@@ -103,6 +107,7 @@ import { DefaultHistorySummarizer } from '../application/use-cases/chat/DefaultH
 import { DefaultTriggerPipeline } from '../application/use-cases/chat/DefaultTriggerPipeline';
 import { RepositoryChatConfigService } from '../application/use-cases/chat/RepositoryChatConfigService';
 import { RepositoryChatInfoService } from '../application/use-cases/chat/RepositoryChatInfoService';
+import { RepositoryChatUserService } from '../application/use-cases/chat/RepositoryChatUserService';
 import { DefaultInterestChecker } from '../application/use-cases/interest/DefaultInterestChecker';
 import { DefaultMessageContextExtractor } from '../application/use-cases/messages/DefaultMessageContextExtractor';
 import { InMemoryInterestMessageStore } from '../application/use-cases/messages/InMemoryInterestMessageStore';
@@ -189,6 +194,11 @@ export const register = (container: Container): void => {
   container
     .bind<ChatInfoService>(CHAT_INFO_SERVICE_ID)
     .to(RepositoryChatInfoService)
+    .inSingletonScope();
+
+  container
+    .bind<ChatUserService>(CHAT_USER_SERVICE_ID)
+    .to(RepositoryChatUserService)
     .inSingletonScope();
 
   container
