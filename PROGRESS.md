@@ -7,12 +7,12 @@ This document tracks tasks, decisions, and issues while rewriting the inline rou
 1. Spec & docs (this lives in `src/view/telegram/inline-router/inline-router.ts` top block) — done
 2. Add initial failing tests — done
 3. Implement `createRouter` skeleton (wiring bot + stores) — done (minimal runtime)
-4. Render + state management (edit/replace/append/smart) — in progress (currently reply-only)
+4. Render + state management (edit/replace/append/smart) - done
 5. `bot.action` handlers + navigation via callback_data — done
 6. `onText` input flow with cancel/back — done
 7. Per-button actions + `answerCbQuery` — done
 8. Auto `setMyCommands` merge from `actionName` — done
-9. Error handling (`RouterUserError`, `onError`) + per-user mutex — pending
+9. Error handling (`RouterUserError`, `onError`) + per-user mutex - done
 
 ## Notes
 
@@ -30,8 +30,6 @@ This document tracks tasks, decisions, and issues while rewriting the inline rou
 
 ## Issues / Risks
 
-- Advanced render modes (edit/replace/append/smart) not yet implemented; currently always replies. Will add + tests.
-- No onEditFail policy yet; message pruning (maxMessages) still basic.
-- No mutex for per-user serialization; could cause rare interleaving in live chats.
-- Error surfaces via generic failures; need `RouterUserError` view handling + `onError` hook.
+- onEditFail policy implemented but may need real-world tuning.
+- Message pruning (maxMessages) is basic FIFO; consider per-chat policy.
 - Telegraf mocking kept minimal; expand as features grow.
