@@ -39,7 +39,7 @@ import {
 import { MessageFactory } from '@/application/use-cases/messages/MessageFactory';
 import type { TriggerContext } from '@/domain/triggers/Trigger';
 
-// Router-related imports removed
+import type { Actions } from './routerConfig';
 
 async function withTyping(
   ctx: Context,
@@ -63,6 +63,99 @@ async function withTyping(
 
 @injectable()
 export class MainService {
+  public readonly actions: Actions = {
+    exportData: async () => {
+      const ctx = this.ensureCtx();
+      await this.handleExportData(ctx);
+    },
+    resetMemory: async () => {
+      const ctx = this.ensureCtx();
+      await this.handleResetMemory(ctx);
+    },
+    requestChatAccess: async () => {
+      const ctx = this.ensureCtx();
+      await this.handleChatRequest(ctx);
+    },
+    requestUserAccess: async () => {
+      const ctx = this.ensureCtx();
+      await this.handleRequestAccess(ctx);
+    },
+    setHistoryLimit: async (chatId, value) => {
+      await this.admin.setHistoryLimit(chatId, value);
+    },
+    setInterestInterval: async (chatId, value) => {
+      await this.admin.setInterestInterval(chatId, value);
+    },
+    setTopicTime: async (chatId, time, timezone) => {
+      await this.chatConfig.setTopicTime(chatId, time, timezone);
+    },
+    rescheduleTopic: async (chatId) => {
+      await this.scheduler.reschedule(chatId);
+    },
+    loadChatSettings: async () => {
+      const ctx = this.ensureCtx();
+      const chatId = ctx.chat?.id;
+      assert(chatId, 'This is not a chat');
+      const config = await this.chatConfig.getConfig(chatId);
+      return {
+        historyLimit: config.historyLimit,
+        interestInterval: config.interestInterval,
+        topicTime: config.topicTime,
+        topicTimezone: config.topicTimezone,
+      };
+    },
+    loadAdminChats: async () => {
+      const chats = await this.approvalService.listAll();
+      const result: { id: number; title: string }[] = [];
+      for (const c of chats) {
+        let title = '';
+        try {
+          const info = await this.messenger.bot.telegram.getChat(c.chatId);
+          title =
+            'title' in info ? ((info as { title?: string }).title ?? '') : '';
+        } catch {
+          /* ignore */
+        }
+        result.push({ id: c.chatId, title });
+      }
+      return result;
+    },
+    loadAdminChat: async (chatId) => {
+      const [status, config] = await Promise.all([
+        this.approvalService.getStatus(chatId),
+        this.chatConfig.getConfig(chatId),
+      ]);
+      return {
+        chatId,
+        status,
+        config: {
+          historyLimit: config.historyLimit,
+          interestInterval: config.interestInterval,
+          topicTime: config.topicTime,
+          topicTimezone: config.topicTimezone,
+        },
+      };
+    },
+    approveChat: async (chatId) => {
+      await this.approvalService.approve(chatId);
+      await this.messenger.sendMessage(chatId, 'Доступ разрешён');
+    },
+    banChat: async (chatId) => {
+      await this.approvalService.ban(chatId);
+      await this.messenger.sendMessage(chatId, 'Доступ запрещён');
+    },
+    unbanChat: async (chatId) => {
+      await this.approvalService.unban(chatId);
+      await this.messenger.sendMessage(chatId, 'Доступ разрешён');
+    },
+    approveUser: async (chatId, userId) => {
+      const expires = await this.admin.createAccessKey(chatId, userId);
+      await this.messenger.sendMessage(
+        chatId,
+        `Доступ к данным разрешен для пользователя ${userId} до ${expires.toISOString()}. Используйте меню для экспорта и сброса`
+      );
+    },
+  };
   private readonly bot: Telegraf;
   private env: Env;
   private awaitingConfig = new Map<
@@ -78,6 +171,7 @@ export class MainService {
   private readonly logger: Logger;
   private readonly messenger: ChatMessenger;
   private readonly scheduler: TopicOfDayScheduler;
+  private ctx?: Context;
   constructor(
     @inject(ENV_SERVICE_ID) envService: EnvService,
     @inject(CHAT_MEMORY_MANAGER_ID) private memories: ChatMemoryManager,
@@ -124,7 +218,16 @@ export class MainService {
     );
   }
 
+  private ensureCtx(): Context {
+    assert(this.ctx, 'No context');
+    return this.ctx;
+  }
+
   private configure(): void {
+    this.bot.use((ctx, next) => {
+      this.ctx = ctx;
+      return next();
+    });
     this.bot.start(async (ctx) => {
       try {
         await ctx.reply('Бот запущен');
