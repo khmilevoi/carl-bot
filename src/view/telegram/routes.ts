@@ -68,7 +68,6 @@ interface Actions {
   isAdmin: (userId: number) => boolean;
 }
 
-// eslint-disable-next-line import/no-unused-modules
 export type { Actions };
 
 // Основные роуты (имена с большой буквы)
