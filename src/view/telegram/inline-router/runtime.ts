@@ -6,7 +6,9 @@ import { RouterUserError } from './errors';
 import { parseCb } from './helpers';
 import type { SimpleMutex } from './mutex';
 import type {
+  Branch,
   Button,
+  ConnectHandler,
   ContextWithCallbackQuery,
   ContextWithMatch,
   ContextWithMessage,
@@ -27,6 +29,7 @@ export type Entry<A> = {
 type RuntimeDeps<A> = {
   options: ResolvedOptions;
   entries: Map<string, Entry<A>>;
+  branches: Branch<A>[];
   mutex: SimpleMutex;
   getKey: (ctx: Context) => string;
   getState: (ctx: Context) => Promise<RouterState>;
@@ -422,7 +425,7 @@ function createTextHandler<A>(
 export function createRun<A>(
   deps: RuntimeDeps<A>
 ): (bot: Telegraf<Context>, actions: A) => RunningRouter<A> {
-  const { options, entries, mutex, getKey, getState } = deps;
+  const { options, entries, branches, mutex, getKey, getState } = deps;
   return function run(bot: Telegraf<Context>, actions: A): RunningRouter<A> {
     const handleError = createHandleError<A>(deps);
 
@@ -453,6 +456,15 @@ export function createRun<A>(
           command: route.actionName,
           description: route.actionDescription ?? route.actionName,
         });
+
+    // Add commands from branches
+    for (const branch of branches) {
+      autos.push({
+        command: branch.command,
+        description: branch.description,
+      });
+    }
+
     const merged = new Map<string, BotCommand>();
     for (const c of [...(options.commands ?? []), ...autos])
       if (!merged.has(c.command)) merged.set(c.command, c);
@@ -469,6 +481,15 @@ export function createRun<A>(
           });
         });
       }
+    }
+
+    // Register branch commands
+    for (const branch of branches) {
+      bot.command(branch.command, async (ctx) => {
+        await mutex.runExclusive(getKey(ctx), async () => {
+          await navigate(ctx, branch.startRoute);
+        });
+      });
     }
 
     const actionHandler = createGlobalActionHandler<A>(
@@ -502,11 +523,26 @@ export function createRun<A>(
       }
     });
 
+    const onConnectHandlers = new Set<ConnectHandler>();
+    bot.on('my_chat_member', async (ctx) => {
+      if (onConnectHandlers.size) {
+        for (const fn of Array.from(onConnectHandlers)) {
+          await fn(ctx);
+        }
+      }
+    });
+
     return {
       onText(fn: (ctx: Context) => Promise<void> | void): () => void {
         onTextFallbacks.add(fn);
         return () => {
           onTextFallbacks.delete(fn);
+        };
+      },
+      onConnect(fn: ConnectHandler): () => void {
+        onConnectHandlers.add(fn);
+        return () => {
+          onConnectHandlers.delete(fn);
         };
       },
       navigate: (ctx: Context, route: Route<A, unknown>, params?: unknown) =>

@@ -52,9 +52,12 @@ export type RouteView<A = unknown> = {
   renderMode?: RenderMode;
   showBack?: boolean;
   showCancel?: boolean;
+  onText?: (
+    args: RouteActionArgs<A, never> & { text: string }
+  ) => Promise<RouteView<A> | void> | RouteView<A> | void;
 };
 
-type NavigateFn<A = unknown> = <NP = void>(
+export type NavigateFn<A = unknown> = <NP = void>(
   route: Route<A, NP>,
   ...p: NP extends void ? [] : [params: NP]
 ) => Promise<void>;
@@ -81,9 +84,11 @@ export type Route<A = unknown, P = void> = {
 };
 
 export type RouteNode<A = unknown> = {
-  route: Route<A, unknown>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  route: Route<A, any>;
   hasBack?: boolean;
-  children?: Array<RouteNode<A> | Route<A, unknown>>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  children?: Array<RouteNode<A> | Route<A, any>>;
 };
 
 export type RouterState = {
@@ -121,8 +126,17 @@ export type StartOptions = {
   commandsExtra?: { scope?: BotCommandScope; language_code?: string };
 };
 
+export type ConnectHandler = (ctx: Context) => Promise<void> | void;
+
+export type Branch<A = unknown> = {
+  command: string;
+  description: string;
+  startRoute: Route<A, unknown>;
+};
+
 export interface RunningRouter<A = unknown> {
   onText(fn: (ctx: Context) => Promise<void> | void): () => void;
+  onConnect(fn: ConnectHandler): () => void;
   navigate<P = void>(
     ctx: Context,
     route: Route<A, P>,

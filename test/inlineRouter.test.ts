@@ -126,9 +126,13 @@ describe('inline-router navigation and state management', () => {
         }),
       };
 
-      const router = createRouter([homeRoute, profileRoute, settingsRoute], {
-        stateStore,
-      });
+      const router = createRouter(
+        [homeRoute, profileRoute, settingsRoute],
+        [],
+        {
+          stateStore,
+        }
+      );
       const running = router.run(bot, {});
 
       const ctx = {
@@ -161,7 +165,7 @@ describe('inline-router navigation and state management', () => {
         action: vi.fn().mockResolvedValue({ text: 'Test' }),
       };
 
-      const router = createRouter([route], { stateStore });
+      const router = createRouter([route], [], { stateStore });
       const running = router.run(bot, {});
 
       const ctx = {
@@ -187,7 +191,7 @@ describe('inline-router navigation and state management', () => {
         })),
       };
 
-      const router = createRouter([userRoute], { stateStore });
+      const router = createRouter([userRoute], [], { stateStore });
       const running = router.run(bot, {});
 
       const ctx = {
@@ -220,7 +224,7 @@ describe('inline-router navigation and state management', () => {
         onText: vi.fn().mockResolvedValue({ text: 'Input received' }),
       };
 
-      const router = createRouter([inputRoute], {
+      const router = createRouter([inputRoute], [], {
         stateStore,
         inputPrompt: 'Please enter text:',
       });
@@ -269,7 +273,7 @@ describe('inline-router navigation and state management', () => {
         onText: vi.fn(),
       };
 
-      const router = createRouter([inputRoute], {
+      const router = createRouter([inputRoute], [], {
         stateStore,
         cancelCommands: ['/cancel'],
       });
@@ -330,7 +334,7 @@ describe('inline-router navigation and state management', () => {
         }),
       };
 
-      const router = createRouter([mainRoute, targetRoute], { stateStore });
+      const router = createRouter([mainRoute, targetRoute], [], { stateStore });
       router.run(bot, {});
 
       const ctx = {
@@ -387,7 +391,7 @@ describe('inline-router navigation and state management', () => {
         }),
       };
 
-      const router = createRouter([errorRoute], {
+      const router = createRouter([errorRoute], [], {
         stateStore,
         errorPrefix: 'ERROR: ',
       });
@@ -420,7 +424,7 @@ describe('inline-router navigation and state management', () => {
         }),
       };
 
-      const router = createRouter([errorRoute], {
+      const router = createRouter([errorRoute], [], {
         stateStore,
         errorPrefix: 'ERR: ',
         errorDefaultText: 'Something went wrong',
@@ -476,7 +480,7 @@ describe('inline-router navigation and state management', () => {
           .mockResolvedValue({ text: 'Test', renderMode: 'append' }),
       };
 
-      const router = createRouter([route], {
+      const router = createRouter([route], [], {
         stateStore,
         maxMessages: 2, // Small limit for testing
       });

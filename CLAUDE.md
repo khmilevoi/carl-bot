@@ -146,3 +146,5 @@ Environment variables in `.env`:
 - "Unknown env config http-proxy" warning: Remove with `npm config delete http-proxy`
 - Migration failures: Script auto-removes and recreates `memory.db` if migrations table missing
 - отдавай предпочтение запуску сразу fix команд, некоторые ошибки сразу будут исправленны
+- используй сразу npm run lint:fix
+- запомни что можно использовать паттерн матчинг и давай ему предпочтение тернарным выражениям

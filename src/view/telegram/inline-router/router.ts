@@ -8,6 +8,7 @@ import { SimpleMutex } from './mutex';
 import { createRenderer } from './render';
 import { createRun, type Entry as RuntimeEntry } from './runtime';
 import type {
+  Branch,
   Route,
   RouteNode,
   RouterState,
@@ -22,7 +23,9 @@ function isConfigNode<A>(v: unknown): v is RouteNode<A> {
 }
 
 export function createRouter<A = unknown>(
-  tree: Array<RouteNode<A> | Route<A, unknown>>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tree: Array<RouteNode<A> | Route<A, any>>,
+  branches: Branch<A>[] = [],
   optionsIn: StartOptions = {}
 ): { run: (bot: Telegraf<Context>, actions: A) => RunningRouter<A> } {
   const options: ResolvedOptions = {
@@ -89,6 +92,7 @@ export function createRouter<A = unknown>(
   const run = createRun<A>({
     options,
     entries,
+    branches,
     mutex,
     getKey,
     getState,

@@ -1,7 +1,7 @@
 import type { Context } from 'telegraf';
 
 import type { TokenStore } from './stores';
-import type { Button, Route, RouterState, RouteView } from './types';
+import type { Branch, Button, Route, RouterState, RouteView } from './types';
 
 export function getMatch(ctx: Context): readonly string[] | undefined {
   return (ctx as Context & { match?: string[] }).match;
@@ -111,6 +111,19 @@ export function button<A = unknown>(config: {
   };
 }
 
+export function branch<A = unknown>(
+  command: string,
+  description: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  startRoute: Route<A, any>
+): Branch<A> {
+  return {
+    command,
+    description,
+    startRoute,
+  };
+}
+
 export const DSL = {
   row<A = unknown>(...btns: Button<A>[]): Button<A>[] {
     return btns;
@@ -122,4 +135,5 @@ export const DSL = {
   },
   route,
   button,
+  branch,
 };

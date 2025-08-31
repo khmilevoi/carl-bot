@@ -4,3 +4,6 @@ export * from './helpers';
 export { createRouter } from './router';
 export * from './stores';
 export * from './types';
+
+// Re-export key helpers for convenient access
+export { branch, button, route } from './helpers';

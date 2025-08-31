@@ -97,7 +97,7 @@ describe('inline-router render modes and errors', () => {
       }),
     };
     const options: StartOptions = { onEditFail: 'replace' };
-    const router = createRouter([r1, r2], options);
+    const router = createRouter([r1, r2], [], options);
     router.run(bot as any, {});
 
     const ctx: any = {
@@ -183,7 +183,7 @@ describe('inline-router render modes and errors', () => {
         });
       }),
     };
-    const router = createRouter([r], { errorPrefix: 'ERR: ' });
+    const router = createRouter([r], [], { errorPrefix: 'ERR: ' });
     router.run(bot as any, {});
 
     const ctx: any = {
