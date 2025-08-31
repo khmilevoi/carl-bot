@@ -5,7 +5,13 @@ import type {
 } from 'telegraf/typings/core/types/typegram';
 
 import type { ResolvedOptions } from './defaults';
-import type { Button, RenderMode, RouterState, RouteView } from './types';
+import type {
+  Button,
+  ContextWithCallbackQuery,
+  RenderMode,
+  RouterState,
+  RouteView,
+} from './types';
 
 export function createRenderer<A = unknown>(
   options: ResolvedOptions,
@@ -101,9 +107,8 @@ export function createRenderer<A = unknown>(
     const reply_markup = keyboard(rows, showBack, showCancel);
     const mode: RenderMode = (view?.renderMode ??
       options.renderMode) as RenderMode;
-    const mid = (
-      ctx as Context & { callbackQuery?: { message?: { message_id?: number } } }
-    ).callbackQuery?.message?.message_id;
+    const mid = (ctx as ContextWithCallbackQuery).callbackQuery?.message
+      ?.message_id;
     const remember = async (messageId: number): Promise<void> => {
       const entry = {
         messageId,

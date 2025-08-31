@@ -11,16 +11,17 @@ export type ResolvedOptions = Required<
 };
 
 export const DEFAULTS: ResolvedOptions = {
-  inputPrompt: '������ �����:',
-  backLabel: '?? �����',
+  inputPrompt: 'Введите текст:',
+  backLabel: 'Назад',
   backCallbackData: '__router_back__',
   renderMode: 'smart',
   onEditFail: 'reply',
   errorRenderMode: 'append',
-  errorPrefix: '?? ',
-  cancelLabel: '?? �⬥��',
+  errorPrefix: '⚠️ ',
+  errorDefaultText: 'Произошла ошибка',
+  cancelLabel: 'Отмена',
   cancelCallbackData: '__router_cancel__',
-  cancelCommands: ['/cancel', '�⬥��', '�⬥��'],
+  cancelCommands: ['/cancel', 'Отмена', 'отмена'],
   showCancelOnWait: true,
   cbVersion: 'v1',
   onError: undefined,

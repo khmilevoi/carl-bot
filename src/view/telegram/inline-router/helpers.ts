@@ -1,7 +1,7 @@
 import type { Context } from 'telegraf';
 
 import type { TokenStore } from './stores';
-import type { Button } from './types';
+import type { Button, Route, RouterState, RouteView } from './types';
 
 export function getMatch(ctx: Context): readonly string[] | undefined {
   return (ctx as Context & { match?: string[] }).match;
@@ -49,6 +49,68 @@ export async function cbTok(
   return `${routeId}!${cbVersion}:t:${token}`;
 }
 
+type NavigateFn<A = unknown> = <NP = void>(
+  route: Route<A, NP>,
+  ...p: NP extends void ? [] : [params: NP]
+) => Promise<void>;
+
+type RouteActionArgs<A = unknown, P = void> = {
+  ctx: Context;
+  actions: A;
+  params: P;
+  navigate: NavigateFn<A>;
+  navigateBack: () => Promise<void>;
+  state: RouterState;
+};
+
+type ButtonActionArgs<A = unknown> = {
+  ctx: Context;
+  actions: A;
+  navigate: NavigateFn<A>;
+  navigateBack: () => Promise<void>;
+};
+
+export function route<A = unknown, P = void>(
+  id: string,
+  action: (
+    args: RouteActionArgs<A, P>
+  ) => Promise<void | RouteView<A>> | void | RouteView<A>,
+  options?: {
+    actionName?: string;
+    actionDescription?: string;
+    onText?: (
+      args: RouteActionArgs<A, P> & { text: string }
+    ) => Promise<RouteView<A> | void> | RouteView<A> | void;
+  }
+): Route<A, P> {
+  return {
+    id,
+    actionName: options?.actionName,
+    actionDescription: options?.actionDescription,
+    action,
+    onText: options?.onText,
+  };
+}
+
+export function button<A = unknown>(config: {
+  text: string;
+  callback: string;
+  action?: (args: ButtonActionArgs<A>) => Promise<void> | void;
+  answer?: {
+    text?: string;
+    alert?: boolean;
+    url?: string;
+    cacheTimeSec?: number;
+  };
+}): Button<A> {
+  return {
+    text: config.text,
+    callback: config.callback,
+    action: config.action,
+    answer: config.answer,
+  };
+}
+
 export const DSL = {
   row<A = unknown>(...btns: Button<A>[]): Button<A>[] {
     return btns;
@@ -58,4 +120,6 @@ export const DSL = {
   ): Array<Button<A> | Button<A>[]> {
     return lines;
   },
+  route,
+  button,
 };

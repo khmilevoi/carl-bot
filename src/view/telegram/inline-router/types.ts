@@ -1,10 +1,30 @@
-import type { Context, Telegraf } from 'telegraf';
+import type { Context } from 'telegraf';
 import type {
   BotCommand,
   BotCommandScope,
-  InlineKeyboardMarkup,
-  Message,
 } from 'telegraf/typings/core/types/typegram';
+
+import type { StateStore, TokenStore } from './stores';
+
+// Enhanced Telegraf context types
+export type ContextWithCallbackQuery = Context & {
+  callbackQuery?: {
+    data?: string;
+    message?: {
+      message_id?: number;
+    };
+  };
+};
+
+export type ContextWithMessage = Context & {
+  message?: {
+    text?: string;
+  };
+};
+
+export type ContextWithMatch = Context & {
+  match?: string[];
+};
 
 export type RenderMode = 'edit' | 'replace' | 'append' | 'smart';
 
@@ -34,12 +54,12 @@ export type RouteView<A = unknown> = {
   showCancel?: boolean;
 };
 
-export type NavigateFn<A = unknown> = <NP = void>(
+type NavigateFn<A = unknown> = <NP = void>(
   route: Route<A, NP>,
   ...p: NP extends void ? [] : [params: NP]
 ) => Promise<void>;
 
-export type RouteActionArgs<A = unknown, P = void> = {
+type RouteActionArgs<A = unknown, P = void> = {
   ctx: Context;
   actions: A;
   params: P;
@@ -87,6 +107,7 @@ export type StartOptions = {
   onEditFail?: 'reply' | 'replace' | 'ignore';
   errorRenderMode?: RenderMode;
   errorPrefix?: string;
+  errorDefaultText?: string;
   cancelLabel?: string;
   cancelCallbackData?: string;
   cancelCommands?: string[];
@@ -100,20 +121,8 @@ export type StartOptions = {
   commandsExtra?: { scope?: BotCommandScope; language_code?: string };
 };
 
-export interface StateStore {
-  get(chatId: number, userId: number): Promise<RouterState | undefined>;
-  set(chatId: number, userId: number, state: RouterState): Promise<void>;
-  delete(chatId: number, userId: number): Promise<void>;
-}
-
-export interface TokenStore {
-  save(data: unknown, ttlMs?: number): Promise<string> | string;
-  load(token: string): Promise<unknown | undefined> | unknown | undefined;
-  delete?(token: string): Promise<void> | void;
-}
-
 export interface RunningRouter<A = unknown> {
-  onText(fn: (ctx: Context) => Promise<void> | void): void;
+  onText(fn: (ctx: Context) => Promise<void> | void): () => void;
   navigate<P = void>(
     ctx: Context,
     route: Route<A, P>,
@@ -121,13 +130,3 @@ export interface RunningRouter<A = unknown> {
   ): Promise<void>;
   navigateBack(ctx: Context): Promise<void>;
 }
-
-// Re-export external type dependencies for convenience
-export type {
-  BotCommand,
-  BotCommandScope,
-  Context,
-  InlineKeyboardMarkup,
-  Message,
-  Telegraf,
-};

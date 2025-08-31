@@ -2,5 +2,5 @@
 export * from './errors';
 export * from './helpers';
 export { createRouter } from './router';
-export type { StateStore, TokenStore } from './stores';
+export * from './stores';
 export * from './types';

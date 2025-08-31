@@ -27,12 +27,15 @@ export interface TokenStore {
 
 export class InMemoryTokenStore implements TokenStore {
   private map = new Map<string, { data: unknown; exp?: number }>();
+
   save(data: unknown, ttlMs?: number): string {
-    const token = Math.random().toString(36).slice(2, 10);
+    // Generate a cryptographically secure token
+    const token = this.generateSecureToken();
     const exp = ttlMs ? Date.now() + ttlMs : undefined;
     this.map.set(token, { data, exp });
     return token;
   }
+
   load(token: string): unknown | undefined {
     const rec = this.map.get(token);
     if (!rec) return undefined;
@@ -42,7 +45,34 @@ export class InMemoryTokenStore implements TokenStore {
     }
     return rec.data;
   }
+
   delete(token: string): void {
     this.map.delete(token);
+  }
+
+  private generateSecureToken(): string {
+    // Use crypto.randomUUID if available, fallback to secure random generation
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+      return crypto.randomUUID().replace(/-/g, '').slice(0, 10);
+    }
+
+    // Fallback for environments without crypto.randomUUID
+    const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      const array = new Uint8Array(10);
+      crypto.getRandomValues(array);
+      for (let i = 0; i < 10; i++) {
+        result += chars[array[i] % chars.length];
+      }
+    } else {
+      // Last resort fallback - still better than Math.random()
+      for (let i = 0; i < 10; i++) {
+        result += chars[Math.floor(Math.random() * chars.length)];
+      }
+    }
+
+    return result;
   }
 }
