@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   canConfirmFinding,
   getSourcePolicyForCategory,
+  isHighStakesCategory,
 } from '../src/application/fact-checking/FactCheckSourcePolicy';
 
 describe('FactCheckSourcePolicy', () => {
@@ -114,5 +115,19 @@ describe('FactCheckSourcePolicy', () => {
         sources: [{ reliability: 'authoritative' }],
       })
     ).toBe(true);
+  });
+});
+
+describe('isHighStakesCategory', () => {
+  it('marks medical, legal, financial, safety as high stakes', () => {
+    for (const category of ['medical', 'legal', 'financial', 'safety'] as const) {
+      expect(isHighStakesCategory(category)).toBe(true);
+    }
+  });
+
+  it('marks external_fact, chat_history, mixed as not high stakes', () => {
+    for (const category of ['external_fact', 'chat_history', 'mixed'] as const) {
+      expect(isHighStakesCategory(category)).toBe(false);
+    }
   });
 });

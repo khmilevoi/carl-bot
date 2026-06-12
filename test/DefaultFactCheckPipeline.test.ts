@@ -263,7 +263,7 @@ describe('DefaultFactCheckPipeline', () => {
     );
     expect(findingRepo.insertFinding).toHaveBeenCalledOnce();
     expect(findingRepo.insertFinding).toHaveBeenCalledWith(
-      expect.objectContaining({ shouldNotifyImmediately: true })
+      expect.objectContaining({ shouldNotifyImmediately: false })
     );
     expect(cursorRepo.upsert).toHaveBeenCalledWith(
       expect.objectContaining({ chatId, lastCheckedMessageId: 10 })
@@ -417,7 +417,7 @@ describe('DefaultFactCheckPipeline', () => {
               explanation: 'Verifier could not satisfy source policy.',
               sourceRequirementsMet: false,
               sourceIndexes: [0],
-              shouldNotifyImmediately: false,
+              shouldNotifyImmediately: true,
             },
           ],
         },
@@ -473,6 +473,7 @@ describe('DefaultFactCheckPipeline', () => {
       expect.objectContaining({
         status: 'uncertain',
         sourceRequirementsMet: false,
+        shouldNotifyImmediately: false,
       })
     );
   });
@@ -589,6 +590,7 @@ describe('DefaultFactCheckPipeline', () => {
         category: 'medical',
         severity: 'high',
         sourcePolicy: 'primary_required',
+        shouldNotifyImmediately: true,
       })
     );
   });

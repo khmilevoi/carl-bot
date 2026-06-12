@@ -49,6 +49,7 @@ import { normalizeClaimKey } from './FactCheckDeduplication';
 import {
   canConfirmFinding,
   getSourcePolicyForCategory,
+  isHighStakesCategory,
 } from './FactCheckSourcePolicy';
 import { buildTelegramMessageUrl } from './FactCheckMessageLinks';
 import type {
@@ -207,6 +208,11 @@ export class DefaultFactCheckPipeline implements FactCheckPipeline {
           status = 'uncertain';
         }
 
+        const shouldNotifyImmediately =
+          finding.shouldNotifyImmediately &&
+          status === 'confirmed' &&
+          (severity === 'high' || isHighStakesCategory(category));
+
         const telegramMessageId = message.messageId ?? null;
         const messageUrl = buildTelegramMessageUrl({
           chatId,
@@ -232,7 +238,7 @@ export class DefaultFactCheckPipeline implements FactCheckPipeline {
           confidence: finding.confidence,
           sourcePolicy,
           sourceRequirementsMet,
-          shouldNotifyImmediately: finding.shouldNotifyImmediately,
+          shouldNotifyImmediately,
           messageUrl,
           createdAt: now,
           checkedAt: now,
