@@ -1,3 +1,4 @@
+import { CronExpressionParser } from 'cron-parser';
 import { inject, injectable, type ServiceIdentifier } from 'inversify';
 import cron, { type ScheduledTask } from 'node-cron';
 
@@ -27,8 +28,6 @@ export interface CronSlotScheduler {
 export const CRON_SLOT_SCHEDULER_ID = Symbol.for(
   'CronSlotScheduler'
 ) as ServiceIdentifier<CronSlotScheduler>;
-
-const HOUR_MS = 60 * 60 * 1000;
 
 @injectable()
 export class DefaultCronSlotScheduler implements CronSlotScheduler {
@@ -99,17 +98,34 @@ export class DefaultCronSlotScheduler implements CronSlotScheduler {
     }
   }
 
+  private prevFires(cronExpr: string, count: number): Date[] {
+    const interval = CronExpressionParser.parse(cronExpr, {
+      tz: this.config.timezone,
+    });
+    const dates: Date[] = [];
+    for (let i = 0; i < count; i++) {
+      dates.push(interval.prev().toDate());
+    }
+    return dates;
+  }
+
   async reconcileOnce(): Promise<void> {
-    const now = new Date();
-    const prevHour = new Date(now.getTime() - HOUR_MS);
     const slots: DueSlot[] = [
-      this.slots.hourlyFactCheck(now),
-      this.slots.hourlyFactCheck(prevHour),
-      this.slots.stateEvolution(now),
-      this.slots.stateEvolution(prevHour),
-      this.slots.dailyStats(now),
-      this.slots.weeklyStats(now),
-      this.slots.monthlyStats(now),
+      ...this.prevFires(this.config.hourlyCron, 2).map((d) =>
+        this.slots.hourlyFactCheck(d)
+      ),
+      ...this.prevFires(this.config.sweepCron, 2).map((d) =>
+        this.slots.stateEvolution(d)
+      ),
+      ...this.prevFires(this.config.dailyStatsCron, 1).map((d) =>
+        this.slots.dailyStats(d)
+      ),
+      ...this.prevFires(this.config.weeklyStatsCron, 1).map((d) =>
+        this.slots.weeklyStats(d)
+      ),
+      ...this.prevFires(this.config.monthlyStatsCron, 1).map((d) =>
+        this.slots.monthlyStats(d)
+      ),
     ];
     for (const slot of slots) {
       await this.insert(slot);
