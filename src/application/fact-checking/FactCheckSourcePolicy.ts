@@ -4,15 +4,8 @@ import type {
   FactCheckSourceReliability,
 } from '@/domain/fact-checking/FactCheckTypes';
 
-const HIGH_STAKES_CATEGORIES: readonly FactCheckCategory[] = [
-  'medical',
-  'legal',
-  'financial',
-  'safety',
-];
-
 export function isHighStakesCategory(category: FactCheckCategory): boolean {
-  return HIGH_STAKES_CATEGORIES.includes(category);
+  return getSourcePolicyForCategory(category) === 'primary_required';
 }
 
 export interface SourcePolicyInput {

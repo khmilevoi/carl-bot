@@ -595,6 +595,116 @@ describe('DefaultFactCheckPipeline', () => {
     );
   });
 
+  it('persists shouldNotifyImmediately:true for confirmed external_fact with riskLevel:high', async () => {
+    const chatId = 789;
+    const batchMsg = makeBatchMessage(15);
+
+    const cursorRepo = {
+      get: vi.fn().mockResolvedValue(null),
+      upsert: vi.fn().mockResolvedValue(undefined),
+    } as unknown as FactCheckWindowRepository;
+    const windowRepo = {
+      findReadyByChatIdAfterId: vi.fn().mockResolvedValue([batchMsg]),
+      findReadyContextBeforeId: vi.fn().mockResolvedValue([]),
+    } as unknown as FactCheckMessageWindowRepository;
+    const reasoning = {
+      extractClaims: vi.fn().mockResolvedValue({
+        result: {
+          claims: [
+            {
+              messageId: 15,
+              claimText: 'This product is 100% safe for all users',
+              category: 'external_fact',
+              riskLevel: 'high',
+              needsExternalSources: true,
+              whyCheckable: 'safety-related external fact claim',
+              contextMessageIds: [],
+            },
+          ],
+        },
+        metadata: {
+          usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
+          selectedModel: 'extract-model',
+          escalated: false,
+        },
+        requestJson: {},
+        responseJson: {},
+      }),
+      verifyClaims: vi.fn().mockResolvedValue({
+        result: {
+          findings: [
+            {
+              messageId: 15,
+              claimText: 'This product is 100% safe for all users',
+              status: 'confirmed',
+              confidence: 0.95,
+              correctedFact: 'No product is universally safe for all users.',
+              explanation: 'External fact verified with high severity.',
+              sourceRequirementsMet: true,
+              sourceIndexes: [0],
+              shouldNotifyImmediately: true,
+            },
+          ],
+        },
+        metadata: {
+          usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
+          selectedModel: 'verify-model',
+          escalated: false,
+        },
+        requestJson: {},
+        responseJson: {},
+      }),
+    } as unknown as FactCheckReasoningService;
+    const findingRepo = {
+      insertFinding: vi.fn().mockResolvedValue(1),
+    } as unknown as FactCheckFindingRepository;
+
+    const pipeline = new DefaultFactCheckPipeline(
+      makeConfig(),
+      windowRepo,
+      cursorRepo,
+      {
+        findById: vi.fn().mockResolvedValue(undefined),
+      } as unknown as ChatRepository,
+      reasoning,
+      {
+        search: vi.fn().mockResolvedValue([
+          {
+            url: 'https://example.com/safety',
+            title: 'Safety study',
+            publisher: 'Example Research',
+            snippet: 'Product safety analysis',
+            reliability: 'authoritative',
+            retrievedAt: '2026-06-12T00:00:00.000Z',
+          },
+        ]),
+      } as unknown as SourceSearchService,
+      {
+        createRun: vi.fn().mockResolvedValue(50),
+        completeRun: vi.fn().mockResolvedValue(undefined),
+        failRun: vi.fn(),
+      } as unknown as FactCheckRunRepository,
+      findingRepo,
+      {
+        sendImmediate: vi.fn().mockResolvedValue(undefined),
+        sendHourlyDigest: vi.fn().mockResolvedValue(undefined),
+        sendStats: vi.fn(),
+      } as unknown as FactCheckNotifier,
+      makeLoggerFactory()
+    );
+
+    await pipeline.runHourly(chatId);
+
+    expect(findingRepo.insertFinding).toHaveBeenCalledWith(
+      expect.objectContaining({
+        category: 'external_fact',
+        severity: 'high',
+        status: 'confirmed',
+        shouldNotifyImmediately: true,
+      })
+    );
+  });
+
   it('returns failed outcome when reasoning throws', async () => {
     const batchMsg = makeBatchMessage(30);
 
