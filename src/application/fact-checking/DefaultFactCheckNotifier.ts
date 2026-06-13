@@ -50,6 +50,9 @@ export class DefaultFactCheckNotifier implements FactCheckNotifier {
         await this.messenger.sendMessage(chatId, text, {
           parse_mode: 'HTML',
           disable_web_page_preview: true,
+          ...(finding.telegramMessageId != null
+            ? { reply_parameters: { message_id: finding.telegramMessageId } }
+            : {}),
         });
         await this.findingRepo.markImmediateNotified(finding.id, now);
       } catch (err) {

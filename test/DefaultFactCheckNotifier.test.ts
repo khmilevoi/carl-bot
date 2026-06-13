@@ -236,6 +236,36 @@ describe('DefaultFactCheckNotifier', () => {
     expect(messenger.sendMessage).toHaveBeenCalledOnce();
   });
 
+  it('sendImmediate replies to the original telegram message when id is known', async () => {
+    const finding = { ...makeFinding(3), telegramMessageId: 555 };
+    const findingRepo = {
+      findUnsentImmediate: vi.fn().mockResolvedValue([finding]),
+      markImmediateNotified: vi.fn().mockResolvedValue(undefined),
+      recordNotificationError: vi.fn(),
+    } as unknown as FactCheckFindingRepository;
+    const messenger = {
+      sendMessage: vi.fn().mockResolvedValue(100),
+    } as unknown as ChatMessenger;
+
+    const notifier = new DefaultFactCheckNotifier(
+      findingRepo,
+      makeConfig(),
+      messenger,
+      {} as unknown as FactCheckStatsService,
+      makeLoggerFactory()
+    );
+
+    await notifier.sendImmediate(42);
+
+    expect(messenger.sendMessage).toHaveBeenCalledWith(
+      42,
+      expect.any(String),
+      expect.objectContaining({
+        reply_parameters: { message_id: 555 },
+      })
+    );
+  });
+
   it('sendStats skips sending and returns false when there are no findings', async () => {
     const statsService = {
       getStatsReport: vi.fn().mockResolvedValue({
