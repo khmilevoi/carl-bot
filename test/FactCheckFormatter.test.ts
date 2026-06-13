@@ -11,6 +11,40 @@ import type { FactCheckConfig } from '../src/application/fact-checking/FactCheck
 
 const now = new Date().toISOString();
 
+function makeDigestFinding(
+  overrides: Partial<FactCheckFindingWithSources> = {}
+): FactCheckFindingWithSources {
+  return {
+    id: 1,
+    runId: 1,
+    chatId: 1,
+    messageId: 10,
+    telegramMessageId: 555,
+    authorUserId: 7,
+    authorDisplayName: 'Alice <3',
+    normalizedClaimKey: 'claim',
+    claimText: 'The sky is green',
+    originalQuote: 'The sky is green',
+    correctedFact: 'The sky is blue',
+    explanation: 'Basic meteorology',
+    category: 'external_fact',
+    severity: 'low',
+    status: 'confirmed',
+    confidence: 0.9,
+    sourcePolicy: 'reliable_or_media_allowed',
+    sourceRequirementsMet: true,
+    shouldNotifyImmediately: false,
+    messageUrl: 'https://t.me/c/123/555',
+    immediateNotifiedAt: null,
+    digestNotifiedAt: null,
+    notificationError: null,
+    createdAt: '2026-06-12T10:00:00.000Z',
+    checkedAt: '2026-06-12T10:00:00.000Z',
+    sources: [],
+    ...overrides,
+  };
+}
+
 function makeFinding(
   status: 'confirmed' | 'uncertain' = 'confirmed',
   overrides: Partial<FactCheckFindingWithSources> = {}
@@ -170,6 +204,25 @@ describe('FactCheckFormatter', () => {
       for (const chunk of chunks) {
         expect(chunk.length).toBeLessThanOrEqual(4000);
       }
+    });
+  });
+
+  describe('digest entry header', () => {
+    it('links the original message and names the author', () => {
+      const chunks = formatHourlyDigestChunks([makeDigestFinding()], defaultConfig);
+      expect(chunks[0].text).toContain(
+        '<a href="https://t.me/c/123/555">Сообщение</a>'
+      );
+      expect(chunks[0].text).toContain('Alice &lt;3');
+    });
+
+    it('falls back to author-only header without a message url', () => {
+      const chunks = formatHourlyDigestChunks(
+        [makeDigestFinding({ messageUrl: null })],
+        defaultConfig
+      );
+      expect(chunks[0].text).not.toContain('<a href=""');
+      expect(chunks[0].text).toContain('Alice &lt;3');
     });
   });
 });

@@ -64,8 +64,13 @@ function formatSingleFinding(
 ): string {
   const label =
     finding.status === 'confirmed' ? '🔴 Подтверждено' : '🟡 Вероятно';
+  const author = escapeTelegramHtml(finding.authorDisplayName);
+  const headline =
+    finding.messageUrl != null
+      ? `${label} · <a href="${escapeUrl(finding.messageUrl)}">Сообщение</a> · ${author}`
+      : `${label} · ${author}`;
   const lines = [
-    `${label}`,
+    headline,
     `<blockquote>${escapeTelegramHtml(finding.originalQuote)}</blockquote>`,
     `<b>Верно:</b> ${escapeTelegramHtml(finding.correctedFact)}`,
     `<b>Почему важно:</b> ${escapeTelegramHtml(finding.explanation)}`,
