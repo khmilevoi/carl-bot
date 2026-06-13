@@ -59,6 +59,14 @@ import type {
 import type { FactCheckVerificationPromptContext } from './FactCheckPromptContext';
 import { sumAiUsage } from './AiUsageMath';
 
+const MAX_MODEL_TEXT_CHARS = 1000;
+
+function truncateModelText(text: string): string {
+  return text.length > MAX_MODEL_TEXT_CHARS
+    ? `${text.slice(0, MAX_MODEL_TEXT_CHARS - 1)}…`
+    : text;
+}
+
 @injectable()
 export class DefaultFactCheckPipeline implements FactCheckPipeline {
   private readonly logger: Logger;
@@ -181,6 +189,7 @@ export class DefaultFactCheckPipeline implements FactCheckPipeline {
           continue;
         }
 
+        const claimText = truncateModelText(finding.claimText);
         const category = claim.category;
         const severity = claim.riskLevel;
 
@@ -227,11 +236,11 @@ export class DefaultFactCheckPipeline implements FactCheckPipeline {
           telegramMessageId,
           authorUserId: message.userId ?? null,
           authorDisplayName: this.buildDisplayName(message),
-          normalizedClaimKey: normalizeClaimKey(finding.claimText),
-          claimText: finding.claimText,
+          normalizedClaimKey: normalizeClaimKey(claimText),
+          claimText,
           originalQuote: message.content.slice(0, 500),
-          correctedFact: finding.correctedFact,
-          explanation: finding.explanation,
+          correctedFact: truncateModelText(finding.correctedFact),
+          explanation: truncateModelText(finding.explanation),
           category,
           severity,
           status,
