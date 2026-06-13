@@ -246,4 +246,26 @@ describe('FactCheckFormatter', () => {
       expect(chunks[0].text).toContain('Alice &lt;3');
     });
   });
+
+  describe('escapeUrl', () => {
+    it('escapes angle brackets in source URLs', () => {
+      const finding = makeDigestFinding({
+        sources: [
+          {
+            id: 1,
+            findingId: 1,
+            url: 'https://example.com/?q=<script>',
+            title: 'Example',
+            publisher: null,
+            snippet: '',
+            reliability: 'media',
+            retrievedAt: '2026-06-12T00:00:00.000Z',
+          },
+        ],
+      });
+      const text = formatImmediateFactCheck(finding);
+      expect(text).toContain('https://example.com/?q=&lt;script&gt;');
+      expect(text).not.toContain('?q=<script>');
+    });
+  });
 });
