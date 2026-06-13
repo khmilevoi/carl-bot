@@ -117,4 +117,24 @@ describe('DefaultFactCheckStatsService', () => {
     expect(report.text).not.toContain('User10');
     expect(report.text).not.toContain('User14');
   });
+
+  it('monthly period clamps the day when the previous month is shorter', async () => {
+    vi.useFakeTimers();
+    // local-time constructor keeps the test timezone-independent
+    vi.setSystemTime(new Date(2026, 2, 31, 12, 0, 0)); // March 31, 2026
+    const statsRepo = {
+      getStats: vi.fn().mockResolvedValue([]),
+    } as unknown as FactCheckStatsRepository;
+    const service = new DefaultFactCheckStatsService(statsRepo);
+
+    await service.getStatsReport(1, 'monthly');
+
+    const query = (statsRepo.getStats as ReturnType<typeof vi.fn>).mock
+      .calls[0][0] as { fromIso: string };
+    const from = new Date(query.fromIso);
+    // Feb 2026 has 28 days: expected Feb 28, NOT Mar 3
+    expect(from.getMonth()).toBe(1);
+    expect(from.getDate()).toBe(28);
+    vi.useRealTimers();
+  });
 });

@@ -16,6 +16,20 @@ import {
 import type { FactCheckStatsService, FactCheckStatsReport } from './FactCheckStatsService';
 import type { FactCheckStatsPeriod } from '@/domain/repositories/FactCheckRepository';
 
+function minusMonthsClamped(date: Date, months: number): Date {
+  const result = new Date(date);
+  const day = result.getDate();
+  result.setDate(1);
+  result.setMonth(result.getMonth() - months);
+  const lastDayOfMonth = new Date(
+    result.getFullYear(),
+    result.getMonth() + 1,
+    0
+  ).getDate();
+  result.setDate(Math.min(day, lastDayOfMonth));
+  return result;
+}
+
 function periodRange(
   period: FactCheckStatsPeriod,
   now: Date
@@ -30,8 +44,7 @@ function periodRange(
       from.setDate(from.getDate() - 7);
       break;
     case 'monthly':
-      from.setMonth(from.getMonth() - 1);
-      break;
+      return { fromIso: minusMonthsClamped(now, 1).toISOString(), toIso };
   }
   return { fromIso: from.toISOString(), toIso };
 }
