@@ -57,7 +57,7 @@ import type {
   VerificationFinding,
 } from '@/domain/fact-checking/FactCheckTypes';
 import type { FactCheckVerificationPromptContext } from './FactCheckPromptContext';
-import type { AiUsage } from '@/application/interfaces/ai/AiGateway';
+import { sumAiUsage } from './AiUsageMath';
 
 @injectable()
 export class DefaultFactCheckPipeline implements FactCheckPipeline {
@@ -157,7 +157,7 @@ export class DefaultFactCheckPipeline implements FactCheckPipeline {
       const verificationResult = await this.reasoning.verifyClaims(verifyInput);
       const latencyMs = Date.now() - start;
 
-      const usageMeta = this.sumUsage(
+      const usageMeta = sumAiUsage(
         extractionResult.metadata.usage,
         verificationResult.metadata.usage
       );
@@ -406,25 +406,6 @@ export class DefaultFactCheckPipeline implements FactCheckPipeline {
     if (exact != null) return exact;
 
     return sameMessage.length === 1 ? sameMessage[0] : null;
-  }
-
-  private sumUsage(left: AiUsage, right: AiUsage): AiUsage {
-    return {
-      promptTokens: this.sumNullable(left.promptTokens, right.promptTokens),
-      completionTokens: this.sumNullable(
-        left.completionTokens,
-        right.completionTokens
-      ),
-      totalTokens: this.sumNullable(left.totalTokens, right.totalTokens),
-    };
-  }
-
-  private sumNullable(
-    left: number | null,
-    right: number | null
-  ): number | null {
-    if (left == null && right == null) return null;
-    return (left ?? 0) + (right ?? 0);
   }
 
   private buildDisplayName(message: ChatMessage): string {

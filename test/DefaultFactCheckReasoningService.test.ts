@@ -348,6 +348,64 @@ describe('DefaultFactCheckReasoningService', () => {
       ).rejects.toThrow('Failed to parse fact-check verification response');
     });
 
+    it('accumulates usage across escalation attempts', async () => {
+      const lowConfidence: FactVerificationResult = {
+        findings: [
+          {
+            messageId: 1,
+            claimText: 'c',
+            status: 'confirmed',
+            confidence: 0.5,
+            correctedFact: 'x',
+            explanation: 'y',
+            sourceRequirementsMet: true,
+            sourceIndexes: [],
+            shouldNotifyImmediately: false,
+          },
+        ],
+      };
+      const highConfidence: FactVerificationResult = {
+        findings: [{ ...lowConfidence.findings[0], confidence: 0.95 }],
+      };
+      const parseChatCompletion = vi
+        .fn()
+        .mockResolvedValueOnce({
+          parsed: lowConfidence,
+          raw: '{}',
+          usage: { promptTokens: 100, completionTokens: 10, totalTokens: 110 },
+        })
+        .mockResolvedValueOnce({
+          parsed: highConfidence,
+          raw: '{}',
+          usage: { promptTokens: 200, completionTokens: 20, totalTokens: 220 },
+        });
+      const gateway = { parseChatCompletion } as unknown as AiGateway;
+
+      const service = new DefaultFactCheckReasoningService(
+        makeEnvService(),
+        makePromptDirector(),
+        gateway,
+        makeConfig(),
+        makeLoggerFactory()
+      );
+
+      const result = await service.verifyClaims({
+        candidates: [],
+        batchMessages: [],
+        contextMessages: [],
+        sources: [],
+      });
+
+      expect(parseChatCompletion).toHaveBeenCalledTimes(2);
+      expect(result.metadata.escalated).toBe(true);
+      expect(result.metadata.escalationReason).toBe('low_confidence');
+      expect(result.metadata.usage).toEqual({
+        promptTokens: 300,
+        completionTokens: 30,
+        totalTokens: 330,
+      });
+    });
+
     it('returns escalated=true in metadata when escalation occurred', async () => {
       const lowConf: FactVerificationResult = {
         findings: [
