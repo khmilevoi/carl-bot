@@ -10,7 +10,7 @@ import {
   type FactCheckStatsCategoryRow,
   type FactCheckStatsUserRow,
 } from './FactCheckFormatter';
-import type { FactCheckStatsService } from './FactCheckStatsService';
+import type { FactCheckStatsService, FactCheckStatsReport } from './FactCheckStatsService';
 import type { FactCheckStatsPeriod } from '@/domain/repositories/FactCheckRepository';
 
 function periodRange(
@@ -40,10 +40,10 @@ export class DefaultFactCheckStatsService implements FactCheckStatsService {
     private readonly statsRepo: FactCheckStatsRepository
   ) {}
 
-  async getStatsSummary(
+  async getStatsReport(
     chatId: number,
     period: 'daily' | 'weekly' | 'monthly'
-  ): Promise<string> {
+  ): Promise<FactCheckStatsReport> {
     const { fromIso, toIso } = periodRange(period, new Date());
     const rows = await this.statsRepo.getStats({ chatId, fromIso, toIso });
 
@@ -58,7 +58,7 @@ export class DefaultFactCheckStatsService implements FactCheckStatsService {
       (a, b) => b.confirmed + b.uncertain - (a.confirmed + a.uncertain)
     );
 
-    return formatStatsReport({
+    const text = formatStatsReport({
       period,
       fromIso,
       toIso,
@@ -67,6 +67,8 @@ export class DefaultFactCheckStatsService implements FactCheckStatsService {
       topUsers,
       categories,
     });
+
+    return { text, totalConfirmed: confirmed, totalUncertain: uncertain };
   }
 
   private aggregateRows(rows: FactCheckStatsRow[]): {

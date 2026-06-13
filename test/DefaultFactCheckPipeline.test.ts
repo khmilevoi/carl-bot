@@ -754,15 +754,12 @@ describe('DefaultFactCheckPipeline', () => {
     expect(cursorRepo.upsert).not.toHaveBeenCalled();
   });
 
-  it('runStats fires notifier and returns completed', async () => {
-    const notifier = {
-      sendImmediate: vi.fn(),
-      sendHourlyDigest: vi.fn(),
-      sendStats: vi.fn().mockResolvedValue(undefined),
-    } as unknown as FactCheckNotifier;
-
-    const pipeline = new DefaultFactCheckPipeline(
-      makeConfig(),
+  function makeStatsPipeline(
+    notifier: FactCheckNotifier,
+    config = makeConfig()
+  ): DefaultFactCheckPipeline {
+    return new DefaultFactCheckPipeline(
+      config,
       {} as unknown as FactCheckMessageWindowRepository,
       {} as unknown as FactCheckWindowRepository,
       {} as unknown as ChatRepository,
@@ -773,9 +770,41 @@ describe('DefaultFactCheckPipeline', () => {
       notifier,
       makeLoggerFactory()
     );
+  }
 
-    const result = await pipeline.runStats(111, 'daily');
+  it('runStats returns completed when the notifier sends a report', async () => {
+    const notifier = {
+      sendStats: vi.fn().mockResolvedValue(true),
+    } as unknown as FactCheckNotifier;
+    const result = await makeStatsPipeline(notifier).runStats(111, 'daily');
     expect(result.outcome).toBe('completed');
     expect(result.chatId).toBe(111);
+    expect(notifier.sendStats).toHaveBeenCalledWith(111, 'daily');
+  });
+
+  it('runStats returns skipped_disabled when fact checking is disabled', async () => {
+    const notifier = { sendStats: vi.fn() } as unknown as FactCheckNotifier;
+    const result = await makeStatsPipeline(
+      notifier,
+      makeConfig({ enabled: false })
+    ).runStats(111, 'daily');
+    expect(result.outcome).toBe('skipped_disabled');
+    expect(notifier.sendStats).not.toHaveBeenCalled();
+  });
+
+  it('runStats returns skipped_no_findings when there is nothing to report', async () => {
+    const notifier = {
+      sendStats: vi.fn().mockResolvedValue(false),
+    } as unknown as FactCheckNotifier;
+    const result = await makeStatsPipeline(notifier).runStats(111, 'weekly');
+    expect(result.outcome).toBe('skipped_no_findings');
+  });
+
+  it('runStats returns failed when sending throws', async () => {
+    const notifier = {
+      sendStats: vi.fn().mockRejectedValue(new Error('telegram down')),
+    } as unknown as FactCheckNotifier;
+    const result = await makeStatsPipeline(notifier).runStats(111, 'monthly');
+    expect(result.outcome).toBe('failed');
   });
 });

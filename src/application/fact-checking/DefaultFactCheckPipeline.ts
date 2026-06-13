@@ -319,18 +319,30 @@ export class DefaultFactCheckPipeline implements FactCheckPipeline {
 
   async runStats(
     chatId: number,
-    _period: 'daily' | 'weekly' | 'monthly'
+    period: 'daily' | 'weekly' | 'monthly'
   ): Promise<FactCheckRunResult> {
-    void this.notifier.sendStats(chatId, _period).catch((err: unknown) => {
-      this.logger.warn({ err }, 'Stats notification failed');
-    });
-    return {
-      chatId,
-      outcome: 'completed',
-      runId: null,
-      processedMessages: 0,
-      persistedFindings: 0,
-    };
+    if (!this.config.enabled) {
+      return this.skip(chatId, 'skipped_disabled');
+    }
+    try {
+      const sent = await this.notifier.sendStats(chatId, period);
+      return {
+        chatId,
+        outcome: sent ? 'completed' : 'skipped_no_findings',
+        runId: null,
+        processedMessages: 0,
+        persistedFindings: 0,
+      };
+    } catch (err) {
+      this.logger.error({ err }, 'Stats notification failed');
+      return {
+        chatId,
+        outcome: 'failed',
+        runId: null,
+        processedMessages: 0,
+        persistedFindings: 0,
+      };
+    }
   }
 
   private async fetchSources(
