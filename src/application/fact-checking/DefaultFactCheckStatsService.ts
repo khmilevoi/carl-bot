@@ -1,5 +1,8 @@
 import { inject, injectable } from 'inversify';
 
+const MAX_STATS_USERS = 10;
+const MAX_STATS_CATEGORIES = 10;
+
 import {
   FACT_CHECK_STATS_REPOSITORY_ID,
   type FactCheckStatsRepository,
@@ -50,13 +53,13 @@ export class DefaultFactCheckStatsService implements FactCheckStatsService {
     const { confirmed, uncertain, userMap, categoryMap } =
       this.aggregateRows(rows);
 
-    const topUsers = [...userMap.values()].sort(
-      (a, b) => b.confirmed + b.uncertain - (a.confirmed + a.uncertain)
-    );
+    const topUsers = [...userMap.values()]
+      .sort((a, b) => b.confirmed - a.confirmed || b.uncertain - a.uncertain)
+      .slice(0, MAX_STATS_USERS);
 
-    const categories = [...categoryMap.values()].sort(
-      (a, b) => b.confirmed + b.uncertain - (a.confirmed + a.uncertain)
-    );
+    const categories = [...categoryMap.values()]
+      .sort((a, b) => b.confirmed - a.confirmed || b.uncertain - a.uncertain)
+      .slice(0, MAX_STATS_CATEGORIES);
 
     const text = formatStatsReport({
       period,

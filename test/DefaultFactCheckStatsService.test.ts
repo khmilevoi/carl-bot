@@ -66,4 +66,55 @@ describe('DefaultFactCheckStatsService', () => {
     const result = await svc.getStatsReport(1, 'monthly');
     expect(result.text).toContain('за месяц');
   });
+
+  it('ranks users by confirmed errors only', async () => {
+    const statsRepo = {
+      getStats: vi.fn().mockResolvedValue([
+        {
+          authorUserId: 1,
+          authorDisplayName: 'ManyUncertain',
+          category: 'external_fact',
+          status: 'uncertain',
+          count: 10,
+        },
+        {
+          authorUserId: 2,
+          authorDisplayName: 'OneConfirmed',
+          category: 'external_fact',
+          status: 'confirmed',
+          count: 1,
+        },
+      ]),
+    } as unknown as FactCheckStatsRepository;
+    const service = new DefaultFactCheckStatsService(statsRepo);
+
+    const report = await service.getStatsReport(1, 'daily');
+
+    const confirmedIndex = report.text.indexOf('OneConfirmed');
+    const uncertainIndex = report.text.indexOf('ManyUncertain');
+    expect(confirmedIndex).toBeGreaterThan(-1);
+    expect(uncertainIndex).toBeGreaterThan(-1);
+    expect(confirmedIndex).toBeLessThan(uncertainIndex);
+  });
+
+  it('caps the user ranking at 10 entries', async () => {
+    const rows = Array.from({ length: 15 }, (_, i) => ({
+      authorUserId: i,
+      authorDisplayName: `User${i}`,
+      category: 'external_fact' as const,
+      status: 'confirmed' as const,
+      count: 15 - i,
+    }));
+    const statsRepo = {
+      getStats: vi.fn().mockResolvedValue(rows),
+    } as unknown as FactCheckStatsRepository;
+    const service = new DefaultFactCheckStatsService(statsRepo);
+
+    const report = await service.getStatsReport(1, 'daily');
+
+    expect(report.text).toContain('User0');
+    expect(report.text).toContain('User9');
+    expect(report.text).not.toContain('User10');
+    expect(report.text).not.toContain('User14');
+  });
 });
