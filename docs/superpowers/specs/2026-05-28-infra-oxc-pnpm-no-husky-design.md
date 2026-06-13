@@ -20,7 +20,7 @@ type-aware линтинга, без второго инструмента-«до
 - **Формат:** Prettier, `.prettierrc` (`singleQuote`, `trailingComma: es5`, `semi`,
   `printWidth: 80`), `.prettierignore` (`node_modules`, `/dist`).
 - **Хуки:** husky `pre-commit` → `lint-staged` (`eslint --fix` + `prettier --write`)
-  + `npm run type:check` + `npm run test:coverage`; скрипт `prepare: husky`.
+  - `npm run type:check` + `npm run test:coverage`; скрипт `prepare: husky`.
 - **Пакетный менеджер:** npm (`packageManager: "npm@10.5.2"`, `package-lock.json`).
 - **CI:** `.github/workflows/test.yml` отдельно гоняет `lint`, `format`, `type:check`,
   `build`, `test:coverage` на pull request.
@@ -29,12 +29,12 @@ type-aware линтинга, без второго инструмента-«до
 
 ## Решения (зафиксированы при брейншторме)
 
-| Развилка | Выбор |
-| --- | --- |
-| Git-хуки | Полностью убрать (husky + lint-staged), проверки только в CI |
+| Развилка               | Выбор                                                                      |
+| ---------------------- | -------------------------------------------------------------------------- |
+| Git-хуки               | Полностью убрать (husky + lint-staged), проверки только в CI               |
 | Покрытие правил oxlint | Полный cutover: мапим всё, что oxlint поддерживает; непокрытое отбрасываем |
-| Type-aware линтинг | Не включаем (без `oxlint-tsgolint`) |
-| Пакетный менеджер | pnpm |
+| Type-aware линтинг     | Не включаем (без `oxlint-tsgolint`)                                        |
+| Пакетный менеджер      | pnpm                                                                       |
 
 ## Архитектура изменений
 
@@ -70,7 +70,7 @@ type-aware линтинга, без второго инструмента-«до
     "semi": true,
     "trailingComma": "es5",
     "printWidth": 80,
-    "tabWidth": 2
+    "tabWidth": 2,
   }
   ```
 - **Следствие:** oxfmt — другой движок форматирования, чем Prettier, поэтому первый
@@ -117,14 +117,14 @@ type-aware линтинга, без второго инструмента-«до
 
 ```yaml
 - uses: actions/checkout@v4
-- uses: pnpm/action-setup@v4          # берёт версию из packageManager
+- uses: pnpm/action-setup@v4 # берёт версию из packageManager
 - uses: actions/setup-node@v4
   with:
     node-version: 20
     cache: 'pnpm'
 - run: pnpm install --frozen-lockfile
-- run: pnpm lint        # oxlint
-- run: pnpm format      # oxfmt --check
+- run: pnpm lint # oxlint
+- run: pnpm format # oxfmt --check
 - run: pnpm type:check
 - run: pnpm build
 - run: pnpm test:coverage --silent

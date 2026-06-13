@@ -635,9 +635,7 @@ export const factVerificationResultJsonSchema = toOpenAiJsonSchema(
   'FactCheckVerification'
 );
 
-export type ClaimExtractionResult = z.infer<
-  typeof claimExtractionResultSchema
->;
+export type ClaimExtractionResult = z.infer<typeof claimExtractionResultSchema>;
 export type FactVerificationResult = z.infer<
   typeof factVerificationResultSchema
 >;
@@ -723,10 +721,7 @@ const firstPass = await windowRepo.findReadyByChatIdAfterId(1, 0, 10);
 expect(firstPass.map((m) => m.id)).toEqual([1]); // NOT [1, 3]
 
 // After id=2 transcribes to 'ready', the rest becomes available.
-await db.run(
-  "UPDATE messages SET processing_status = 'ready' WHERE id = ?",
-  2
-);
+await db.run("UPDATE messages SET processing_status = 'ready' WHERE id = ?", 2);
 const secondPass = await windowRepo.findReadyByChatIdAfterId(1, 1, 10);
 expect(secondPass.map((m) => m.id)).toEqual([2, 3]);
 ```
@@ -806,7 +801,7 @@ const chat = new ChatEntity(
 In `SQLiteChatRepository`, update insert/select:
 
 ```ts
-'INSERT INTO chats (chat_id, title, username) VALUES (?, ?, ?) ON CONFLICT(chat_id) DO UPDATE SET title=excluded.title, username=excluded.username'
+'INSERT INTO chats (chat_id, title, username) VALUES (?, ?, ?) ON CONFLICT(chat_id) DO UPDATE SET title=excluded.title, username=excluded.username';
 ```
 
 and read `username` into `new ChatEntity(row.chat_id, row.title, row.username)`.
@@ -862,9 +857,7 @@ import {
 } from '@/infrastructure/persistence/sqlite/SQLiteMessageRepository';
 
 @injectable()
-export class SQLiteFactCheckMessageWindowRepository
-  implements FactCheckMessageWindowRepository
-{
+export class SQLiteFactCheckMessageWindowRepository implements FactCheckMessageWindowRepository {
   constructor(
     @inject(DB_PROVIDER_ID) private readonly dbProvider: DbProvider
   ) {}
@@ -1396,10 +1389,7 @@ Client → interface mapping:
 In `src/container/repositories.ts`, bind the single implementation to all three role ids (same singleton instance). Inversify v7-alpha: bind the class to itself, then resolve it for each id (mirrors the `toDynamicValue(() => container.get(...))` style already used in `application.ts`):
 
 ```ts
-container
-  .bind(SQLiteFactCheckRepository)
-  .toSelf()
-  .inSingletonScope();
+container.bind(SQLiteFactCheckRepository).toSelf().inSingletonScope();
 container
   .bind<FactCheckRunRepository>(FACT_CHECK_RUN_REPOSITORY_ID)
   .toDynamicValue(() => container.get(SQLiteFactCheckRepository))
@@ -1454,26 +1444,32 @@ git commit -m "feat(fact-check): add persistence"
 Test the key rules:
 
 ```ts
-expect(canConfirmFinding({
-  category: 'medical',
-  sourcePolicy: 'primary_required',
-  sourceRequirementsMet: false,
-  sources: [{ reliability: 'media' }],
-})).toBe(false);
+expect(
+  canConfirmFinding({
+    category: 'medical',
+    sourcePolicy: 'primary_required',
+    sourceRequirementsMet: false,
+    sources: [{ reliability: 'media' }],
+  })
+).toBe(false);
 
-expect(canConfirmFinding({
-  category: 'external_fact',
-  sourcePolicy: 'reliable_or_media_allowed',
-  sourceRequirementsMet: true,
-  sources: [{ reliability: 'media' }],
-})).toBe(true);
+expect(
+  canConfirmFinding({
+    category: 'external_fact',
+    sourcePolicy: 'reliable_or_media_allowed',
+    sourceRequirementsMet: true,
+    sources: [{ reliability: 'media' }],
+  })
+).toBe(true);
 
-expect(canConfirmFinding({
-  category: 'chat_history',
-  sourcePolicy: 'chat_history_only',
-  sourceRequirementsMet: true,
-  sources: [],
-})).toBe(true);
+expect(
+  canConfirmFinding({
+    category: 'chat_history',
+    sourcePolicy: 'chat_history_only',
+    sourceRequirementsMet: true,
+    sources: [],
+  })
+).toBe(true);
 ```
 
 - [ ] **Step 2: Write failing formatter tests**
@@ -1493,17 +1489,21 @@ Assert:
 Assert:
 
 ```ts
-expect(buildTelegramMessageUrl({
-  chatId: -1001234567890,
-  chatUsername: null,
-  telegramMessageId: 55,
-})).toBe('https://t.me/c/1234567890/55');
+expect(
+  buildTelegramMessageUrl({
+    chatId: -1001234567890,
+    chatUsername: null,
+    telegramMessageId: 55,
+  })
+).toBe('https://t.me/c/1234567890/55');
 
-expect(buildTelegramMessageUrl({
-  chatId: -100123,
-  chatUsername: 'mychat',
-  telegramMessageId: 55,
-})).toBe('https://t.me/mychat/55');
+expect(
+  buildTelegramMessageUrl({
+    chatId: -100123,
+    chatUsername: 'mychat',
+    telegramMessageId: 55,
+  })
+).toBe('https://t.me/mychat/55');
 ```
 
 Also assert missing `telegramMessageId` returns null.
@@ -1668,9 +1668,7 @@ Immediate copy should be Russian, for example:
 
 <blockquote>...</blockquote>
 
-<b>Верно:</b> ...
-<b>Почему важно:</b> ...
-<b>Источники:</b> <a href="...">1</a>
+<b>Верно:</b> ... <b>Почему важно:</b> ... <b>Источники:</b> <a href="...">1</a>
 ```
 
 - [ ] **Step 9: Run utility tests**
@@ -1950,8 +1948,12 @@ export interface FactCheckAiResult<T> {
 }
 
 export interface FactCheckReasoningService {
-  extractClaims(input: FactCheckExtractionPromptContext): Promise<FactCheckAiResult<ClaimExtractionResult>>;
-  verifyClaims(input: FactCheckVerificationPromptContext): Promise<FactCheckAiResult<FactVerificationResult>>;
+  extractClaims(
+    input: FactCheckExtractionPromptContext
+  ): Promise<FactCheckAiResult<ClaimExtractionResult>>;
+  verifyClaims(
+    input: FactCheckVerificationPromptContext
+  ): Promise<FactCheckAiResult<FactVerificationResult>>;
 }
 
 export const FACT_CHECK_REASONING_SERVICE_ID = Symbol.for(
@@ -2239,7 +2241,10 @@ export interface FactCheckRunResult {
 
 export interface FactCheckPipeline {
   runHourly(chatId: number): Promise<FactCheckRunResult>;
-  runStats(chatId: number, period: 'daily' | 'weekly' | 'monthly'): Promise<FactCheckRunResult>;
+  runStats(
+    chatId: number,
+    period: 'daily' | 'weekly' | 'monthly'
+  ): Promise<FactCheckRunResult>;
 }
 
 export const FACT_CHECK_PIPELINE_ID = Symbol.for(
@@ -2363,7 +2368,10 @@ import type { ServiceIdentifier } from 'inversify';
 export interface FactCheckNotifier {
   sendImmediate(chatId: number): Promise<void>;
   sendHourlyDigest(chatId: number): Promise<void>;
-  sendStats(chatId: number, period: 'daily' | 'weekly' | 'monthly'): Promise<void>;
+  sendStats(
+    chatId: number,
+    period: 'daily' | 'weekly' | 'monthly'
+  ): Promise<void>;
 }
 
 export const FACT_CHECK_NOTIFIER_ID = Symbol.for(
@@ -2800,7 +2808,7 @@ implementing the affected task — they are not TODOs to silently "improve away.
   default). Do **not** silently switch to digest-only — that was a considered and
   rejected alternative.
 - **Corroboration trust gap — DOCUMENTED LIMITATION.** `canConfirmFinding`
-  (Task 5) checks only the *reliability tier* of cited sources, not that a
+  (Task 5) checks only the _reliability tier_ of cited sources, not that a
   source's content actually supports the correction; the verification model
   self-reports `sourceRequirementsMet` and `sourceIndexes`. A
   "confirmed-with-source" finding can therefore still be a hallucinated

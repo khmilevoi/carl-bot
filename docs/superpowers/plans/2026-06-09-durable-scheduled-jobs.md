@@ -33,6 +33,7 @@ If you prefer, Phase 1 and Phase 2 may be executed as two separate plans. Within
 ## File Structure
 
 **Phase 1 deletes:**
+
 - `src/application/interfaces/scheduler/TopicOfDayScheduler.ts`
 - `src/application/use-cases/scheduler/TopicOfDayScheduler.ts`
 - `src/application/interfaces/chat/ChatConfigService.errors.ts` (only `InvalidTopicTimeError` lives here)
@@ -41,6 +42,7 @@ If you prefer, Phase 1 and Phase 2 may be executed as two separate plans. Within
 - `migrations/024_drop_topic_of_day_columns.{up,down}.sql` (new; drops columns)
 
 **Phase 2 creates:**
+
 - `src/domain/scheduler/ScheduledJobTypes.ts` — queue row + due-slot value types
 - `src/domain/repositories/ScheduledJobRepository.ts` — repo interface + Symbol
 - `src/infrastructure/persistence/sqlite/SQLiteScheduledJobRepository.ts` — SQLite impl
@@ -65,6 +67,7 @@ If you prefer, Phase 1 and Phase 2 may be executed as two separate plans. Within
 This is a coordinated deletion across many files. TypeScript will not compile until every reference is gone, so do all edits, then verify with `pnpm type:check` + `pnpm test`. Keep behavior-state `patch.topic` code (political topics) untouched — it is unrelated.
 
 **Files:**
+
 - Delete: `src/application/interfaces/scheduler/TopicOfDayScheduler.ts`
 - Delete: `src/application/use-cases/scheduler/TopicOfDayScheduler.ts`
 - Modify: `src/application/interfaces/scheduler/JobRunner.ts`
@@ -142,6 +145,7 @@ Leave the `JobRunner` interface and `JOB_RUNNER_ID` export unchanged. Keep the e
 - [ ] **Step 2: `DefaultJobRunner.ts` — remove the scheduler dependency and topic cases**
 
 In `src/application/use-cases/scheduler/DefaultJobRunner.ts`:
+
 - Delete the import block for `TOPIC_OF_DAY_SCHEDULER_ID` / `TopicOfDayScheduler` (lines ~31-34).
 - Delete the constructor parameter `@inject(TOPIC_OF_DAY_SCHEDULER_ID) private readonly topicOfDay: TopicOfDayScheduler,`.
 - In `runForChat`, delete the entire `case 'topic-of-day':` block.
@@ -151,6 +155,7 @@ In `src/application/use-cases/scheduler/DefaultJobRunner.ts`:
 - [ ] **Step 3: `JobController.ts` — remove from `JOB_NAMES` and `dispatch`**
 
 In `src/view/http/JobController.ts`:
+
 - Change `JOB_NAMES` to:
 
 ```typescript
@@ -173,20 +178,22 @@ git rm src/application/interfaces/scheduler/TopicOfDayScheduler.ts \
 - [ ] **Step 5: `container/application.ts` — remove the binding + imports**
 
 In `src/container/application.ts`:
+
 - Delete the import block `import { TOPIC_OF_DAY_SCHEDULER_ID, type TopicOfDayScheduler } from '../application/interfaces/scheduler/TopicOfDayScheduler';` (lines ~192-195).
 - Delete `import { TopicOfDaySchedulerImpl } from '../application/use-cases/scheduler/TopicOfDayScheduler';` (line ~229).
 - Delete the binding:
 
 ```typescript
-  container
-    .bind<TopicOfDayScheduler>(TOPIC_OF_DAY_SCHEDULER_ID)
-    .to(TopicOfDaySchedulerImpl)
-    .inSingletonScope();
+container
+  .bind<TopicOfDayScheduler>(TOPIC_OF_DAY_SCHEDULER_ID)
+  .to(TopicOfDaySchedulerImpl)
+  .inSingletonScope();
 ```
 
 - [ ] **Step 6: `MainService.ts` — remove the topic scheduler field, action, and menu data**
 
 In `src/view/telegram/MainService.ts`:
+
 - Delete the import of `TOPIC_OF_DAY_SCHEDULER_ID` / `TopicOfDayScheduler` (lines ~47-50).
 - Delete the field `private readonly scheduler: TopicOfDayScheduler;` (line ~72).
 - Delete the constructor param `@inject(new LazyServiceIdentifier(() => TOPIC_OF_DAY_SCHEDULER_ID)) scheduler: TopicOfDayScheduler,` (lines ~91-92).
@@ -200,6 +207,7 @@ In `src/view/telegram/MainService.ts`:
 - [ ] **Step 7: `routes.ts` — remove topic-time conversations, menu entries, and types**
 
 In `src/view/telegram/routes.ts`:
+
 - In the `getChatData` return type (lines ~22-26) and the `Actions` type (lines ~46-48), remove `topicTime: string | null;` and `topicTimezone: string;`.
 - Remove the `setTopicTime` action from the `Actions` interface (lines ~55-59).
 - Delete the `adminTopicTime` conversation function (around lines ~183-249) and the `userTopicTime` conversation function (around lines ~251-289).
@@ -279,6 +287,7 @@ git commit -m "refactor: remove topic-of-day runtime feature"
 ## Task 2: Remove topic-of-day from chat config (entity, repository, service)
 
 **Files:**
+
 - Modify: `src/domain/entities/ChatConfigEntity.ts`
 - Modify: `src/application/interfaces/chat/ChatConfigService.ts`
 - Delete: `src/application/interfaces/chat/ChatConfigService.errors.ts`
@@ -330,6 +339,7 @@ git rm src/application/interfaces/chat/ChatConfigService.errors.ts
 - [ ] **Step 4: `RepositoryChatConfigService.ts` — remove topic logic**
 
 In `src/application/use-cases/chat/RepositoryChatConfigService.ts`:
+
 - Delete the import of `InvalidTopicTimeError`.
 - Delete the constants `DEFAULT_TOPIC_TIME`, `DEFAULT_TOPIC_TIMEZONE`, `TOPIC_TIME_REGEX`.
 - In `getConfig`'s default object, remove `topicTime` / `topicTimezone` so it returns `{ chatId, historyLimit: <existing default> }`.
@@ -344,13 +354,15 @@ Open `src/domain/repositories/ChatConfigRepository.ts`. If `upsert` / return typ
 - [ ] **Step 6: `SQLiteChatConfigRepository.ts` — stop reading/writing topic columns**
 
 In `src/infrastructure/persistence/sqlite/SQLiteChatConfigRepository.ts`:
+
 - In `upsert`, change the SQL to:
 
 ```typescript
-'INSERT INTO chat_configs (chat_id, history_limit) VALUES (?, ?) ON CONFLICT(chat_id) DO UPDATE SET history_limit=excluded.history_limit'
+'INSERT INTO chat_configs (chat_id, history_limit) VALUES (?, ?) ON CONFLICT(chat_id) DO UPDATE SET history_limit=excluded.history_limit';
 ```
 
 and pass only `chatId, historyLimit` (remove `topicTime`, `topicTimezone` params and destructuring).
+
 - In the single-row read, change the SQL to `SELECT chat_id, history_limit FROM chat_configs WHERE chat_id = ?` and map only `{ chatId: row.chat_id, historyLimit: row.history_limit }`. Remove the `topic_time` / `topic_timezone` fields from the row type and mapping.
 - In the all-rows read, change to `SELECT chat_id, history_limit FROM chat_configs` and map only `{ chatId, historyLimit }`.
 
@@ -372,6 +384,7 @@ git commit -m "refactor: drop topic fields from chat config"
 ## Task 3: Migration 024 — drop topic columns
 
 **Files:**
+
 - Create: `migrations/024_drop_topic_of_day_columns.up.sql`
 - Create: `migrations/024_drop_topic_of_day_columns.down.sql`
 - Create: `test/topicColumnsMigration024.test.ts`
@@ -473,6 +486,7 @@ git commit -m "feat: migration to drop topic-of-day columns"
 ## Task 4: Migration 025 — create `scheduled_jobs`
 
 **Files:**
+
 - Create: `migrations/025_create_scheduled_jobs.up.sql`
 - Create: `migrations/025_create_scheduled_jobs.down.sql`
 - Create: `test/scheduledJobsMigration025.test.ts`
@@ -623,6 +637,7 @@ git commit -m "feat: migration to create scheduled_jobs queue table"
 ## Task 5: Domain types + repository interface for scheduled jobs
 
 **Files:**
+
 - Create: `src/domain/scheduler/ScheduledJobTypes.ts`
 - Create: `src/domain/repositories/ScheduledJobRepository.ts`
 
@@ -719,6 +734,7 @@ git commit -m "feat: scheduled job domain types and repository interface"
 ## Task 6: SQLite scheduled-job repository
 
 **Files:**
+
 - Create: `src/infrastructure/persistence/sqlite/SQLiteScheduledJobRepository.ts`
 - Test: `test/SQLiteScheduledJobRepository.test.ts`
 
@@ -792,7 +808,10 @@ describe('SQLiteScheduledJobRepository', () => {
     await repo.insertDueSlot(slot(), 5, now);
     await repo.insertDueSlot(slot(), 5, now);
 
-    const found = await repo.findBySlot('fact-check', 'fact-check:2026-06-08T14');
+    const found = await repo.findBySlot(
+      'fact-check',
+      'fact-check:2026-06-08T14'
+    );
     expect(found).not.toBeNull();
     expect(found?.status).toBe('pending');
     expect(found?.attempts).toBe(0);
@@ -1144,6 +1163,7 @@ git commit -m "feat: SQLite scheduled job repository"
 ## Task 7: SlotCalculator (pure slot-key computation)
 
 **Files:**
+
 - Create: `src/application/scheduler/SlotCalculator.ts`
 - Test: `test/SlotCalculator.test.ts`
 
@@ -1358,6 +1378,7 @@ git commit -m "feat: slot calculator for scheduled job slot keys"
 This task is **purely additive** — it introduces the worker config and new env vars, and a new `STATE_EVOLUTION_SWEEP_CRON` env (which supersedes the old hardcoded `sweepCron`). `getCronWorkerConfig` reads the existing `FACT_CHECK_*_CRON` / `FACT_CHECK_TIMEZONE` env values. The actual **relocation** (removing the now-duplicated cron fields from `FactCheckConfig`/`StateEvolutionConfig`) happens in Task 13, together with deleting the scheduler classes that read them, so the tree stays green at every commit.
 
 **Files:**
+
 - Create: `src/application/scheduler/CronWorkerConfig.ts`
 - Modify: `src/infrastructure/config/envSchema.ts`
 - Modify: `src/application/interfaces/env/EnvService.ts`
@@ -1480,14 +1501,14 @@ In `src/infrastructure/config/envSchema.ts`, add these keys inside the `z.object
 In `src/application/interfaces/env/EnvService.ts`, add to `interface Env` (after the `FACT_CHECK_*` fields):
 
 ```typescript
-  JOBS_BASE_URL: string;
-  STATE_EVOLUTION_SWEEP_CRON: string;
-  SCHEDULER_POLL_INTERVAL_MS: number;
-  SCHEDULER_RECONCILE_INTERVAL_MS: number;
-  SCHEDULER_LOCK_MS: number;
-  SCHEDULER_MAX_ATTEMPTS: number;
-  SCHEDULER_BACKOFF_BASE_MS: number;
-  SCHEDULER_JOB_REQUEST_TIMEOUT_MS: number;
+JOBS_BASE_URL: string;
+STATE_EVOLUTION_SWEEP_CRON: string;
+SCHEDULER_POLL_INTERVAL_MS: number;
+SCHEDULER_RECONCILE_INTERVAL_MS: number;
+SCHEDULER_LOCK_MS: number;
+SCHEDULER_MAX_ATTEMPTS: number;
+SCHEDULER_BACKOFF_BASE_MS: number;
+SCHEDULER_JOB_REQUEST_TIMEOUT_MS: number;
 ```
 
 Also add `getCronWorkerConfig(): CronWorkerConfig;` to the `EnvService` interface, and add the import:
@@ -1554,6 +1575,7 @@ git commit -m "feat: add CronWorkerConfig and scheduler env wiring"
 ## Task 9: ScheduledJobDispatcher
 
 **Files:**
+
 - Create: `src/application/scheduler/ScheduledJobDispatcher.ts`
 - Test: `test/ScheduledJobDispatcher.test.ts`
 
@@ -1961,6 +1983,7 @@ git commit -m "feat: scheduled job dispatcher"
 ## Task 10: CronSlotScheduler (node-cron + reconciliation)
 
 **Files:**
+
 - Create: `src/application/scheduler/CronSlotScheduler.ts`
 - Test: `test/CronSlotScheduler.test.ts`
 
@@ -2219,6 +2242,7 @@ git commit -m "feat: cron slot scheduler with reconciliation"
 ## Task 11: CronWorker orchestrator
 
 **Files:**
+
 - Create: `src/application/scheduler/CronWorker.ts`
 - Test: `test/CronWorker.test.ts`
 
@@ -2347,6 +2371,7 @@ git commit -m "feat: cron worker orchestrator"
 ## Task 12: DI module + entrypoint + build/scripts/docker
 
 **Files:**
+
 - Create: `src/container/cron-worker.ts`
 - Create: `src/cron-worker.ts`
 - Modify: `rsbuild.config.ts`
@@ -2432,7 +2457,10 @@ import {
   LOGGER_FACTORY_ID,
   type LoggerFactory,
 } from './application/interfaces/logging/LoggerFactory';
-import { CRON_WORKER_ID, type CronWorker } from './application/scheduler/CronWorker';
+import {
+  CRON_WORKER_ID,
+  type CronWorker,
+} from './application/scheduler/CronWorker';
 import { register as registerApplication } from './container/application';
 import { registerCronWorker } from './container/cron-worker';
 import { register as registerRepositories } from './container/repositories';
@@ -2535,6 +2563,7 @@ git commit -m "feat: cron-worker entrypoint, DI module, build entry, scripts, do
 Remove the in-app cron schedulers so only `cron-worker` triggers schedules. This also resolves the type errors deferred from Task 8.
 
 **Files:**
+
 - Delete: `src/application/fact-checking/FactCheckScheduler.ts`
 - Delete: `src/application/fact-checking/DefaultFactCheckScheduler.ts`
 - Delete: `test/FactCheckScheduler.test.ts`
@@ -2571,6 +2600,7 @@ export interface StateEvolutionScheduler {
 - [ ] **Step 3: Drop cron from `DefaultStateEvolutionScheduler`**
 
 In `src/application/behavior/DefaultStateEvolutionScheduler.ts`:
+
 - Remove `import cron, { type ScheduledTask } from 'node-cron';`.
 - Remove the field `private task: ScheduledTask | null = null;`.
 - Delete the `start()` and `stop()` methods entirely.
@@ -2583,6 +2613,7 @@ Remove any test that calls `start()` / `stop()` or asserts cron scheduling. Keep
 - [ ] **Step 5: Remove scheduler wiring from `MainService`**
 
 In `src/view/telegram/MainService.ts`:
+
 - Remove the imports of `FACT_CHECK_SCHEDULER_ID` / `FactCheckScheduler` and `STATE_EVOLUTION_SCHEDULER_ID` / `StateEvolutionScheduler`.
 - Remove the fields `private readonly stateEvolutionScheduler: StateEvolutionScheduler;` and `private readonly factCheckScheduler: FactCheckScheduler;`.
 - Remove their constructor params and the assignments `this.stateEvolutionScheduler = ...` / `this.factCheckScheduler = ...`.
@@ -2599,14 +2630,15 @@ In `src/view/telegram/MainService.ts`:
 - [ ] **Step 6: Remove the fact-check scheduler binding from the container**
 
 In `src/container/application.ts`:
+
 - Remove the import block for `FACT_CHECK_SCHEDULER_ID` / `FactCheckScheduler` and `import { DefaultFactCheckScheduler } ...`.
 - Remove the binding:
 
 ```typescript
-  container
-    .bind<FactCheckScheduler>(FACT_CHECK_SCHEDULER_ID)
-    .to(DefaultFactCheckScheduler)
-    .inSingletonScope();
+container
+  .bind<FactCheckScheduler>(FACT_CHECK_SCHEDULER_ID)
+  .to(DefaultFactCheckScheduler)
+  .inSingletonScope();
 ```
 
 Leave the `StateEvolutionScheduler` binding (`DefaultStateEvolutionScheduler`) in place — `DefaultJobRunner` depends on it for `sweep()`.
@@ -2614,6 +2646,7 @@ Leave the `StateEvolutionScheduler` binding (`DefaultStateEvolutionScheduler`) i
 - [ ] **Step 7: Relocate the now-dead cron config fields**
 
 With both scheduler classes deleted/trimmed, the cron fields they read are dead. Remove them so `CronWorkerConfig` is the sole owner:
+
 - In `src/application/fact-checking/FactCheckConfig.ts`, delete `hourlyCron`, `dailyStatsCron`, `weeklyStatsCron`, `monthlyStatsCron`, and `timezone` from the interface (keep `enabled` and all `max*` / threshold fields).
 - In **both** `src/infrastructure/config/DefaultEnvService.ts` and `src/infrastructure/config/TestEnvService.ts`, delete those five lines from `getFactCheckConfig()`. Keep the `FACT_CHECK_*_CRON` / `FACT_CHECK_TIMEZONE` env keys — `getCronWorkerConfig()` still reads them.
 - In `src/application/behavior/BehaviorConfig.ts`, remove `sweepCron: string;` from `interface StateEvolutionConfig` and `sweepCron: '0 */3 * * *',` from `DEFAULT_STATE_EVOLUTION_CONFIG`.

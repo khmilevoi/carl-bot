@@ -12,19 +12,19 @@
 
 ## Audit Findings Driving This Plan
 
-| # | Severity | Defect | Location |
-|---|----------|--------|----------|
-| 1 | High | `reconcileOnce` inserts daily/weekly/monthly stats slots with `runAfter = now` at the start of each period, so stats fire right after midnight (or worker start) instead of at the configured cron time (default 09:00). Same root cause makes `state-evolution` sweep fire **every hour** instead of per `sweepCron` (every 3h). | `src/application/scheduler/CronSlotScheduler.ts:102-117` |
-| 2 | High | `shouldNotifyImmediately` is persisted straight from the model even when the pipeline downgrades `confirmed` → `uncertain`, so uncertain findings can be announced as "важная фактическая ошибка". Spec: immediate replies are for *confirmed high-stakes* errors only. The verification prompt also never defines when to set the flag. | `src/application/fact-checking/DefaultFactCheckPipeline.ts:197-235`, `prompts/fact_check_verification_system_prompt.md` |
-| 3 | High | `runStats` ignores `config.enabled` and always reports `completed`; empty "0/0" stats are sent to every approved chat; send errors are swallowed by fire-and-forget. | `DefaultFactCheckPipeline.ts:314-328`, `DefaultFactCheckNotifier.ts:107-120` |
-| 4 | Medium | Immediate notification does not reply to the original message (`reply_parameters`), although the spec requires it and `telegramMessageId` is available. | `DefaultFactCheckNotifier.ts:43-68` |
-| 5 | Medium | Digest entries omit the message link (`messageUrl` is stored but never displayed) and the author name, both required by the spec template. | `FactCheckFormatter.ts:61-76` |
-| 6 | Medium | Stats ranking sorts users by `confirmed + uncertain`; spec says rankings count confirmed only. Top lists are uncapped → a busy chat can exceed Telegram's 4096-char limit and the whole stats message fails. | `DefaultFactCheckStatsService.ts:53-59` |
-| 7 | Medium | On verification escalation, usage/latency of the first attempt is dropped — run audit undercounts tokens. | `DefaultFactCheckReasoningService.ts:103-167` |
-| 8 | Low | `periodRange('monthly')` uses `setMonth(-1)` without day clamping: on Mar 31 the "from" becomes Mar 3 (Feb 31 overflow). | `DefaultFactCheckStatsService.ts:16-34` |
-| 9 | Low | Digest chunking can leave a section header (`<b>Возможные неточности</b>`) orphaned as the last element of the previous chunk. | `FactCheckFormatter.ts:133-171` |
-| 10 | Low | `correctedFact`/`explanation`/`claimText` are persisted unbounded; one oversized finding makes its digest chunk permanently unsendable (retried every hour forever). | `DefaultFactCheckPipeline.ts:217-249` |
-| 11 | Low | `escapeUrl` does not escape `<`/`>` (can break Telegram HTML); `wikipedia.org`/`britannica.com` are classified `authoritative`, which lets Wikipedia confirm *medical/legal* claims under `primary_required`. | `FactCheckFormatter.ts:42-44`, `DefaultFactCheckSourceSearchService.ts:85-130` |
+| #   | Severity | Defect                                                                                                                                                                                                                                                                                                                                   | Location                                                                                                                |
+| --- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 1   | High     | `reconcileOnce` inserts daily/weekly/monthly stats slots with `runAfter = now` at the start of each period, so stats fire right after midnight (or worker start) instead of at the configured cron time (default 09:00). Same root cause makes `state-evolution` sweep fire **every hour** instead of per `sweepCron` (every 3h).        | `src/application/scheduler/CronSlotScheduler.ts:102-117`                                                                |
+| 2   | High     | `shouldNotifyImmediately` is persisted straight from the model even when the pipeline downgrades `confirmed` → `uncertain`, so uncertain findings can be announced as "важная фактическая ошибка". Spec: immediate replies are for _confirmed high-stakes_ errors only. The verification prompt also never defines when to set the flag. | `src/application/fact-checking/DefaultFactCheckPipeline.ts:197-235`, `prompts/fact_check_verification_system_prompt.md` |
+| 3   | High     | `runStats` ignores `config.enabled` and always reports `completed`; empty "0/0" stats are sent to every approved chat; send errors are swallowed by fire-and-forget.                                                                                                                                                                     | `DefaultFactCheckPipeline.ts:314-328`, `DefaultFactCheckNotifier.ts:107-120`                                            |
+| 4   | Medium   | Immediate notification does not reply to the original message (`reply_parameters`), although the spec requires it and `telegramMessageId` is available.                                                                                                                                                                                  | `DefaultFactCheckNotifier.ts:43-68`                                                                                     |
+| 5   | Medium   | Digest entries omit the message link (`messageUrl` is stored but never displayed) and the author name, both required by the spec template.                                                                                                                                                                                               | `FactCheckFormatter.ts:61-76`                                                                                           |
+| 6   | Medium   | Stats ranking sorts users by `confirmed + uncertain`; spec says rankings count confirmed only. Top lists are uncapped → a busy chat can exceed Telegram's 4096-char limit and the whole stats message fails.                                                                                                                             | `DefaultFactCheckStatsService.ts:53-59`                                                                                 |
+| 7   | Medium   | On verification escalation, usage/latency of the first attempt is dropped — run audit undercounts tokens.                                                                                                                                                                                                                                | `DefaultFactCheckReasoningService.ts:103-167`                                                                           |
+| 8   | Low      | `periodRange('monthly')` uses `setMonth(-1)` without day clamping: on Mar 31 the "from" becomes Mar 3 (Feb 31 overflow).                                                                                                                                                                                                                 | `DefaultFactCheckStatsService.ts:16-34`                                                                                 |
+| 9   | Low      | Digest chunking can leave a section header (`<b>Возможные неточности</b>`) orphaned as the last element of the previous chunk.                                                                                                                                                                                                           | `FactCheckFormatter.ts:133-171`                                                                                         |
+| 10  | Low      | `correctedFact`/`explanation`/`claimText` are persisted unbounded; one oversized finding makes its digest chunk permanently unsendable (retried every hour forever).                                                                                                                                                                     | `DefaultFactCheckPipeline.ts:217-249`                                                                                   |
+| 11  | Low      | `escapeUrl` does not escape `<`/`>` (can break Telegram HTML); `wikipedia.org`/`britannica.com` are classified `authoritative`, which lets Wikipedia confirm _medical/legal_ claims under `primary_required`.                                                                                                                            | `FactCheckFormatter.ts:42-44`, `DefaultFactCheckSourceSearchService.ts:85-130`                                          |
 
 Known limitations explicitly **out of scope** (documented, not fixed here): concurrent manual+scheduled `runHourly` for the same chat may double-spend AI calls (dedup absorbs the findings); source-search snippet indexes assume a single `output_text` block; `sendImmediate` limit of 10 per run stays hardcoded.
 
@@ -53,9 +53,10 @@ Task order: Task 3 must precede Task 6 and Task 8 (they call `getStatsReport`). 
 
 ### Task 1: Reconcile Scheduled Slots From Previous Cron Fire Times
 
-The bug: `reconcileOnce` derives slots from wall-clock `now`, so a stats slot for the current period appears (and becomes due) at the **start** of the period instead of at the cron fire time, and `state-evolution` gets a fresh hourly slot-key every hour regardless of `sweepCron`. Fix: derive reconcile slots from the *previous actual fire times* of each cron expression, computed with `cron-parser` in the worker timezone. `runAfter` then equals the real scheduled fire time (in the past only when the fire was missed), and slot keys stay identical to the ones the live `node-cron` callbacks produce.
+The bug: `reconcileOnce` derives slots from wall-clock `now`, so a stats slot for the current period appears (and becomes due) at the **start** of the period instead of at the cron fire time, and `state-evolution` gets a fresh hourly slot-key every hour regardless of `sweepCron`. Fix: derive reconcile slots from the _previous actual fire times_ of each cron expression, computed with `cron-parser` in the worker timezone. `runAfter` then equals the real scheduled fire time (in the past only when the fire was missed), and slot keys stay identical to the ones the live `node-cron` callbacks produce.
 
 **Files:**
+
 - Modify: `package.json` (new dependency)
 - Modify: `src/application/scheduler/CronSlotScheduler.ts`
 - Test: `test/CronSlotScheduler.test.ts`
@@ -221,9 +222,10 @@ rtk git commit -m "fix: reconcile scheduled slots from previous cron fire times"
 
 ### Task 2: Gate Immediate Notifications On Final Confirmed High-Stakes Status
 
-The bug: the pipeline persists the model's `shouldNotifyImmediately` verbatim, even when the pipeline itself downgrades the finding to `uncertain`, and even for low-stakes categories. Per spec, immediate replies are only for *confirmed high-stakes* errors.
+The bug: the pipeline persists the model's `shouldNotifyImmediately` verbatim, even when the pipeline itself downgrades the finding to `uncertain`, and even for low-stakes categories. Per spec, immediate replies are only for _confirmed high-stakes_ errors.
 
 **Files:**
+
 - Modify: `src/application/fact-checking/FactCheckSourcePolicy.ts`
 - Modify: `src/application/fact-checking/DefaultFactCheckPipeline.ts`
 - Modify: `prompts/fact_check_verification_system_prompt.md`
@@ -237,13 +239,22 @@ In `test/FactCheckSourcePolicy.test.ts` add (import `isHighStakesCategory` from 
 ```ts
 describe('isHighStakesCategory', () => {
   it('marks medical, legal, financial, safety as high stakes', () => {
-    for (const category of ['medical', 'legal', 'financial', 'safety'] as const) {
+    for (const category of [
+      'medical',
+      'legal',
+      'financial',
+      'safety',
+    ] as const) {
       expect(isHighStakesCategory(category)).toBe(true);
     }
   });
 
   it('marks external_fact, chat_history, mixed as not high stakes', () => {
-    for (const category of ['external_fact', 'chat_history', 'mixed'] as const) {
+    for (const category of [
+      'external_fact',
+      'chat_history',
+      'mixed',
+    ] as const) {
       expect(isHighStakesCategory(category)).toBe(false);
     }
   });
@@ -255,34 +266,34 @@ In `test/DefaultFactCheckPipeline.test.ts`:
 a) In the existing test `'completes successfully and persists non-no_error findings'` (claim is `external_fact`/`low`), change the assertion:
 
 ```ts
-    expect(findingRepo.insertFinding).toHaveBeenCalledWith(
-      expect.objectContaining({ shouldNotifyImmediately: false })
-    );
+expect(findingRepo.insertFinding).toHaveBeenCalledWith(
+  expect.objectContaining({ shouldNotifyImmediately: false })
+);
 ```
 
 b) In the existing test `'matches verifier findings to the exact extracted claim text'` (claim is `medical`/`high`, verifier returns `confirmed` + `shouldNotifyImmediately: true` + authoritative source), extend the assertion:
 
 ```ts
-    expect(findingRepo.insertFinding).toHaveBeenCalledWith(
-      expect.objectContaining({
-        category: 'medical',
-        severity: 'high',
-        sourcePolicy: 'primary_required',
-        shouldNotifyImmediately: true,
-      })
-    );
+expect(findingRepo.insertFinding).toHaveBeenCalledWith(
+  expect.objectContaining({
+    category: 'medical',
+    severity: 'high',
+    sourcePolicy: 'primary_required',
+    shouldNotifyImmediately: true,
+  })
+);
 ```
 
 c) In the existing test `'downgrades confirmed findings when verifier source requirements are not met'`, change the verifier finding stub to ask for immediate notification (`shouldNotifyImmediately: true` instead of `false`) and extend the assertion:
 
 ```ts
-    expect(findingRepo.insertFinding).toHaveBeenCalledWith(
-      expect.objectContaining({
-        status: 'uncertain',
-        sourceRequirementsMet: false,
-        shouldNotifyImmediately: false,
-      })
-    );
+expect(findingRepo.insertFinding).toHaveBeenCalledWith(
+  expect.objectContaining({
+    status: 'uncertain',
+    sourceRequirementsMet: false,
+    shouldNotifyImmediately: false,
+  })
+);
 ```
 
 - [ ] **Step 2: Run tests to verify failures**
@@ -325,10 +336,10 @@ import {
 2. After the `status` downgrade block (currently ending around line 208), compute the final flag:
 
 ```ts
-        const shouldNotifyImmediately =
-          finding.shouldNotifyImmediately &&
-          status === 'confirmed' &&
-          (severity === 'high' || isHighStakesCategory(category));
+const shouldNotifyImmediately =
+  finding.shouldNotifyImmediately &&
+  status === 'confirmed' &&
+  (severity === 'high' || isHighStakesCategory(category));
 ```
 
 3. In the `InsertFactCheckFindingInput` literal, replace `shouldNotifyImmediately: finding.shouldNotifyImmediately,` with:
@@ -370,6 +381,7 @@ rtk git commit -m "fix: send immediate fact-check notifications only for confirm
 The bug: `runStats` runs even with `FACT_CHECK_ENABLED=false`, always reports `completed`, sends "0 / 0" reports to every approved chat, and swallows send failures via fire-and-forget.
 
 **Files:**
+
 - Modify: `src/application/fact-checking/FactCheckPipeline.ts`
 - Modify: `src/application/fact-checking/FactCheckStatsService.ts`
 - Modify: `src/application/fact-checking/DefaultFactCheckStatsService.ts`
@@ -385,59 +397,59 @@ The bug: `runStats` runs even with `FACT_CHECK_ENABLED=false`, always reports `c
 In `test/DefaultFactCheckPipeline.test.ts`, replace the test `'runStats fires notifier and returns completed'` with:
 
 ```ts
-  function makeStatsPipeline(
-    notifier: FactCheckNotifier,
-    config = makeConfig()
-  ): DefaultFactCheckPipeline {
-    return new DefaultFactCheckPipeline(
-      config,
-      {} as unknown as FactCheckMessageWindowRepository,
-      {} as unknown as FactCheckWindowRepository,
-      {} as unknown as ChatRepository,
-      {} as unknown as FactCheckReasoningService,
-      {} as unknown as SourceSearchService,
-      {} as unknown as FactCheckRunRepository,
-      {} as unknown as FactCheckFindingRepository,
-      notifier,
-      makeLoggerFactory()
-    );
-  }
+function makeStatsPipeline(
+  notifier: FactCheckNotifier,
+  config = makeConfig()
+): DefaultFactCheckPipeline {
+  return new DefaultFactCheckPipeline(
+    config,
+    {} as unknown as FactCheckMessageWindowRepository,
+    {} as unknown as FactCheckWindowRepository,
+    {} as unknown as ChatRepository,
+    {} as unknown as FactCheckReasoningService,
+    {} as unknown as SourceSearchService,
+    {} as unknown as FactCheckRunRepository,
+    {} as unknown as FactCheckFindingRepository,
+    notifier,
+    makeLoggerFactory()
+  );
+}
 
-  it('runStats returns completed when the notifier sends a report', async () => {
-    const notifier = {
-      sendStats: vi.fn().mockResolvedValue(true),
-    } as unknown as FactCheckNotifier;
-    const result = await makeStatsPipeline(notifier).runStats(111, 'daily');
-    expect(result.outcome).toBe('completed');
-    expect(result.chatId).toBe(111);
-    expect(notifier.sendStats).toHaveBeenCalledWith(111, 'daily');
-  });
+it('runStats returns completed when the notifier sends a report', async () => {
+  const notifier = {
+    sendStats: vi.fn().mockResolvedValue(true),
+  } as unknown as FactCheckNotifier;
+  const result = await makeStatsPipeline(notifier).runStats(111, 'daily');
+  expect(result.outcome).toBe('completed');
+  expect(result.chatId).toBe(111);
+  expect(notifier.sendStats).toHaveBeenCalledWith(111, 'daily');
+});
 
-  it('runStats returns skipped_disabled when fact checking is disabled', async () => {
-    const notifier = { sendStats: vi.fn() } as unknown as FactCheckNotifier;
-    const result = await makeStatsPipeline(
-      notifier,
-      makeConfig({ enabled: false })
-    ).runStats(111, 'daily');
-    expect(result.outcome).toBe('skipped_disabled');
-    expect(notifier.sendStats).not.toHaveBeenCalled();
-  });
+it('runStats returns skipped_disabled when fact checking is disabled', async () => {
+  const notifier = { sendStats: vi.fn() } as unknown as FactCheckNotifier;
+  const result = await makeStatsPipeline(
+    notifier,
+    makeConfig({ enabled: false })
+  ).runStats(111, 'daily');
+  expect(result.outcome).toBe('skipped_disabled');
+  expect(notifier.sendStats).not.toHaveBeenCalled();
+});
 
-  it('runStats returns skipped_no_findings when there is nothing to report', async () => {
-    const notifier = {
-      sendStats: vi.fn().mockResolvedValue(false),
-    } as unknown as FactCheckNotifier;
-    const result = await makeStatsPipeline(notifier).runStats(111, 'weekly');
-    expect(result.outcome).toBe('skipped_no_findings');
-  });
+it('runStats returns skipped_no_findings when there is nothing to report', async () => {
+  const notifier = {
+    sendStats: vi.fn().mockResolvedValue(false),
+  } as unknown as FactCheckNotifier;
+  const result = await makeStatsPipeline(notifier).runStats(111, 'weekly');
+  expect(result.outcome).toBe('skipped_no_findings');
+});
 
-  it('runStats returns failed when sending throws', async () => {
-    const notifier = {
-      sendStats: vi.fn().mockRejectedValue(new Error('telegram down')),
-    } as unknown as FactCheckNotifier;
-    const result = await makeStatsPipeline(notifier).runStats(111, 'monthly');
-    expect(result.outcome).toBe('failed');
-  });
+it('runStats returns failed when sending throws', async () => {
+  const notifier = {
+    sendStats: vi.fn().mockRejectedValue(new Error('telegram down')),
+  } as unknown as FactCheckNotifier;
+  const result = await makeStatsPipeline(notifier).runStats(111, 'monthly');
+  expect(result.outcome).toBe('failed');
+});
 ```
 
 - [ ] **Step 2: Write failing notifier tests**
@@ -445,51 +457,51 @@ In `test/DefaultFactCheckPipeline.test.ts`, replace the test `'runStats fires no
 In `test/DefaultFactCheckNotifier.test.ts` add:
 
 ```ts
-  it('sendStats sends the report and returns true when there are findings', async () => {
-    const statsService = {
-      getStatsReport: vi.fn().mockResolvedValue({
-        text: '<b>Статистика</b>',
-        totalConfirmed: 2,
-        totalUncertain: 1,
-      }),
-    } as unknown as FactCheckStatsService;
-    const messenger = {
-      sendMessage: vi.fn().mockResolvedValue(100),
-    } as unknown as ChatMessenger;
-    const notifier = new DefaultFactCheckNotifier(
-      {} as unknown as FactCheckFindingRepository,
-      makeConfig(),
-      messenger,
-      statsService,
-      makeLoggerFactory()
-    );
+it('sendStats sends the report and returns true when there are findings', async () => {
+  const statsService = {
+    getStatsReport: vi.fn().mockResolvedValue({
+      text: '<b>Статистика</b>',
+      totalConfirmed: 2,
+      totalUncertain: 1,
+    }),
+  } as unknown as FactCheckStatsService;
+  const messenger = {
+    sendMessage: vi.fn().mockResolvedValue(100),
+  } as unknown as ChatMessenger;
+  const notifier = new DefaultFactCheckNotifier(
+    {} as unknown as FactCheckFindingRepository,
+    makeConfig(),
+    messenger,
+    statsService,
+    makeLoggerFactory()
+  );
 
-    await expect(notifier.sendStats(42, 'daily')).resolves.toBe(true);
-    expect(messenger.sendMessage).toHaveBeenCalledOnce();
-  });
+  await expect(notifier.sendStats(42, 'daily')).resolves.toBe(true);
+  expect(messenger.sendMessage).toHaveBeenCalledOnce();
+});
 
-  it('sendStats skips sending and returns false when there are no findings', async () => {
-    const statsService = {
-      getStatsReport: vi.fn().mockResolvedValue({
-        text: '<b>Статистика</b>',
-        totalConfirmed: 0,
-        totalUncertain: 0,
-      }),
-    } as unknown as FactCheckStatsService;
-    const messenger = {
-      sendMessage: vi.fn(),
-    } as unknown as ChatMessenger;
-    const notifier = new DefaultFactCheckNotifier(
-      {} as unknown as FactCheckFindingRepository,
-      makeConfig(),
-      messenger,
-      statsService,
-      makeLoggerFactory()
-    );
+it('sendStats skips sending and returns false when there are no findings', async () => {
+  const statsService = {
+    getStatsReport: vi.fn().mockResolvedValue({
+      text: '<b>Статистика</b>',
+      totalConfirmed: 0,
+      totalUncertain: 0,
+    }),
+  } as unknown as FactCheckStatsService;
+  const messenger = {
+    sendMessage: vi.fn(),
+  } as unknown as ChatMessenger;
+  const notifier = new DefaultFactCheckNotifier(
+    {} as unknown as FactCheckFindingRepository,
+    makeConfig(),
+    messenger,
+    statsService,
+    makeLoggerFactory()
+  );
 
-    await expect(notifier.sendStats(42, 'daily')).resolves.toBe(false);
-    expect(messenger.sendMessage).not.toHaveBeenCalled();
-  });
+  await expect(notifier.sendStats(42, 'daily')).resolves.toBe(false);
+  expect(messenger.sendMessage).not.toHaveBeenCalled();
+});
 ```
 
 If the file has existing `sendStats` tests that mock `getStatsSummary`, update them to mock `getStatsReport` returning `{ text, totalConfirmed, totalUncertain }` instead.
@@ -663,6 +675,7 @@ rtk git commit -m "fix: honor feature flag and skip empty reports in fact-check 
 Spec: "This should be sent with `reply_to_message_id` when possible." The codebase pattern for replies is `reply_parameters` (see `src/application/behavior/DefaultBehaviorExecutor.ts:120`).
 
 **Files:**
+
 - Modify: `src/application/fact-checking/DefaultFactCheckNotifier.ts`
 - Test: `test/DefaultFactCheckNotifier.test.ts`
 
@@ -671,35 +684,35 @@ Spec: "This should be sent with `reply_to_message_id` when possible." The codeba
 In `test/DefaultFactCheckNotifier.test.ts` add:
 
 ```ts
-  it('sendImmediate replies to the original telegram message when id is known', async () => {
-    const finding = { ...makeFinding(3), telegramMessageId: 555 };
-    const findingRepo = {
-      findUnsentImmediate: vi.fn().mockResolvedValue([finding]),
-      markImmediateNotified: vi.fn().mockResolvedValue(undefined),
-      recordNotificationError: vi.fn(),
-    } as unknown as FactCheckFindingRepository;
-    const messenger = {
-      sendMessage: vi.fn().mockResolvedValue(100),
-    } as unknown as ChatMessenger;
+it('sendImmediate replies to the original telegram message when id is known', async () => {
+  const finding = { ...makeFinding(3), telegramMessageId: 555 };
+  const findingRepo = {
+    findUnsentImmediate: vi.fn().mockResolvedValue([finding]),
+    markImmediateNotified: vi.fn().mockResolvedValue(undefined),
+    recordNotificationError: vi.fn(),
+  } as unknown as FactCheckFindingRepository;
+  const messenger = {
+    sendMessage: vi.fn().mockResolvedValue(100),
+  } as unknown as ChatMessenger;
 
-    const notifier = new DefaultFactCheckNotifier(
-      findingRepo,
-      makeConfig(),
-      messenger,
-      {} as unknown as FactCheckStatsService,
-      makeLoggerFactory()
-    );
+  const notifier = new DefaultFactCheckNotifier(
+    findingRepo,
+    makeConfig(),
+    messenger,
+    {} as unknown as FactCheckStatsService,
+    makeLoggerFactory()
+  );
 
-    await notifier.sendImmediate(42);
+  await notifier.sendImmediate(42);
 
-    expect(messenger.sendMessage).toHaveBeenCalledWith(
-      42,
-      expect.any(String),
-      expect.objectContaining({
-        reply_parameters: { message_id: 555 },
-      })
-    );
-  });
+  expect(messenger.sendMessage).toHaveBeenCalledWith(
+    42,
+    expect.any(String),
+    expect.objectContaining({
+      reply_parameters: { message_id: 555 },
+    })
+  );
+});
 ```
 
 - [ ] **Step 2: Run test to verify failure**
@@ -715,13 +728,13 @@ Expected: FAIL — `reply_parameters` is not passed.
 In `DefaultFactCheckNotifier.sendImmediate`, replace the `sendMessage` call with:
 
 ```ts
-        await this.messenger.sendMessage(chatId, text, {
-          parse_mode: 'HTML',
-          disable_web_page_preview: true,
-          ...(finding.telegramMessageId != null
-            ? { reply_parameters: { message_id: finding.telegramMessageId } }
-            : {}),
-        });
+await this.messenger.sendMessage(chatId, text, {
+  parse_mode: 'HTML',
+  disable_web_page_preview: true,
+  ...(finding.telegramMessageId != null
+    ? { reply_parameters: { message_id: finding.telegramMessageId } }
+    : {}),
+});
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -746,6 +759,7 @@ rtk git commit -m "fix: reply to the original message in immediate fact-check no
 Spec digest template: `<a href="message_url">Message</a> · Author`. Currently `messageUrl` is stored but never rendered, and the author is missing entirely.
 
 **Files:**
+
 - Modify: `src/application/fact-checking/FactCheckFormatter.ts`
 - Test: `test/FactCheckFormatter.test.ts`
 
@@ -868,6 +882,7 @@ rtk git commit -m "fix: include message link and author in fact-check digest ent
 Depends on Task 3 (`getStatsReport`). Spec: "Count only confirmed errors in public rankings, while showing uncertain counts separately." Also cap the lists so a busy chat cannot push the stats message past Telegram's 4096-char limit.
 
 **Files:**
+
 - Modify: `src/application/fact-checking/DefaultFactCheckStatsService.ts`
 - Test: `test/DefaultFactCheckStatsService.test.ts`
 
@@ -876,56 +891,56 @@ Depends on Task 3 (`getStatsReport`). Spec: "Count only confirmed errors in publ
 In `test/DefaultFactCheckStatsService.test.ts` add (using the file's existing repo-mock pattern; `FactCheckStatsRow` rows have `authorUserId`, `authorDisplayName`, `category`, `status`, `count`):
 
 ```ts
-  it('ranks users by confirmed errors only', async () => {
-    const statsRepo = {
-      getStats: vi.fn().mockResolvedValue([
-        {
-          authorUserId: 1,
-          authorDisplayName: 'ManyUncertain',
-          category: 'external_fact',
-          status: 'uncertain',
-          count: 10,
-        },
-        {
-          authorUserId: 2,
-          authorDisplayName: 'OneConfirmed',
-          category: 'external_fact',
-          status: 'confirmed',
-          count: 1,
-        },
-      ]),
-    } as unknown as FactCheckStatsRepository;
-    const service = new DefaultFactCheckStatsService(statsRepo);
+it('ranks users by confirmed errors only', async () => {
+  const statsRepo = {
+    getStats: vi.fn().mockResolvedValue([
+      {
+        authorUserId: 1,
+        authorDisplayName: 'ManyUncertain',
+        category: 'external_fact',
+        status: 'uncertain',
+        count: 10,
+      },
+      {
+        authorUserId: 2,
+        authorDisplayName: 'OneConfirmed',
+        category: 'external_fact',
+        status: 'confirmed',
+        count: 1,
+      },
+    ]),
+  } as unknown as FactCheckStatsRepository;
+  const service = new DefaultFactCheckStatsService(statsRepo);
 
-    const report = await service.getStatsReport(1, 'daily');
+  const report = await service.getStatsReport(1, 'daily');
 
-    const confirmedIndex = report.text.indexOf('OneConfirmed');
-    const uncertainIndex = report.text.indexOf('ManyUncertain');
-    expect(confirmedIndex).toBeGreaterThan(-1);
-    expect(uncertainIndex).toBeGreaterThan(-1);
-    expect(confirmedIndex).toBeLessThan(uncertainIndex);
-  });
+  const confirmedIndex = report.text.indexOf('OneConfirmed');
+  const uncertainIndex = report.text.indexOf('ManyUncertain');
+  expect(confirmedIndex).toBeGreaterThan(-1);
+  expect(uncertainIndex).toBeGreaterThan(-1);
+  expect(confirmedIndex).toBeLessThan(uncertainIndex);
+});
 
-  it('caps the user ranking at 10 entries', async () => {
-    const rows = Array.from({ length: 15 }, (_, i) => ({
-      authorUserId: i,
-      authorDisplayName: `User${i}`,
-      category: 'external_fact' as const,
-      status: 'confirmed' as const,
-      count: 15 - i,
-    }));
-    const statsRepo = {
-      getStats: vi.fn().mockResolvedValue(rows),
-    } as unknown as FactCheckStatsRepository;
-    const service = new DefaultFactCheckStatsService(statsRepo);
+it('caps the user ranking at 10 entries', async () => {
+  const rows = Array.from({ length: 15 }, (_, i) => ({
+    authorUserId: i,
+    authorDisplayName: `User${i}`,
+    category: 'external_fact' as const,
+    status: 'confirmed' as const,
+    count: 15 - i,
+  }));
+  const statsRepo = {
+    getStats: vi.fn().mockResolvedValue(rows),
+  } as unknown as FactCheckStatsRepository;
+  const service = new DefaultFactCheckStatsService(statsRepo);
 
-    const report = await service.getStatsReport(1, 'daily');
+  const report = await service.getStatsReport(1, 'daily');
 
-    expect(report.text).toContain('User0');
-    expect(report.text).toContain('User9');
-    expect(report.text).not.toContain('User10');
-    expect(report.text).not.toContain('User14');
-  });
+  expect(report.text).toContain('User0');
+  expect(report.text).toContain('User9');
+  expect(report.text).not.toContain('User10');
+  expect(report.text).not.toContain('User14');
+});
 ```
 
 - [ ] **Step 2: Run tests to verify failure**
@@ -946,13 +961,13 @@ const MAX_STATS_CATEGORIES = 10;
 ```
 
 ```ts
-    const topUsers = [...userMap.values()]
-      .sort((a, b) => b.confirmed - a.confirmed || b.uncertain - a.uncertain)
-      .slice(0, MAX_STATS_USERS);
+const topUsers = [...userMap.values()]
+  .sort((a, b) => b.confirmed - a.confirmed || b.uncertain - a.uncertain)
+  .slice(0, MAX_STATS_USERS);
 
-    const categories = [...categoryMap.values()]
-      .sort((a, b) => b.confirmed - a.confirmed || b.uncertain - a.uncertain)
-      .slice(0, MAX_STATS_CATEGORIES);
+const categories = [...categoryMap.values()]
+  .sort((a, b) => b.confirmed - a.confirmed || b.uncertain - a.uncertain)
+  .slice(0, MAX_STATS_CATEGORIES);
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -977,6 +992,7 @@ rtk git commit -m "fix: rank fact-check stats by confirmed errors and cap list s
 The bug: when verification escalates, the recursive `attempt()` discards the first attempt's token usage and latency, so `fact_check_runs` audit data undercounts. Extract a shared `sumAiUsage` util (the pipeline has a private copy) and rewrite the recursion as a loop that accumulates.
 
 **Files:**
+
 - Create: `src/application/fact-checking/AiUsageMath.ts`
 - Modify: `src/application/fact-checking/DefaultFactCheckReasoningService.ts`
 - Modify: `src/application/fact-checking/DefaultFactCheckPipeline.ts`
@@ -987,63 +1003,63 @@ The bug: when verification escalates, the recursive `attempt()` discards the fir
 In `test/DefaultFactCheckReasoningService.test.ts` add (the file already has `makeEnvService`, `makePromptDirector`, `makeConfig`, `makeLoggerFactory` helpers):
 
 ```ts
-  it('accumulates usage across escalation attempts', async () => {
-    const lowConfidence: FactVerificationResult = {
-      findings: [
-        {
-          messageId: 1,
-          claimText: 'c',
-          status: 'confirmed',
-          confidence: 0.5,
-          correctedFact: 'x',
-          explanation: 'y',
-          sourceRequirementsMet: true,
-          sourceIndexes: [],
-          shouldNotifyImmediately: false,
-        },
-      ],
-    };
-    const highConfidence: FactVerificationResult = {
-      findings: [{ ...lowConfidence.findings[0], confidence: 0.95 }],
-    };
-    const parseChatCompletion = vi
-      .fn()
-      .mockResolvedValueOnce({
-        parsed: lowConfidence,
-        raw: '{}',
-        usage: { promptTokens: 100, completionTokens: 10, totalTokens: 110 },
-      })
-      .mockResolvedValueOnce({
-        parsed: highConfidence,
-        raw: '{}',
-        usage: { promptTokens: 200, completionTokens: 20, totalTokens: 220 },
-      });
-    const gateway = { parseChatCompletion } as unknown as AiGateway;
-
-    const service = new DefaultFactCheckReasoningService(
-      makeEnvService(),
-      makePromptDirector(),
-      gateway,
-      makeConfig(),
-      makeLoggerFactory()
-    );
-
-    const result = await service.verifyClaims({
-      candidates: [],
-      batchMessages: [],
-      contextMessages: [],
-      sources: [],
+it('accumulates usage across escalation attempts', async () => {
+  const lowConfidence: FactVerificationResult = {
+    findings: [
+      {
+        messageId: 1,
+        claimText: 'c',
+        status: 'confirmed',
+        confidence: 0.5,
+        correctedFact: 'x',
+        explanation: 'y',
+        sourceRequirementsMet: true,
+        sourceIndexes: [],
+        shouldNotifyImmediately: false,
+      },
+    ],
+  };
+  const highConfidence: FactVerificationResult = {
+    findings: [{ ...lowConfidence.findings[0], confidence: 0.95 }],
+  };
+  const parseChatCompletion = vi
+    .fn()
+    .mockResolvedValueOnce({
+      parsed: lowConfidence,
+      raw: '{}',
+      usage: { promptTokens: 100, completionTokens: 10, totalTokens: 110 },
+    })
+    .mockResolvedValueOnce({
+      parsed: highConfidence,
+      raw: '{}',
+      usage: { promptTokens: 200, completionTokens: 20, totalTokens: 220 },
     });
+  const gateway = { parseChatCompletion } as unknown as AiGateway;
 
-    expect(parseChatCompletion).toHaveBeenCalledTimes(2);
-    expect(result.metadata.escalated).toBe(true);
-    expect(result.metadata.escalationReason).toBe('low_confidence');
-    expect(result.metadata.usage).toEqual({
-      promptTokens: 300,
-      completionTokens: 30,
-      totalTokens: 330,
-    });
+  const service = new DefaultFactCheckReasoningService(
+    makeEnvService(),
+    makePromptDirector(),
+    gateway,
+    makeConfig(),
+    makeLoggerFactory()
+  );
+
+  const result = await service.verifyClaims({
+    candidates: [],
+    batchMessages: [],
+    contextMessages: [],
+    sources: [],
   });
+
+  expect(parseChatCompletion).toHaveBeenCalledTimes(2);
+  expect(result.metadata.escalated).toBe(true);
+  expect(result.metadata.escalationReason).toBe('low_confidence');
+  expect(result.metadata.usage).toEqual({
+    promptTokens: 300,
+    completionTokens: 30,
+    totalTokens: 330,
+  });
+});
 ```
 
 - [ ] **Step 2: Run test to verify failure**
@@ -1189,6 +1205,7 @@ rtk git commit -m "fix: accumulate token usage and latency across fact-check ver
 The bug: `from.setMonth(from.getMonth() - 1)` on Mar 31 produces "Feb 31" → Mar 3, silently shrinking the monthly window.
 
 **Files:**
+
 - Modify: `src/application/fact-checking/DefaultFactCheckStatsService.ts`
 - Test: `test/DefaultFactCheckStatsService.test.ts`
 
@@ -1197,25 +1214,25 @@ The bug: `from.setMonth(from.getMonth() - 1)` on Mar 31 produces "Feb 31" → Ma
 In `test/DefaultFactCheckStatsService.test.ts`, export-test `periodRange` indirectly through `getStatsReport` by asserting the repo query bounds (the repo mock receives `fromIso`):
 
 ```ts
-  it('monthly period clamps the day when the previous month is shorter', async () => {
-    vi.useFakeTimers();
-    // local-time constructor keeps the test timezone-independent
-    vi.setSystemTime(new Date(2026, 2, 31, 12, 0, 0)); // March 31, 2026
-    const statsRepo = {
-      getStats: vi.fn().mockResolvedValue([]),
-    } as unknown as FactCheckStatsRepository;
-    const service = new DefaultFactCheckStatsService(statsRepo);
+it('monthly period clamps the day when the previous month is shorter', async () => {
+  vi.useFakeTimers();
+  // local-time constructor keeps the test timezone-independent
+  vi.setSystemTime(new Date(2026, 2, 31, 12, 0, 0)); // March 31, 2026
+  const statsRepo = {
+    getStats: vi.fn().mockResolvedValue([]),
+  } as unknown as FactCheckStatsRepository;
+  const service = new DefaultFactCheckStatsService(statsRepo);
 
-    await service.getStatsReport(1, 'monthly');
+  await service.getStatsReport(1, 'monthly');
 
-    const query = (statsRepo.getStats as ReturnType<typeof vi.fn>).mock
-      .calls[0][0] as { fromIso: string };
-    const from = new Date(query.fromIso);
-    // Feb 2026 has 28 days: expected Feb 28, NOT Mar 3
-    expect(from.getMonth()).toBe(1);
-    expect(from.getDate()).toBe(28);
-    vi.useRealTimers();
-  });
+  const query = (statsRepo.getStats as ReturnType<typeof vi.fn>).mock
+    .calls[0][0] as { fromIso: string };
+  const from = new Date(query.fromIso);
+  // Feb 2026 has 28 days: expected Feb 28, NOT Mar 3
+  expect(from.getMonth()).toBe(1);
+  expect(from.getDate()).toBe(28);
+  vi.useRealTimers();
+});
 ```
 
 - [ ] **Step 2: Run test to verify failure**
@@ -1298,6 +1315,7 @@ rtk git commit -m "fix: clamp day-of-month when computing monthly fact-check sta
 The bug: when a chunk fills up, a section header (`<b>Возможные неточности</b>` / `<b>Фактические ошибки</b>`) already pushed into `current` stays as the **last** element of the flushed chunk, while its findings land in the next chunk.
 
 **Files:**
+
 - Modify: `src/application/fact-checking/FactCheckFormatter.ts`
 - Test: `test/FactCheckFormatter.test.ts`
 
@@ -1306,24 +1324,24 @@ The bug: when a chunk fills up, a section header (`<b>Возможные нет�
 In `test/FactCheckFormatter.test.ts` add (reusing `makeDigestFinding` from Task 5):
 
 ```ts
-  it('moves a section header to the chunk that contains its findings', () => {
-    const smallConfig = { ...config, maxFindingsPerDigestMessage: 2 };
-    const confirmed = [1, 2].map((id) =>
-      makeDigestFinding({ id, status: 'confirmed' })
-    );
-    const uncertain = [makeDigestFinding({ id: 3, status: 'uncertain' })];
-    const chunks = formatHourlyDigestChunks(
-      [...confirmed, ...uncertain],
-      smallConfig
-    );
+it('moves a section header to the chunk that contains its findings', () => {
+  const smallConfig = { ...config, maxFindingsPerDigestMessage: 2 };
+  const confirmed = [1, 2].map((id) =>
+    makeDigestFinding({ id, status: 'confirmed' })
+  );
+  const uncertain = [makeDigestFinding({ id: 3, status: 'uncertain' })];
+  const chunks = formatHourlyDigestChunks(
+    [...confirmed, ...uncertain],
+    smallConfig
+  );
 
-    expect(chunks).toHaveLength(2);
-    // header must NOT dangle at the end of chunk 0
-    expect(chunks[0].text).not.toContain('Возможные неточности');
-    expect(chunks[1].text).toContain('Возможные неточности');
-    expect(chunks[0].findingIds).toEqual([1, 2]);
-    expect(chunks[1].findingIds).toEqual([3]);
-  });
+  expect(chunks).toHaveLength(2);
+  // header must NOT dangle at the end of chunk 0
+  expect(chunks[0].text).not.toContain('Возможные неточности');
+  expect(chunks[1].text).toContain('Возможные неточности');
+  expect(chunks[0].findingIds).toEqual([1, 2]);
+  expect(chunks[1].findingIds).toEqual([3]);
+});
 ```
 
 - [ ] **Step 2: Run test to verify failure**
@@ -1339,52 +1357,52 @@ Expected: FAIL — chunk 0 currently ends with the orphaned header.
 In `formatHourlyDigestChunks`, replace the chunking loop (from `const chunks: FactCheckDigestChunk[] = [];` to the final `if (current.length > 0)` block) with:
 
 ```ts
-  const chunks: FactCheckDigestChunk[] = [];
-  let current: { text: string; findingId: number | null }[] = [];
-  let currentLen = 0;
-  let countInChunk = 0;
+const chunks: FactCheckDigestChunk[] = [];
+let current: { text: string; findingId: number | null }[] = [];
+let currentLen = 0;
+let countInChunk = 0;
 
-  const toChunk = (
-    parts: { text: string; findingId: number | null }[]
-  ): FactCheckDigestChunk => ({
-    text: parts.map((p) => p.text).join('\n\n'),
-    findingIds: parts
-      .map((p) => p.findingId)
-      .filter((id): id is number => id != null),
-  });
+const toChunk = (
+  parts: { text: string; findingId: number | null }[]
+): FactCheckDigestChunk => ({
+  text: parts.map((p) => p.text).join('\n\n'),
+  findingIds: parts
+    .map((p) => p.findingId)
+    .filter((id): id is number => id != null),
+});
 
-  for (const part of allParts) {
-    const partLen = part.text.length + 2; // +2 for \n\n separator
-    const wouldExceedCount =
-      part.findingId != null &&
-      countInChunk >= config.maxFindingsPerDigestMessage;
-    const wouldExceedLen = currentLen + partLen > MAX_CHUNK_CHARS;
+for (const part of allParts) {
+  const partLen = part.text.length + 2; // +2 for \n\n separator
+  const wouldExceedCount =
+    part.findingId != null &&
+    countInChunk >= config.maxFindingsPerDigestMessage;
+  const wouldExceedLen = currentLen + partLen > MAX_CHUNK_CHARS;
 
-    if (current.length > 0 && (wouldExceedCount || wouldExceedLen)) {
-      // never leave trailing headers behind: carry them into the next chunk
-      let splitAt = current.length;
-      while (splitAt > 0 && current[splitAt - 1].findingId == null) {
-        splitAt--;
-      }
-      if (splitAt > 0) {
-        const carried = current.slice(splitAt);
-        chunks.push(toChunk(current.slice(0, splitAt)));
-        current = carried;
-        currentLen = carried.reduce((sum, p) => sum + p.text.length + 2, 0);
-        countInChunk = 0;
-      }
+  if (current.length > 0 && (wouldExceedCount || wouldExceedLen)) {
+    // never leave trailing headers behind: carry them into the next chunk
+    let splitAt = current.length;
+    while (splitAt > 0 && current[splitAt - 1].findingId == null) {
+      splitAt--;
     }
-
-    current.push(part);
-    currentLen += partLen;
-    if (part.findingId != null) countInChunk++;
+    if (splitAt > 0) {
+      const carried = current.slice(splitAt);
+      chunks.push(toChunk(current.slice(0, splitAt)));
+      current = carried;
+      currentLen = carried.reduce((sum, p) => sum + p.text.length + 2, 0);
+      countInChunk = 0;
+    }
   }
 
-  if (current.length > 0) {
-    chunks.push(toChunk(current));
-  }
+  current.push(part);
+  currentLen += partLen;
+  if (part.findingId != null) countInChunk++;
+}
 
-  return chunks;
+if (current.length > 0) {
+  chunks.push(toChunk(current));
+}
+
+return chunks;
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -1409,6 +1427,7 @@ rtk git commit -m "fix: carry digest section headers into the chunk with their f
 The bug: `claimText`, `correctedFact`, and `explanation` come from the model unbounded. One oversized finding makes its digest chunk exceed Telegram's limit; the send fails every hour forever (the findings never get marked notified). `originalQuote` is already capped at 500 chars.
 
 **Files:**
+
 - Modify: `src/application/fact-checking/DefaultFactCheckPipeline.ts`
 - Test: `test/DefaultFactCheckPipeline.test.ts`
 
@@ -1417,103 +1436,103 @@ The bug: `claimText`, `correctedFact`, and `explanation` come from the model unb
 In `test/DefaultFactCheckPipeline.test.ts` add a test reusing the structure of `'completes successfully and persists non-no_error findings'`, with the verifier stub returning oversized fields:
 
 ```ts
-  it('truncates oversized model text before persisting findings', async () => {
-    const chatId = 456;
-    const batchMsg = makeBatchMessage(10);
-    const longText = 'x'.repeat(5000);
+it('truncates oversized model text before persisting findings', async () => {
+  const chatId = 456;
+  const batchMsg = makeBatchMessage(10);
+  const longText = 'x'.repeat(5000);
 
-    const reasoning = {
-      extractClaims: vi.fn().mockResolvedValue({
-        result: {
-          claims: [
-            {
-              messageId: 10,
-              claimText: longText,
-              category: 'external_fact',
-              needsExternalSources: false,
-              riskLevel: 'low',
-              whyCheckable: 'long claim',
-              contextMessageIds: [],
-            },
-          ],
-        },
-        metadata: {
-          usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
-          escalated: false,
-        },
-        requestJson: {},
-        responseJson: {},
-      }),
-      verifyClaims: vi.fn().mockResolvedValue({
-        result: {
-          findings: [
-            {
-              messageId: 10,
-              claimText: longText,
-              status: 'confirmed',
-              confidence: 0.9,
-              correctedFact: longText,
-              explanation: longText,
-              sourceRequirementsMet: true,
-              sourceIndexes: [],
-              shouldNotifyImmediately: false,
-            },
-          ],
-        },
-        metadata: {
-          usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
-          escalated: false,
-        },
-        requestJson: {},
-        responseJson: {},
-      }),
-    } as unknown as FactCheckReasoningService;
+  const reasoning = {
+    extractClaims: vi.fn().mockResolvedValue({
+      result: {
+        claims: [
+          {
+            messageId: 10,
+            claimText: longText,
+            category: 'external_fact',
+            needsExternalSources: false,
+            riskLevel: 'low',
+            whyCheckable: 'long claim',
+            contextMessageIds: [],
+          },
+        ],
+      },
+      metadata: {
+        usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
+        escalated: false,
+      },
+      requestJson: {},
+      responseJson: {},
+    }),
+    verifyClaims: vi.fn().mockResolvedValue({
+      result: {
+        findings: [
+          {
+            messageId: 10,
+            claimText: longText,
+            status: 'confirmed',
+            confidence: 0.9,
+            correctedFact: longText,
+            explanation: longText,
+            sourceRequirementsMet: true,
+            sourceIndexes: [],
+            shouldNotifyImmediately: false,
+          },
+        ],
+      },
+      metadata: {
+        usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
+        escalated: false,
+      },
+      requestJson: {},
+      responseJson: {},
+    }),
+  } as unknown as FactCheckReasoningService;
 
-    const findingRepo = {
-      insertFinding: vi.fn().mockResolvedValue(1),
-    } as unknown as FactCheckFindingRepository;
+  const findingRepo = {
+    insertFinding: vi.fn().mockResolvedValue(1),
+  } as unknown as FactCheckFindingRepository;
 
-    const pipeline = new DefaultFactCheckPipeline(
-      makeConfig(),
-      {
-        findReadyByChatIdAfterId: vi.fn().mockResolvedValue([batchMsg]),
-        findReadyContextBeforeId: vi.fn().mockResolvedValue([]),
-      } as unknown as FactCheckMessageWindowRepository,
-      {
-        get: vi.fn().mockResolvedValue(null),
-        upsert: vi.fn().mockResolvedValue(undefined),
-      } as unknown as FactCheckWindowRepository,
-      {
-        findById: vi.fn().mockResolvedValue(undefined),
-      } as unknown as ChatRepository,
-      reasoning,
-      { search: vi.fn().mockResolvedValue([]) } as unknown as SourceSearchService,
-      {
-        createRun: vi.fn().mockResolvedValue(42),
-        completeRun: vi.fn().mockResolvedValue(undefined),
-        failRun: vi.fn(),
-      } as unknown as FactCheckRunRepository,
-      findingRepo,
-      {
-        sendImmediate: vi.fn().mockResolvedValue(undefined),
-        sendHourlyDigest: vi.fn().mockResolvedValue(undefined),
-        sendStats: vi.fn(),
-      } as unknown as FactCheckNotifier,
-      makeLoggerFactory()
-    );
+  const pipeline = new DefaultFactCheckPipeline(
+    makeConfig(),
+    {
+      findReadyByChatIdAfterId: vi.fn().mockResolvedValue([batchMsg]),
+      findReadyContextBeforeId: vi.fn().mockResolvedValue([]),
+    } as unknown as FactCheckMessageWindowRepository,
+    {
+      get: vi.fn().mockResolvedValue(null),
+      upsert: vi.fn().mockResolvedValue(undefined),
+    } as unknown as FactCheckWindowRepository,
+    {
+      findById: vi.fn().mockResolvedValue(undefined),
+    } as unknown as ChatRepository,
+    reasoning,
+    { search: vi.fn().mockResolvedValue([]) } as unknown as SourceSearchService,
+    {
+      createRun: vi.fn().mockResolvedValue(42),
+      completeRun: vi.fn().mockResolvedValue(undefined),
+      failRun: vi.fn(),
+    } as unknown as FactCheckRunRepository,
+    findingRepo,
+    {
+      sendImmediate: vi.fn().mockResolvedValue(undefined),
+      sendHourlyDigest: vi.fn().mockResolvedValue(undefined),
+      sendStats: vi.fn(),
+    } as unknown as FactCheckNotifier,
+    makeLoggerFactory()
+  );
 
-    await pipeline.runHourly(chatId);
+  await pipeline.runHourly(chatId);
 
-    const input = (findingRepo.insertFinding as ReturnType<typeof vi.fn>).mock
-      .calls[0][0] as {
-      claimText: string;
-      correctedFact: string;
-      explanation: string;
-    };
-    expect(input.claimText.length).toBeLessThanOrEqual(1000);
-    expect(input.correctedFact.length).toBeLessThanOrEqual(1000);
-    expect(input.explanation.length).toBeLessThanOrEqual(1000);
-  });
+  const input = (findingRepo.insertFinding as ReturnType<typeof vi.fn>).mock
+    .calls[0][0] as {
+    claimText: string;
+    correctedFact: string;
+    explanation: string;
+  };
+  expect(input.claimText.length).toBeLessThanOrEqual(1000);
+  expect(input.correctedFact.length).toBeLessThanOrEqual(1000);
+  expect(input.explanation.length).toBeLessThanOrEqual(1000);
+});
 ```
 
 - [ ] **Step 2: Run test to verify failure**
@@ -1541,7 +1560,7 @@ function truncateModelText(text: string): string {
 Inside the findings loop, before building `input`, add:
 
 ```ts
-        const claimText = truncateModelText(finding.claimText);
+const claimText = truncateModelText(finding.claimText);
 ```
 
 And in the `InsertFactCheckFindingInput` literal replace the three fields:
@@ -1577,6 +1596,7 @@ rtk git commit -m "fix: truncate model-generated fact-check fields before persis
 Two small robustness fixes: (a) `escapeUrl` must escape `<`/`>` so a hostile URL cannot break Telegram HTML parsing; (b) `wikipedia.org`/`britannica.com` should classify as `media`, not `authoritative` — otherwise Wikipedia alone satisfies `primary_required` and can confirm medical/legal claims.
 
 **Files:**
+
 - Modify: `src/application/fact-checking/FactCheckFormatter.ts`
 - Modify: `src/application/fact-checking/DefaultFactCheckSourceSearchService.ts`
 - Test: `test/FactCheckFormatter.test.ts`
@@ -1587,25 +1607,25 @@ Two small robustness fixes: (a) `escapeUrl` must escape `<`/`>` so a hostile URL
 In `test/FactCheckFormatter.test.ts` add (reusing `makeDigestFinding`; `formatImmediateFactCheck` is already exported):
 
 ```ts
-  it('escapes angle brackets in source URLs', () => {
-    const finding = makeDigestFinding({
-      sources: [
-        {
-          id: 1,
-          findingId: 1,
-          url: 'https://example.com/?q=<script>',
-          title: 'Example',
-          publisher: null,
-          snippet: '',
-          reliability: 'media',
-          retrievedAt: '2026-06-12T00:00:00.000Z',
-        },
-      ],
-    });
-    const text = formatImmediateFactCheck(finding);
-    expect(text).toContain('https://example.com/?q=&lt;script&gt;');
-    expect(text).not.toContain('?q=<script>');
+it('escapes angle brackets in source URLs', () => {
+  const finding = makeDigestFinding({
+    sources: [
+      {
+        id: 1,
+        findingId: 1,
+        url: 'https://example.com/?q=<script>',
+        title: 'Example',
+        publisher: null,
+        snippet: '',
+        reliability: 'media',
+        retrievedAt: '2026-06-12T00:00:00.000Z',
+      },
+    ],
   });
+  const text = formatImmediateFactCheck(finding);
+  expect(text).toContain('https://example.com/?q=&lt;script&gt;');
+  expect(text).not.toContain('?q=<script>');
+});
 ```
 
 In `test/DefaultFactCheckSourceSearchService.test.ts` add (import `classifyReliability` once exported):
@@ -1613,13 +1633,19 @@ In `test/DefaultFactCheckSourceSearchService.test.ts` add (import `classifyRelia
 ```ts
 describe('classifyReliability', () => {
   it('classifies wikipedia and britannica as media, not authoritative', () => {
-    expect(classifyReliability('https://en.wikipedia.org/wiki/X')).toBe('media');
-    expect(classifyReliability('https://www.britannica.com/topic/X')).toBe('media');
+    expect(classifyReliability('https://en.wikipedia.org/wiki/X')).toBe(
+      'media'
+    );
+    expect(classifyReliability('https://www.britannica.com/topic/X')).toBe(
+      'media'
+    );
   });
 
   it('keeps gov/edu as primary and WHO as authoritative', () => {
     expect(classifyReliability('https://www.cdc.gov/page')).toBe('primary');
-    expect(classifyReliability('https://www.who.int/page')).toBe('authoritative');
+    expect(classifyReliability('https://www.who.int/page')).toBe(
+      'authoritative'
+    );
   });
 });
 ```

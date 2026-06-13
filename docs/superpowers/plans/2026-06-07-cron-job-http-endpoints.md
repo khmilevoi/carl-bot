@@ -17,6 +17,7 @@
 ## File Structure
 
 **Create:**
+
 - `src/application/interfaces/scheduler/JobRunner.ts` — job contract: `JobName`, `StatsPeriod`, `JobRunInput`, `JobRunResult`, `AllChatsJobInput`, `AllChatsJobResult`, `JobRunner` interface, `JOB_RUNNER_ID`.
 - `src/application/use-cases/scheduler/DefaultJobRunner.ts` — implementation (per-chat + all-chats).
 - `src/view/http/HttpServer.ts` — `HttpServer` lifecycle interface + `HTTP_SERVER_ID`.
@@ -26,6 +27,7 @@
 - `test/JobRunner.test.ts`, `test/FactCheckScheduler.test.ts`, `test/JobController.test.ts`, `test/NodeHttpServer.test.ts`, `test/triggerJobArgs.test.ts`.
 
 **Modify:**
+
 - `src/application/fact-checking/DefaultFactCheckScheduler.ts` — delegate all-chats loops to `JobRunner`.
 - `src/container/application.ts` — rebind runner, register HTTP services.
 - `src/index.ts` — start/stop `HttpServer` from the container instead of inline `http.createServer`.
@@ -35,6 +37,7 @@
 - `.env.example`, `CLAUDE.md` — document `JOBS_BASE_URL` and the endpoints/scripts.
 
 **Delete:**
+
 - `src/manual-job.ts`, `src/application/interfaces/scheduler/ManualJobRunner.ts`, `src/application/use-cases/scheduler/DefaultManualJobRunner.ts`, `test/ManualJobRunner.test.ts`.
 
 ---
@@ -44,6 +47,7 @@
 Self-contained removal. `manual-job.ts` is referenced only by the rsbuild entry and the `job*` pnpm scripts — no `src` code imports it — so deleting it keeps the build green. `DefaultManualJobRunner` stays bound but unused until Task 2 renames it.
 
 **Files:**
+
 - Delete: `src/manual-job.ts`
 - Modify: `rsbuild.config.ts:8`
 - Modify: `package.json` (scripts block)
@@ -100,6 +104,7 @@ rtk git commit -m "chore: remove manual-job CLI entrypoint and scripts"
 Atomic rename + extension (interface, impl, container, test change together to compile). Adds `fact-check-stats` (with period) and `runForAllChats`. Test-first.
 
 **Files:**
+
 - Create: `src/application/interfaces/scheduler/JobRunner.ts`
 - Delete: `src/application/interfaces/scheduler/ManualJobRunner.ts`
 - Create: `src/application/use-cases/scheduler/DefaultJobRunner.ts`
@@ -134,11 +139,17 @@ const createLoggerFactory = (): LoggerFactory =>
 function makeRunner(overrides?: {
   topicOfDay?: { runNow?: ReturnType<typeof vi.fn> };
   stateEvolution?: { run?: ReturnType<typeof vi.fn> };
-  pipeline?: { runHourly?: ReturnType<typeof vi.fn>; runStats?: ReturnType<typeof vi.fn> };
+  pipeline?: {
+    runHourly?: ReturnType<typeof vi.fn>;
+    runStats?: ReturnType<typeof vi.fn>;
+  };
   approval?: { listAll?: ReturnType<typeof vi.fn> };
   scheduler?: { sweep?: ReturnType<typeof vi.fn> };
 }) {
-  const topicOfDay = { runNow: vi.fn(async () => {}), ...overrides?.topicOfDay };
+  const topicOfDay = {
+    runNow: vi.fn(async () => {}),
+    ...overrides?.topicOfDay,
+  };
   const stateEvolution = { run: vi.fn(), ...overrides?.stateEvolution };
   const pipeline = {
     runHourly: vi.fn(),
@@ -171,7 +182,11 @@ describe('DefaultJobRunner.runForChat', () => {
     const { runner, topicOfDay } = makeRunner();
     const result = await runner.runForChat({ job: 'topic-of-day', chatId: 7 });
     expect(topicOfDay.runNow).toHaveBeenCalledWith(7);
-    expect(result).toEqual({ job: 'topic-of-day', chatId: 7, outcome: 'completed' });
+    expect(result).toEqual({
+      job: 'topic-of-day',
+      chatId: 7,
+      outcome: 'completed',
+    });
   });
 
   it('runs state-evolution and returns its result', async () => {
@@ -183,7 +198,10 @@ describe('DefaultJobRunner.runForChat', () => {
     const { runner, stateEvolution } = makeRunner({
       stateEvolution: { run: vi.fn(async () => stateResult) },
     });
-    const result = await runner.runForChat({ job: 'state-evolution', chatId: -5 });
+    const result = await runner.runForChat({
+      job: 'state-evolution',
+      chatId: -5,
+    });
     expect(stateEvolution.run).toHaveBeenCalledWith(-5);
     expect(result).toEqual({
       job: 'state-evolution',
@@ -249,8 +267,18 @@ describe('DefaultJobRunner.runForAllChats', () => {
       scope: 'all',
       totalChats: 2,
       results: [
-        { job: 'fact-check', chatId: 1, outcome: 'completed', factCheck: factResult },
-        { job: 'fact-check', chatId: 3, outcome: 'completed', factCheck: factResult },
+        {
+          job: 'fact-check',
+          chatId: 1,
+          outcome: 'completed',
+          factCheck: factResult,
+        },
+        {
+          job: 'fact-check',
+          chatId: 3,
+          outcome: 'completed',
+          factCheck: factResult,
+        },
       ],
     });
   });
@@ -258,9 +286,14 @@ describe('DefaultJobRunner.runForAllChats', () => {
   it('passes the period through for fact-check-stats all-chats', async () => {
     const { runner, pipeline } = makeRunner({
       pipeline: { runStats: vi.fn(async () => factResult) },
-      approval: { listAll: vi.fn(async () => [{ chatId: 1, status: 'approved' }]) },
+      approval: {
+        listAll: vi.fn(async () => [{ chatId: 1, status: 'approved' }]),
+      },
     });
-    const result = await runner.runForAllChats({ job: 'fact-check-stats', period: 'daily' });
+    const result = await runner.runForAllChats({
+      job: 'fact-check-stats',
+      period: 'daily',
+    });
     expect(pipeline.runStats).toHaveBeenCalledWith(1, 'daily');
     expect(result).toEqual({
       job: 'fact-check-stats',
@@ -298,7 +331,14 @@ describe('DefaultJobRunner.runForAllChats', () => {
       job: 'fact-check',
       scope: 'all',
       totalChats: 2,
-      results: [{ job: 'fact-check', chatId: 2, outcome: 'completed', factCheck: factResult }],
+      results: [
+        {
+          job: 'fact-check',
+          chatId: 2,
+          outcome: 'completed',
+          factCheck: factResult,
+        },
+      ],
     });
   });
 
@@ -308,7 +348,11 @@ describe('DefaultJobRunner.runForAllChats', () => {
     const result = await runner.runForAllChats({ job: 'state-evolution' });
     expect(sweep).toHaveBeenCalledTimes(1);
     expect(approval.listAll).not.toHaveBeenCalled();
-    expect(result).toEqual({ job: 'state-evolution', scope: 'all', outcome: 'swept' });
+    expect(result).toEqual({
+      job: 'state-evolution',
+      scope: 'all',
+      outcome: 'swept',
+    });
   });
 });
 ```
@@ -459,7 +503,11 @@ export class DefaultJobRunner implements JobRunner {
     switch (input.job) {
       case 'topic-of-day':
         await this.topicOfDay.runNow(input.chatId);
-        return { job: 'topic-of-day', chatId: input.chatId, outcome: 'completed' };
+        return {
+          job: 'topic-of-day',
+          chatId: input.chatId,
+          outcome: 'completed',
+        };
       case 'state-evolution': {
         const result = await this.stateEvolution.run(input.chatId);
         return {
@@ -587,19 +635,19 @@ import { DefaultJobRunner } from '../application/use-cases/scheduler/DefaultJobR
 Replace the binding (around lines 546-549):
 
 ```ts
-  container
-    .bind<ManualJobRunner>(MANUAL_JOB_RUNNER_ID)
-    .to(DefaultManualJobRunner)
-    .inSingletonScope();
+container
+  .bind<ManualJobRunner>(MANUAL_JOB_RUNNER_ID)
+  .to(DefaultManualJobRunner)
+  .inSingletonScope();
 ```
 
 with:
 
 ```ts
-  container
-    .bind<JobRunner>(JOB_RUNNER_ID)
-    .to(DefaultJobRunner)
-    .inSingletonScope();
+container
+  .bind<JobRunner>(JOB_RUNNER_ID)
+  .to(DefaultJobRunner)
+  .inSingletonScope();
 ```
 
 - [ ] **Step 8: Delete the stale old test**
@@ -632,6 +680,7 @@ rtk git commit -m "refactor: generalize ManualJobRunner into JobRunner with all-
 `DefaultFactCheckScheduler` keeps its cron registration but routes execution through `JobRunner.runForAllChats`, removing its duplicated approved-chat loops and its direct `ChatApprovalService`/`FactCheckPipeline` dependencies.
 
 **Files:**
+
 - Modify: `src/application/fact-checking/DefaultFactCheckScheduler.ts` (full rewrite)
 - Create: `test/FactCheckScheduler.test.ts`
 
@@ -679,7 +728,12 @@ function makeRunner(): JobRunner {
     runForChat: vi.fn(),
     runForAllChats: vi
       .fn()
-      .mockResolvedValue({ job: 'fact-check', scope: 'all', totalChats: 0, results: [] }),
+      .mockResolvedValue({
+        job: 'fact-check',
+        scope: 'all',
+        totalChats: 0,
+        results: [],
+      }),
   };
 }
 
@@ -712,16 +766,27 @@ describe('DefaultFactCheckScheduler', () => {
     expect(exprs).toEqual(['HOURLY', 'DAILY', 'WEEKLY', 'MONTHLY']);
 
     // Invoke each captured cron callback (second arg of each schedule call).
-    const callbacks = scheduleMock.mock.calls.map((call) => call[1] as () => void);
+    const callbacks = scheduleMock.mock.calls.map(
+      (call) => call[1] as () => void
+    );
     callbacks[0]();
     callbacks[1]();
     callbacks[2]();
     callbacks[3]();
 
     expect(runner.runForAllChats).toHaveBeenCalledWith({ job: 'fact-check' });
-    expect(runner.runForAllChats).toHaveBeenCalledWith({ job: 'fact-check-stats', period: 'daily' });
-    expect(runner.runForAllChats).toHaveBeenCalledWith({ job: 'fact-check-stats', period: 'weekly' });
-    expect(runner.runForAllChats).toHaveBeenCalledWith({ job: 'fact-check-stats', period: 'monthly' });
+    expect(runner.runForAllChats).toHaveBeenCalledWith({
+      job: 'fact-check-stats',
+      period: 'daily',
+    });
+    expect(runner.runForAllChats).toHaveBeenCalledWith({
+      job: 'fact-check-stats',
+      period: 'weekly',
+    });
+    expect(runner.runForAllChats).toHaveBeenCalledWith({
+      job: 'fact-check-stats',
+      period: 'monthly',
+    });
   });
 });
 ```
@@ -848,6 +913,7 @@ rtk git commit -m "refactor: route fact-check cron through JobRunner.runForAllCh
 Pure unit: `run(jobName, scope, body)` validates `chatId`/`period`, dispatches to `JobRunner`, and returns an `HttpResult`. No sockets, no path matching — fully unit-testable. Routing (find-my-way) lives in `NodeHttpServer` (Task 5).
 
 **Files:**
+
 - Create: `src/view/http/HttpServer.ts`
 - Create: `src/view/http/JobController.ts`
 - Create: `test/JobController.test.ts`
@@ -918,7 +984,13 @@ describe('JobController', () => {
       job: 'fact-check',
       chatId: 5,
       outcome: 'completed',
-      factCheck: { chatId: 5, outcome: 'completed', runId: 1, processedMessages: 0, persistedFindings: 0 },
+      factCheck: {
+        chatId: 5,
+        outcome: 'completed',
+        runId: 1,
+        processedMessages: 0,
+        persistedFindings: 0,
+      },
     }));
     const controller = makeController({ runForChat: runForChat as never });
     const res = await controller.run('fact-check', 'chat', { chatId: 5 });
@@ -939,11 +1011,24 @@ describe('JobController', () => {
       chatId: 5,
       period: 'weekly',
       outcome: 'completed',
-      factCheck: { chatId: 5, outcome: 'completed', runId: 1, processedMessages: 0, persistedFindings: 0 },
+      factCheck: {
+        chatId: 5,
+        outcome: 'completed',
+        runId: 1,
+        processedMessages: 0,
+        persistedFindings: 0,
+      },
     }));
     const controller = makeController({ runForChat: runForChat as never });
-    const res = await controller.run('fact-check-stats', 'chat', { chatId: 5, period: 'weekly' });
-    expect(runForChat).toHaveBeenCalledWith({ job: 'fact-check-stats', chatId: 5, period: 'weekly' });
+    const res = await controller.run('fact-check-stats', 'chat', {
+      chatId: 5,
+      period: 'weekly',
+    });
+    expect(runForChat).toHaveBeenCalledWith({
+      job: 'fact-check-stats',
+      chatId: 5,
+      period: 'weekly',
+    });
     expect(res.status).toBe(200);
   });
 
@@ -954,7 +1039,9 @@ describe('JobController', () => {
       totalChats: 0,
       results: [],
     }));
-    const controller = makeController({ runForAllChats: runForAllChats as never });
+    const controller = makeController({
+      runForAllChats: runForAllChats as never,
+    });
     const res = await controller.run('fact-check', 'all', {});
     expect(runForAllChats).toHaveBeenCalledWith({ job: 'fact-check' });
     expect(res.status).toBe(200);
@@ -1083,9 +1170,15 @@ export class JobController {
         if (period === null) return this.badPeriod();
         return scope === 'chat'
           ? this.perChat(body, (chatId) =>
-              this.runner.runForChat({ job: 'fact-check-stats', chatId, period })
+              this.runner.runForChat({
+                job: 'fact-check-stats',
+                chatId,
+                period,
+              })
             )
-          : this.wrap(this.runner.runForAllChats({ job: 'fact-check-stats', period }));
+          : this.wrap(
+              this.runner.runForAllChats({ job: 'fact-check-stats', period })
+            );
       }
     }
   }
@@ -1125,7 +1218,8 @@ export class JobController {
 
   private parsePeriod(body: Record<string, unknown>): StatsPeriod | null {
     const value = body.period;
-    return typeof value === 'string' && STATS_PERIODS.includes(value as StatsPeriod)
+    return typeof value === 'string' &&
+      STATS_PERIODS.includes(value as StatsPeriod)
       ? (value as StatsPeriod)
       : null;
   }
@@ -1160,6 +1254,7 @@ rtk git commit -m "feat: add JobController for HTTP job validation and dispatch"
 `NodeHttpServer` owns the `find-my-way` router and the socket loop: `lookup(req, res)` dispatches matched routes to handlers that read the body, call `JobController.run`, and write the response; `defaultRoute` produces 404/405. Routing is covered by an integration test (ephemeral port + `fetch`). `find-my-way` is pure JS and bundles via rspack — no `rsbuild.config.ts` externals change needed.
 
 **Files:**
+
 - Modify: `package.json` (add `find-my-way` dependency)
 - Create: `src/view/http/NodeHttpServer.ts`
 - Create: `test/NodeHttpServer.test.ts`
@@ -1195,7 +1290,9 @@ const loggerFactory = {
   }),
 } as unknown as LoggerFactory;
 
-function makeController(run: (...args: unknown[]) => Promise<HttpResult>): JobController {
+function makeController(
+  run: (...args: unknown[]) => Promise<HttpResult>
+): JobController {
   return { run } as unknown as JobController;
 }
 
@@ -1211,7 +1308,12 @@ describe('NodeHttpServer', () => {
 
   it('routes a per-chat POST to the controller with the parsed body', async () => {
     process.env.PORT = '0';
-    const run = vi.fn(async (): Promise<HttpResult> => ({ status: 200, json: { ok: true, echoed: true } }));
+    const run = vi.fn(
+      async (): Promise<HttpResult> => ({
+        status: 200,
+        json: { ok: true, echoed: true },
+      })
+    );
     server = new NodeHttpServer(makeController(run), loggerFactory);
     await server.start();
 
@@ -1227,13 +1329,18 @@ describe('NodeHttpServer', () => {
 
   it('routes an all-chats POST with an empty body to the controller', async () => {
     process.env.PORT = '0';
-    const run = vi.fn(async (): Promise<HttpResult> => ({ status: 200, json: { ok: true } }));
+    const run = vi.fn(
+      async (): Promise<HttpResult> => ({ status: 200, json: { ok: true } })
+    );
     server = new NodeHttpServer(makeController(run), loggerFactory);
     await server.start();
 
-    const res = await fetch(`http://127.0.0.1:${server.port}/jobs/fact-check/all`, {
-      method: 'POST',
-    });
+    const res = await fetch(
+      `http://127.0.0.1:${server.port}/jobs/fact-check/all`,
+      {
+        method: 'POST',
+      }
+    );
 
     expect(res.status).toBe(200);
     expect(run).toHaveBeenCalledWith('fact-check', 'all', {});
@@ -1255,19 +1362,29 @@ describe('NodeHttpServer', () => {
 
   it('returns 405 for a known path with the wrong method', async () => {
     process.env.PORT = '0';
-    server = new NodeHttpServer(makeController(vi.fn() as never), loggerFactory);
+    server = new NodeHttpServer(
+      makeController(vi.fn() as never),
+      loggerFactory
+    );
     await server.start();
 
-    const res = await fetch(`http://127.0.0.1:${server.port}/jobs/fact-check`, { method: 'GET' });
+    const res = await fetch(`http://127.0.0.1:${server.port}/jobs/fact-check`, {
+      method: 'GET',
+    });
     expect(res.status).toBe(405);
   });
 
   it('returns 404 for an unknown path', async () => {
     process.env.PORT = '0';
-    server = new NodeHttpServer(makeController(vi.fn() as never), loggerFactory);
+    server = new NodeHttpServer(
+      makeController(vi.fn() as never),
+      loggerFactory
+    );
     await server.start();
 
-    const res = await fetch(`http://127.0.0.1:${server.port}/nope`, { method: 'POST' });
+    const res = await fetch(`http://127.0.0.1:${server.port}/nope`, {
+      method: 'POST',
+    });
     expect(res.status).toBe(404);
   });
 
@@ -1434,7 +1551,11 @@ export class NodeHttpServer implements HttpServer {
     if (rawBody.trim().length === 0) return {};
     try {
       const parsed: unknown = JSON.parse(rawBody);
-      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      if (
+        typeof parsed !== 'object' ||
+        parsed === null ||
+        Array.isArray(parsed)
+      ) {
         return null;
       }
       return parsed as Record<string, unknown>;
@@ -1455,6 +1576,7 @@ export class NodeHttpServer implements HttpServer {
 ```
 
 Notes:
+
 - The `:job` param is validated inside `JobController.run` (unknown job → 404), so the router only needs the generic `/jobs/:job` pattern.
 - Handlers are fire-and-forget (`void this.runJob(...)`) — `lookup()` doesn't await them; each handler owns writing its own response.
 
@@ -1468,29 +1590,23 @@ Expected: PASS (6 tests).
 In `src/container/application.ts`, add these imports near the other `view`/`interfaces` imports (e.g. just after the `JobRunner` import added in Task 2):
 
 ```ts
-import {
-  HTTP_SERVER_ID,
-  type HttpServer,
-} from '../view/http/HttpServer';
-import {
-  JOB_CONTROLLER_ID,
-  JobController,
-} from '../view/http/JobController';
+import { HTTP_SERVER_ID, type HttpServer } from '../view/http/HttpServer';
+import { JOB_CONTROLLER_ID, JobController } from '../view/http/JobController';
 import { NodeHttpServer } from '../view/http/NodeHttpServer';
 ```
 
 Then, inside `register`, add these bindings right after the `JOB_RUNNER_ID` binding:
 
 ```ts
-  container
-    .bind<JobController>(JOB_CONTROLLER_ID)
-    .to(JobController)
-    .inSingletonScope();
+container
+  .bind<JobController>(JOB_CONTROLLER_ID)
+  .to(JobController)
+  .inSingletonScope();
 
-  container
-    .bind<HttpServer>(HTTP_SERVER_ID)
-    .to(NodeHttpServer)
-    .inSingletonScope();
+container
+  .bind<HttpServer>(HTTP_SERVER_ID)
+  .to(NodeHttpServer)
+  .inSingletonScope();
 ```
 
 - [ ] **Step 7: Rewrite `src/index.ts`**
@@ -1533,13 +1649,17 @@ Expected: no type errors; build succeeds; all tests PASS.
 - [ ] **Step 9: Smoke-test the running server**
 
 Run (starts the built server; requires a valid `.env`):
+
 ```bash
 rtk pnpm start
 ```
+
 In another shell:
+
 ```bash
 rtk curl -s http://localhost:3000/health
 ```
+
 Expected: `ok`. Stop the server (Ctrl+C) and confirm a clean shutdown log line.
 
 - [ ] **Step 10: Commit**
@@ -1556,6 +1676,7 @@ rtk git commit -m "feat: serve cron jobs over HTTP via find-my-way + NodeHttpSer
 Cross-platform CLI (Node global `fetch`) that POSTs to the endpoints. `parseArgs` is exported and unit-tested; `main()` runs only when invoked directly.
 
 **Files:**
+
 - Create: `scripts/trigger-job.mjs`
 - Create: `test/triggerJobArgs.test.ts`
 - Modify: `package.json` (scripts block)
@@ -1602,8 +1723,12 @@ describe('trigger-job parseArgs', () => {
 
   it('requires a valid period for fact-check-stats', () => {
     expect(parseArgs(['fact-check-stats', '--all']).ok).toBe(false);
-    expect(parseArgs(['fact-check-stats', '--all', '--period', 'yearly']).ok).toBe(false);
-    expect(parseArgs(['fact-check-stats', '--all', '--period', 'weekly'])).toEqual({
+    expect(
+      parseArgs(['fact-check-stats', '--all', '--period', 'yearly']).ok
+    ).toBe(false);
+    expect(
+      parseArgs(['fact-check-stats', '--all', '--period', 'weekly'])
+    ).toEqual({
       ok: true,
       job: 'fact-check-stats',
       all: true,
@@ -1634,13 +1759,21 @@ Create `scripts/trigger-job.mjs`:
 // Base URL: $JOBS_BASE_URL, else http://localhost:$PORT (PORT defaults to 3000).
 import { pathToFileURL } from 'node:url';
 
-const JOBS = ['topic-of-day', 'state-evolution', 'fact-check', 'fact-check-stats'];
+const JOBS = [
+  'topic-of-day',
+  'state-evolution',
+  'fact-check',
+  'fact-check-stats',
+];
 const PERIODS = ['daily', 'weekly', 'monthly'];
 
 export function parseArgs(argv) {
   const [job, ...rest] = argv;
   if (!job || !JOBS.includes(job)) {
-    return { ok: false, error: `Unknown job "${job ?? ''}". Expected one of: ${JOBS.join(', ')}` };
+    return {
+      ok: false,
+      error: `Unknown job "${job ?? ''}". Expected one of: ${JOBS.join(', ')}`,
+    };
   }
 
   let chatId = null;
@@ -1667,10 +1800,19 @@ export function parseArgs(argv) {
   }
 
   if (all === (chatId !== null)) {
-    return { ok: false, error: 'Specify exactly one of --chat-id <n> or --all' };
+    return {
+      ok: false,
+      error: 'Specify exactly one of --chat-id <n> or --all',
+    };
   }
-  if (job === 'fact-check-stats' && (period === null || !PERIODS.includes(period))) {
-    return { ok: false, error: `fact-check-stats requires --period <${PERIODS.join('|')}>` };
+  if (
+    job === 'fact-check-stats' &&
+    (period === null || !PERIODS.includes(period))
+  ) {
+    return {
+      ok: false,
+      error: `fact-check-stats requires --period <${PERIODS.join('|')}>`,
+    };
   }
 
   return { ok: true, job, all, chatId, period };
@@ -1684,7 +1826,8 @@ async function main() {
     return;
   }
 
-  const base = process.env.JOBS_BASE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
+  const base =
+    process.env.JOBS_BASE_URL ?? `http://localhost:${process.env.PORT ?? 3000}`;
   const path = parsed.all ? `/jobs/${parsed.job}/all` : `/jobs/${parsed.job}`;
   const body = {};
   if (!parsed.all) body.chatId = Number(parsed.chatId);
@@ -1700,7 +1843,8 @@ async function main() {
 }
 
 const isMain =
-  Boolean(process.argv[1]) && import.meta.url === pathToFileURL(process.argv[1]).href;
+  Boolean(process.argv[1]) &&
+  import.meta.url === pathToFileURL(process.argv[1]).href;
 if (isMain) {
   main().catch((error) => {
     process.stderr.write(`${error?.stack ?? String(error)}\n`);
@@ -1733,14 +1877,18 @@ In `package.json`, add these to `scripts` (place where the old `job*` scripts we
 - [ ] **Step 6: Smoke-test the CLI against a running server**
 
 With the server running (`rtk pnpm start` in another shell) and at least one approved chat:
+
 ```bash
 rtk pnpm job:fact-check --chat-id <realChatId>
 rtk pnpm job:fact-check-stats --period weekly --all
 ```
+
 Expected: each prints a JSON response and exits 0. Bad args exit non-zero:
+
 ```bash
 node scripts/trigger-job.mjs fact-check-stats --all
 ```
+
 Expected: stderr "fact-check-stats requires --period ...", exit code 1.
 
 - [ ] **Step 7: Commit**
@@ -1755,10 +1903,12 @@ rtk git commit -m "feat: add trigger-job script and pnpm job commands"
 ## Task 7: Bind port to localhost + point healthcheck at /health (Docker)
 
 Two changes to `docker-compose.yml`:
+
 1. Implements the "localhost / internal network only" decision — the host-published port becomes reachable only from the host loopback, not the network.
 2. **Required fix:** the healthcheck currently hits root `/`, which the old catch-all server answered with `200`. The new server only serves `/health` and the job routes, so root `/` now returns `404` and the healthcheck must target `/health`.
 
 **Files:**
+
 - Modify: `docker-compose.yml` (`app` service `ports` ~line 40-41 and `healthcheck` ~line 46-55)
 
 - [ ] **Step 1: Restrict the published port**
@@ -1766,15 +1916,15 @@ Two changes to `docker-compose.yml`:
 In `docker-compose.yml`, change the `app` service `ports` mapping from:
 
 ```yaml
-    ports:
-      - '${PORT:-3000}:3000'
+ports:
+  - '${PORT:-3000}:3000'
 ```
 
 to:
 
 ```yaml
-    ports:
-      - '127.0.0.1:${PORT:-3000}:3000'
+ports:
+  - '127.0.0.1:${PORT:-3000}:3000'
 ```
 
 - [ ] **Step 2: Point the healthcheck at `/health`**
@@ -1782,7 +1932,7 @@ to:
 In the `app` service `healthcheck.test`, change the probe URL from `http://127.0.0.1:3000` to `http://127.0.0.1:3000/health`. The line becomes:
 
 ```yaml
-        - "require('http').get('http://127.0.0.1:3000/health',(r)=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+- "require('http').get('http://127.0.0.1:3000/health',(r)=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
 ```
 
 - [ ] **Step 3: Validate the compose file**
@@ -1802,6 +1952,7 @@ rtk git commit -m "chore: bind app HTTP port to localhost and probe /health"
 ## Task 8: Documentation
 
 **Files:**
+
 - Modify: `.env.example`
 - Modify: `CLAUDE.md`
 
@@ -1859,10 +2010,12 @@ Expected: no matches.
 - [ ] **Confirm endpoints exist end-to-end**
 
 Start the server, then:
+
 ```bash
 rtk curl -s http://localhost:3000/health
 rtk curl -s -X POST http://localhost:3000/jobs/fact-check/all
 ```
+
 Expected: `ok`, then a JSON aggregate (`{"ok":true,"job":"fact-check","scope":"all",...}`).
 
 ---
@@ -1872,4 +2025,7 @@ Expected: `ok`, then a JSON aggregate (`{"ok":true,"job":"fact-check","scope":"a
 - **state-evolution all-chats result** is `{ scope: 'all', outcome: 'swept' }` rather than a count of requested runs. `StateEvolutionScheduler.sweep()` returns `void`, so a count isn't available without widening that interface (out of scope). The sweep itself logs the count it requested.
 - **all-chats resilience:** a per-chat failure during an all-chats run is logged and skipped; the chat is omitted from `results` but still counted in `totalChats`. This mirrors the previous scheduler behavior.
 - **`fact-check-stats` is a distinct job** (with a `period`) rather than overloading `fact-check`, matching the cron surface (hourly vs daily/weekly/monthly stats).
+
+```
+
 ```

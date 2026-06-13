@@ -9,6 +9,7 @@
 **Tech Stack:** TypeScript, Inversify DI, SQLite (`sqlite`/`sqlite3`), OpenAI SDK (`openai` v6), Zod v4, Vitest.
 
 **Deviations from spec (intentional):**
+
 - Migration number is **018** (spec said 017 — that number is already taken by `017_cutover_legacy_cleanup`).
 - Embedding model is a module constant (`text-embedding-3-small`) inside the service rather than an env var — YAGNI, avoids editing `Env`/`DefaultEnvService`/`TestEnvService`/`.env.example` for a value that effectively never changes.
 - Embedding failures are tolerated silently (fail-open) without logging, to keep the applicator's constructor dependencies unchanged (it has no logger injected today).
@@ -18,6 +19,7 @@
 ## File Structure
 
 **Create:**
+
 - `src/application/behavior/cosineSimilarity.ts` — pure cosine helper.
 - `src/application/interfaces/ai/EmbeddingService.ts` — `EmbeddingService` interface + `EMBEDDING_SERVICE_ID`.
 - `src/infrastructure/external/OpenAIEmbeddingService.ts` — OpenAI-backed implementation.
@@ -25,6 +27,7 @@
 - `test/cosineSimilarity.test.ts`, `test/OpenAIEmbeddingService.test.ts`, `test/behaviorMigration018.test.ts`, `test/truthRepositoryEmbedding.test.ts`.
 
 **Modify:**
+
 - `src/domain/repositories/TruthRepository.ts` — add `TruthEmbedding`, `findActiveEmbeddings`, `setEmbedding`, optional `embedding` arg on `add`.
 - `src/infrastructure/persistence/sqlite/SQLiteTruthRepository.ts` — implement the new methods + store embedding on insert.
 - `src/application/behavior/BehaviorTypes.ts` — add `'merged'` to `BehaviorPatchOutcome`.
@@ -38,6 +41,7 @@
 ## Task 1: Pure cosine similarity helper
 
 **Files:**
+
 - Create: `src/application/behavior/cosineSimilarity.ts`
 - Test: `test/cosineSimilarity.test.ts`
 
@@ -123,6 +127,7 @@ git commit -m "feat(behavior): add pure cosineSimilarity helper"
 ## Task 2: Migration 018 — `bot_truths.embedding_json`
 
 **Files:**
+
 - Create: `migrations/018_add_truth_embedding.up.sql`
 - Create: `migrations/018_add_truth_embedding.down.sql`
 - Test: `test/behaviorMigration018.test.ts`
@@ -149,7 +154,9 @@ beforeEach(async () => {
     filename: path.join(dir, 't.db'),
     driver: sqlite3.Database,
   });
-  await db.exec('CREATE TABLE chats (chat_id INTEGER PRIMARY KEY, title TEXT);');
+  await db.exec(
+    'CREATE TABLE chats (chat_id INTEGER PRIMARY KEY, title TEXT);'
+  );
   const up015 = readFileSync(
     path.join('migrations', '015_create_behavior_tables.up.sql'),
     'utf8'
@@ -227,6 +234,7 @@ git commit -m "feat(db): add bot_truths.embedding_json column (migration 018)"
 ## Task 3: EmbeddingService interface + OpenAI implementation + DI binding
 
 **Files:**
+
 - Create: `src/application/interfaces/ai/EmbeddingService.ts`
 - Create: `src/infrastructure/external/OpenAIEmbeddingService.ts`
 - Modify: `src/container/application.ts`
@@ -331,9 +339,7 @@ const EMBEDDING_MODEL = 'text-embedding-3-small';
 export class OpenAIEmbeddingService implements EmbeddingService {
   private readonly openai: OpenAI;
 
-  constructor(
-    @inject(ENV_SERVICE_ID) private readonly envService: EnvService
-  ) {
+  constructor(@inject(ENV_SERVICE_ID) private readonly envService: EnvService) {
     this.openai = new OpenAI({ apiKey: this.envService.env.OPENAI_KEY });
   }
 
@@ -372,10 +378,10 @@ import {
 Then, immediately after the `AIService` binding block (around line 268-271), add:
 
 ```ts
-  container
-    .bind<EmbeddingService>(EMBEDDING_SERVICE_ID)
-    .to(OpenAIEmbeddingService)
-    .inSingletonScope();
+container
+  .bind<EmbeddingService>(EMBEDDING_SERVICE_ID)
+  .to(OpenAIEmbeddingService)
+  .inSingletonScope();
 ```
 
 - [ ] **Step 7: Verify the project still type-checks and builds**
@@ -395,6 +401,7 @@ git commit -m "feat(ai): add OpenAI EmbeddingService and DI binding"
 ## Task 4: TruthRepository embedding storage
 
 **Files:**
+
 - Modify: `src/domain/repositories/TruthRepository.ts`
 - Modify: `src/infrastructure/persistence/sqlite/SQLiteTruthRepository.ts`
 - Test: `test/truthRepositoryEmbedding.test.ts`
@@ -688,6 +695,7 @@ git commit -m "feat(db): persist and query truth embeddings"
 ## Task 5: Add `merged` patch outcome
 
 **Files:**
+
 - Modify: `src/application/behavior/BehaviorTypes.ts:78-84`
 
 - [ ] **Step 1: Add the outcome to the union**
@@ -722,6 +730,7 @@ git commit -m "feat(behavior): add 'merged' patch outcome"
 ## Task 6: Add `truthDuplicateSimilarity` config
 
 **Files:**
+
 - Modify: `src/application/behavior/StatePatchApplicator.ts:11-18`
 
 - [ ] **Step 1: Extend the config interface and default**
@@ -758,6 +767,7 @@ git commit -m "feat(behavior): add truthDuplicateSimilarity threshold to applica
 ## Task 7: Dedup guard in DefaultStatePatchApplicator
 
 **Files:**
+
 - Modify: `src/application/behavior/DefaultStatePatchApplicator.ts`
 - Modify: `test/StatePatchApplicator.test.ts`
 
@@ -785,59 +795,59 @@ const config: StatePatchApplicatorConfig = {
 (c) Replace the `makeRepos` function so the truth fake stores embeddings separately and implements the two new methods. Replace the whole `const truthRepo: TruthRepository = { ... };` block and the surrounding embedding bookkeeping with:
 
 ```ts
-  const truths = new Map<number, BotTruth>();
-  const embeddings = new Map<number, number[] | null>();
-  for (const truth of params?.truths ?? []) {
+const truths = new Map<number, BotTruth>();
+const embeddings = new Map<number, number[] | null>();
+for (const truth of params?.truths ?? []) {
+  truths.set(truth.id, truth);
+  embeddings.set(truth.id, null);
+}
+let nextTruthId = Math.max(0, ...truths.keys()) + 1;
+
+const profileRepo: UserSocialProfileRepository = {
+  findByChatAndUser: vi.fn((chatId: number, userId: number) =>
+    Promise.resolve(profiles.get(`${chatId}:${userId}`))
+  ),
+  findByChat: vi.fn(),
+  upsert: vi.fn((profile: UserSocialProfile) => {
+    profiles.set(`${profile.chatId}:${profile.userId}`, profile);
+    return Promise.resolve();
+  }),
+};
+
+const truthRepo: TruthRepository = {
+  add: vi.fn((truth, embedding?: number[] | null) => {
+    const id = nextTruthId;
+    nextTruthId += 1;
+    truths.set(id, { id, ...truth });
+    embeddings.set(id, embedding ?? null);
+    return Promise.resolve(id);
+  }),
+  findById: vi.fn((id: number) => Promise.resolve(truths.get(id))),
+  findByChatId: vi.fn((chatId: number) =>
+    Promise.resolve([...truths.values()].filter((t) => t.chatId === chatId))
+  ),
+  update: vi.fn((truth: BotTruth) => {
     truths.set(truth.id, truth);
-    embeddings.set(truth.id, null);
-  }
-  let nextTruthId = Math.max(0, ...truths.keys()) + 1;
+    return Promise.resolve();
+  }),
+  findActiveEmbeddings: vi.fn((chatId: number) =>
+    Promise.resolve(
+      [...truths.values()]
+        .filter((t) => t.chatId === chatId && t.status !== 'superseded')
+        .map((t) => ({
+          id: t.id,
+          text: t.text,
+          embedding: embeddings.get(t.id) ?? null,
+        }))
+    )
+  ),
+  setEmbedding: vi.fn((id: number, embedding: number[]) => {
+    embeddings.set(id, embedding);
+    return Promise.resolve();
+  }),
+};
 
-  const profileRepo: UserSocialProfileRepository = {
-    findByChatAndUser: vi.fn((chatId: number, userId: number) =>
-      Promise.resolve(profiles.get(`${chatId}:${userId}`))
-    ),
-    findByChat: vi.fn(),
-    upsert: vi.fn((profile: UserSocialProfile) => {
-      profiles.set(`${profile.chatId}:${profile.userId}`, profile);
-      return Promise.resolve();
-    }),
-  };
-
-  const truthRepo: TruthRepository = {
-    add: vi.fn((truth, embedding?: number[] | null) => {
-      const id = nextTruthId;
-      nextTruthId += 1;
-      truths.set(id, { id, ...truth });
-      embeddings.set(id, embedding ?? null);
-      return Promise.resolve(id);
-    }),
-    findById: vi.fn((id: number) => Promise.resolve(truths.get(id))),
-    findByChatId: vi.fn((chatId: number) =>
-      Promise.resolve([...truths.values()].filter((t) => t.chatId === chatId))
-    ),
-    update: vi.fn((truth: BotTruth) => {
-      truths.set(truth.id, truth);
-      return Promise.resolve();
-    }),
-    findActiveEmbeddings: vi.fn((chatId: number) =>
-      Promise.resolve(
-        [...truths.values()]
-          .filter((t) => t.chatId === chatId && t.status !== 'superseded')
-          .map((t) => ({
-            id: t.id,
-            text: t.text,
-            embedding: embeddings.get(t.id) ?? null,
-          }))
-      )
-    ),
-    setEmbedding: vi.fn((id: number, embedding: number[]) => {
-      embeddings.set(id, embedding);
-      return Promise.resolve();
-    }),
-  };
-
-  return { profileRepo, profiles, truthRepo, truths, embeddings };
+return { profileRepo, profiles, truthRepo, truths, embeddings };
 ```
 
 Note: `TruthRepository` and `TruthEmbedding` are already imported via the existing
@@ -912,174 +922,174 @@ Expected: FAIL to compile/run — `DefaultStatePatchApplicator` does not yet acc
 Append these test cases inside the top-level `describe('DefaultStatePatchApplicator', ...)` block in `test/StatePatchApplicator.test.ts`:
 
 ```ts
-  it('merges a near-duplicate truth.add into the existing truth instead of inserting', async () => {
-    const existing = makeTruth({
-      id: 10,
-      text: 'Carl is from the north of Russia.',
-      confidence: 0.8,
-      sourceMessageIds: [1],
-      status: 'stable',
-    });
-    const { profileRepo, truthRepo, truths } = makeRepos({ truths: [existing] });
-    const shared = [1, 0, 0];
-    const embeddings = makeEmbeddings({
-      'Carl is from the north of Russia.': shared,
-      'Carl is from Russia, specifically the north.': shared,
-    });
-    const applicator = makeApplicator({ profileRepo, truthRepo, embeddings });
+it('merges a near-duplicate truth.add into the existing truth instead of inserting', async () => {
+  const existing = makeTruth({
+    id: 10,
+    text: 'Carl is from the north of Russia.',
+    confidence: 0.8,
+    sourceMessageIds: [1],
+    status: 'stable',
+  });
+  const { profileRepo, truthRepo, truths } = makeRepos({ truths: [existing] });
+  const shared = [1, 0, 0];
+  const embeddings = makeEmbeddings({
+    'Carl is from the north of Russia.': shared,
+    'Carl is from Russia, specifically the north.': shared,
+  });
+  const applicator = makeApplicator({ profileRepo, truthRepo, embeddings });
 
-    const results = await applicator.applyPatches({
-      chatId: 1,
-      patches: [
-        {
-          type: 'truth.add',
-          text: 'Carl is from Russia, specifically the north.',
-          relatedTruthIds: [],
-          contradictsTruthIds: [],
-          evidence: evidence([2], 0.9),
-        },
-      ],
-      contextMessages: [],
-      nowIso: 'now',
-      nowMs: 1_000,
-    });
-
-    expect(results[0].outcome).toBe('merged');
-    expect(results[0].stateRef).toMatchObject({ kind: 'bot_truth', truthId: 10 });
-    expect(truthRepo.add).not.toHaveBeenCalled();
-    const merged = truths.get(10);
-    expect(merged?.sourceMessageIds).toEqual([1, 2]);
-    expect(merged?.confidence).toBeCloseTo(0.98);
-    expect(merged?.status).toBe('stable');
-    expect(truths.size).toBe(1);
+  const results = await applicator.applyPatches({
+    chatId: 1,
+    patches: [
+      {
+        type: 'truth.add',
+        text: 'Carl is from Russia, specifically the north.',
+        relatedTruthIds: [],
+        contradictsTruthIds: [],
+        evidence: evidence([2], 0.9),
+      },
+    ],
+    contextMessages: [],
+    nowIso: 'now',
+    nowMs: 1_000,
   });
 
-  it('inserts a new truth when no existing truth is similar enough', async () => {
-    const existing = makeTruth({
-      id: 10,
-      text: 'Carl likes fixing radios.',
-      status: 'stable',
-    });
-    const { profileRepo, truthRepo, truths } = makeRepos({ truths: [existing] });
-    const applicator = makeApplicator({ profileRepo, truthRepo });
+  expect(results[0].outcome).toBe('merged');
+  expect(results[0].stateRef).toMatchObject({ kind: 'bot_truth', truthId: 10 });
+  expect(truthRepo.add).not.toHaveBeenCalled();
+  const merged = truths.get(10);
+  expect(merged?.sourceMessageIds).toEqual([1, 2]);
+  expect(merged?.confidence).toBeCloseTo(0.98);
+  expect(merged?.status).toBe('stable');
+  expect(truths.size).toBe(1);
+});
 
-    const results = await applicator.applyPatches({
-      chatId: 1,
-      patches: [
-        {
-          type: 'truth.add',
-          text: 'Carl was promoted to OpenAI usage tier 2.',
-          relatedTruthIds: [],
-          contradictsTruthIds: [],
-          evidence: evidence([3], 0.9),
-        },
-      ],
-      contextMessages: [],
-      nowIso: 'now',
-      nowMs: 1_000,
-    });
+it('inserts a new truth when no existing truth is similar enough', async () => {
+  const existing = makeTruth({
+    id: 10,
+    text: 'Carl likes fixing radios.',
+    status: 'stable',
+  });
+  const { profileRepo, truthRepo, truths } = makeRepos({ truths: [existing] });
+  const applicator = makeApplicator({ profileRepo, truthRepo });
 
-    expect(results[0].outcome).toBe('applied');
-    expect(truthRepo.add).toHaveBeenCalledTimes(1);
-    expect(truths.size).toBe(2);
+  const results = await applicator.applyPatches({
+    chatId: 1,
+    patches: [
+      {
+        type: 'truth.add',
+        text: 'Carl was promoted to OpenAI usage tier 2.',
+        relatedTruthIds: [],
+        contradictsTruthIds: [],
+        evidence: evidence([3], 0.9),
+      },
+    ],
+    contextMessages: [],
+    nowIso: 'now',
+    nowMs: 1_000,
   });
 
-  it('does not merge into a truth the add explicitly contradicts', async () => {
-    const existing = makeTruth({
-      id: 10,
-      text: 'Carl was born in Poland.',
-      status: 'stable',
-    });
-    const { profileRepo, truthRepo, truths } = makeRepos({ truths: [existing] });
-    const shared = [1, 0, 0];
-    const embeddings = makeEmbeddings({
-      'Carl was born in Poland.': shared,
-      'Carl was born in Russia, not Poland.': shared,
-    });
-    const applicator = makeApplicator({ profileRepo, truthRepo, embeddings });
+  expect(results[0].outcome).toBe('applied');
+  expect(truthRepo.add).toHaveBeenCalledTimes(1);
+  expect(truths.size).toBe(2);
+});
 
-    const results = await applicator.applyPatches({
-      chatId: 1,
-      patches: [
-        {
-          type: 'truth.add',
-          text: 'Carl was born in Russia, not Poland.',
-          relatedTruthIds: [],
-          contradictsTruthIds: [10],
-          evidence: evidence([4], 0.9),
-        },
-      ],
-      contextMessages: [],
-      nowIso: 'now',
-      nowMs: 1_000,
-    });
+it('does not merge into a truth the add explicitly contradicts', async () => {
+  const existing = makeTruth({
+    id: 10,
+    text: 'Carl was born in Poland.',
+    status: 'stable',
+  });
+  const { profileRepo, truthRepo, truths } = makeRepos({ truths: [existing] });
+  const shared = [1, 0, 0];
+  const embeddings = makeEmbeddings({
+    'Carl was born in Poland.': shared,
+    'Carl was born in Russia, not Poland.': shared,
+  });
+  const applicator = makeApplicator({ profileRepo, truthRepo, embeddings });
 
-    expect(results[0].outcome).toBe('applied');
-    expect(truthRepo.add).toHaveBeenCalledTimes(1);
-    expect(truths.size).toBe(2);
+  const results = await applicator.applyPatches({
+    chatId: 1,
+    patches: [
+      {
+        type: 'truth.add',
+        text: 'Carl was born in Russia, not Poland.',
+        relatedTruthIds: [],
+        contradictsTruthIds: [10],
+        evidence: evidence([4], 0.9),
+      },
+    ],
+    contextMessages: [],
+    nowIso: 'now',
+    nowMs: 1_000,
   });
 
-  it('falls open to a plain insert when the embedding service fails', async () => {
-    const { profileRepo, truthRepo, truths } = makeRepos();
-    const embeddings: EmbeddingService = {
-      embed: vi.fn(() => Promise.reject(new Error('embeddings down'))),
-    };
-    const applicator = makeApplicator({ profileRepo, truthRepo, embeddings });
+  expect(results[0].outcome).toBe('applied');
+  expect(truthRepo.add).toHaveBeenCalledTimes(1);
+  expect(truths.size).toBe(2);
+});
 
-    const results = await applicator.applyPatches({
-      chatId: 1,
-      patches: [
-        {
-          type: 'truth.add',
-          text: 'Carl owns a cat.',
-          relatedTruthIds: [],
-          contradictsTruthIds: [],
-          evidence: evidence([5], 0.9),
-        },
-      ],
-      contextMessages: [],
-      nowIso: 'now',
-      nowMs: 1_000,
-    });
+it('falls open to a plain insert when the embedding service fails', async () => {
+  const { profileRepo, truthRepo, truths } = makeRepos();
+  const embeddings: EmbeddingService = {
+    embed: vi.fn(() => Promise.reject(new Error('embeddings down'))),
+  };
+  const applicator = makeApplicator({ profileRepo, truthRepo, embeddings });
 
-    expect(results[0].outcome).toBe('applied');
-    expect(truthRepo.add).toHaveBeenCalledTimes(1);
-    expect(truths.size).toBe(1);
+  const results = await applicator.applyPatches({
+    chatId: 1,
+    patches: [
+      {
+        type: 'truth.add',
+        text: 'Carl owns a cat.',
+        relatedTruthIds: [],
+        contradictsTruthIds: [],
+        evidence: evidence([5], 0.9),
+      },
+    ],
+    contextMessages: [],
+    nowIso: 'now',
+    nowMs: 1_000,
   });
 
-  it('dedups a second identical truth.add within the same batch', async () => {
-    const { profileRepo, truthRepo, truths } = makeRepos();
-    const shared = [1, 0, 0];
-    const embeddings = makeEmbeddings({ 'Carl hates Mondays.': shared });
-    const applicator = makeApplicator({ profileRepo, truthRepo, embeddings });
+  expect(results[0].outcome).toBe('applied');
+  expect(truthRepo.add).toHaveBeenCalledTimes(1);
+  expect(truths.size).toBe(1);
+});
 
-    const results = await applicator.applyPatches({
-      chatId: 1,
-      patches: [
-        {
-          type: 'truth.add',
-          text: 'Carl hates Mondays.',
-          relatedTruthIds: [],
-          contradictsTruthIds: [],
-          evidence: evidence([6], 0.9),
-        },
-        {
-          type: 'truth.add',
-          text: 'Carl hates Mondays.',
-          relatedTruthIds: [],
-          contradictsTruthIds: [],
-          evidence: evidence([7], 0.9),
-        },
-      ],
-      contextMessages: [],
-      nowIso: 'now',
-      nowMs: 1_000,
-    });
+it('dedups a second identical truth.add within the same batch', async () => {
+  const { profileRepo, truthRepo, truths } = makeRepos();
+  const shared = [1, 0, 0];
+  const embeddings = makeEmbeddings({ 'Carl hates Mondays.': shared });
+  const applicator = makeApplicator({ profileRepo, truthRepo, embeddings });
 
-    expect(results.map((r) => r.outcome)).toEqual(['applied', 'merged']);
-    expect(truths.size).toBe(1);
-    expect([...truths.values()][0].sourceMessageIds).toEqual([6, 7]);
+  const results = await applicator.applyPatches({
+    chatId: 1,
+    patches: [
+      {
+        type: 'truth.add',
+        text: 'Carl hates Mondays.',
+        relatedTruthIds: [],
+        contradictsTruthIds: [],
+        evidence: evidence([6], 0.9),
+      },
+      {
+        type: 'truth.add',
+        text: 'Carl hates Mondays.',
+        relatedTruthIds: [],
+        contradictsTruthIds: [],
+        evidence: evidence([7], 0.9),
+      },
+    ],
+    contextMessages: [],
+    nowIso: 'now',
+    nowMs: 1_000,
   });
+
+  expect(results.map((r) => r.outcome)).toEqual(['applied', 'merged']);
+  expect(truths.size).toBe(1);
+  expect([...truths.values()][0].sourceMessageIds).toEqual([6, 7]);
+});
 ```
 
 Also update the **existing** test `applies truth add, reinforce, contest, and revise semantics`: the `truth.add` text `'new stable truth'` is unrelated to the seeded `'old truth'`, so `oneHot` makes them orthogonal and the add still inserts as id 11 — no change to its assertions is needed. Re-run it in Step 5 to confirm.
@@ -1309,4 +1319,7 @@ git commit -m "chore: lint/format fixups for truth dedup guard"
 - **Spec coverage:** guard in `truth.add` (Task 7) ✓; embeddings detection + storage (Tasks 3, 4) ✓; column + lazy backfill (Tasks 2, 7 `loadDedupCandidates`) ✓; `merged` outcome (Task 5) ✓; threshold config (Task 6) ✓; fail-open (Task 7 `findDuplicateTruth`/`loadDedupCandidates` try/catch) ✓; contradiction exclusion (Task 7) ✓; intra-batch dedup via per-add fresh `findActiveEmbeddings` (Task 7 test) ✓; no migration of existing rows ✓; `revise`/`contest` untouched, embeddings via lazy backfill ✓.
 - **Type consistency:** `findActiveEmbeddings`/`setEmbedding`/`add(truth, embedding?)`/`TruthEmbedding` are defined in Task 4 and consumed verbatim in Task 7; `truthDuplicateSimilarity` defined in Task 6 and read in Task 7; `EMBEDDING_SERVICE_ID`/`EmbeddingService` defined in Task 3 and injected in Task 7; `'merged'` defined in Task 5 and returned in Task 7.
 - **No placeholders:** every code/step block contains concrete content and exact commands.
+
+```
+
 ```

@@ -60,7 +60,7 @@ is needed only for `evidence.messageIds`, a structured field.
   **not raw ids** — so remapping ids does not affect targeting.
 - `evidence.messageIds` / `sourceMessageIds` are written **directly into the DB**
   (truths, social signals, political positions) as real `messages.id`. Any id the
-  model emits as evidence MUST be translated back to a real `messages.id` *before*
+  model emits as evidence MUST be translated back to a real `messages.id` _before_
   reaching `DefaultStatePatchApplicator`, or persisted anchors get corrupted.
 - The id-carrying response fields are exactly three:
   - gate: `triggerMessageIds`, `contextMessageIds` (`behaviorGateDecisionSchema`)
@@ -84,8 +84,8 @@ is needed only for `evidence.messageIds`, a structured field.
 - Inject `MessageService` into `DefaultBehaviorExecutor`. After a **successful**
   `reply` / `ask_question` send, persist an assistant message:
   `{ role:'assistant', chatId, content: action.text, messageId: <returned tg id>,
-  userId: bot.id, username: bot.username, replyText/replyUsername: from the resolved
-  reply target (optional) }`. Bot identity comes from `messenger.bot.botInfo`.
+userId: bot.id, username: bot.username, replyText/replyUsername: from the resolved
+reply target (optional) }`. Bot identity comes from `messenger.bot.botInfo`.
 - Provide a ctx-less assistant builder (extend `MessageFactory` or build the
   `StoredMessage` inline in the executor).
 - Do not persist on send failure.

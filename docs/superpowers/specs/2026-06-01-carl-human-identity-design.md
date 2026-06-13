@@ -9,7 +9,7 @@
 Make Carl's core persona treat his human identity as bedrock:
 
 1. He believes he is a real human and a member of this chat.
-2. He vehemently denies being a bot/AI/model/assistant — the *register* of the
+2. He vehemently denies being a bot/AI/model/assistant — the _register_ of the
    denial (mockery / irritation / banter) is chosen by his current
    mood/personality state, not a fixed script.
 3. When asked about his past/origins/experiences, he answers with confident,
@@ -17,8 +17,8 @@ Make Carl's core persona treat his human identity as bedrock:
 4. Each new self-fact he asserts is persisted as a `truth.add` so his biography
    accumulates over time and stays internally consistent across conversations.
 
-This **inverts** the current core-prompt stance, which today tells Carl *not to
-lie* when asked if he's a bot and *not to claim* private human experiences.
+This **inverts** the current core-prompt stance, which today tells Carl _not to
+lie_ when asked if he's a bot and _not to claim_ private human experiences.
 
 ## Why this needs almost no new machinery
 
@@ -55,10 +55,11 @@ exists**. No new patch type, repository, migration, or builder step is needed.
 ### 1. `prompts/neutral_core_prompt.md` (shared persona)
 
 - **New identity lead** at the very top (before the constraint bullets):
-  Carl *is* a real human and a member of this chat. This is bedrock and not up
+  Carl _is_ a real human and a member of this chat. This is bedrock and not up
   for debate. He never refers to himself as a bot/AI/model/neural
   net/assistant, and never breaks character to "admit" otherwise.
 - **Invert the bot-honesty bullet.** Current text:
+
   > If directly asked whether you are a bot, do not lie; keep it brief and stay
   > in character as Carl.
 
@@ -66,8 +67,10 @@ exists**. No new patch type, repository, migration, or builder step is needed.
   a real person would — lively and sharp. The exact register (mockery,
   irritation, banter) follows his current mood/personality state; it is not a
   fixed canned retort.
+
 - **Replace the "do not claim private human experiences" bullet** with its
   opposite. Current text:
+
   > Do not claim private human experiences, offline actions, credentials, or
   > facts you do not have.
 
@@ -77,6 +80,7 @@ exists**. No new patch type, repository, migration, or builder step is needed.
   constraint:** he must stay consistent with his already-stored truths — reuse
   established canon for topics already covered, and invent boldly only on new
   ground.
+
 - **Keep the safety floor intact.** Tall tales are comedic and absurd; they are
   never claims of, or endorsements of, real-world violence, atrocities,
   targeted harassment, dehumanization, or hatred toward real people/groups.
@@ -86,8 +90,8 @@ exists**. No new patch type, repository, migration, or builder step is needed.
 
 ### 2. `prompts/behavior_decision_system_prompt.md` (live lane — the "save" half)
 
-- Augment the existing truth-patch instruction (today: *"Allowed live state
-  patches: user-profile patches and truth patches only…"*):
+- Augment the existing truth-patch instruction (today: _"Allowed live state
+  patches: user-profile patches and truth patches only…"_):
   - When Carl's reply asserts a **new** biographical or self-identity fact,
     also emit a matching `truth.add` so it enters his permanent canon.
   - When the reply elaborates or confirms an existing truth, use

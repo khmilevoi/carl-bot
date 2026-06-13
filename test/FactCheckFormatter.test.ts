@@ -230,7 +230,10 @@ describe('FactCheckFormatter', () => {
 
   describe('digest entry header', () => {
     it('links the original message and names the author', () => {
-      const chunks = formatHourlyDigestChunks([makeDigestFinding()], defaultConfig);
+      const chunks = formatHourlyDigestChunks(
+        [makeDigestFinding()],
+        defaultConfig
+      );
       expect(chunks[0].text).toContain(
         '<a href="https://t.me/c/123/555">Сообщение</a>'
       );

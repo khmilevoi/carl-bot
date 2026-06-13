@@ -84,13 +84,19 @@ function makeCitationRaw(
 
 describe('classifyReliability', () => {
   it('classifies wikipedia and britannica as media, not authoritative', () => {
-    expect(classifyReliability('https://en.wikipedia.org/wiki/X')).toBe('media');
-    expect(classifyReliability('https://www.britannica.com/topic/X')).toBe('media');
+    expect(classifyReliability('https://en.wikipedia.org/wiki/X')).toBe(
+      'media'
+    );
+    expect(classifyReliability('https://www.britannica.com/topic/X')).toBe(
+      'media'
+    );
   });
 
   it('keeps gov/edu as primary and WHO as authoritative', () => {
     expect(classifyReliability('https://www.cdc.gov/page')).toBe('primary');
-    expect(classifyReliability('https://www.who.int/page')).toBe('authoritative');
+    expect(classifyReliability('https://www.who.int/page')).toBe(
+      'authoritative'
+    );
   });
 });
 

@@ -878,7 +878,9 @@ describe('DefaultFactCheckPipeline', () => {
         findById: vi.fn().mockResolvedValue(undefined),
       } as unknown as ChatRepository,
       reasoning,
-      { search: vi.fn().mockResolvedValue([]) } as unknown as SourceSearchService,
+      {
+        search: vi.fn().mockResolvedValue([]),
+      } as unknown as SourceSearchService,
       {
         createRun: vi.fn().mockResolvedValue(42),
         completeRun: vi.fn().mockResolvedValue(undefined),

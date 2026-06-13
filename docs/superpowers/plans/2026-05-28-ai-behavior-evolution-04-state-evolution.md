@@ -20,17 +20,17 @@
 
 1. **Political coordinates are in this plan.** Pull the former Plan 06 (compass + user political notes) into Phase 4 to match the spec's literal Phase-4 phasing. There is no separate Plan 06; migration `016` carries all of it.
 2. **Radical patches re-run on the stronger model.** When a default-model evolution proposal contains a radical political patch (`politics.add_position` `requestedIntensity: 'radical'` or `politics.adjust_position` `direction: 'radicalize'`), `proposeStateEvolution` re-runs on the escalation model (mirrors `decideBehavior` reactive escalation), and the applicator then applies the radical content (`reviewedByStrongModel: true`).
-3. **Personality signals live in their own table.** A new append-only `bot_personality_signals` table — **not** a field on the rendered personality state. The live `decideBehavior` prompt renders only the derived personality fields; signals are loaded only for the evolution pass. (Political compass + user political notes *do* render into the live prompt — they are the spec's only behavior channel for coordinates.)
+3. **Personality signals live in their own table.** A new append-only `bot_personality_signals` table — **not** a field on the rendered personality state. The live `decideBehavior` prompt renders only the derived personality fields; signals are loaded only for the evolution pass. (Political compass + user political notes _do_ render into the live prompt — they are the spec's only behavior channel for coordinates.)
 4. **Default cadence kept:** `eventThreshold 8`, `highRiskEventThreshold 3`, `cooldownMs 5min`, `maxIntervalMs 1h`, `sweepCron */5 * * * *`, `recentMessageLimit 60`.
 
 ## Scope Locks
 
-- **No MainService cutover.** No Telegram routing and no cron started in `index.ts`/`MainService`. Phase 5 wires the live pipeline *and* `StateEvolutionScheduler.start()`. Phase 4 is exercised entirely through tests.
+- **No MainService cutover.** No Telegram routing and no cron started in `index.ts`/`MainService`. Phase 5 wires the live pipeline _and_ `StateEvolutionScheduler.start()`. Phase 4 is exercised entirely through tests.
 - **No git worktree** (normal branch — carry-forward from Phase 3).
 - **Compasses are derived snapshots, never patched.** No `set_coordinate` patch. The pass derives `botCompass` from `positions[]` and each user compass from that user's active notes (AI-derived in the evolution call), clamped to `[-10, 10]` / `[0, 1]` at write time.
 - **Descriptive snapshots are derived, never patched.** Personality rendered fields and user `communicationStyle`/`conflictStyle`/`preferredTone`/`interests` come from the AI snapshot; never from patches; never touch event-patched/runtime-derived user fields.
 - **Append-and-flag only; no time decay.** Personality signals and political notes/positions are append-only; "removal" is a `status` change; reversibility comes only from later evidence.
-- The live lane's `StatePatchApplicator.applyPatches` (Phase 3) keeps its behavior; this plan only *adds* `applyEvolutionPatches`.
+- The live lane's `StatePatchApplicator.applyPatches` (Phase 3) keeps its behavior; this plan only _adds_ `applyEvolutionPatches`.
 
 ## Concrete Phase 4 Decisions
 
@@ -55,10 +55,10 @@ The pass reconciles `reinforce`/`contest`/`soften` polarities when it derives th
 
 ```ts
 interface PoliticalCompass {
-  economic: number;            // [-10, 10]  (- left, + right)
-  social: number;              // [-10, 10]  (- libertarian, + authoritarian)
-  economicConfidence: number;  // [0, 1]
-  socialConfidence: number;    // [0, 1]
+  economic: number; // [-10, 10]  (- left, + right)
+  social: number; // [-10, 10]  (- libertarian, + authoritarian)
+  economicConfidence: number; // [0, 1]
+  socialConfidence: number; // [0, 1]
 }
 ```
 
@@ -75,8 +75,8 @@ interface PoliticalNote {
 interface UserPoliticalProfile {
   userId: number;
   chatId: number;
-  notes: PoliticalNote[];      // evidence-backed, append-only, contestable
-  compass: PoliticalCompass;   // derived from active notes
+  notes: PoliticalNote[]; // evidence-backed, append-only, contestable
+  compass: PoliticalCompass; // derived from active notes
   updatedAt: string;
 }
 ```
@@ -89,8 +89,18 @@ Added to `evolutionPatchSchema`:
 
 ```ts
 type UserPoliticalPatch =
-  | { type: 'user.add_political_note'; userId: number; text: string; evidence: PatchEvidence }
-  | { type: 'user.contest_political_note'; userId: number; target: { text: string }; evidence: PatchEvidence };
+  | {
+      type: 'user.add_political_note';
+      userId: number;
+      text: string;
+      evidence: PatchEvidence;
+    }
+  | {
+      type: 'user.contest_political_note';
+      userId: number;
+      target: { text: string };
+      evidence: PatchEvidence;
+    };
 ```
 
 `user.contest_political_note` matches a note by `text`, appends counter-evidence, and flips `status` (`active → contested`, then `inactive`); notes are never deleted.
@@ -99,14 +109,27 @@ type UserPoliticalPatch =
 
 ```ts
 interface StateEvolutionDecision {
-  evolutionPatches: EvolutionPatch[];      // personality.add_signal, politics.*, user.add_political_note, user.contest_political_note
+  evolutionPatches: EvolutionPatch[]; // personality.add_signal, politics.*, user.add_political_note, user.contest_political_note
   personalitySnapshot: {
-    identityNotes: string[]; values: string[];
-    speechStyle: { tone: string; humor: string; verbosity: 'short' | 'medium' | 'essay'; formality: 'low' | 'medium' | 'high' };
-    socialHabits: string[]; recurringThemes: string[];
+    identityNotes: string[];
+    values: string[];
+    speechStyle: {
+      tone: string;
+      humor: string;
+      verbosity: 'short' | 'medium' | 'essay';
+      formality: 'low' | 'medium' | 'high';
+    };
+    socialHabits: string[];
+    recurringThemes: string[];
   };
-  userSnapshots: Array<{ userId: number; communicationStyle: string; conflictStyle: string; preferredTone: string; interests: string[] }>;
-  botCompass: PoliticalCompass;            // derived from positions[]
+  userSnapshots: Array<{
+    userId: number;
+    communicationStyle: string;
+    conflictStyle: string;
+    preferredTone: string;
+    interests: string[];
+  }>;
+  botCompass: PoliticalCompass; // derived from positions[]
   userPoliticalSnapshots: Array<{ userId: number; compass: PoliticalCompass }>; // derived from each user's active notes
 }
 ```
@@ -134,7 +157,12 @@ Persist after the loop: personality signals are inserted as they apply; the poli
 
 ```ts
 export type BehaviorPatchOutcome =
-  | 'applied' | 'rejected' | 'rate_limited' | 'failed' | 'escalated' | 'to_uncertainty';
+  | 'applied'
+  | 'rejected'
+  | 'rate_limited'
+  | 'failed'
+  | 'escalated'
+  | 'to_uncertainty';
 
 export type BehaviorPatchStateRef =
   | { kind: 'user_social_profile'; chatId: number; userId: number }
@@ -165,11 +193,13 @@ Identical to the original design (unchanged by the four decisions):
 ## File Structure
 
 **Schemas (`src/domain/behavior/schemas/`):**
+
 - Create `evolution.ts` (decision contract + JSON schema). Modify `state.ts` (`personalitySignalSchema`, `politicalCompassSchema`, `compass` on `botPoliticalStateSchema`, `politicalNoteSchema`, `userPoliticalProfileSchema`), `patches.ts` (`userPoliticalPatchSchema` + into `evolutionPatchSchema`), `index.ts` (`export * from './evolution'`).
 
 **Migration:** Create `migrations/016_state_evolution.up.sql` / `.down.sql` (`bot_personality_signals`, `state_evolution_cursors`, `compass_json` on `bot_political_states`, `user_political_profiles`).
 
 **Entities/repositories:**
+
 - Create `StateEvolutionCursorEntity.ts` + repo (interface + SQLite).
 - Create `PersonalitySignalRepository.ts` + SQLite + a `NewPersonalitySignal` row.
 - Create `UserPoliticalProfileRepository.ts` + SQLite.
@@ -177,6 +207,7 @@ Identical to the original design (unchanged by the four decisions):
 - Modify `SQLitePoliticalStateRepository` (read/write `compass_json`).
 
 **Application services (`src/application/behavior/`):**
+
 - Create `StateEvolutionContextAssembler` + Default, `StateEvolutionPass` + Default, `StateEvolutionWorker` + Default, `StateEvolutionTrigger` + Default, `StateEvolutionScheduler` + Default.
 - Modify `BehaviorTypes.ts` (outcome/ref/`StateEvolutionContext`/`StateEvolutionResult`), `StatePatchApplicator` + Default (`applyEvolutionPatches`), `BehaviorAiService` + `ChatGPTService` (`proposeStateEvolution` + radical re-run), `BehaviorEventLogger` + Default (`logEvolution`), `BehaviorConfig.ts` (`StateEvolutionConfig`), `DefaultBehaviorPipeline.ts` (call trigger), `DefaultBehaviorContextAssembler.ts` (load user political profiles + `defaultPolitical` compass), `PatchPolicy` `DefaultPatchPolicy.ts` (`patchText` for user-political).
 
@@ -260,7 +291,13 @@ DROP TABLE IF EXISTS bot_personality_signals;
 
 ```typescript
 export const personalitySignalSchema = z.object({
-  area: z.enum(['identity', 'values', 'speech_style', 'social_habits', 'themes']),
+  area: z.enum([
+    'identity',
+    'values',
+    'speech_style',
+    'social_habits',
+    'themes',
+  ]),
   polarity: z.enum(['reinforce', 'contest', 'soften']),
   text: z.string(),
   evidenceMessageIds: z.array(messageIdSchema),
@@ -376,7 +413,10 @@ import type { ServiceIdentifier } from 'inversify';
 import type { UserPoliticalProfile } from '@/domain/behavior/schemas/state';
 
 export interface UserPoliticalProfileRepository {
-  findByChatAndUser(chatId: number, userId: number): Promise<UserPoliticalProfile | undefined>;
+  findByChatAndUser(
+    chatId: number,
+    userId: number
+  ): Promise<UserPoliticalProfile | undefined>;
   findByChat(chatId: number): Promise<UserPoliticalProfile[]>;
   upsert(profile: UserPoliticalProfile): Promise<void>;
 }
@@ -498,7 +538,9 @@ export const stateEvolutionJsonSchema = toOpenAiJsonSchema(
 export type PersonalitySnapshot = z.infer<typeof personalitySnapshotSchema>;
 export type UserProfileSnapshot = z.infer<typeof userProfileSnapshotSchema>;
 export type UserCompassSnapshot = z.infer<typeof userCompassSnapshotSchema>;
-export type StateEvolutionDecision = z.infer<typeof stateEvolutionDecisionSchema>;
+export type StateEvolutionDecision = z.infer<
+  typeof stateEvolutionDecisionSchema
+>;
 ```
 
 - [ ] **Step 2:** add `export * from './evolution';` to `index.ts` (after `./state`).
@@ -752,4 +794,7 @@ pnpm build
 - **Cursor race.** A live decision logged concurrently with the pass could be skipped when the cursor jumps to the pass's own event id. Single-process + per-chat dedup makes this rare; revisit with the per-chat concurrency key (out of scope for v1).
 - **Prompt naming deviation.** The spec folds user compass + notes into `user_profiles_prompt.md`; this codebase keeps social and political user data in separate entities, so they render via a separate `user_political_profiles_prompt.md` block. Functionally equivalent (both render in the same prompt).
 - **Phase 5 wiring.** `StateEvolutionScheduler.start()` and routing live Telegram traffic through `BehaviorPipeline` (which already calls the trigger) are deferred to the Phase 5 cutover plan.
+
+```
+
 ```

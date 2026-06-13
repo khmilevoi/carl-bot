@@ -4,7 +4,7 @@
 
 **Goal:** Teach Carl to prefer a reaction (or silence) over a text reply when a message is trivial, emotional, or background noise — cutting chat spam without muting him in real discussions.
 
-**Architecture:** Prompt-only change. The `react` action and empty-`actions` silence are already fully wired (schema, executor, validator, rate limiter). The only gap is guidance: the decision prompt lists `react` as *allowed* but never says *when* to prefer it. We add a "Response ladder" to the decision prompt and a one-line participant ethos to the neutral core. No TypeScript, schema, or config changes.
+**Architecture:** Prompt-only change. The `react` action and empty-`actions` silence are already fully wired (schema, executor, validator, rate limiter). The only gap is guidance: the decision prompt lists `react` as _allowed_ but never says _when_ to prefer it. We add a "Response ladder" to the decision prompt and a one-line participant ethos to the neutral core. No TypeScript, schema, or config changes.
 
 **Tech Stack:** Markdown prompt templates in `prompts/`, loaded via `PromptTemplateService` → `PromptBuilder` (`addNeutralCore`, `addBehaviorDecisionSystem`).
 
@@ -34,10 +34,10 @@ git switch -c feat/reaction-response-ladder
 
 ## File Structure
 
-| File | Responsibility | Change |
-|------|----------------|--------|
-| `prompts/neutral_core_prompt.md` | Carl's cross-scenario persona (used by decision, topic-of-day, state-evolution prompts) | +1 bullet: participant-not-commentator ethos |
-| `prompts/behavior_decision_system_prompt.md` | How the decision lane chooses an action | + "Response ladder" section; expand the emoji line into semantics + zoomer style |
+| File                                         | Responsibility                                                                          | Change                                                                           |
+| -------------------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `prompts/neutral_core_prompt.md`             | Carl's cross-scenario persona (used by decision, topic-of-day, state-evolution prompts) | +1 bullet: participant-not-commentator ethos                                     |
+| `prompts/behavior_decision_system_prompt.md` | How the decision lane chooses an action                                                 | + "Response ladder" section; expand the emoji line into semantics + zoomer style |
 
 No other files change. `PromptBuilder.addNeutralCore`/`addBehaviorDecisionSystem` (`src/application/prompts/PromptBuilder.ts:165,181`) load these templates verbatim — editing the markdown is sufficient.
 
@@ -46,14 +46,17 @@ No other files change. `PromptBuilder.addNeutralCore`/`addBehaviorDecisionSystem
 ## Task 1: Add participant ethos to the neutral core
 
 **Files:**
+
 - Modify: `prompts/neutral_core_prompt.md`
 
 - [ ] **Step 1: Create the feature branch (if not already on it)**
 
 Run:
+
 ```bash
 git switch -c feat/reaction-response-ladder
 ```
+
 Expected: `Switched to a new branch 'feat/reaction-response-ladder'`. If it already exists, use `git switch feat/reaction-response-ladder`.
 
 - [ ] **Step 2: Insert the ethos bullet**
@@ -82,16 +85,20 @@ Replace it with (inserts one new bullet between the two existing ones):
 - [ ] **Step 3: Confirm pre-existing diff is acceptable, then stage and commit**
 
 Run:
+
 ```bash
 git diff -- prompts/neutral_core_prompt.md
 ```
+
 Review with the user (see Pre-flight). Then:
+
 ```bash
 git add prompts/neutral_core_prompt.md
 git commit -m "feat(prompts): add participant-not-commentator ethos to neutral core
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ```
+
 Expected: one file changed.
 
 ---
@@ -99,6 +106,7 @@ Expected: one file changed.
 ## Task 2: Add the Response ladder to the decision prompt
 
 **Files:**
+
 - Modify: `prompts/behavior_decision_system_prompt.md`
 
 - [ ] **Step 1: Insert the Response ladder section**
@@ -120,7 +128,7 @@ Replace it with:
 
 ## Response ladder
 
-Default to the *minimum sufficient* response. Climb up to text only when words
+Default to the _minimum sufficient_ response. Climb up to text only when words
 add something.
 
 - Text (reply / ask_question): when words are actually needed — answering a
@@ -153,9 +161,11 @@ talk; it does not make Carl quiet in a discussion.
 - [ ] **Step 2: Verify the section rendered correctly**
 
 Run:
+
 ```bash
 git diff -- prompts/behavior_decision_system_prompt.md
 ```
+
 Expected: the new `## Response ladder` section appears between `## Visible behavior` and `## Argument boundaries`, with nothing else in that file changed yet.
 
 ---
@@ -163,6 +173,7 @@ Expected: the new `## Response ladder` section appears between `## Visible behav
 ## Task 3: Expand the emoji line into semantics + zoomer style
 
 **Files:**
+
 - Modify: `prompts/behavior_decision_system_prompt.md`
 
 - [ ] **Step 1: Replace the allowed-emoji line with semantics + style guidance**
@@ -204,10 +215,13 @@ For example: funny -> 💀 / 😭 instead of 😂; approval -> 🔥 instead of �
 - [ ] **Step 2: Confirm pre-existing diff is acceptable, then stage and commit**
 
 Run:
+
 ```bash
 git diff -- prompts/behavior_decision_system_prompt.md
 ```
+
 Review with the user (see Pre-flight). Then:
+
 ```bash
 git add prompts/behavior_decision_system_prompt.md
 git commit -m "feat(prompts): add response ladder and emoji semantics to decision prompt
@@ -219,6 +233,7 @@ a text reply (explicit anti-regress clause).
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ```
+
 Expected: one file changed.
 
 ---
@@ -230,40 +245,49 @@ Expected: one file changed.
 - [ ] **Step 1: Format and lint (project convention before considering work done)**
 
 Run:
+
 ```bash
 pnpm format:fix
 pnpm lint:fix
 ```
+
 Expected: no errors. Markdown prompt files are not lint targets, so these should be no-ops for our changes; run them anyway per `CLAUDE.md`.
 
 - [ ] **Step 2: Type-check**
 
 Run:
+
 ```bash
 pnpm type:check
 ```
+
 Expected: passes (no code changed).
 
 - [ ] **Step 3: Run the prompt-composition and behavior tests**
 
 Run:
+
 ```bash
 pnpm test
 ```
+
 Expected: PASS. In particular `test/PromptDirector.test.ts`, `test/PromptBuilder.test.ts`, `test/ChatGPTService.behavior.test.ts`, and `test/BehaviorPipeline.test.ts` stay green — they assert builder call order and mocked AI behavior, not prompt body text, so the markdown edits must not affect them.
 
 - [ ] **Step 4: Build**
 
 Run:
+
 ```bash
 pnpm build
 ```
+
 Expected: build succeeds.
 
 - [ ] **Step 5: Manual read-through (the real verification for a prompt change)**
 
 Open both files and read the final text end-to-end:
-- `prompts/neutral_core_prompt.md` — the ethos bullet reads naturally in the `Core constraints` list and does not contradict the existing "Be present, opinionated, reactive" bullet (it qualifies *form* of response, not willingness to engage).
+
+- `prompts/neutral_core_prompt.md` — the ethos bullet reads naturally in the `Core constraints` list and does not contradict the existing "Be present, opinionated, reactive" bullet (it qualifies _form_ of response, not willingness to engage).
 - `prompts/behavior_decision_system_prompt.md` — confirm:
   - The `## Response ladder` sits between `## Visible behavior` and `## Argument boundaries`.
   - The anti-regress clause ("does NOT mute live arguments…") is present and consistent with the existing "Prefer a living reply" guidance — they must not contradict.
@@ -273,6 +297,7 @@ Open both files and read the final text end-to-end:
 - [ ] **Step 6: Any fixes from the read-through**
 
 If the read-through surfaces wording issues, fix inline, then re-run `git diff` and amend or add a follow-up commit:
+
 ```bash
 git add prompts/neutral_core_prompt.md prompts/behavior_decision_system_prompt.md
 git commit -m "fix(prompts): wording cleanup for response ladder
@@ -285,6 +310,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ## Self-Review
 
 **Spec coverage:**
+
 - Layer 1 ethos (neutral_core) → Task 1. ✓
 - Layer 2 Response ladder (text/reaction/silence + selection rules) → Task 2. ✓
 - Emoji semantics table → Task 3. ✓

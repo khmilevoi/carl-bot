@@ -120,13 +120,22 @@ describe('FactCheckSourcePolicy', () => {
 
 describe('isHighStakesCategory', () => {
   it('marks medical, legal, financial, safety as high stakes', () => {
-    for (const category of ['medical', 'legal', 'financial', 'safety'] as const) {
+    for (const category of [
+      'medical',
+      'legal',
+      'financial',
+      'safety',
+    ] as const) {
       expect(isHighStakesCategory(category)).toBe(true);
     }
   });
 
   it('marks external_fact, chat_history, mixed as not high stakes', () => {
-    for (const category of ['external_fact', 'chat_history', 'mixed'] as const) {
+    for (const category of [
+      'external_fact',
+      'chat_history',
+      'mixed',
+    ] as const) {
       expect(isHighStakesCategory(category)).toBe(false);
     }
   });

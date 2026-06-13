@@ -60,6 +60,7 @@ Reviewed against the approved spec and the Phase 1-4 implementation on 2026-05-3
 ## Task 1: Add Message Soft Delete And Legacy Field Migration
 
 **Files:**
+
 - Create: `migrations/017_cutover_legacy_cleanup.up.sql`
 - Create: `migrations/017_cutover_legacy_cleanup.down.sql`
 - Create/modify: `test/behaviorMigration017.test.ts`
@@ -118,6 +119,7 @@ Run the same focused tests. Expected: PASS.
 ## Task 2: Route `MainService` Through `BehaviorPipeline`
 
 **Files:**
+
 - Modify: `test/MainService.test.ts`
 - Modify: `src/view/telegram/MainService.ts`
 
@@ -143,10 +145,12 @@ it('stores approved messages and sends direct triggers to BehaviorPipeline', asy
 
   await (service as any).handleMessage(ctx);
 
-  expect(addMessage).toHaveBeenCalledWith(expect.objectContaining({
-    chatId: 2,
-    content: '@Carl hi',
-  }));
+  expect(addMessage).toHaveBeenCalledWith(
+    expect.objectContaining({
+      chatId: 2,
+      content: '@Carl hi',
+    })
+  );
   expect(deps.behaviorPipeline.handleStoredMessage).toHaveBeenCalledWith({
     message: expect.objectContaining({ id: 42, chatId: 2, messageId: 77 }),
     directTrigger: {
@@ -188,7 +192,10 @@ Direct-trigger mapping:
 const directTrigger = triggerResult
   ? {
       reason: 'direct_trigger' as const,
-      why: triggerResult.reason?.why ?? triggerResult.reason?.message ?? 'direct trigger matched',
+      why:
+        triggerResult.reason?.why ??
+        triggerResult.reason?.message ??
+        'direct trigger matched',
       triggerMessageId: storedId,
       replyToTelegramMessageId:
         triggerResult.replyToMessageId ?? userMsg.messageId ?? null,
@@ -209,6 +216,7 @@ Expected: PASS.
 ## Task 3: Start State Evolution Scheduler In Runtime Bootstrap
 
 **Files:**
+
 - Modify: `test/MainService.test.ts`
 - Modify: `src/view/telegram/MainService.ts`
 
@@ -262,6 +270,7 @@ Expected: PASS.
 ## Task 4: Retire Legacy Chat Responder, Interest, Memory, And User-Assessment Paths
 
 **Files:**
+
 - Modify: `src/container/application.ts`
 - Modify: `src/container/view.ts`
 - Modify: `src/view/telegram/routes.ts`
@@ -312,6 +321,7 @@ Expected: PASS.
 ## Task 5: Drop `users.attitude` From Code And Topic Prompts
 
 **Files:**
+
 - Modify: `src/domain/entities/UserEntity.ts`
 - Modify: `src/infrastructure/persistence/sqlite/SQLiteUserRepository.ts`
 - Modify: `src/infrastructure/persistence/sqlite/SQLiteMessageRepository.ts`
@@ -342,6 +352,7 @@ Expected: PASS.
 ## Task 6: Remove Dead AI Methods And Prompt Paths
 
 **Files:**
+
 - Modify: `src/application/interfaces/ai/AIService.ts`
 - Modify: `src/infrastructure/external/ChatGPTService.ts`
 - Modify: `src/application/prompts/PromptDirector.ts`
@@ -382,6 +393,7 @@ Expected: PASS.
 ## Task 7: Defer `summarize_thread` Worker Explicitly
 
 **Files:**
+
 - Modify: `src/application/behavior/BehaviorConfig.ts`
 - Modify: `src/application/behavior/BehaviorSummarizationQueue.ts`
 - Modify: `src/application/behavior/DefaultBehaviorSummarizationQueue.ts`
@@ -425,6 +437,7 @@ Expected: PASS.
 ## Task 8: Full Regression And Cleanup
 
 **Files:**
+
 - Modify any remaining files surfaced by typecheck/lint.
 - Update: `docs/superpowers/plans/2026-05-28-ai-behavior-evolution-tracker.md` status if desired, but do not commit docs/superpowers.
 

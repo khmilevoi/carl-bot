@@ -81,6 +81,7 @@ Important project rules:
 ## Task 1: Add `messages.sent_at` Migration
 
 **Files:**
+
 - Create: `migrations/024_add_message_sent_at.up.sql`
 - Create: `migrations/024_add_message_sent_at.down.sql`
 - Test: `test/messageSentAtMigration024.test.ts`
@@ -164,6 +165,7 @@ git commit -m "feat(db): add nullable sent_at to messages"
 ## Task 2: Persist And Read `sentAt`
 
 **Files:**
+
 - Modify: `src/domain/messages/ChatMessage.ts`
 - Modify: `src/domain/repositories/MessageRepository.ts`
 - Modify: `src/application/interfaces/messages/MessageService.ts`
@@ -266,7 +268,7 @@ In `SQLiteMessageRepository.ts`:
 `MessageRow`:
 
 ```ts
-  sent_at: string | null;
+sent_at: string | null;
 ```
 
 `SELECT_MESSAGE_COLUMNS` should include `m.sent_at` after `m.message_id`:
@@ -279,7 +281,7 @@ export const SELECT_MESSAGE_COLUMNS =
 `rowToMessage`:
 
 ```ts
-  if (r.sent_at) entry.sentAt = r.sent_at;
+if (r.sent_at) entry.sentAt = r.sent_at;
 ```
 
 `insert` destructuring:
@@ -339,6 +341,7 @@ git commit -m "feat(messages): persist sentAt and lookup Telegram reply targets"
 ## Task 3: Capture `sentAt` For User, Voice, And Assistant Messages
 
 **Files:**
+
 - Modify: `src/application/use-cases/messages/MessageFactory.ts`
 - Modify: `src/application/behavior/DefaultBehaviorExecutor.ts`
 - Modify: `test/MessageFactory.test.ts`
@@ -372,7 +375,12 @@ it('fromUserContent converts Telegram date seconds to sentAt ISO', () => {
   } as unknown as Context;
   const meta = { username: 'oleg', fullName: 'Олег' } as MessageContext;
 
-  const stored = MessageFactory.fromUserContent(ctx, meta, 'voice text', 'voice');
+  const stored = MessageFactory.fromUserContent(
+    ctx,
+    meta,
+    'voice text',
+    'voice'
+  );
 
   expect(stored.sentAt).toBe('2026-06-06T10:41:21.000Z');
 });
@@ -520,6 +528,7 @@ git commit -m "feat(messages): capture sentAt for Telegram and assistant message
 ## Task 4: Add Timeline Config And DI Binding
 
 **Files:**
+
 - Modify: `src/application/behavior/BehaviorConfig.ts`
 - Modify: `src/container/application.ts`
 - Modify: `test/BehaviorConfig.test.ts`
@@ -596,9 +605,9 @@ export const BEHAVIOR_TIMELINE_CONFIG_ID = Symbol.for(
 In `src/container/application.ts`, import the new config exports and bind:
 
 ```ts
-  container
-    .bind<BehaviorTimelineConfig>(BEHAVIOR_TIMELINE_CONFIG_ID)
-    .toConstantValue(DEFAULT_BEHAVIOR_TIMELINE_CONFIG);
+container
+  .bind<BehaviorTimelineConfig>(BEHAVIOR_TIMELINE_CONFIG_ID)
+  .toConstantValue(DEFAULT_BEHAVIOR_TIMELINE_CONFIG);
 ```
 
 Place it near the other behavior config bindings.
@@ -621,6 +630,7 @@ git commit -m "feat(behavior): add timeline prompt config"
 ## Task 5: Add Recent Behavior Event Lookup
 
 **Files:**
+
 - Modify: `src/domain/repositories/BehaviorEventRepository.ts`
 - Modify: `src/infrastructure/persistence/sqlite/SQLiteBehaviorEventRepository.ts`
 - Modify: `test/behaviorEventRepositories.test.ts`
@@ -655,7 +665,9 @@ it('findRecentByChatId returns newest events in chronological order', async () =
     createdAt,
   });
 
-  await behaviorRepo.insert(mkEvent('behaviorDecision', '2026-06-06T10:00:00.000Z'));
+  await behaviorRepo.insert(
+    mkEvent('behaviorDecision', '2026-06-06T10:00:00.000Z')
+  );
   const id2 = await behaviorRepo.insert(
     mkEvent('behaviorDecision', '2026-06-06T10:01:00.000Z')
   );
@@ -729,6 +741,7 @@ git commit -m "feat(behavior): query recent behavior events for timeline"
 ## Task 6: Introduce Timeline Types And Reaction Extraction
 
 **Files:**
+
 - Create: `src/application/behavior/ChatTimelineAssembler.ts`
 - Create: `src/application/behavior/DefaultChatTimelineAssembler.ts`
 - Modify: `src/container/application.ts`
@@ -761,7 +774,9 @@ const loggerFactory: LoggerFactory = {
   }),
 } as unknown as LoggerFactory;
 
-function message(overrides: Partial<StoredBehaviorMessage>): StoredBehaviorMessage {
+function message(
+  overrides: Partial<StoredBehaviorMessage>
+): StoredBehaviorMessage {
   return {
     id: 1,
     chatId: -100,
@@ -849,7 +864,11 @@ function makeSentReactionBehaviorEvent(params: {
 
 describe('DefaultChatTimelineAssembler', () => {
   it('includes successful visible reaction events', async () => {
-    const target = message({ id: 75, messageId: 900, content: 'Земля круглая' });
+    const target = message({
+      id: 75,
+      messageId: 900,
+      content: 'Земля круглая',
+    });
     const { assembler } = makeAssembler({
       events: [
         {
@@ -933,12 +952,33 @@ describe('DefaultChatTimelineAssembler', () => {
           escalated: false,
           escalationReason: null,
           actionsJson: JSON.stringify([
-            { type: 'react', intent: 'mockery', emoji: '🤡', target: { scope: 'trigger', pick: 'latest', index: null } },
-            { type: 'reply', intent: 'banter', text: 'no', target: { kind: 'none' } },
+            {
+              type: 'react',
+              intent: 'mockery',
+              emoji: '🤡',
+              target: { scope: 'trigger', pick: 'latest', index: null },
+            },
+            {
+              type: 'reply',
+              intent: 'banter',
+              text: 'no',
+              target: { kind: 'none' },
+            },
           ]),
           actionResultsJson: JSON.stringify([
-            { actionType: 'react', outcome: 'failed', reason: 'telegram error', targetMessageId: 75, telegramMessageId: 900 },
-            { actionType: 'reply', outcome: 'sent', reason: null, telegramMessageId: 901 },
+            {
+              actionType: 'react',
+              outcome: 'failed',
+              reason: 'telegram error',
+              targetMessageId: 75,
+              telegramMessageId: 900,
+            },
+            {
+              actionType: 'reply',
+              outcome: 'sent',
+              reason: null,
+              telegramMessageId: 901,
+            },
           ]),
           statePatchesJson: '[]',
           patchResultsJson: '[]',
@@ -961,7 +1001,9 @@ describe('DefaultChatTimelineAssembler', () => {
     });
 
     expect(result.promptContext.currentTimeline).not.toEqual(
-      expect.arrayContaining([expect.objectContaining({ type: 'bot_reaction' })])
+      expect.arrayContaining([
+        expect.objectContaining({ type: 'bot_reaction' }),
+      ])
     );
   });
 });
@@ -1120,10 +1162,10 @@ Use type guards with `Record<string, unknown>` checks; do not use `any`.
 In `src/container/application.ts`, import and bind:
 
 ```ts
-  container
-    .bind<ChatTimelineAssembler>(CHAT_TIMELINE_ASSEMBLER_ID)
-    .to(DefaultChatTimelineAssembler)
-    .inSingletonScope();
+container
+  .bind<ChatTimelineAssembler>(CHAT_TIMELINE_ASSEMBLER_ID)
+  .to(DefaultChatTimelineAssembler)
+  .inSingletonScope();
 ```
 
 - [ ] **Step 6: Run focused tests**
@@ -1144,6 +1186,7 @@ git commit -m "feat(behavior): derive visible reaction timeline events"
 ## Task 7: Timeline Window, Ordering, And Gap Events
 
 **Files:**
+
 - Modify: `src/application/behavior/DefaultChatTimelineAssembler.ts`
 - Modify: `test/ChatTimelineAssembler.test.ts`
 
@@ -1288,6 +1331,7 @@ git commit -m "feat(behavior): window chat timeline and mark large gaps"
 ## Task 8: Reply Chain Assembly
 
 **Files:**
+
 - Modify: `src/application/behavior/DefaultChatTimelineAssembler.ts`
 - Modify: `test/ChatTimelineAssembler.test.ts`
 
@@ -1339,11 +1383,9 @@ it('builds a reply chain from trigger through Telegram reply targets', async () 
   });
 
   expect(result.messages.map((item) => item.id)).toEqual([10, 11, 12]);
-  expect(result.promptContext.replyChain.map((event) => event.storedMessageId)).toEqual([
-    10,
-    11,
-    12,
-  ]);
+  expect(
+    result.promptContext.replyChain.map((event) => event.storedMessageId)
+  ).toEqual([10, 11, 12]);
 });
 ```
 
@@ -1373,7 +1415,9 @@ it('limits reply chain length by config', async () => {
     batchMessageIds: [],
   });
 
-  expect(result.promptContext.replyChain.map((event) => event.storedMessageId)).toEqual([12]);
+  expect(
+    result.promptContext.replyChain.map((event) => event.storedMessageId)
+  ).toEqual([12]);
 });
 ```
 
@@ -1449,6 +1493,7 @@ git commit -m "feat(behavior): assemble explicit reply chains for prompts"
 ## Task 9: Wire Timeline Into Behavior Context
 
 **Files:**
+
 - Modify: `src/application/prompts/PromptTypes.ts`
 - Modify: `src/application/behavior/DefaultBehaviorContextAssembler.ts`
 - Modify: `test/BehaviorContextAssembler.test.ts`
@@ -1528,13 +1573,13 @@ after `EnvService` or near message dependencies.
 After `mergedMessages` is computed:
 
 ```ts
-    const timelineAssembly = await this.timelineAssembler.assemble({
-      chatId,
-      messages: mergedMessages,
-      triggerMessageIds,
-      contextMessageIds,
-      batchMessageIds,
-    });
+const timelineAssembly = await this.timelineAssembler.assemble({
+  chatId,
+  messages: mergedMessages,
+  triggerMessageIds,
+  contextMessageIds,
+  batchMessageIds,
+});
 ```
 
 Return:
@@ -1570,6 +1615,7 @@ git commit -m "feat(behavior): attach timeline context to behavior decisions"
 ## Task 10: Timeline Formatter And Prompt Template
 
 **Files:**
+
 - Create: `src/application/prompts/ChatTimelineFormatter.ts`
 - Create: `prompts/behavior_chat_context_guide_prompt.md`
 - Modify: `src/application/interfaces/env/EnvService.ts`
@@ -1595,7 +1641,9 @@ import type {
   ChatTimelineMessageEvent,
 } from '../src/application/behavior/ChatTimelineAssembler';
 
-function msg(overrides: Partial<ChatTimelineMessageEvent>): ChatTimelineMessageEvent {
+function msg(
+  overrides: Partial<ChatTimelineMessageEvent>
+): ChatTimelineMessageEvent {
   return {
     type: 'message',
     storedMessageId: 75,
@@ -1683,7 +1731,9 @@ describe('ChatTimelineFormatter', () => {
       refMap
     );
 
-    expect(out.indexOf('old target')).toBeLessThan(out.indexOf('reply trigger'));
+    expect(out.indexOf('old target')).toBeLessThan(
+      out.indexOf('reply trigger')
+    );
     expect(out).toContain('REPLY_CHAIN');
   });
 });
@@ -1762,7 +1812,7 @@ Use the existing truncation behavior from `PromptBuilder` as a guide, but keep t
 In `EnvService.ts`, add to `PromptFiles`:
 
 ```ts
-  behaviorChatContextGuide: string;
+behaviorChatContextGuide: string;
 ```
 
 In `DefaultEnvService.getPromptFiles()` and `TestEnvService.getPromptFiles()`, add:
@@ -1828,6 +1878,7 @@ git commit -m "feat(prompts): format Telegram chat timeline context"
 ## Task 11: Wire Decision Prompt To Guide, Reply Chain, Timeline, Background
 
 **Files:**
+
 - Modify: `src/application/prompts/PromptBuilder.ts`
 - Modify: `src/application/prompts/PromptDirector.ts`
 - Modify: `test/PromptDirector.test.ts`
@@ -1908,38 +1959,38 @@ Add:
 In `PromptDirector.createBehaviorDecisionPrompt(...)`, change the implementation to build through a local `builder`, because the timeline path and no-timeline fallback branch differ:
 
 ```ts
-    const builder = this.builderFactory()
-      .addNeutralCore()
-      .addBehaviorDecisionSystem()
-      .addBehaviorChatContextGuide();
+const builder = this.builderFactory()
+  .addNeutralCore()
+  .addBehaviorDecisionSystem()
+  .addBehaviorChatContextGuide();
 
-    if (context.timeline) {
-      builder
-        .addBehaviorReplyChain(context.timeline, refMap)
-        .addCurrentChatTimeline(context.timeline, refMap);
-    } else {
-      builder.addBehaviorMessages(
-        context.messages,
-        refMap,
-        {
-          triggerMessageIds: context.triggerMessageIds,
-          contextMessageIds: context.contextMessageIds,
-          batchMessageIds: context.batchMessageIds,
-        },
-        context.selfIdentity
-      );
-    }
+if (context.timeline) {
+  builder
+    .addBehaviorReplyChain(context.timeline, refMap)
+    .addCurrentChatTimeline(context.timeline, refMap);
+} else {
+  builder.addBehaviorMessages(
+    context.messages,
+    refMap,
+    {
+      triggerMessageIds: context.triggerMessageIds,
+      contextMessageIds: context.contextMessageIds,
+      batchMessageIds: context.batchMessageIds,
+    },
+    context.selfIdentity
+  );
+}
 
-    return builder
-      .addBackgroundContextLabel()
-      .addAskSummary(context.summary)
-      .addPersonalityState(context.state.personality)
-      .addPoliticalState(context.state.political)
-      .addUserProfiles(context.state.profiles)
-      .addUserPoliticalProfiles(context.state.userPolitical)
-      .addTruths(context.state.truths)
-      .addBehaviorBrief(context.state, context.messages, context.selfIdentity)
-      .build();
+return builder
+  .addBackgroundContextLabel()
+  .addAskSummary(context.summary)
+  .addPersonalityState(context.state.personality)
+  .addPoliticalState(context.state.political)
+  .addUserProfiles(context.state.profiles)
+  .addUserPoliticalProfiles(context.state.userPolitical)
+  .addTruths(context.state.truths)
+  .addBehaviorBrief(context.state, context.messages, context.selfIdentity)
+  .build();
 ```
 
 Do not call `addBehaviorMessages(...)` for behavior decisions when timeline context exists. Use it only as a safety fallback for direct unit calls that construct `BehaviorPromptContext` without `timeline`. Gate and state-evolution methods still use `addBehaviorMessages(...)`.
@@ -2021,6 +2072,7 @@ git commit -m "feat(prompts): use chat timeline in behavior decisions"
 ## Task 12: Prompt Text Updates And Incident Regression
 
 **Files:**
+
 - Modify: `prompts/behavior_decision_system_prompt.md`
 - Modify: `test/ChatTimelineAssembler.test.ts`
 - Modify: `test/PromptDirector.test.ts`
@@ -2090,7 +2142,13 @@ it('regression: ambiguous "Карл объяснись" sees recent clown reacti
     sentAt: '2026-06-06T10:41:00.000Z',
   });
   const { assembler } = makeAssembler({
-    events: [makeSentReactionBehaviorEvent({ id: 76, targetStoredId: 75, emoji: '🤡' })],
+    events: [
+      makeSentReactionBehaviorEvent({
+        id: 76,
+        targetStoredId: 75,
+        emoji: '🤡',
+      }),
+    ],
   });
 
   const result = await assembler.assemble({
@@ -2147,6 +2205,7 @@ git commit -m "feat(prompts): teach decision prompt to read chat timelines"
 ## Task 13: Full Verification
 
 **Files:**
+
 - All changed implementation and test files.
 
 - [ ] **Step 1: Run autofix**

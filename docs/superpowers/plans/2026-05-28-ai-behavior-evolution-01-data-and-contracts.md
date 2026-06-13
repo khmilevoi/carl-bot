@@ -19,7 +19,7 @@ Tracker (decisions, sequencing): [`2026-05-28-ai-behavior-evolution-tracker.md`]
 ## Key decisions locked for this phase
 
 1. **Zod v4 + native `z.toJSONSchema()`.** Already installed (`^4.4.3`). No converter, no upgrade.
-2. **Additive migration only.** Phase 1 *adds* six tables. It does **not** drop legacy tables and does **not** remove `users.attitude` — that destructive step is deferred to the Phase 5 cutover plan so the legacy flow keeps working.
+2. **Additive migration only.** Phase 1 _adds_ six tables. It does **not** drop legacy tables and does **not** remove `users.attitude` — that destructive step is deferred to the Phase 5 cutover plan so the legacy flow keeps working.
 3. **Evidence message IDs reference `messages.id`** (the bot's own autoincrement PK), not the nullable Telegram `message_id`.
 4. **OpenAI strict transforms:** `z.toJSONSchema` already gives `additionalProperties:false`, all-required, and nullable-as-`anyOf`. The wrapper additionally (a) strips the root `$schema` key and (b) rewrites every `oneOf` to `anyOf` (OpenAI strict supports `anyOf`, not `oneOf`). All optional values are expressed as `T | null` (`.nullable()`), never `.optional()`.
 5. **Canonical schema location:** `src/domain/behavior/schemas/`. Types are inferred from schemas there (no duplicate hand-written interfaces), satisfying the spec's "types inferred with `z.infer`". This is a deliberate, documented deviation from the `domain/entities/XxxEntity.ts` convention for the AI-contract + state types; plain row-DTO interfaces for `behavior_events` / `ai_error_events` still live in `domain/entities/`.
@@ -29,6 +29,7 @@ Tracker (decisions, sequencing): [`2026-05-28-ai-behavior-evolution-tracker.md`]
 ## File Structure
 
 **Create — canonical Zod schemas + generated OpenAI JSON Schema (`src/domain/behavior/schemas/`):**
+
 - `jsonSchema.ts` — `toOpenAiJsonSchema(schema, name)` generator (lives in domain so schema modules can use it without a domain→application dependency).
 - `primitives.ts` — `patchEvidenceSchema`, `confidenceSchema`, `messageIdSchema`, shared enums.
 - `gate.ts` — `behaviorGateDecisionSchema` **and** the precomputed `behaviorGateJsonSchema` constant.
@@ -39,28 +40,35 @@ Tracker (decisions, sequencing): [`2026-05-28-ai-behavior-evolution-tracker.md`]
 - `index.ts` — re-export all schemas, inferred types, and the precomputed JSON-schema constants.
 
 **Create — application services (`src/application/behavior/`):**
+
 - `BehaviorDecisionValidator.ts` — interface + symbol.
 - `DefaultBehaviorDecisionValidator.ts` — impl.
 - `PatchPolicy.ts` — interface + symbol + config type.
 - `DefaultPatchPolicy.ts` — impl.
 
 **Create — row-DTO entities (`src/domain/entities/`):**
+
 - `BehaviorEventEntity.ts`, `AiErrorEventEntity.ts`.
 
 **Create — repository interfaces (`src/domain/repositories/`):**
+
 - `PersonalityStateRepository.ts`, `PoliticalStateRepository.ts`, `UserSocialProfileRepository.ts`, `TruthRepository.ts`, `BehaviorEventRepository.ts`, `AiErrorEventRepository.ts`.
 
 **Create — SQLite implementations (`src/infrastructure/persistence/sqlite/`):**
+
 - `SQLitePersonalityStateRepository.ts`, `SQLitePoliticalStateRepository.ts`, `SQLiteUserSocialProfileRepository.ts`, `SQLiteTruthRepository.ts`, `SQLiteBehaviorEventRepository.ts`, `SQLiteAiErrorEventRepository.ts`.
 
 **Create — migration (`migrations/`):**
+
 - `015_create_behavior_tables.up.sql`, `015_create_behavior_tables.down.sql`.
 
 **Create — tests (`test/`):**
+
 - `behaviorJsonSchema.test.ts`, `behaviorMigration015.test.ts`, `behaviorStateRepositories.test.ts`, `behaviorEventRepositories.test.ts`, `BehaviorDecisionValidator.test.ts`, `PatchPolicy.test.ts`.
 - No `behaviorSchemas.test.ts`: the Zod schema modules are not unit-tested in isolation (that would re-test Zod). They are exercised through the JSON-schema constants, the validator, the policy, and the repository round-trips.
 
 **Modify:**
+
 - `src/container/repositories.ts` — register the six new repositories.
 
 ## Conventions (follow exactly)
@@ -76,6 +84,7 @@ Tracker (decisions, sequencing): [`2026-05-28-ai-behavior-evolution-tracker.md`]
 ## Task 1: Schema primitives + OpenAI JSON Schema generator
 
 **Files:**
+
 - Create: `src/domain/behavior/schemas/primitives.ts`
 - Create: `src/domain/behavior/schemas/jsonSchema.ts`
 - Test: `test/behaviorJsonSchema.test.ts`
@@ -99,7 +108,12 @@ export const patchEvidenceSchema = z.object({
 
 export const stateImpactRiskSchema = z.enum(['none', 'low', 'medium', 'high']);
 
-export const intensitySchema = z.enum(['weak', 'moderate', 'strong', 'radical']);
+export const intensitySchema = z.enum([
+  'weak',
+  'moderate',
+  'strong',
+  'radical',
+]);
 
 export const signalStatusSchema = z.enum(['active', 'contested', 'inactive']);
 
@@ -297,6 +311,7 @@ git commit -m "feat(behavior): add schema primitives and OpenAI JSON Schema gene
 ## Task 2: Gate decision schema (+ precomputed JSON schema)
 
 **Files:**
+
 - Create: `src/domain/behavior/schemas/gate.ts`
 
 No Zod unit test (would re-test Zod). The exported `behaviorGateJsonSchema` constant is asserted in Task 5's `behaviorJsonSchema.test.ts`.
@@ -357,6 +372,7 @@ git commit -m "feat(behavior): add gate decision schema with precomputed JSON sc
 ## Task 3: Behavior action schemas
 
 **Files:**
+
 - Create: `src/domain/behavior/schemas/actions.ts`
 
 - [ ] **Step 1: Write `actions.ts`**
@@ -368,7 +384,13 @@ import { messageIdSchema } from './primitives';
 
 export const replyActionSchema = z.object({
   type: z.literal('reply'),
-  intent: z.enum(['direct_answer', 'banter', 'argument', 'support', 'correction']),
+  intent: z.enum([
+    'direct_answer',
+    'banter',
+    'argument',
+    'support',
+    'correction',
+  ]),
   text: z.string(),
   replyTo: z.enum(['trigger', 'latest', 'none']),
 });
@@ -416,6 +438,7 @@ git commit -m "feat(behavior): add behavior action schemas"
 ## Task 4: State patch schemas (live + evolution)
 
 **Files:**
+
 - Create: `src/domain/behavior/schemas/patches.ts`
 
 - [ ] **Step 1: Write `patches.ts`**
@@ -527,7 +550,13 @@ export const liveStatePatchSchema = z.discriminatedUnion('type', [
 
 export const personalityPatchSchema = z.object({
   type: z.literal('personality.add_signal'),
-  area: z.enum(['identity', 'values', 'speech_style', 'social_habits', 'themes']),
+  area: z.enum([
+    'identity',
+    'values',
+    'speech_style',
+    'social_habits',
+    'themes',
+  ]),
   polarity: z.enum(['reinforce', 'contest', 'soften']),
   text: z.string(),
   evidence: patchEvidenceSchema,
@@ -589,6 +618,7 @@ git commit -m "feat(behavior): add live and evolution state patch schemas"
 ## Task 5: Behavior decision schema (+ precomputed JSON schema) and contract-schema test
 
 **Files:**
+
 - Create: `src/domain/behavior/schemas/decision.ts`
 - Create: `src/domain/behavior/schemas/index.ts`
 - Test: `test/behaviorJsonSchema.test.ts` (extend — assert the precomputed constants)
@@ -737,6 +767,7 @@ git commit -m "feat(behavior): add decision schema and precomputed contract JSON
 ## Task 6: Persisted state schemas
 
 **Files:**
+
 - Create: `src/domain/behavior/schemas/state.ts`
 - Modify: `src/domain/behavior/schemas/index.ts` (add `export * from './state';`)
 
@@ -745,7 +776,11 @@ git commit -m "feat(behavior): add decision schema and precomputed contract JSON
 ```typescript
 import { z } from 'zod';
 
-import { confidenceSchema, messageIdSchema, signalStatusSchema } from './primitives';
+import {
+  confidenceSchema,
+  messageIdSchema,
+  signalStatusSchema,
+} from './primitives';
 
 export const socialSignalSchema = z.object({
   text: z.string(),
@@ -869,6 +904,7 @@ git commit -m "feat(behavior): add persisted state schemas"
 ## Task 7: Row-DTO entities for behavior_events and ai_error_events
 
 **Files:**
+
 - Create: `src/domain/entities/BehaviorEventEntity.ts`
 - Create: `src/domain/entities/AiErrorEventEntity.ts`
 
@@ -941,6 +977,7 @@ git commit -m "feat(behavior): add behavior/error event row DTOs"
 ## Task 8: Additive migration — six behavior tables
 
 **Files:**
+
 - Create: `migrations/015_create_behavior_tables.up.sql`
 - Create: `migrations/015_create_behavior_tables.down.sql`
 - Test: `test/behaviorMigration015.test.ts`
@@ -1084,7 +1121,10 @@ let db: Db;
 
 beforeEach(async () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'mig015-'));
-  db = await open({ filename: path.join(dir, 't.db'), driver: sqlite3.Database });
+  db = await open({
+    filename: path.join(dir, 't.db'),
+    driver: sqlite3.Database,
+  });
   // Prerequisite operational tables for FK targets.
   await db.exec(`
     CREATE TABLE chats (chat_id INTEGER PRIMARY KEY, title TEXT);
@@ -1158,6 +1198,7 @@ git commit -m "feat(behavior): add additive migration for six behavior tables"
 ## Task 9: State repositories (personality, political, profile, truth)
 
 **Files:**
+
 - Create: `src/domain/repositories/PersonalityStateRepository.ts`, `PoliticalStateRepository.ts`, `UserSocialProfileRepository.ts`, `TruthRepository.ts`
 - Create: `src/infrastructure/persistence/sqlite/SQLitePersonalityStateRepository.ts`, `SQLitePoliticalStateRepository.ts`, `SQLiteUserSocialProfileRepository.ts`, `SQLiteTruthRepository.ts`
 - Test: `test/behaviorStateRepositories.test.ts`
@@ -1175,7 +1216,9 @@ export interface PersonalityStateRepository {
   upsert(state: BotPersonalityState): Promise<void>;
 }
 
-export const PERSONALITY_STATE_REPOSITORY_ID = Symbol('PersonalityStateRepository');
+export const PERSONALITY_STATE_REPOSITORY_ID = Symbol(
+  'PersonalityStateRepository'
+);
 ```
 
 ```typescript
@@ -1247,9 +1290,7 @@ interface PersonalityRow {
 }
 
 @injectable()
-export class SQLitePersonalityStateRepository
-  implements PersonalityStateRepository
-{
+export class SQLitePersonalityStateRepository implements PersonalityStateRepository {
   constructor(
     @inject(DB_PROVIDER_ID) private readonly dbProvider: DbProvider
   ) {}
@@ -1430,9 +1471,7 @@ function toProfile(row: ProfileRow): UserSocialProfile {
 }
 
 @injectable()
-export class SQLiteUserSocialProfileRepository
-  implements UserSocialProfileRepository
-{
+export class SQLiteUserSocialProfileRepository implements UserSocialProfileRepository {
   constructor(
     @inject(DB_PROVIDER_ID) private readonly dbProvider: DbProvider
   ) {}
@@ -1532,9 +1571,7 @@ function toTruth(row: TruthRow): BotTruth {
     sourceMessageIds: JSON.parse(row.source_message_ids_json) as number[],
     confidence: row.confidence,
     relatedTruthIds: JSON.parse(row.related_truth_ids_json) as number[],
-    contradictsTruthIds: JSON.parse(
-      row.contradicts_truth_ids_json
-    ) as number[],
+    contradictsTruthIds: JSON.parse(row.contradicts_truth_ids_json) as number[],
     status: row.status as BotTruth['status'],
     createdAt: row.created_at,
   };
@@ -1654,7 +1691,10 @@ beforeEach(async () => {
     CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT);
   `);
   await db.exec(
-    readFileSync(path.join('migrations', '015_create_behavior_tables.up.sql'), 'utf8')
+    readFileSync(
+      path.join('migrations', '015_create_behavior_tables.up.sql'),
+      'utf8'
+    )
   );
   await db.run('INSERT INTO chats (chat_id) VALUES (1)');
   await db.run('INSERT INTO users (id, username) VALUES (10, ?)', 'alice');
@@ -1674,7 +1714,12 @@ describe('behavior state repositories', () => {
       chatId: 1,
       identityNotes: ['curious'],
       values: ['honesty'],
-      speechStyle: { tone: 'dry', humor: 'sarcastic', verbosity: 'short', formality: 'low' },
+      speechStyle: {
+        tone: 'dry',
+        humor: 'sarcastic',
+        verbosity: 'short',
+        formality: 'low',
+      },
       socialHabits: ['lurks'],
       recurringThemes: ['cats'],
       lastUpdatedAt: now,
@@ -1725,7 +1770,12 @@ describe('behavior state repositories', () => {
       affinityScore: -2,
       labels: [{ text: 'toxic', evidenceMessageIds: [3], status: 'active' }],
       patterns: [
-        { polarity: 'negative', text: 'derails threads', evidenceMessageIds: [4], status: 'active' },
+        {
+          polarity: 'negative',
+          text: 'derails threads',
+          evidenceMessageIds: [4],
+          status: 'active',
+        },
       ],
       grudges: [],
       trustLevel: 'low',
@@ -1797,6 +1847,7 @@ git commit -m "feat(behavior): add personality/political/profile/truth repositor
 ## Task 10: Event repositories (behavior_events, ai_error_events)
 
 **Files:**
+
 - Create: `src/domain/repositories/BehaviorEventRepository.ts`, `AiErrorEventRepository.ts`
 - Create: `src/infrastructure/persistence/sqlite/SQLiteBehaviorEventRepository.ts`, `SQLiteAiErrorEventRepository.ts`
 - Test: `test/behaviorEventRepositories.test.ts`
@@ -2097,7 +2148,10 @@ beforeEach(async () => {
     CREATE TABLE users (id INTEGER PRIMARY KEY, username TEXT);
   `);
   await db.exec(
-    readFileSync(path.join('migrations', '015_create_behavior_tables.up.sql'), 'utf8')
+    readFileSync(
+      path.join('migrations', '015_create_behavior_tables.up.sql'),
+      'utf8'
+    )
   );
   await db.run('INSERT INTO chats (chat_id) VALUES (1)');
   await db.close();
@@ -2180,6 +2234,7 @@ git commit -m "feat(behavior): add behavior and AI error event repositories"
 ## Task 11: Register the six repositories in the DI container
 
 **Files:**
+
 - Modify: `src/container/repositories.ts`
 
 - [ ] **Step 1: Add imports** at the top of `src/container/repositories.ts` (after the existing imports, keeping alphabetical-ish grouping consistent with the file)
@@ -2220,30 +2275,30 @@ import { SQLiteUserSocialProfileRepository } from '../infrastructure/persistence
 - [ ] **Step 2: Add bindings** inside the `register` function, after the existing `ChatConfigRepository` binding
 
 ```typescript
-  container
-    .bind<PersonalityStateRepository>(PERSONALITY_STATE_REPOSITORY_ID)
-    .to(SQLitePersonalityStateRepository)
-    .inSingletonScope();
-  container
-    .bind<PoliticalStateRepository>(POLITICAL_STATE_REPOSITORY_ID)
-    .to(SQLitePoliticalStateRepository)
-    .inSingletonScope();
-  container
-    .bind<UserSocialProfileRepository>(USER_SOCIAL_PROFILE_REPOSITORY_ID)
-    .to(SQLiteUserSocialProfileRepository)
-    .inSingletonScope();
-  container
-    .bind<TruthRepository>(TRUTH_REPOSITORY_ID)
-    .to(SQLiteTruthRepository)
-    .inSingletonScope();
-  container
-    .bind<BehaviorEventRepository>(BEHAVIOR_EVENT_REPOSITORY_ID)
-    .to(SQLiteBehaviorEventRepository)
-    .inSingletonScope();
-  container
-    .bind<AiErrorEventRepository>(AI_ERROR_EVENT_REPOSITORY_ID)
-    .to(SQLiteAiErrorEventRepository)
-    .inSingletonScope();
+container
+  .bind<PersonalityStateRepository>(PERSONALITY_STATE_REPOSITORY_ID)
+  .to(SQLitePersonalityStateRepository)
+  .inSingletonScope();
+container
+  .bind<PoliticalStateRepository>(POLITICAL_STATE_REPOSITORY_ID)
+  .to(SQLitePoliticalStateRepository)
+  .inSingletonScope();
+container
+  .bind<UserSocialProfileRepository>(USER_SOCIAL_PROFILE_REPOSITORY_ID)
+  .to(SQLiteUserSocialProfileRepository)
+  .inSingletonScope();
+container
+  .bind<TruthRepository>(TRUTH_REPOSITORY_ID)
+  .to(SQLiteTruthRepository)
+  .inSingletonScope();
+container
+  .bind<BehaviorEventRepository>(BEHAVIOR_EVENT_REPOSITORY_ID)
+  .to(SQLiteBehaviorEventRepository)
+  .inSingletonScope();
+container
+  .bind<AiErrorEventRepository>(AI_ERROR_EVENT_REPOSITORY_ID)
+  .to(SQLiteAiErrorEventRepository)
+  .inSingletonScope();
 ```
 
 - [ ] **Step 3: Build to verify DI wiring compiles and resolves**
@@ -2264,6 +2319,7 @@ git commit -m "feat(behavior): register behavior repositories in DI container"
 ## Task 12: BehaviorDecisionValidator
 
 **Files:**
+
 - Create: `src/application/behavior/BehaviorDecisionValidator.ts` (interface + symbol + result types)
 - Create: `src/application/behavior/DefaultBehaviorDecisionValidator.ts` (impl)
 - Test: `test/BehaviorDecisionValidator.test.ts`
@@ -2271,6 +2327,7 @@ git commit -m "feat(behavior): register behavior repositories in DI container"
 The validator parses raw AI output against `behaviorDecisionSchema`, then enforces semantic rules the JSON Schema cannot express, applying the spec's "drop only the invalid action" fallback. It does **not** mutate state.
 
 Rules enforced:
+
 - invalid JSON / schema → `{ ok: false }` with `errorCode: 'behavior_decision_validation'`.
 - at most one `reply`, one `react`, one `ask_question` (keep the first of each type, drop extras).
 - reply `text` non-empty and `<= maxReplyLength` (drop the reply action otherwise).
@@ -2345,7 +2402,9 @@ describe('DefaultBehaviorDecisionValidator', () => {
 
   it('accepts a valid decision with no drops', () => {
     const result = validator.validate(
-      decision([{ type: 'reply', intent: 'banter', text: 'hi', replyTo: 'none' }])
+      decision([
+        { type: 'reply', intent: 'banter', text: 'hi', replyTo: 'none' },
+      ])
     );
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -2357,7 +2416,12 @@ describe('DefaultBehaviorDecisionValidator', () => {
   it('drops a reply whose text exceeds maxReplyLength', () => {
     const result = validator.validate(
       decision([
-        { type: 'reply', intent: 'banter', text: 'x'.repeat(50), replyTo: 'none' },
+        {
+          type: 'reply',
+          intent: 'banter',
+          text: 'x'.repeat(50),
+          replyTo: 'none',
+        },
       ])
     );
     expect(result.ok).toBe(true);
@@ -2379,7 +2443,9 @@ describe('DefaultBehaviorDecisionValidator', () => {
 
   it('drops a react with a disallowed emoji', () => {
     const result = validator.validate(
-      decision([{ type: 'react', intent: 'approval', emoji: '🔥', targetMessageId: 1 }])
+      decision([
+        { type: 'react', intent: 'approval', emoji: '🔥', targetMessageId: 1 },
+      ])
     );
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -2407,7 +2473,11 @@ describe('DefaultBehaviorDecisionValidator', () => {
   it('does not count summarize_thread against visible-action limits', () => {
     const result = validator.validate(
       decision([
-        { type: 'summarize_thread', intent: 'compress_context', reason: 'long' },
+        {
+          type: 'summarize_thread',
+          intent: 'compress_context',
+          reason: 'long',
+        },
         { type: 'reply', intent: 'support', text: 'ok', replyTo: 'none' },
       ])
     );
@@ -2441,9 +2511,7 @@ import type {
 } from './BehaviorDecisionValidator';
 
 @injectable()
-export class DefaultBehaviorDecisionValidator
-  implements BehaviorDecisionValidator
-{
+export class DefaultBehaviorDecisionValidator implements BehaviorDecisionValidator {
   constructor(private readonly config: BehaviorDecisionValidatorConfig) {}
 
   validate(raw: unknown): BehaviorDecisionValidationResult {
@@ -2544,6 +2612,7 @@ git commit -m "feat(behavior): add BehaviorDecisionValidator with per-action san
 ## Task 13: PatchPolicy (per-domain patch validation)
 
 **Files:**
+
 - Create: `src/application/behavior/PatchPolicy.ts` (interface + symbol + config + result types)
 - Create: `src/application/behavior/DefaultPatchPolicy.ts` (impl)
 - Test: `test/PatchPolicy.test.ts`
@@ -2553,6 +2622,7 @@ git commit -m "feat(behavior): add BehaviorDecisionValidator with per-action san
 Outcomes: `accept` | `reject` | `to_uncertainty` | `downgrade` | `escalate`.
 
 Rules (spec-derived):
+
 - All patches require `evidence.messageIds.length >= 1`; otherwise `reject` ("missing evidence").
 - `politics.add_position` with `requestedIntensity` `strong`/`radical` and `evidence.confidence < politicalStrongMinConfidence` → `to_uncertainty`.
 - `politics.add_position` with `evidence.confidence < politicalWeakMaxConfidence` → `to_uncertainty` (weak claims go to uncertainty, not positions).
@@ -2765,7 +2835,10 @@ export class DefaultPatchPolicy implements PatchPolicy {
       }
       case 'personality.add_signal': {
         if (patch.evidence.confidence < this.config.personalityMinConfidence) {
-          return { outcome: 'reject', reason: 'low-confidence personality signal' };
+          return {
+            outcome: 'reject',
+            reason: 'low-confidence personality signal',
+          };
         }
         return { outcome: 'accept', reason: 'personality signal accepted' };
       }

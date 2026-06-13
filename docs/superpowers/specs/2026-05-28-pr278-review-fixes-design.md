@@ -68,6 +68,7 @@ admin or user menu via `actions.isAdmin(ctx.chat.id)` and sends a fresh message.
 ### B4 + B6. Memory reset leaves no menu / edits menu-owned message (routes.ts:480-487, MainService.ts:320-360)
 
 **Fix:**
+
 - `handleResetMemory` becomes a pure data operation: access check + `memories.reset(chatId)`,
   returning a boolean (or throwing). It no longer edits messages.
 - The `confirm_reset` "✅ Да, сбросить" handler: `editMessageText('⏳ Сбрасываю память...')`,
@@ -114,6 +115,7 @@ vitest + mock-`Context` pattern (`as unknown as Context`, mock bot capturing
 `command`/`callbackQuery`/`use`/`on`).
 
 Coverage to add:
+
 1. **`waitForInputOrCancel`**: valid input returns parsed value; cancel callback returns null;
    invalid-then-valid retry; two invalid attempts returns null and sends the "too many
    attempts" message.
@@ -137,12 +139,12 @@ Coverage to add:
 
 ## File map
 
-| Action | File | Findings |
-| ------ | ---- | -------- |
-| Modify | `src/view/telegram/routes.ts` | A1, A2, A3, B4, B5, B6, D |
-| Modify | `src/view/telegram/MainService.ts` | A10, B4, B-export |
-| Modify | `.gitignore` | C7, C8 |
-| Untrack | `.claude/settings.local.json` | C7 |
-| Untrack | `docs/superpowers/plans/*`, `docs/superpowers/specs/*` | C8 |
-| Modify/Add | `test/routes.test.ts` (or new) | D |
-| Modify | `test/MainService.test.ts` | D |
+| Action     | File                                                   | Findings                  |
+| ---------- | ------------------------------------------------------ | ------------------------- |
+| Modify     | `src/view/telegram/routes.ts`                          | A1, A2, A3, B4, B5, B6, D |
+| Modify     | `src/view/telegram/MainService.ts`                     | A10, B4, B-export         |
+| Modify     | `.gitignore`                                           | C7, C8                    |
+| Untrack    | `.claude/settings.local.json`                          | C7                        |
+| Untrack    | `docs/superpowers/plans/*`, `docs/superpowers/specs/*` | C8                        |
+| Modify/Add | `test/routes.test.ts` (or new)                         | D                         |
+| Modify     | `test/MainService.test.ts`                             | D                         |

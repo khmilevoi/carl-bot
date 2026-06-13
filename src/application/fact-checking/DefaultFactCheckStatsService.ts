@@ -13,7 +13,10 @@ import {
   type FactCheckStatsCategoryRow,
   type FactCheckStatsUserRow,
 } from './FactCheckFormatter';
-import type { FactCheckStatsService, FactCheckStatsReport } from './FactCheckStatsService';
+import type {
+  FactCheckStatsService,
+  FactCheckStatsReport,
+} from './FactCheckStatsService';
 import type { FactCheckStatsPeriod } from '@/domain/repositories/FactCheckRepository';
 
 function minusMonthsClamped(date: Date, months: number): Date {

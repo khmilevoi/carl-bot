@@ -270,7 +270,13 @@ interface UserSocialProfile {
 
   // derived by runtime policy; never patched directly
   trustLevel: 'none' | 'low' | 'medium' | 'high';
-  preferredDistance: 'warm' | 'neutral' | 'cold' | 'mocking' | 'avoidant' | 'hostile';
+  preferredDistance:
+    | 'warm'
+    | 'neutral'
+    | 'cold'
+    | 'mocking'
+    | 'avoidant'
+    | 'hostile';
 
   // descriptive snapshot, re-derived by the state-evolution pass; not patched per turn
   communicationStyle: string;
@@ -332,7 +338,7 @@ Carl adapts response tone, detail level, and social distance based on `UserSocia
 
 ## Behavior Decision Contract
 
-For v1, the live turn uses one main AI call: `decideBehavior`. It returns structured JSON with visible/runtime actions plus *fast, low-risk* durable state patches — user-profile patches and truth patches only. Keeping reply text inside this call (rather than a separate `decide -> generate` flow) keeps latency and cost down.
+For v1, the live turn uses one main AI call: `decideBehavior`. It returns structured JSON with visible/runtime actions plus _fast, low-risk_ durable state patches — user-profile patches and truth patches only. Keeping reply text inside this call (rather than a separate `decide -> generate` flow) keeps latency and cost down.
 
 Slow, high-impact state — personality signals and all political patches — plus descriptive-snapshot derivation are handled by a separate background state-evolution pass (see [State-Evolution Pass](#state-evolution-pass)). This split keeps the live JSON schema small enough for strict structured output and aligns model escalation with risk. It is a different axis from `decide -> generate` and does not split reply generation.
 
@@ -347,7 +353,12 @@ interface BehaviorDecision {
 type BehaviorAction =
   | {
       type: 'reply';
-      intent: 'direct_answer' | 'banter' | 'argument' | 'support' | 'correction';
+      intent:
+        | 'direct_answer'
+        | 'banter'
+        | 'argument'
+        | 'support'
+        | 'correction';
       text: string;
       replyTo: 'trigger' | 'latest' | 'none';
     }
@@ -363,7 +374,11 @@ type BehaviorAction =
       text: string;
       targetUsername: string | null;
     }
-  | { type: 'summarize_thread'; intent: 'compress_context' | 'state_review'; reason: string };
+  | {
+      type: 'summarize_thread';
+      intent: 'compress_context' | 'state_review';
+      reason: string;
+    };
 ```
 
 There is no global `mode` for the whole decision. Each action carries its own `type` and `intent`. `type` says what the executor does; `intent` says why or in what style. This allows mixed decisions such as `reply + react + truth.add` or `react + user.add_pattern` without contradictory top-level state. An empty `actions` array is itself a valid and expected outcome: it means "do nothing visible" and is the normal result for messages that pass the gate but warrant no visible response. There is no `stay_silent` action — silence is simply an empty action set. Durable state patches may accompany an empty `actions` array.
@@ -388,15 +403,10 @@ Patch objects use domain-specific discriminated unions, not JSON Patch and not f
 
 ```ts
 // produced by the live decideBehavior lane
-type LiveStatePatch =
-  | UserProfilePatch
-  | TruthPatch;
+type LiveStatePatch = UserProfilePatch | TruthPatch;
 
 // produced by the background state-evolution pass
-type EvolutionPatch =
-  | PersonalityPatch
-  | PoliticalPatch
-  | UserPoliticalPatch; // see Political Coordinates
+type EvolutionPatch = PersonalityPatch | PoliticalPatch | UserPoliticalPatch; // see Political Coordinates
 
 interface PatchEvidence {
   messageIds: number[];
@@ -559,14 +569,14 @@ Do not use the strongest model for every chat turn. Use the cheapest model that 
 
 Default v1 routing:
 
-| Workload | Default model | Escalation model | Notes |
-| --- | --- | --- | --- |
-| Cheap behavior gate (`triggerGate` slot) | `gpt-5.4-nano` or `gpt-5.4-mini` | none | Runs per batch (not per message). It cannot change state or send actions; it only decides whether to call `decideBehavior`. |
-| Live `decideBehavior` (`behaviorDecision` slot) | `gpt-5.4-mini` | `gpt-5.5` | Strict structured output. Reply text is generated inside this call for v1. Reactive escalation on schema retry failure, low confidence, conflicting actions, or risky state patches. One proactive rule: a gate `stateImpactRisk` of `high` starts directly on the stronger model, skipping the cheap-first attempt. |
-| Summarization (`summarization` slot) | `gpt-5.4-mini` | `gpt-5.5` | Background thread summaries. Escalate only for large context. |
-| State-evolution pass (`stateEvolution` slot) | `gpt-5.4-mini` | `gpt-5.5` | Proposes personality and political patches and derives descriptive profile/personality snapshots. Political patches and high-impact personality changes are reviewed by the stronger model before application. |
-| AI error repair hints (`errorRepair` slot) | `gpt-5.4-mini` | `gpt-5.5` | Runtime errors can use the cheaper model; repeated or unclear failures can escalate. |
-| Offline evals and deep repair | `gpt-5.5` | none | Asynchronous review, evals, or manual repair workflows only; not part of the normal chat path. |
+| Workload                                        | Default model                    | Escalation model | Notes                                                                                                                                                                                                                                                                                                                |
+| ----------------------------------------------- | -------------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Cheap behavior gate (`triggerGate` slot)        | `gpt-5.4-nano` or `gpt-5.4-mini` | none             | Runs per batch (not per message). It cannot change state or send actions; it only decides whether to call `decideBehavior`.                                                                                                                                                                                          |
+| Live `decideBehavior` (`behaviorDecision` slot) | `gpt-5.4-mini`                   | `gpt-5.5`        | Strict structured output. Reply text is generated inside this call for v1. Reactive escalation on schema retry failure, low confidence, conflicting actions, or risky state patches. One proactive rule: a gate `stateImpactRisk` of `high` starts directly on the stronger model, skipping the cheap-first attempt. |
+| Summarization (`summarization` slot)            | `gpt-5.4-mini`                   | `gpt-5.5`        | Background thread summaries. Escalate only for large context.                                                                                                                                                                                                                                                        |
+| State-evolution pass (`stateEvolution` slot)    | `gpt-5.4-mini`                   | `gpt-5.5`        | Proposes personality and political patches and derives descriptive profile/personality snapshots. Political patches and high-impact personality changes are reviewed by the stronger model before application.                                                                                                       |
+| AI error repair hints (`errorRepair` slot)      | `gpt-5.4-mini`                   | `gpt-5.5`        | Runtime errors can use the cheaper model; repeated or unclear failures can escalate.                                                                                                                                                                                                                                 |
+| Offline evals and deep repair                   | `gpt-5.5`                        | none             | Asynchronous review, evals, or manual repair workflows only; not part of the normal chat path.                                                                                                                                                                                                                       |
 
 Routing should be explicit configuration, not scattered literals. Replace the current `ask`, `summary`, and `interest` model slots with task-oriented model slots such as `behaviorDecision`, `summarization`, `triggerGate`, `stateEvolution`, and `errorRepair`. All slots target the GPT-5 series; the current `o3` / `o3-mini` configuration is retired. There is no `pro`-tier model in v1.
 

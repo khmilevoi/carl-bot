@@ -15,18 +15,21 @@
 Spec: `docs/superpowers/specs/2026-06-01-behavior-context-ordinal-remap-design.md`.
 
 Four root causes, all fixed here:
+
 - **A** internal `storeId` leaks into `action.text` (e.g. «ст. 150 и 154–161»);
 - **B** bot replies are never persisted (`MessageFactory.fromAssistant` is dead code), so Carl is blind to his own turns;
 - **C** reply/quote linkage is dropped in the behavior message format;
 - **D** two numeric id namespaces inline (`storeId` + `telegramId`) cause id-space confusion.
 
 Key invariants confirmed during design:
+
 - Reply/react targeting uses `scope`+`pick`+`index` selectors, NOT raw ids — remap does not affect targeting.
 - The ONLY response fields carrying message references are: gate `triggerMessageIds`/`contextMessageIds`; `statePatches[].evidence.messageIds`; `evolutionPatches[].evidence.messageIds`.
 - `userId` in patches and `userSnapshots[].userId`/`userPoliticalSnapshots[].userId` are **Telegram user ids**, NOT message references — keep them, never remap them.
 - `evidence.messageIds` is persisted directly into the DB as real `messages.id`, so translation MUST happen before persistence.
 
 Conventions:
+
 - Tests live in `test/*.test.ts`, use Vitest (`import { describe, it, expect, vi } from 'vitest'`), and instantiate classes directly with hand-rolled mocks (no DI container in tests).
 - Run a single test file: `pnpm test -- test/<file>.test.ts`.
 - Before each commit: `pnpm format:fix && pnpm lint:fix && pnpm type:check && pnpm test`.
@@ -54,6 +57,7 @@ Conventions:
 ## Task 1: `MessageReferenceMap` value object
 
 **Files:**
+
 - Create: `src/application/prompts/MessageReferenceMap.ts`
 - Test: `test/MessageReferenceMap.test.ts`
 
@@ -67,7 +71,11 @@ import { MessageReferenceMap } from '../src/application/prompts/MessageReference
 
 describe('MessageReferenceMap', () => {
   it('assigns 1-based ordinals in ascending storeId order', () => {
-    const map = MessageReferenceMap.fromMessages([{ id: 161 }, { id: 150 }, { id: 154 }]);
+    const map = MessageReferenceMap.fromMessages([
+      { id: 161 },
+      { id: 150 },
+      { id: 154 },
+    ]);
     expect(map.ordinalFor(150)).toBe(1);
     expect(map.ordinalFor(154)).toBe(2);
     expect(map.ordinalFor(161)).toBe(3);
@@ -171,6 +179,7 @@ git commit -m "feat(prompts): add MessageReferenceMap ordinal value object"
 ## Task 2: Ordinal translation helpers
 
 **Files:**
+
 - Create: `src/application/behavior/OrdinalTranslation.ts`
 - Test: `test/OrdinalTranslation.test.ts`
 
@@ -316,6 +325,7 @@ git commit -m "feat(behavior): add ordinal->storeId translation helpers"
 ## Task 3: Render `[#N]` + reply/quote in `addBehaviorMessages`
 
 **Files:**
+
 - Modify: `src/application/prompts/PromptBuilder.ts` (method `addBehaviorMessages`, lines ~306-341)
 - Test: `test/PromptBuilderBehaviorMessages.test.ts`
 
@@ -475,6 +485,7 @@ git commit -m "feat(prompts): render ordinal refs and reply/quote lines, drop ra
 ## Task 4: Thread the ref map through `PromptDirector`
 
 **Files:**
+
 - Modify: `src/application/prompts/PromptDirector.ts`
 
 - [ ] **Step 1: Add the import**
@@ -560,6 +571,7 @@ Expected: the only remaining errors are in `ChatGPTService.ts` (callers of these
 ## Task 5: Build the ref map and translate responses in `ChatGPTService`
 
 **Files:**
+
 - Modify: `src/infrastructure/external/ChatGPTService.ts`
 
 - [ ] **Step 1: Add imports**
@@ -580,45 +592,45 @@ import {
 In `evaluateGate`, build the map, pass it to the prompt, and translate the parsed decision. Replace the body from the `const prompt = ...` line through the `return { decision: parsed.data, ... }` with:
 
 ```ts
-    const refMap = MessageReferenceMap.fromMessages(messages);
-    const prompt = await this.prompts.createBehaviorGatePrompt(messages, refMap);
-    const openaiMessages = this.toOpenAiMessages(prompt);
-    const start = Date.now();
+const refMap = MessageReferenceMap.fromMessages(messages);
+const prompt = await this.prompts.createBehaviorGatePrompt(messages, refMap);
+const openaiMessages = this.toOpenAiMessages(prompt);
+const start = Date.now();
 
-    const completion = await this.openai.chat.completions.parse({
-      model: this.triggerGateModel,
-      messages: openaiMessages,
-      response_format: behaviorGateResponseFormat,
-    });
+const completion = await this.openai.chat.completions.parse({
+  model: this.triggerGateModel,
+  messages: openaiMessages,
+  response_format: behaviorGateResponseFormat,
+});
 
-    const latencyMs = Date.now() - start;
-    const raw = completion.choices[0]?.message?.parsed;
-    void this.logPrompt('behaviorGate', openaiMessages, raw);
+const latencyMs = Date.now() - start;
+const raw = completion.choices[0]?.message?.parsed;
+void this.logPrompt('behaviorGate', openaiMessages, raw);
 
-    if (raw == null) {
-      throw new Error('Failed to parse evaluateGate JSON response');
-    }
+if (raw == null) {
+  throw new Error('Failed to parse evaluateGate JSON response');
+}
 
-    const parsed = behaviorGateDecisionSchema.safeParse(raw);
-    if (!parsed.success) {
-      throw new Error(
-        parsed.error.issues
-          .map((i) => `${i.path.join('.')}: ${i.message}`)
-          .join('; ')
-      );
-    }
+const parsed = behaviorGateDecisionSchema.safeParse(raw);
+if (!parsed.success) {
+  throw new Error(
+    parsed.error.issues
+      .map((i) => `${i.path.join('.')}: ${i.message}`)
+      .join('; ')
+  );
+}
 
-    return {
-      decision: translateGateDecision(parsed.data, refMap),
-      metadata: this.buildMetadata(
-        'triggerGate',
-        this.triggerGateModel,
-        false,
-        null,
-        latencyMs,
-        completion.usage
-      ),
-    };
+return {
+  decision: translateGateDecision(parsed.data, refMap),
+  metadata: this.buildMetadata(
+    'triggerGate',
+    this.triggerGateModel,
+    false,
+    null,
+    latencyMs,
+    completion.usage
+  ),
+};
 ```
 
 - [ ] **Step 3: Update `decideBehavior`**
@@ -626,26 +638,23 @@ In `evaluateGate`, build the map, pass it to the prompt, and translate the parse
 Build the map before the prompt and pass it in. Change these two lines:
 
 ```ts
-    const prompt = await this.prompts.createBehaviorDecisionPrompt(context);
+const prompt = await this.prompts.createBehaviorDecisionPrompt(context);
 ```
 
 to:
 
 ```ts
-    const refMap = MessageReferenceMap.fromMessages(context.messages);
-    const prompt = await this.prompts.createBehaviorDecisionPrompt(
-      context,
-      refMap
-    );
+const refMap = MessageReferenceMap.fromMessages(context.messages);
+const prompt = await this.prompts.createBehaviorDecisionPrompt(context, refMap);
 ```
 
 Then, inside the `attempt` closure, right after the successful parse (replace `const decision = parsed.data;`) with:
 
 ```ts
-      const decision = {
-        ...parsed.data,
-        statePatches: translateLivePatches(parsed.data.statePatches, refMap),
-      };
+const decision = {
+  ...parsed.data,
+  statePatches: translateLivePatches(parsed.data.statePatches, refMap),
+};
 ```
 
 (The escalation checks use `decision.confidence` and `decision.actions`, which are unchanged, so they keep working.)
@@ -655,17 +664,14 @@ Then, inside the `attempt` closure, right after the successful parse (replace `c
 Change:
 
 ```ts
-    const prompt = await this.prompts.createStateEvolutionPrompt(context);
+const prompt = await this.prompts.createStateEvolutionPrompt(context);
 ```
 
 to:
 
 ```ts
-    const refMap = MessageReferenceMap.fromMessages(context.messages);
-    const prompt = await this.prompts.createStateEvolutionPrompt(
-      context,
-      refMap
-    );
+const refMap = MessageReferenceMap.fromMessages(context.messages);
+const prompt = await this.prompts.createStateEvolutionPrompt(context, refMap);
 ```
 
 Then inside the `attempt` closure, after the parse succeeds, build a translated decision and use it for the radical check and the return. Replace:
@@ -724,6 +730,7 @@ git commit -m "feat(behavior): remap message refs to ordinals at the AI boundary
 ## Task 6: `sendMessage` returns the Telegram message id
 
 **Files:**
+
 - Modify: `src/application/interfaces/chat/ChatMessenger.ts`
 - Modify: `src/view/telegram/TelegramMessenger.ts`
 
@@ -778,6 +785,7 @@ git commit -m "feat(messenger): return sent telegram message id from sendMessage
 ## Task 7: Persist bot replies as `role:assistant`
 
 **Files:**
+
 - Modify: `src/application/behavior/DefaultBehaviorExecutor.ts`
 - Test: `test/DefaultBehaviorExecutor.test.ts`
 
@@ -959,54 +967,54 @@ Replace the constructor with (adds `messages` + a logger):
 In `executeReply`, capture the sent id and persist the assistant message. Replace the `try { ... }` block (the `await this.messenger.sendMessage(...)` and its `return`) with:
 
 ```ts
-    try {
-      const telegramMessageId = await this.messenger.sendMessage(
-        context.chatId,
-        action.text,
-        extra
-      );
-      await this.persistAssistant({
-        chatId: context.chatId,
-        text: action.text,
-        telegramMessageId,
-        replyToStoredId: target.targetMessageId,
-        contextMessages: context.messages,
-      });
-      return {
-        actionType: action.type,
-        outcome: 'sent',
-        reason: null,
-        targetMessageId: target.targetMessageId,
-        telegramMessageId: target.telegramMessageId,
-      };
-    } catch (error) {
-      return this.failed(action.type, error);
-    }
+try {
+  const telegramMessageId = await this.messenger.sendMessage(
+    context.chatId,
+    action.text,
+    extra
+  );
+  await this.persistAssistant({
+    chatId: context.chatId,
+    text: action.text,
+    telegramMessageId,
+    replyToStoredId: target.targetMessageId,
+    contextMessages: context.messages,
+  });
+  return {
+    actionType: action.type,
+    outcome: 'sent',
+    reason: null,
+    targetMessageId: target.targetMessageId,
+    telegramMessageId: target.telegramMessageId,
+  };
+} catch (error) {
+  return this.failed(action.type, error);
+}
 ```
 
 In `executeAskQuestion`, do the same (no reply target). Replace its `try` block with:
 
 ```ts
-    try {
-      const telegramMessageId = await this.messenger.sendMessage(
-        context.chatId,
-        this.formatQuestion(action)
-      );
-      await this.persistAssistant({
-        chatId: context.chatId,
-        text: this.formatQuestion(action),
-        telegramMessageId,
-        replyToStoredId: null,
-        contextMessages: context.messages,
-      });
-      return {
-        actionType: action.type,
-        outcome: 'sent',
-        reason: null,
-      };
-    } catch (error) {
-      return this.failed(action.type, error);
-    }
+try {
+  const telegramMessageId = await this.messenger.sendMessage(
+    context.chatId,
+    this.formatQuestion(action)
+  );
+  await this.persistAssistant({
+    chatId: context.chatId,
+    text: this.formatQuestion(action),
+    telegramMessageId,
+    replyToStoredId: null,
+    contextMessages: context.messages,
+  });
+  return {
+    actionType: action.type,
+    outcome: 'sent',
+    reason: null,
+  };
+} catch (error) {
+  return this.failed(action.type, error);
+}
 ```
 
 Add the private helper (place it just above `private failed(...)`):
@@ -1067,6 +1075,7 @@ git commit -m "feat(behavior): persist bot replies as assistant messages"
 ## Task 8: Validator backstop — strip leaked rendered tags from visible text
 
 **Files:**
+
 - Modify: `src/application/behavior/DefaultBehaviorDecisionValidator.ts`
 - Test: `test/DefaultBehaviorDecisionValidator.test.ts`
 
@@ -1142,7 +1151,10 @@ const LEAKED_TAG_PATTERN =
   /\[\s*(?:#\d+|storeId|telegramId|userId|username|fullName|role)\b[^\]]*\]/gi;
 
 function stripLeakedTags(text: string): string {
-  return text.replace(LEAKED_TAG_PATTERN, '').replace(/[ \t]{2,}/g, ' ').trim();
+  return text
+    .replace(LEAKED_TAG_PATTERN, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim();
 }
 ```
 
@@ -1196,6 +1208,7 @@ git commit -m "feat(behavior): strip leaked reference tags from visible reply te
 ## Task 9: Update system prompt wording (reference numbers + no-leak rule)
 
 **Files:**
+
 - Modify: `prompts/behavior_gate_system_prompt.md`
 - Modify: `prompts/behavior_decision_system_prompt.md`
 - Modify: `prompts/state_evolution_system_prompt.md`
@@ -1296,6 +1309,7 @@ Expected: all green.
 - [ ] **Step 2: Manual sanity (optional, if a dev bot token is available)**
 
 Enable `LOG_PROMPTS`, run `pnpm dev`, send a few messages in a test chat, then inspect `prompts.log`:
+
 - behavior message lines start with `[#N]` and contain NO `storeId`/`telegramId`;
 - `reply`/`ask_question` responses contain no `#N` or bracket tags in `text`;
 - after the bot replies, a later prompt's message list includes a `[role:assistant]` line for the bot's own message.
@@ -1314,6 +1328,7 @@ git commit -m "chore: formatting after ordinal remap work"
 ## Self-Review (completed by plan author)
 
 **Spec coverage:**
+
 - A (id leak): Tasks 3 (drop raw ids), 5 (ordinal remap at AI boundary), 8 (text backstop), 9 (prompt wording). ✓
 - B (persist bot replies): Tasks 6 (messenger returns id) + 7 (executor persists assistant). ✓
 - C (reply/quote linkage): Task 3 (reply/quote sub-lines) + Task 7 (assistant message stores replyText). ✓
