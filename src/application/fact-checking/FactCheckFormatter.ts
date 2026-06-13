@@ -140,6 +140,15 @@ export function formatHourlyDigestChunks(
   let currentLen = 0;
   let countInChunk = 0;
 
+  const toChunk = (
+    parts: { text: string; findingId: number | null }[]
+  ): FactCheckDigestChunk => ({
+    text: parts.map((p) => p.text).join('\n\n'),
+    findingIds: parts
+      .map((p) => p.findingId)
+      .filter((id): id is number => id != null),
+  });
+
   for (const part of allParts) {
     const partLen = part.text.length + 2; // +2 for \n\n separator
     const wouldExceedCount =
@@ -148,15 +157,18 @@ export function formatHourlyDigestChunks(
     const wouldExceedLen = currentLen + partLen > MAX_CHUNK_CHARS;
 
     if (current.length > 0 && (wouldExceedCount || wouldExceedLen)) {
-      chunks.push({
-        text: current.map((p) => p.text).join('\n\n'),
-        findingIds: current
-          .map((p) => p.findingId)
-          .filter((id): id is number => id != null),
-      });
-      current = [];
-      currentLen = 0;
-      countInChunk = 0;
+      // never leave trailing headers behind: carry them into the next chunk
+      let splitAt = current.length;
+      while (splitAt > 0 && current[splitAt - 1].findingId == null) {
+        splitAt--;
+      }
+      if (splitAt > 0) {
+        const carried = current.slice(splitAt);
+        chunks.push(toChunk(current.slice(0, splitAt)));
+        current = carried;
+        currentLen = carried.reduce((sum, p) => sum + p.text.length + 2, 0);
+        countInChunk = 0;
+      }
     }
 
     current.push(part);
@@ -165,12 +177,7 @@ export function formatHourlyDigestChunks(
   }
 
   if (current.length > 0) {
-    chunks.push({
-      text: current.map((p) => p.text).join('\n\n'),
-      findingIds: current
-        .map((p) => p.findingId)
-        .filter((id): id is number => id != null),
-    });
+    chunks.push(toChunk(current));
   }
 
   return chunks;

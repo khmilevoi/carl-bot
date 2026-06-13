@@ -207,6 +207,27 @@ describe('FactCheckFormatter', () => {
     });
   });
 
+  describe('section header carry-over', () => {
+    it('moves a section header to the chunk that contains its findings', () => {
+      const smallConfig = { ...defaultConfig, maxFindingsPerDigestMessage: 2 };
+      const confirmed = [1, 2].map((id) =>
+        makeDigestFinding({ id, status: 'confirmed' })
+      );
+      const uncertain = [makeDigestFinding({ id: 3, status: 'uncertain' })];
+      const chunks = formatHourlyDigestChunks(
+        [...confirmed, ...uncertain],
+        smallConfig
+      );
+
+      expect(chunks).toHaveLength(2);
+      // header must NOT dangle at the end of chunk 0
+      expect(chunks[0].text).not.toContain('Возможные неточности');
+      expect(chunks[1].text).toContain('Возможные неточности');
+      expect(chunks[0].findingIds).toEqual([1, 2]);
+      expect(chunks[1].findingIds).toEqual([3]);
+    });
+  });
+
   describe('digest entry header', () => {
     it('links the original message and names the author', () => {
       const chunks = formatHourlyDigestChunks([makeDigestFinding()], defaultConfig);
