@@ -11,6 +11,40 @@ import type { FactCheckConfig } from '../src/application/fact-checking/FactCheck
 
 const now = new Date().toISOString();
 
+function makeDigestFinding(
+  overrides: Partial<FactCheckFindingWithSources> = {}
+): FactCheckFindingWithSources {
+  return {
+    id: 1,
+    runId: 1,
+    chatId: 1,
+    messageId: 10,
+    telegramMessageId: 555,
+    authorUserId: 7,
+    authorDisplayName: 'Alice <3',
+    normalizedClaimKey: 'claim',
+    claimText: 'The sky is green',
+    originalQuote: 'The sky is green',
+    correctedFact: 'The sky is blue',
+    explanation: 'Basic meteorology',
+    category: 'external_fact',
+    severity: 'low',
+    status: 'confirmed',
+    confidence: 0.9,
+    sourcePolicy: 'reliable_or_media_allowed',
+    sourceRequirementsMet: true,
+    shouldNotifyImmediately: false,
+    messageUrl: 'https://t.me/c/123/555',
+    immediateNotifiedAt: null,
+    digestNotifiedAt: null,
+    notificationError: null,
+    createdAt: '2026-06-12T10:00:00.000Z',
+    checkedAt: '2026-06-12T10:00:00.000Z',
+    sources: [],
+    ...overrides,
+  };
+}
+
 function makeFinding(
   status: 'confirmed' | 'uncertain' = 'confirmed',
   overrides: Partial<FactCheckFindingWithSources> = {}
@@ -170,6 +204,71 @@ describe('FactCheckFormatter', () => {
       for (const chunk of chunks) {
         expect(chunk.length).toBeLessThanOrEqual(4000);
       }
+    });
+  });
+
+  describe('section header carry-over', () => {
+    it('moves a section header to the chunk that contains its findings', () => {
+      const smallConfig = { ...defaultConfig, maxFindingsPerDigestMessage: 2 };
+      const confirmed = [1, 2].map((id) =>
+        makeDigestFinding({ id, status: 'confirmed' })
+      );
+      const uncertain = [makeDigestFinding({ id: 3, status: 'uncertain' })];
+      const chunks = formatHourlyDigestChunks(
+        [...confirmed, ...uncertain],
+        smallConfig
+      );
+
+      expect(chunks).toHaveLength(2);
+      // header must NOT dangle at the end of chunk 0
+      expect(chunks[0].text).not.toContain('Возможные неточности');
+      expect(chunks[1].text).toContain('Возможные неточности');
+      expect(chunks[0].findingIds).toEqual([1, 2]);
+      expect(chunks[1].findingIds).toEqual([3]);
+    });
+  });
+
+  describe('digest entry header', () => {
+    it('links the original message and names the author', () => {
+      const chunks = formatHourlyDigestChunks(
+        [makeDigestFinding()],
+        defaultConfig
+      );
+      expect(chunks[0].text).toContain(
+        '<a href="https://t.me/c/123/555">Сообщение</a>'
+      );
+      expect(chunks[0].text).toContain('Alice &lt;3');
+    });
+
+    it('falls back to author-only header without a message url', () => {
+      const chunks = formatHourlyDigestChunks(
+        [makeDigestFinding({ messageUrl: null })],
+        defaultConfig
+      );
+      expect(chunks[0].text).not.toContain('<a href=""');
+      expect(chunks[0].text).toContain('Alice &lt;3');
+    });
+  });
+
+  describe('escapeUrl', () => {
+    it('escapes angle brackets in source URLs', () => {
+      const finding = makeDigestFinding({
+        sources: [
+          {
+            id: 1,
+            findingId: 1,
+            url: 'https://example.com/?q=<script>',
+            title: 'Example',
+            publisher: null,
+            snippet: '',
+            reliability: 'media',
+            retrievedAt: '2026-06-12T00:00:00.000Z',
+          },
+        ],
+      });
+      const text = formatImmediateFactCheck(finding);
+      expect(text).toContain('https://example.com/?q=&lt;script&gt;');
+      expect(text).not.toContain('?q=<script>');
     });
   });
 });

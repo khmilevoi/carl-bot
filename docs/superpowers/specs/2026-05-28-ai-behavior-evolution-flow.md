@@ -103,11 +103,11 @@ flowchart LR
 
 Field kinds inside `user_social_profiles`:
 
-| Kind | Fields | Written by |
-| --- | --- | --- |
-| Event-patched | `affinityScore`, `labels`, `patterns`, `grudges` | live `decideBehavior` patches |
-| Runtime-derived | `trustLevel`, `preferredDistance` | `StatePatchApplicator` (never patched) |
-| Descriptive snapshot | `communicationStyle`, `conflictStyle`, `preferredTone`, `interests` | state-evolution pass derivation |
+| Kind                 | Fields                                                              | Written by                             |
+| -------------------- | ------------------------------------------------------------------- | -------------------------------------- |
+| Event-patched        | `affinityScore`, `labels`, `patterns`, `grudges`                    | live `decideBehavior` patches          |
+| Runtime-derived      | `trustLevel`, `preferredDistance`                                   | `StatePatchApplicator` (never patched) |
+| Descriptive snapshot | `communicationStyle`, `conflictStyle`, `preferredTone`, `interests` | state-evolution pass derivation        |
 
 ## 4. Model routing
 

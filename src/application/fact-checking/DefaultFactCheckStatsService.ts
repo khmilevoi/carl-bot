@@ -1,5 +1,8 @@
 import { inject, injectable } from 'inversify';
 
+const MAX_STATS_USERS = 10;
+const MAX_STATS_CATEGORIES = 10;
+
 import {
   FACT_CHECK_STATS_REPOSITORY_ID,
   type FactCheckStatsRepository,
@@ -10,8 +13,25 @@ import {
   type FactCheckStatsCategoryRow,
   type FactCheckStatsUserRow,
 } from './FactCheckFormatter';
-import type { FactCheckStatsService } from './FactCheckStatsService';
+import type {
+  FactCheckStatsService,
+  FactCheckStatsReport,
+} from './FactCheckStatsService';
 import type { FactCheckStatsPeriod } from '@/domain/repositories/FactCheckRepository';
+
+function minusMonthsClamped(date: Date, months: number): Date {
+  const result = new Date(date);
+  const day = result.getDate();
+  result.setDate(1);
+  result.setMonth(result.getMonth() - months);
+  const lastDayOfMonth = new Date(
+    result.getFullYear(),
+    result.getMonth() + 1,
+    0
+  ).getDate();
+  result.setDate(Math.min(day, lastDayOfMonth));
+  return result;
+}
 
 function periodRange(
   period: FactCheckStatsPeriod,
@@ -27,8 +47,7 @@ function periodRange(
       from.setDate(from.getDate() - 7);
       break;
     case 'monthly':
-      from.setMonth(from.getMonth() - 1);
-      break;
+      return { fromIso: minusMonthsClamped(now, 1).toISOString(), toIso };
   }
   return { fromIso: from.toISOString(), toIso };
 }
@@ -40,25 +59,25 @@ export class DefaultFactCheckStatsService implements FactCheckStatsService {
     private readonly statsRepo: FactCheckStatsRepository
   ) {}
 
-  async getStatsSummary(
+  async getStatsReport(
     chatId: number,
     period: 'daily' | 'weekly' | 'monthly'
-  ): Promise<string> {
+  ): Promise<FactCheckStatsReport> {
     const { fromIso, toIso } = periodRange(period, new Date());
     const rows = await this.statsRepo.getStats({ chatId, fromIso, toIso });
 
     const { confirmed, uncertain, userMap, categoryMap } =
       this.aggregateRows(rows);
 
-    const topUsers = [...userMap.values()].sort(
-      (a, b) => b.confirmed + b.uncertain - (a.confirmed + a.uncertain)
-    );
+    const topUsers = [...userMap.values()]
+      .sort((a, b) => b.confirmed - a.confirmed || b.uncertain - a.uncertain)
+      .slice(0, MAX_STATS_USERS);
 
-    const categories = [...categoryMap.values()].sort(
-      (a, b) => b.confirmed + b.uncertain - (a.confirmed + a.uncertain)
-    );
+    const categories = [...categoryMap.values()]
+      .sort((a, b) => b.confirmed - a.confirmed || b.uncertain - a.uncertain)
+      .slice(0, MAX_STATS_CATEGORIES);
 
-    return formatStatsReport({
+    const text = formatStatsReport({
       period,
       fromIso,
       toIso,
@@ -67,6 +86,8 @@ export class DefaultFactCheckStatsService implements FactCheckStatsService {
       topUsers,
       categories,
     });
+
+    return { text, totalConfirmed: confirmed, totalUncertain: uncertain };
   }
 
   private aggregateRows(rows: FactCheckStatsRow[]): {

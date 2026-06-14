@@ -343,9 +343,8 @@ Template:
 
 <blockquote>short original quote</blockquote>
 
-<b>Correction:</b> short corrected fact.
-<b>Why it matters:</b> one short sentence.
-<b>Sources:</b> <a href="...">source 1</a>, <a href="...">source 2</a>
+<b>Correction:</b> short corrected fact. <b>Why it matters:</b> one short
+sentence. <b>Sources:</b> <a href="...">source 1</a>, <a href="...">source 2</a>
 ```
 
 This should be sent with `reply_to_message_id` when possible.
@@ -358,15 +357,12 @@ Template:
 <b>Fact check: last hour</b>
 
 <b>Confirmed errors</b>
-1. <a href="message_url">Message</a> · Author
-   Was: short quote
-   Correct: short correction
-   Sources: <a href="...">1</a>, <a href="...">2</a>
+1. <a href="message_url">Message</a> · Author Was: short quote Correct: short
+correction Sources: <a href="...">1</a>, <a href="...">2</a>
 
 <b>Requires checking</b>
-1. <a href="message_url">Message</a> · Author
-   Claim: claim text
-   Why uncertain: short explanation
+1. <a href="message_url">Message</a> · Author Claim: claim text Why uncertain:
+short explanation
 ```
 
 ### Statistics
@@ -376,10 +372,8 @@ Template:
 ```html
 <b>Fact check: day</b>
 
-1. Author A - 3 confirmed, 1 requires checking
-2. Author B - 1 confirmed, 4 require checking
-
-Categories: external_fact 2, chat_history 1, financial 1
+1. Author A - 3 confirmed, 1 requires checking 2. Author B - 1 confirmed, 4
+require checking Categories: external_fact 2, chat_history 1, financial 1
 ```
 
 Message links:

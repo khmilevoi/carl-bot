@@ -53,15 +53,17 @@ text). A detected duplicate is **merged** into the existing truth instead of
 inserted.
 
 **In scope**
+
 - Guard inside `applyTruthPatch` for `truth.add` only.
 - Embedding service (new) + embedding storage on `bot_truths`.
 - New patch outcome `merged`.
 
 **Out of scope (deliberately)**
+
 - Migrating / cleaning the duplicate rows already in the DB (user decision:
   prevent new only). Rows are not modified or merged retroactively.
 - Fixing cursor-leapfrog / self-trigger. The guard catches a duplicate
-  regardless of *why* the model re-sent the fact, so this fix is unnecessary
+  regardless of _why_ the model re-sent the fact, so this fix is unnecessary
   for the symptom and stays tracked separately.
 - `truth.revise` / `truth.contest`: these intentionally create new rows
   (supersede / counter). Not guarded. They still get an embedding stored on
@@ -99,11 +101,13 @@ backfill array.
 ### 2. Embedding storage
 
 Migration `017_add_truth_embedding`:
+
 - up: `ALTER TABLE bot_truths ADD COLUMN embedding_json TEXT;` (nullable)
 - down: `ALTER TABLE bot_truths DROP COLUMN embedding_json;` (SQLite ≥ 3.35,
   bundled with better-sqlite3)
 
 `TruthRepository` (interface + `SQLiteTruthRepository`):
+
 - The vector is **kept out of the domain `BotTruth`** so it never leaks into the
   prompt via `PromptBuilder.addTruths` (a 1536-float array per truth would blow
   up tokens). Access via dedicated methods:

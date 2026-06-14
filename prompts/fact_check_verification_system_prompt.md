@@ -10,3 +10,8 @@ professional sources. If that bar is not met, use uncertain at most.
 
 Use neutral wording. Never accuse a person of lying.
 Return strict JSON matching the provided schema.
+
+Set shouldNotifyImmediately to true only for confirmed findings in the
+medical, legal, financial, or safety categories where acting on the error
+could cause real harm. In all other cases set shouldNotifyImmediately to
+false.

@@ -31,6 +31,7 @@ import {
   type FactVerificationResult,
 } from '@/domain/fact-checking/FactCheckSchemas';
 import { FACT_CHECK_CONFIG_ID, type FactCheckConfig } from './FactCheckConfig';
+import { sumAiUsage } from './AiUsageMath';
 import type {
   FactCheckExtractionPromptContext,
   FactCheckVerificationPromptContext,
@@ -105,12 +106,19 @@ export class DefaultFactCheckReasoningService implements FactCheckReasoningServi
   ): Promise<FactCheckAiResult<FactVerificationResult>> {
     const prompt = await this.prompts.createFactCheckVerificationPrompt(input);
     const messages = this.toAiMessages(prompt);
+    const threshold = this.config.verificationConfidenceThreshold;
 
-    const attempt = async (
-      model: AiModelId,
-      escalated: boolean,
-      escalationReason: string | null
-    ): Promise<FactCheckAiResult<FactVerificationResult>> => {
+    let model = this.verificationModel;
+    let escalated = false;
+    let escalationReason: string | null = null;
+    let totalLatencyMs = 0;
+    let usage: AiUsage = {
+      promptTokens: null,
+      completionTokens: null,
+      totalTokens: null,
+    };
+
+    for (;;) {
       const start = Date.now();
       const result =
         await this.gateway.parseChatCompletion<FactVerificationResult>({
@@ -120,19 +128,18 @@ export class DefaultFactCheckReasoningService implements FactCheckReasoningServi
           parse: (content) =>
             factVerificationResultSchema.parse(JSON.parse(content) as unknown),
         });
-      const latencyMs = Date.now() - start;
+      totalLatencyMs += Date.now() - start;
+      usage = sumAiUsage(usage, result.usage);
       void this.logPrompt('factCheckVerification', messages, result.raw);
 
-      const threshold = this.config.verificationConfidenceThreshold;
       const canEscalate = model !== this.verificationEscalationModel;
 
       if (result.parsed == null) {
         if (canEscalate) {
-          return attempt(
-            this.verificationEscalationModel,
-            true,
-            'schema_validation_failed'
-          );
+          model = this.verificationEscalationModel;
+          escalated = true;
+          escalationReason = 'schema_validation_failed';
+          continue;
         }
         throw new Error('Failed to parse fact-check verification response');
       }
@@ -141,11 +148,10 @@ export class DefaultFactCheckReasoningService implements FactCheckReasoningServi
         (f) => f.status !== 'no_error' && f.confidence < threshold
       );
       if (lowConfidence && canEscalate) {
-        return attempt(
-          this.verificationEscalationModel,
-          true,
-          'low_confidence'
-        );
+        model = this.verificationEscalationModel;
+        escalated = true;
+        escalationReason = 'low_confidence';
+        continue;
       }
 
       return {
@@ -155,15 +161,13 @@ export class DefaultFactCheckReasoningService implements FactCheckReasoningServi
           model,
           escalated,
           escalationReason,
-          latencyMs,
-          result.usage
+          totalLatencyMs,
+          usage
         ),
         requestJson: messages,
         responseJson: result.raw,
       };
-    };
-
-    return attempt(this.verificationModel, false, null);
+    }
   }
 
   private buildMetadata(

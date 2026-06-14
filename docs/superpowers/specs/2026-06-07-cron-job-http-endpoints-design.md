@@ -23,12 +23,12 @@
 
 ## Каталог джобов
 
-| Джоб | per-chat | all-chats |
-|---|---|---|
-| `topic-of-day` | `TopicOfDayScheduler.runNow(chatId)` | итерация approved-чатов → `runNow` каждому |
-| `state-evolution` | `StateEvolutionPass.run(chatId)` (force) | `StateEvolutionScheduler.sweep()` (как крон) |
-| `fact-check` | `FactCheckPipeline.runHourly(chatId)` | итерация approved → `runHourly` (= крон hourly) |
-| `fact-check-stats` (period) | `FactCheckPipeline.runStats(chatId, period)` | итерация approved → `runStats` (= крон stats) |
+| Джоб                        | per-chat                                     | all-chats                                       |
+| --------------------------- | -------------------------------------------- | ----------------------------------------------- |
+| `topic-of-day`              | `TopicOfDayScheduler.runNow(chatId)`         | итерация approved-чатов → `runNow` каждому      |
+| `state-evolution`           | `StateEvolutionPass.run(chatId)` (force)     | `StateEvolutionScheduler.sweep()` (как крон)    |
+| `fact-check`                | `FactCheckPipeline.runHourly(chatId)`        | итерация approved → `runHourly` (= крон hourly) |
+| `fact-check-stats` (period) | `FactCheckPipeline.runStats(chatId, period)` | итерация approved → `runStats` (= крон stats)   |
 
 `period ∈ { daily, weekly, monthly }`.
 

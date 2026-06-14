@@ -5,7 +5,8 @@ export type FactCheckRunOutcome =
   | 'partial'
   | 'failed'
   | 'skipped_disabled'
-  | 'skipped_no_messages';
+  | 'skipped_no_messages'
+  | 'skipped_no_findings';
 
 export interface FactCheckRunResult {
   chatId: number;

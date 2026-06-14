@@ -50,6 +50,9 @@ export class DefaultFactCheckNotifier implements FactCheckNotifier {
         await this.messenger.sendMessage(chatId, text, {
           parse_mode: 'HTML',
           disable_web_page_preview: true,
+          ...(finding.telegramMessageId != null
+            ? { reply_parameters: { message_id: finding.telegramMessageId } }
+            : {}),
         });
         await this.findingRepo.markImmediateNotified(finding.id, now);
       } catch (err) {
@@ -107,15 +110,15 @@ export class DefaultFactCheckNotifier implements FactCheckNotifier {
   async sendStats(
     chatId: number,
     period: 'daily' | 'weekly' | 'monthly'
-  ): Promise<void> {
-    try {
-      const text = await this.statsService.getStatsSummary(chatId, period);
-      await this.messenger.sendMessage(chatId, text, {
-        parse_mode: 'HTML',
-        disable_web_page_preview: true,
-      });
-    } catch (err) {
-      this.logger.warn({ err }, 'Stats send failed');
+  ): Promise<boolean> {
+    const report = await this.statsService.getStatsReport(chatId, period);
+    if (report.totalConfirmed + report.totalUncertain === 0) {
+      return false;
     }
+    await this.messenger.sendMessage(chatId, report.text, {
+      parse_mode: 'HTML',
+      disable_web_page_preview: true,
+    });
+    return true;
   }
 }

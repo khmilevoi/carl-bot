@@ -77,6 +77,7 @@ Do not rewrite migration 019. Migration 020 adds a new `audio_transcription_jobs
 ## Task 1: Add Result-Bearing Queue Schema
 
 **Files:**
+
 - Create: `migrations/020_audio_transcription_jobs.up.sql`
 - Create: `migrations/020_audio_transcription_jobs.down.sql`
 - Create: `src/domain/voice/AudioTranscriptionJobTypes.ts`
@@ -196,6 +197,7 @@ Expected: PASS.
 ## Task 2: Add Audio Transcription Job Repository
 
 **Files:**
+
 - Create: `src/domain/repositories/AudioTranscriptionJobRepository.ts`
 - Create: `src/infrastructure/persistence/sqlite/SQLiteAudioTranscriptionJobRepository.ts`
 - Test: `test/SQLiteAudioTranscriptionJobRepository.test.ts`
@@ -235,9 +237,17 @@ import type {
 export interface AudioTranscriptionJobRepository {
   create(job: NewAudioTranscriptionJob): Promise<AudioTranscriptionJob>;
   findById(jobId: number): Promise<AudioTranscriptionJob | null>;
-  claimNext(now: string, lockedUntil: string): Promise<AudioTranscriptionJob | null>;
+  claimNext(
+    now: string,
+    lockedUntil: string
+  ): Promise<AudioTranscriptionJob | null>;
   markDone(jobId: number, resultText: string, now: string): Promise<void>;
-  requeue(jobId: number, availableAt: string, lastError: string, now: string): Promise<void>;
+  requeue(
+    jobId: number,
+    availableAt: string,
+    lastError: string,
+    now: string
+  ): Promise<void>;
   markFailed(jobId: number, lastError: string, now: string): Promise<void>;
   markCancelled(jobId: number, reason: string, now: string): Promise<void>;
 }
@@ -273,6 +283,7 @@ Expected: PASS.
 ## Task 3: Add Awaitable Transcription Service
 
 **Files:**
+
 - Create: `src/application/interfaces/voice/QueuedAudioTranscriptionService.ts`
 - Create: `src/application/use-cases/voice/DefaultQueuedAudioTranscriptionService.ts`
 - Modify: `src/application/voice/VoiceConfig.ts`
@@ -374,6 +385,7 @@ Expected: PASS.
 ## Task 4: Replace Worker Responsibility
 
 **Files:**
+
 - Create: `src/application/interfaces/voice/AudioTranscriptionWorker.ts`
 - Create: `src/application/use-cases/voice/DefaultAudioTranscriptionWorker.ts`
 - Modify: `src/audio-worker.ts`
@@ -436,7 +448,8 @@ Processing:
 
 ```ts
 const downloaded = await this.fileDownload.download(job.telegramFileId);
-const converted = await this.audioConversion.convertForTranscription(downloaded);
+const converted =
+  await this.audioConversion.convertForTranscription(downloaded);
 const text = (await this.transcription.transcribe(converted)).trim();
 if (!text) throw new Error('Empty transcript returned');
 await this.jobRepo.markDone(job.id, text, now);
@@ -465,6 +478,7 @@ Expected: PASS.
 ## Task 5: Switch Telegram Voice Flow To Awaited Text
 
 **Files:**
+
 - Modify: `src/view/telegram/MainService.ts`
 - Modify: `src/application/use-cases/messages/MessageFactory.ts`
 - Test: `test/TelegramVoiceRouting.test.ts`
@@ -565,6 +579,7 @@ Expected: PASS.
 ## Task 6: Update DI Bindings And Remove Old Application Path
 
 **Files:**
+
 - Modify: `src/container/application.ts`
 - Modify: `src/container/audio-worker.ts`
 - Modify: old tests referencing `VoiceMessageService` / `DefaultVoiceMessageWorker`
@@ -622,6 +637,7 @@ Expected: no references, unless intentionally kept in migration/history docs.
 ## Task 7: Focused And Full Verification
 
 **Files:**
+
 - All changed source and test files.
 
 - [ ] **Step 1: Run focused tests**

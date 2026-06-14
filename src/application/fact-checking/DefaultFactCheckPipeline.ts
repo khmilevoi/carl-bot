@@ -49,6 +49,7 @@ import { normalizeClaimKey } from './FactCheckDeduplication';
 import {
   canConfirmFinding,
   getSourcePolicyForCategory,
+  isHighStakesCategory,
 } from './FactCheckSourcePolicy';
 import { buildTelegramMessageUrl } from './FactCheckMessageLinks';
 import type {
@@ -56,7 +57,15 @@ import type {
   VerificationFinding,
 } from '@/domain/fact-checking/FactCheckTypes';
 import type { FactCheckVerificationPromptContext } from './FactCheckPromptContext';
-import type { AiUsage } from '@/application/interfaces/ai/AiGateway';
+import { sumAiUsage } from './AiUsageMath';
+
+const MAX_MODEL_TEXT_CHARS = 1000;
+
+function truncateModelText(text: string): string {
+  return text.length > MAX_MODEL_TEXT_CHARS
+    ? `${text.slice(0, MAX_MODEL_TEXT_CHARS - 1)}…`
+    : text;
+}
 
 @injectable()
 export class DefaultFactCheckPipeline implements FactCheckPipeline {
@@ -156,7 +165,7 @@ export class DefaultFactCheckPipeline implements FactCheckPipeline {
       const verificationResult = await this.reasoning.verifyClaims(verifyInput);
       const latencyMs = Date.now() - start;
 
-      const usageMeta = this.sumUsage(
+      const usageMeta = sumAiUsage(
         extractionResult.metadata.usage,
         verificationResult.metadata.usage
       );
@@ -180,6 +189,7 @@ export class DefaultFactCheckPipeline implements FactCheckPipeline {
           continue;
         }
 
+        const claimText = truncateModelText(finding.claimText);
         const category = claim.category;
         const severity = claim.riskLevel;
 
@@ -207,6 +217,11 @@ export class DefaultFactCheckPipeline implements FactCheckPipeline {
           status = 'uncertain';
         }
 
+        const shouldNotifyImmediately =
+          finding.shouldNotifyImmediately &&
+          status === 'confirmed' &&
+          (severity === 'high' || isHighStakesCategory(category));
+
         const telegramMessageId = message.messageId ?? null;
         const messageUrl = buildTelegramMessageUrl({
           chatId,
@@ -221,18 +236,18 @@ export class DefaultFactCheckPipeline implements FactCheckPipeline {
           telegramMessageId,
           authorUserId: message.userId ?? null,
           authorDisplayName: this.buildDisplayName(message),
-          normalizedClaimKey: normalizeClaimKey(finding.claimText),
-          claimText: finding.claimText,
+          normalizedClaimKey: normalizeClaimKey(claimText),
+          claimText,
           originalQuote: message.content.slice(0, 500),
-          correctedFact: finding.correctedFact,
-          explanation: finding.explanation,
+          correctedFact: truncateModelText(finding.correctedFact),
+          explanation: truncateModelText(finding.explanation),
           category,
           severity,
           status,
           confidence: finding.confidence,
           sourcePolicy,
           sourceRequirementsMet,
-          shouldNotifyImmediately: finding.shouldNotifyImmediately,
+          shouldNotifyImmediately,
           messageUrl,
           createdAt: now,
           checkedAt: now,
@@ -313,18 +328,30 @@ export class DefaultFactCheckPipeline implements FactCheckPipeline {
 
   async runStats(
     chatId: number,
-    _period: 'daily' | 'weekly' | 'monthly'
+    period: 'daily' | 'weekly' | 'monthly'
   ): Promise<FactCheckRunResult> {
-    void this.notifier.sendStats(chatId, _period).catch((err: unknown) => {
-      this.logger.warn({ err }, 'Stats notification failed');
-    });
-    return {
-      chatId,
-      outcome: 'completed',
-      runId: null,
-      processedMessages: 0,
-      persistedFindings: 0,
-    };
+    if (!this.config.enabled) {
+      return this.skip(chatId, 'skipped_disabled');
+    }
+    try {
+      const sent = await this.notifier.sendStats(chatId, period);
+      return {
+        chatId,
+        outcome: sent ? 'completed' : 'skipped_no_findings',
+        runId: null,
+        processedMessages: 0,
+        persistedFindings: 0,
+      };
+    } catch (err) {
+      this.logger.error({ err }, 'Stats notification failed');
+      return {
+        chatId,
+        outcome: 'failed',
+        runId: null,
+        processedMessages: 0,
+        persistedFindings: 0,
+      };
+    }
   }
 
   private async fetchSources(
@@ -388,25 +415,6 @@ export class DefaultFactCheckPipeline implements FactCheckPipeline {
     if (exact != null) return exact;
 
     return sameMessage.length === 1 ? sameMessage[0] : null;
-  }
-
-  private sumUsage(left: AiUsage, right: AiUsage): AiUsage {
-    return {
-      promptTokens: this.sumNullable(left.promptTokens, right.promptTokens),
-      completionTokens: this.sumNullable(
-        left.completionTokens,
-        right.completionTokens
-      ),
-      totalTokens: this.sumNullable(left.totalTokens, right.totalTokens),
-    };
-  }
-
-  private sumNullable(
-    left: number | null,
-    right: number | null
-  ): number | null {
-    if (left == null && right == null) return null;
-    return (left ?? 0) + (right ?? 0);
   }
 
   private buildDisplayName(message: ChatMessage): string {

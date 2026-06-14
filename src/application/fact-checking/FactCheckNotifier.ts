@@ -6,7 +6,7 @@ export interface FactCheckNotifier {
   sendStats(
     chatId: number,
     period: 'daily' | 'weekly' | 'monthly'
-  ): Promise<void>;
+  ): Promise<boolean>;
 }
 
 export const FACT_CHECK_NOTIFIER_ID = Symbol.for(

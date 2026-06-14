@@ -216,8 +216,8 @@ import type { ChatModel } from 'openai/resources/shared';
 In `src/infrastructure/config/DefaultEnvService.ts` and `src/infrastructure/config/TestEnvService.ts`, remove the `ChatModel` import and replace casts:
 
 ```ts
-'gpt-5.4-mini' as AiModelId
-'gpt-5.5' as AiModelId
+'gpt-5.4-mini' as AiModelId;
+'gpt-5.5' as AiModelId;
 ```
 
 Import `AiModelId` from the project interface file.

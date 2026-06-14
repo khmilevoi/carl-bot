@@ -16,20 +16,21 @@
 
 ## File Map
 
-| Action | File | Findings |
-| ------ | ---- | -------- |
-| Modify | `.gitignore` | C7, C8 |
-| Untrack | `.claude/settings.local.json`, `docs/superpowers/plans/*`, `docs/superpowers/specs/*` | C7, C8 |
-| Modify | `src/view/telegram/routes.ts` | A1, A2, A3, B4, B5, B6, D1, D2 |
-| Modify | `src/view/telegram/MainService.ts` | A10, B4, B-export |
-| Create | `test/routes.test.ts` | D1, D2, A1 |
-| Modify | `test/MainService.test.ts` | D3, D4 |
+| Action  | File                                                                                  | Findings                       |
+| ------- | ------------------------------------------------------------------------------------- | ------------------------------ |
+| Modify  | `.gitignore`                                                                          | C7, C8                         |
+| Untrack | `.claude/settings.local.json`, `docs/superpowers/plans/*`, `docs/superpowers/specs/*` | C7, C8                         |
+| Modify  | `src/view/telegram/routes.ts`                                                         | A1, A2, A3, B4, B5, B6, D1, D2 |
+| Modify  | `src/view/telegram/MainService.ts`                                                    | A10, B4, B-export              |
+| Create  | `test/routes.test.ts`                                                                 | D1, D2, A1                     |
+| Modify  | `test/MainService.test.ts`                                                            | D3, D4                         |
 
 ---
 
 ## Task 1: Repo hygiene — re-ignore `.claude` and `docs/superpowers`
 
 **Files:**
+
 - Modify: `.gitignore`
 - Untrack: `.claude/settings.local.json`, `docs/superpowers/plans/`, `docs/superpowers/specs/`
 
@@ -50,10 +51,12 @@ docs/superpowers/
 - [ ] **Step 3: Untrack the committed local-only files**
 
 Run:
+
 ```bash
 git rm --cached .claude/settings.local.json
 git rm -r --cached docs/superpowers/plans docs/superpowers/specs
 ```
+
 Expected: git lists the removed (cached) paths. Files remain on disk. Untracked files in those dirs (this plan + its spec) are unaffected.
 
 - [ ] **Step 4: Verify the local-only files are now ignored**
@@ -67,6 +70,7 @@ Expected: `.gitignore` modified; the `.claude/settings.local.json` and `docs/sup
 git add .gitignore .claude/settings.local.json docs/superpowers/plans docs/superpowers/specs
 git commit -m "chore: stop tracking .claude and docs/superpowers"
 ```
+
 Note: `git add` of removed paths records the deletions. The ignored new files won't be added.
 Expected: commit succeeds; pre-commit hooks pass.
 
@@ -77,6 +81,7 @@ Expected: commit succeeds; pre-commit hooks pass.
 `waitForInputOrCancel` returns the validated value directly (`T | null`) instead of an `InputResult<T>` whose `userMessageId`/`promptMessageId` were always deleted before return. The retry loop becomes a bounded `for` loop with no unreachable `return`.
 
 **Files:**
+
 - Modify: `src/view/telegram/routes.ts`
 - Create: `test/routes.test.ts`
 
@@ -87,10 +92,7 @@ Create `test/routes.test.ts`:
 ```typescript
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  CANCEL_DATA,
-  waitForInputOrCancel,
-} from '../src/view/telegram/routes';
+import { CANCEL_DATA, waitForInputOrCancel } from '../src/view/telegram/routes';
 import type { BotContext } from '../src/view/telegram/context';
 
 const makeCtx = () =>
@@ -130,7 +132,12 @@ describe('waitForInputOrCancel', () => {
       waitUntil: vi.fn().mockResolvedValue(textUpdate('5')),
     } as any;
 
-    const result = await waitForInputOrCancel(conversation, ctx, 'prompt', toNum);
+    const result = await waitForInputOrCancel(
+      conversation,
+      ctx,
+      'prompt',
+      toNum
+    );
 
     expect(result).toBe(5);
     expect(ctx.api.sendMessage).toHaveBeenCalledTimes(1);
@@ -139,9 +146,16 @@ describe('waitForInputOrCancel', () => {
   it('returns null when cancelled', async () => {
     const ctx = makeCtx();
     const update = cancelUpdate();
-    const conversation = { waitUntil: vi.fn().mockResolvedValue(update) } as any;
+    const conversation = {
+      waitUntil: vi.fn().mockResolvedValue(update),
+    } as any;
 
-    const result = await waitForInputOrCancel(conversation, ctx, 'prompt', toNum);
+    const result = await waitForInputOrCancel(
+      conversation,
+      ctx,
+      'prompt',
+      toNum
+    );
 
     expect(result).toBeNull();
     expect(update.answerCallbackQuery).toHaveBeenCalledWith('Отменено');
@@ -156,7 +170,12 @@ describe('waitForInputOrCancel', () => {
         .mockResolvedValueOnce(textUpdate('7')),
     } as any;
 
-    const result = await waitForInputOrCancel(conversation, ctx, 'prompt', toNum);
+    const result = await waitForInputOrCancel(
+      conversation,
+      ctx,
+      'prompt',
+      toNum
+    );
 
     expect(result).toBe(7);
     expect(ctx.api.sendMessage).toHaveBeenCalledTimes(2);
@@ -168,7 +187,12 @@ describe('waitForInputOrCancel', () => {
       waitUntil: vi.fn().mockResolvedValue(textUpdate('abc')),
     } as any;
 
-    const result = await waitForInputOrCancel(conversation, ctx, 'prompt', toNum);
+    const result = await waitForInputOrCancel(
+      conversation,
+      ctx,
+      'prompt',
+      toNum
+    );
 
     expect(result).toBeNull();
     expect(ctx.api.sendMessage).toHaveBeenLastCalledWith(
@@ -324,55 +348,61 @@ export async function waitForInputOrCancel<T>(
 In `makeConversations`, replace each `result.value` / `timeResult.value` / `tzResult.value` with the bare variable. Concretely:
 
 `adminHistoryLimit`:
-```typescript
-    if (result === null) return;
 
-    await actions.setHistoryLimit(chatId, result, true);
+```typescript
+if (result === null) return;
+
+await actions.setHistoryLimit(chatId, result, true);
 ```
 
 `adminInterestInterval`:
-```typescript
-    if (result === null) return;
 
-    await actions.setInterestInterval(chatId, result, true);
+```typescript
+if (result === null) return;
+
+await actions.setInterestInterval(chatId, result, true);
 ```
 
 `adminTopicTime` (the final block):
-```typescript
-    if (tzResult === null) return;
 
-    await actions.setTopicTime(chatId, timeResult, tzResult);
-    await ctx.api.sendMessage(
-      adminChatId,
-      `✅ Время ${timeResult} (${tzResult}) установлено`,
-      { reply_markup: menuRefs.adminChat.menu }
-    );
+```typescript
+if (tzResult === null) return;
+
+await actions.setTopicTime(chatId, timeResult, tzResult);
+await ctx.api.sendMessage(
+  adminChatId,
+  `✅ Время ${timeResult} (${tzResult}) установлено`,
+  { reply_markup: menuRefs.adminChat.menu }
+);
 ```
 
 `userHistoryLimit`:
-```typescript
-    if (result === null) return;
 
-    await actions.setHistoryLimit(chatId, result, false);
+```typescript
+if (result === null) return;
+
+await actions.setHistoryLimit(chatId, result, false);
 ```
 
 `userInterestInterval`:
-```typescript
-    if (result === null) return;
 
-    await actions.setInterestInterval(chatId, result, false);
+```typescript
+if (result === null) return;
+
+await actions.setInterestInterval(chatId, result, false);
 ```
 
 `userTopicTime` (the final block):
-```typescript
-    if (tzResult === null) return;
 
-    await actions.setTopicTime(chatId, timeResult, tzResult);
-    await ctx.api.sendMessage(
-      chatId,
-      `✅ Время ${timeResult} (${tzResult}) установлено`,
-      { reply_markup: menuRefs.chatSettings.menu }
-    );
+```typescript
+if (tzResult === null) return;
+
+await actions.setTopicTime(chatId, timeResult, tzResult);
+await ctx.api.sendMessage(
+  chatId,
+  `✅ Время ${timeResult} (${tzResult}) установлено`,
+  { reply_markup: menuRefs.chatSettings.menu }
+);
 ```
 
 - [ ] **Step 6: Run tests, type check, lint/format**
@@ -398,6 +428,7 @@ git commit -m "refactor: simplify waitForInputOrCancel to return value and remov
 ## Task 3: Fix `adminTopicTime` stale ctx (A1) + export `makeConversations` + regression test
 
 **Files:**
+
 - Modify: `src/view/telegram/routes.ts`
 - Modify: `test/routes.test.ts`
 
@@ -408,7 +439,9 @@ In `src/view/telegram/routes.ts`, change:
 ```typescript
 function makeConversations(
 ```
+
 to:
+
 ```typescript
 export function makeConversations(
 ```
@@ -468,15 +501,15 @@ Expected: FAIL — with the current `external(() => ctx.session?.selectedChatId)
 In `adminTopicTime`, change:
 
 ```typescript
-    const chatId = await conversation.external(
-      () => ctx.session?.selectedChatId
-    );
+const chatId = await conversation.external(() => ctx.session?.selectedChatId);
 ```
+
 to:
+
 ```typescript
-    const chatId = await conversation.external(
-      (ctx) => ctx.session?.selectedChatId
-    );
+const chatId = await conversation.external(
+  (ctx) => ctx.session?.selectedChatId
+);
 ```
 
 - [ ] **Step 5: Run tests + type check**
@@ -492,7 +525,9 @@ Expected: no errors.
 ```bash
 git add src/view/telegram/routes.ts test/routes.test.ts
 ```
+
 Run: `npm run lint:fix && npm run format:fix`
+
 ```bash
 git commit -m "fix: read selectedChatId from replayed conversation context in adminTopicTime"
 ```
@@ -504,6 +539,7 @@ git commit -m "fix: read selectedChatId from replayed conversation context in ad
 `resetMemory` becomes a pure data operation returning a status; the `confirm_reset` "Да" handler deletes the confirmation message and sends a fresh main menu. Add module-level menu-title constants and a `sendMainMenu` helper.
 
 **Files:**
+
 - Modify: `src/view/telegram/MainService.ts`
 - Modify: `src/view/telegram/routes.ts`
 - Modify: `test/MainService.test.ts`
@@ -608,6 +644,7 @@ describe('MainService.handleResetMemory', () => {
 ```
 
 Add the `BotContext` import to the test file if missing:
+
 ```typescript
 import type { BotContext } from '../src/view/telegram/context';
 ```
@@ -698,11 +735,13 @@ with:
 In `src/view/telegram/routes.ts`, change the `Actions` member:
 
 ```typescript
-  resetMemory: (ctx: BotContext, menuMessageId: number) => Promise<void>;
+resetMemory: (ctx: BotContext, menuMessageId: number) => Promise<void>;
 ```
+
 to:
+
 ```typescript
-  resetMemory: (ctx: BotContext) => Promise<'ok' | 'denied' | 'error'>;
+resetMemory: (ctx: BotContext) => Promise<'ok' | 'denied' | 'error'>;
 ```
 
 In `src/view/telegram/MainService.ts`, change the wiring:
@@ -711,7 +750,9 @@ In `src/view/telegram/MainService.ts`, change the wiring:
       resetMemory: (ctx: BotContext, menuMessageId: number) =>
         this.handleResetMemory(ctx, menuMessageId),
 ```
+
 to:
+
 ```typescript
       resetMemory: (ctx: BotContext) => this.handleResetMemory(ctx),
 ```
@@ -730,19 +771,19 @@ export const USER_MENU_TITLE = 'Главное меню\nВыберите дей
 In `buildMenus`, add this function declaration at the top of the function body (right after the opening `// ── Admin menus ───` comment is fine — it is hoisted and resolves `adminMenu`/`userMenu` at call time):
 
 ```typescript
-  async function sendMainMenu(
-    ctx: BotContext,
-    titleOverride?: string
-  ): Promise<void> {
-    const chatId = ctx.chat?.id;
-    if (!chatId) return;
-    const isAdminChat = actions.isAdmin(chatId);
-    const title =
-      titleOverride ?? (isAdminChat ? ADMIN_MENU_TITLE : USER_MENU_TITLE);
-    await ctx.api.sendMessage(chatId, title, {
-      reply_markup: isAdminChat ? adminMenu : userMenu,
-    });
-  }
+async function sendMainMenu(
+  ctx: BotContext,
+  titleOverride?: string
+): Promise<void> {
+  const chatId = ctx.chat?.id;
+  if (!chatId) return;
+  const isAdminChat = actions.isAdmin(chatId);
+  const title =
+    titleOverride ?? (isAdminChat ? ADMIN_MENU_TITLE : USER_MENU_TITLE);
+  await ctx.api.sendMessage(chatId, title, {
+    reply_markup: isAdminChat ? adminMenu : userMenu,
+  });
+}
 ```
 
 - [ ] **Step 7: Rewrite the `confirm_reset` menu**
@@ -750,40 +791,40 @@ In `buildMenus`, add this function declaration at the top of the function body (
 Replace:
 
 ```typescript
-  const confirmReset = new Menu<BotContext>('confirm_reset')
-    .text('✅ Да, сбросить', async (ctx) => {
-      const messageId = ctx.callbackQuery?.message?.message_id;
-      if (messageId) {
-        await ctx.editMessageText('⏳ Сбрасываю память...');
-      }
-      await actions.resetMemory(ctx, messageId ?? 0);
-    })
-    .row()
-    .back('❌ Отмена');
+const confirmReset = new Menu<BotContext>('confirm_reset')
+  .text('✅ Да, сбросить', async (ctx) => {
+    const messageId = ctx.callbackQuery?.message?.message_id;
+    if (messageId) {
+      await ctx.editMessageText('⏳ Сбрасываю память...');
+    }
+    await actions.resetMemory(ctx, messageId ?? 0);
+  })
+  .row()
+  .back('❌ Отмена');
 ```
 
 with:
 
 ```typescript
-  const resetTitles: Record<'ok' | 'denied' | 'error', string> = {
-    ok: '✅ Память сброшена!',
-    denied: '❌ Нет доступа или ключ просрочен.',
-    error: '❌ Ошибка при сбросе памяти.',
-  };
+const resetTitles: Record<'ok' | 'denied' | 'error', string> = {
+  ok: '✅ Память сброшена!',
+  denied: '❌ Нет доступа или ключ просрочен.',
+  error: '❌ Ошибка при сбросе памяти.',
+};
 
-  const confirmReset = new Menu<BotContext>('confirm_reset')
-    .text('✅ Да, сбросить', async (ctx) => {
-      await ctx.editMessageText('⏳ Сбрасываю память...');
-      const result = await actions.resetMemory(ctx);
-      const chatId = ctx.chat?.id;
-      const messageId = ctx.callbackQuery?.message?.message_id;
-      if (chatId && messageId) {
-        await tryDeleteMessage(ctx, chatId, messageId);
-      }
-      await sendMainMenu(ctx, resetTitles[result]);
-    })
-    .row()
-    .back('❌ Отмена');
+const confirmReset = new Menu<BotContext>('confirm_reset')
+  .text('✅ Да, сбросить', async (ctx) => {
+    await ctx.editMessageText('⏳ Сбрасываю память...');
+    const result = await actions.resetMemory(ctx);
+    const chatId = ctx.chat?.id;
+    const messageId = ctx.callbackQuery?.message?.message_id;
+    if (chatId && messageId) {
+      await tryDeleteMessage(ctx, chatId, messageId);
+    }
+    await sendMainMenu(ctx, resetTitles[result]);
+  })
+  .row()
+  .back('❌ Отмена');
 ```
 
 - [ ] **Step 8: Run tests, type check, lint/format**
@@ -808,6 +849,7 @@ git commit -m "fix: re-render main menu after memory reset"
 ## Task 5: Export access-denied edits in place + re-attach menu + setImmediate comment (B5, B-export, A10)
 
 **Files:**
+
 - Modify: `src/view/telegram/routes.ts`
 - Modify: `src/view/telegram/MainService.ts`
 - Modify: `test/MainService.test.ts`
@@ -881,14 +923,16 @@ Expected: these three tests should PASS against the current `handleExportData` (
 In `handleExportData`, change:
 
 ```typescript
-        await editProgress(`📦 Загружено ${i + 1}/${total}...`);
-        await new Promise<void>((resolve) => setImmediate(resolve));
+await editProgress(`📦 Загружено ${i + 1}/${total}...`);
+await new Promise<void>((resolve) => setImmediate(resolve));
 ```
+
 to:
+
 ```typescript
-        await editProgress(`📦 Загружено ${i + 1}/${total}...`);
-        // Yield to the event loop so bulk document sends don't block other updates
-        await new Promise<void>((resolve) => setImmediate(resolve));
+await editProgress(`📦 Загружено ${i + 1}/${total}...`);
+// Yield to the event loop so bulk document sends don't block other updates
+await new Promise<void>((resolve) => setImmediate(resolve));
 ```
 
 - [ ] **Step 4: Fix the export access-denied path (B5)**
@@ -896,39 +940,33 @@ to:
 In `src/view/telegram/routes.ts`, in the `userMenu` "Загрузить данные" handler, replace:
 
 ```typescript
-      if (!hasAccess) {
-        await ctx.reply(
-          '❌ У вас нет доступа к данным этого чата.\n\nДля получения доступа обратитесь к администратору.',
-          { reply_markup: requestDataAccessMenu }
-        );
-        return;
-      }
-      await actions.exportData(
-        ctx,
-        ctx.callbackQuery?.message?.message_id ?? 0
-      );
+if (!hasAccess) {
+  await ctx.reply(
+    '❌ У вас нет доступа к данным этого чата.\n\nДля получения доступа обратитесь к администратору.',
+    { reply_markup: requestDataAccessMenu }
+  );
+  return;
+}
+await actions.exportData(ctx, ctx.callbackQuery?.message?.message_id ?? 0);
 ```
 
 with:
 
 ```typescript
-      if (!hasAccess) {
-        const deniedText =
-          '❌ У вас нет доступа к данным этого чата.\n\nДля получения доступа обратитесь к администратору.';
-        try {
-          await ctx.editMessageText(deniedText, {
-            reply_markup: requestDataAccessMenu,
-          });
-        } catch {
-          await ctx.reply(deniedText, { reply_markup: requestDataAccessMenu });
-        }
-        return;
-      }
-      await actions.exportData(
-        ctx,
-        ctx.callbackQuery?.message?.message_id ?? 0
-      );
-      await sendMainMenu(ctx);
+if (!hasAccess) {
+  const deniedText =
+    '❌ У вас нет доступа к данным этого чата.\n\nДля получения доступа обратитесь к администратору.';
+  try {
+    await ctx.editMessageText(deniedText, {
+      reply_markup: requestDataAccessMenu,
+    });
+  } catch {
+    await ctx.reply(deniedText, { reply_markup: requestDataAccessMenu });
+  }
+  return;
+}
+await actions.exportData(ctx, ctx.callbackQuery?.message?.message_id ?? 0);
+await sendMainMenu(ctx);
 ```
 
 - [ ] **Step 5: Re-attach the menu after admin export (B-export)**
@@ -936,30 +974,24 @@ with:
 In the `adminMenu` "Загрузить данные" handler, replace:
 
 ```typescript
-  const adminMenu = new Menu<BotContext>('admin_menu')
-    .text('📊 Загрузить данные', async (ctx) => {
-      await actions.exportData(
-        ctx,
-        ctx.callbackQuery?.message?.message_id ?? 0
-      );
-    })
-    .row()
-    .submenu('💬 Управление чатами', 'admin_chats');
+const adminMenu = new Menu<BotContext>('admin_menu')
+  .text('📊 Загрузить данные', async (ctx) => {
+    await actions.exportData(ctx, ctx.callbackQuery?.message?.message_id ?? 0);
+  })
+  .row()
+  .submenu('💬 Управление чатами', 'admin_chats');
 ```
 
 with:
 
 ```typescript
-  const adminMenu = new Menu<BotContext>('admin_menu')
-    .text('📊 Загрузить данные', async (ctx) => {
-      await actions.exportData(
-        ctx,
-        ctx.callbackQuery?.message?.message_id ?? 0
-      );
-      await sendMainMenu(ctx);
-    })
-    .row()
-    .submenu('💬 Управление чатами', 'admin_chats');
+const adminMenu = new Menu<BotContext>('admin_menu')
+  .text('📊 Загрузить данные', async (ctx) => {
+    await actions.exportData(ctx, ctx.callbackQuery?.message?.message_id ?? 0);
+    await sendMainMenu(ctx);
+  })
+  .row()
+  .submenu('💬 Управление чатами', 'admin_chats');
 ```
 
 - [ ] **Step 6: Run tests, type check, lint/format**
@@ -984,6 +1016,7 @@ git commit -m "fix: edit menu in place on export denial and re-render menu after
 ## Task 6: Admin/user routing test for /start (D2)
 
 **Files:**
+
 - Modify: `test/routes.test.ts`
 
 - [ ] **Step 1: Write the routing test**
@@ -991,7 +1024,11 @@ git commit -m "fix: edit menu in place on export denial and re-render menu after
 Append to `test/routes.test.ts`:
 
 ```typescript
-import { setupBotRouting, ADMIN_MENU_TITLE, USER_MENU_TITLE } from '../src/view/telegram/routes';
+import {
+  setupBotRouting,
+  ADMIN_MENU_TITLE,
+  USER_MENU_TITLE,
+} from '../src/view/telegram/routes';
 
 describe('setupBotRouting /start routing', () => {
   const fullActions = (isAdmin: (id: number) => boolean): Actions =>
@@ -1035,7 +1072,10 @@ describe('setupBotRouting /start routing', () => {
 
   it('shows the admin menu in the admin chat', async () => {
     const handler = captureCommand(fullActions(() => true));
-    const ctx = { chat: { id: 1 }, reply: vi.fn().mockResolvedValue(undefined) };
+    const ctx = {
+      chat: { id: 1 },
+      reply: vi.fn().mockResolvedValue(undefined),
+    };
 
     await handler(ctx);
 
@@ -1047,7 +1087,10 @@ describe('setupBotRouting /start routing', () => {
 
   it('shows the user menu in a non-admin chat', async () => {
     const handler = captureCommand(fullActions(() => false));
-    const ctx = { chat: { id: 9 }, reply: vi.fn().mockResolvedValue(undefined) };
+    const ctx = {
+      chat: { id: 9 },
+      reply: vi.fn().mockResolvedValue(undefined),
+    };
 
     await handler(ctx);
 
@@ -1064,25 +1107,28 @@ Combine the new `import` from `'../src/view/telegram/routes'` with the existing 
 Note: the `/start` handler uses `menuRefs.adminMenu.title` / `menuRefs.userMenu.title`. Update `setupBotRouting`'s `menuRefs` to reference the new constants so the test assertions match:
 
 In `setupBotRouting`, change:
+
 ```typescript
-  const menuRefs = {
-    userMenu: { menu: userMenu, title: 'Главное меню\nВыберите действие:' },
-    adminMenu: {
-      menu: adminMenu,
-      title: 'Панель администратора\nВыберите действие:',
-    },
-    chatSettings: { menu: chatSettings, title: 'Настройки чата:' },
-    adminChat: { menu: adminChat, title: 'Управление чатом:' },
-  };
+const menuRefs = {
+  userMenu: { menu: userMenu, title: 'Главное меню\nВыберите действие:' },
+  adminMenu: {
+    menu: adminMenu,
+    title: 'Панель администратора\nВыберите действие:',
+  },
+  chatSettings: { menu: chatSettings, title: 'Настройки чата:' },
+  adminChat: { menu: adminChat, title: 'Управление чатом:' },
+};
 ```
+
 to:
+
 ```typescript
-  const menuRefs = {
-    userMenu: { menu: userMenu, title: USER_MENU_TITLE },
-    adminMenu: { menu: adminMenu, title: ADMIN_MENU_TITLE },
-    chatSettings: { menu: chatSettings, title: 'Настройки чата:' },
-    adminChat: { menu: adminChat, title: 'Управление чатом:' },
-  };
+const menuRefs = {
+  userMenu: { menu: userMenu, title: USER_MENU_TITLE },
+  adminMenu: { menu: adminMenu, title: ADMIN_MENU_TITLE },
+  chatSettings: { menu: chatSettings, title: 'Настройки чата:' },
+  adminChat: { menu: adminChat, title: 'Управление чатом:' },
+};
 ```
 
 - [ ] **Step 2: Run the test to verify it passes**

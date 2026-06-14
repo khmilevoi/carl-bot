@@ -4,6 +4,10 @@ import type {
   FactCheckSourceReliability,
 } from '@/domain/fact-checking/FactCheckTypes';
 
+export function isHighStakesCategory(category: FactCheckCategory): boolean {
+  return getSourcePolicyForCategory(category) === 'primary_required';
+}
+
 export interface SourcePolicyInput {
   category: FactCheckCategory;
   sourcePolicy: FactCheckSourcePolicy;

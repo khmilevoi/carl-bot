@@ -213,30 +213,79 @@ describe('DefaultFactCheckNotifier', () => {
     );
   });
 
-  it('sendStats sends formatted stats message', async () => {
+  it('sendStats sends the report and returns true when there are findings', async () => {
     const statsService = {
-      getStatsSummary: vi.fn().mockResolvedValue('<b>Статистика</b>'),
+      getStatsReport: vi.fn().mockResolvedValue({
+        text: '<b>Статистика</b>',
+        totalConfirmed: 2,
+        totalUncertain: 1,
+      }),
     } as unknown as FactCheckStatsService;
     const messenger = {
-      sendMessage: vi.fn().mockResolvedValue(1),
+      sendMessage: vi.fn().mockResolvedValue(100),
     } as unknown as ChatMessenger;
-    const findingRepo = {} as unknown as FactCheckFindingRepository;
-
     const notifier = new DefaultFactCheckNotifier(
-      findingRepo,
+      {} as unknown as FactCheckFindingRepository,
       makeConfig(),
       messenger,
       statsService,
       makeLoggerFactory()
     );
 
-    await notifier.sendStats(5, 'weekly');
+    await expect(notifier.sendStats(42, 'daily')).resolves.toBe(true);
+    expect(messenger.sendMessage).toHaveBeenCalledOnce();
+  });
 
-    expect(statsService.getStatsSummary).toHaveBeenCalledWith(5, 'weekly');
-    expect(messenger.sendMessage).toHaveBeenCalledWith(
-      5,
-      '<b>Статистика</b>',
-      expect.anything()
+  it('sendImmediate replies to the original telegram message when id is known', async () => {
+    const finding = { ...makeFinding(3), telegramMessageId: 555 };
+    const findingRepo = {
+      findUnsentImmediate: vi.fn().mockResolvedValue([finding]),
+      markImmediateNotified: vi.fn().mockResolvedValue(undefined),
+      recordNotificationError: vi.fn(),
+    } as unknown as FactCheckFindingRepository;
+    const messenger = {
+      sendMessage: vi.fn().mockResolvedValue(100),
+    } as unknown as ChatMessenger;
+
+    const notifier = new DefaultFactCheckNotifier(
+      findingRepo,
+      makeConfig(),
+      messenger,
+      {} as unknown as FactCheckStatsService,
+      makeLoggerFactory()
     );
+
+    await notifier.sendImmediate(42);
+
+    expect(messenger.sendMessage).toHaveBeenCalledWith(
+      42,
+      expect.any(String),
+      expect.objectContaining({
+        reply_parameters: { message_id: 555 },
+      })
+    );
+  });
+
+  it('sendStats skips sending and returns false when there are no findings', async () => {
+    const statsService = {
+      getStatsReport: vi.fn().mockResolvedValue({
+        text: '<b>Статистика</b>',
+        totalConfirmed: 0,
+        totalUncertain: 0,
+      }),
+    } as unknown as FactCheckStatsService;
+    const messenger = {
+      sendMessage: vi.fn(),
+    } as unknown as ChatMessenger;
+    const notifier = new DefaultFactCheckNotifier(
+      {} as unknown as FactCheckFindingRepository,
+      makeConfig(),
+      messenger,
+      statsService,
+      makeLoggerFactory()
+    );
+
+    await expect(notifier.sendStats(42, 'daily')).resolves.toBe(false);
+    expect(messenger.sendMessage).not.toHaveBeenCalled();
   });
 });

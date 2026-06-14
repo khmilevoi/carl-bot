@@ -263,7 +263,7 @@ describe('DefaultFactCheckPipeline', () => {
     );
     expect(findingRepo.insertFinding).toHaveBeenCalledOnce();
     expect(findingRepo.insertFinding).toHaveBeenCalledWith(
-      expect.objectContaining({ shouldNotifyImmediately: true })
+      expect.objectContaining({ shouldNotifyImmediately: false })
     );
     expect(cursorRepo.upsert).toHaveBeenCalledWith(
       expect.objectContaining({ chatId, lastCheckedMessageId: 10 })
@@ -417,7 +417,7 @@ describe('DefaultFactCheckPipeline', () => {
               explanation: 'Verifier could not satisfy source policy.',
               sourceRequirementsMet: false,
               sourceIndexes: [0],
-              shouldNotifyImmediately: false,
+              shouldNotifyImmediately: true,
             },
           ],
         },
@@ -473,6 +473,7 @@ describe('DefaultFactCheckPipeline', () => {
       expect.objectContaining({
         status: 'uncertain',
         sourceRequirementsMet: false,
+        shouldNotifyImmediately: false,
       })
     );
   });
@@ -589,6 +590,117 @@ describe('DefaultFactCheckPipeline', () => {
         category: 'medical',
         severity: 'high',
         sourcePolicy: 'primary_required',
+        shouldNotifyImmediately: true,
+      })
+    );
+  });
+
+  it('persists shouldNotifyImmediately:true for confirmed external_fact with riskLevel:high', async () => {
+    const chatId = 789;
+    const batchMsg = makeBatchMessage(15);
+
+    const cursorRepo = {
+      get: vi.fn().mockResolvedValue(null),
+      upsert: vi.fn().mockResolvedValue(undefined),
+    } as unknown as FactCheckWindowRepository;
+    const windowRepo = {
+      findReadyByChatIdAfterId: vi.fn().mockResolvedValue([batchMsg]),
+      findReadyContextBeforeId: vi.fn().mockResolvedValue([]),
+    } as unknown as FactCheckMessageWindowRepository;
+    const reasoning = {
+      extractClaims: vi.fn().mockResolvedValue({
+        result: {
+          claims: [
+            {
+              messageId: 15,
+              claimText: 'This product is 100% safe for all users',
+              category: 'external_fact',
+              riskLevel: 'high',
+              needsExternalSources: true,
+              whyCheckable: 'safety-related external fact claim',
+              contextMessageIds: [],
+            },
+          ],
+        },
+        metadata: {
+          usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
+          selectedModel: 'extract-model',
+          escalated: false,
+        },
+        requestJson: {},
+        responseJson: {},
+      }),
+      verifyClaims: vi.fn().mockResolvedValue({
+        result: {
+          findings: [
+            {
+              messageId: 15,
+              claimText: 'This product is 100% safe for all users',
+              status: 'confirmed',
+              confidence: 0.95,
+              correctedFact: 'No product is universally safe for all users.',
+              explanation: 'External fact verified with high severity.',
+              sourceRequirementsMet: true,
+              sourceIndexes: [0],
+              shouldNotifyImmediately: true,
+            },
+          ],
+        },
+        metadata: {
+          usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
+          selectedModel: 'verify-model',
+          escalated: false,
+        },
+        requestJson: {},
+        responseJson: {},
+      }),
+    } as unknown as FactCheckReasoningService;
+    const findingRepo = {
+      insertFinding: vi.fn().mockResolvedValue(1),
+    } as unknown as FactCheckFindingRepository;
+
+    const pipeline = new DefaultFactCheckPipeline(
+      makeConfig(),
+      windowRepo,
+      cursorRepo,
+      {
+        findById: vi.fn().mockResolvedValue(undefined),
+      } as unknown as ChatRepository,
+      reasoning,
+      {
+        search: vi.fn().mockResolvedValue([
+          {
+            url: 'https://example.com/safety',
+            title: 'Safety study',
+            publisher: 'Example Research',
+            snippet: 'Product safety analysis',
+            reliability: 'authoritative',
+            retrievedAt: '2026-06-12T00:00:00.000Z',
+          },
+        ]),
+      } as unknown as SourceSearchService,
+      {
+        createRun: vi.fn().mockResolvedValue(50),
+        completeRun: vi.fn().mockResolvedValue(undefined),
+        failRun: vi.fn(),
+      } as unknown as FactCheckRunRepository,
+      findingRepo,
+      {
+        sendImmediate: vi.fn().mockResolvedValue(undefined),
+        sendHourlyDigest: vi.fn().mockResolvedValue(undefined),
+        sendStats: vi.fn(),
+      } as unknown as FactCheckNotifier,
+      makeLoggerFactory()
+    );
+
+    await pipeline.runHourly(chatId);
+
+    expect(findingRepo.insertFinding).toHaveBeenCalledWith(
+      expect.objectContaining({
+        category: 'external_fact',
+        severity: 'high',
+        status: 'confirmed',
+        shouldNotifyImmediately: true,
       })
     );
   });
@@ -642,15 +754,12 @@ describe('DefaultFactCheckPipeline', () => {
     expect(cursorRepo.upsert).not.toHaveBeenCalled();
   });
 
-  it('runStats fires notifier and returns completed', async () => {
-    const notifier = {
-      sendImmediate: vi.fn(),
-      sendHourlyDigest: vi.fn(),
-      sendStats: vi.fn().mockResolvedValue(undefined),
-    } as unknown as FactCheckNotifier;
-
-    const pipeline = new DefaultFactCheckPipeline(
-      makeConfig(),
+  function makeStatsPipeline(
+    notifier: FactCheckNotifier,
+    config = makeConfig()
+  ): DefaultFactCheckPipeline {
+    return new DefaultFactCheckPipeline(
+      config,
       {} as unknown as FactCheckMessageWindowRepository,
       {} as unknown as FactCheckWindowRepository,
       {} as unknown as ChatRepository,
@@ -661,9 +770,141 @@ describe('DefaultFactCheckPipeline', () => {
       notifier,
       makeLoggerFactory()
     );
+  }
 
-    const result = await pipeline.runStats(111, 'daily');
+  it('runStats returns completed when the notifier sends a report', async () => {
+    const notifier = {
+      sendStats: vi.fn().mockResolvedValue(true),
+    } as unknown as FactCheckNotifier;
+    const result = await makeStatsPipeline(notifier).runStats(111, 'daily');
     expect(result.outcome).toBe('completed');
     expect(result.chatId).toBe(111);
+    expect(notifier.sendStats).toHaveBeenCalledWith(111, 'daily');
+  });
+
+  it('runStats returns skipped_disabled when fact checking is disabled', async () => {
+    const notifier = { sendStats: vi.fn() } as unknown as FactCheckNotifier;
+    const result = await makeStatsPipeline(
+      notifier,
+      makeConfig({ enabled: false })
+    ).runStats(111, 'daily');
+    expect(result.outcome).toBe('skipped_disabled');
+    expect(notifier.sendStats).not.toHaveBeenCalled();
+  });
+
+  it('runStats returns skipped_no_findings when there is nothing to report', async () => {
+    const notifier = {
+      sendStats: vi.fn().mockResolvedValue(false),
+    } as unknown as FactCheckNotifier;
+    const result = await makeStatsPipeline(notifier).runStats(111, 'weekly');
+    expect(result.outcome).toBe('skipped_no_findings');
+  });
+
+  it('runStats returns failed when sending throws', async () => {
+    const notifier = {
+      sendStats: vi.fn().mockRejectedValue(new Error('telegram down')),
+    } as unknown as FactCheckNotifier;
+    const result = await makeStatsPipeline(notifier).runStats(111, 'monthly');
+    expect(result.outcome).toBe('failed');
+  });
+
+  it('truncates oversized model text before persisting findings', async () => {
+    const chatId = 456;
+    const batchMsg = makeBatchMessage(10);
+    const longText = 'x'.repeat(5000);
+
+    const reasoning = {
+      extractClaims: vi.fn().mockResolvedValue({
+        result: {
+          claims: [
+            {
+              messageId: 10,
+              claimText: longText,
+              category: 'external_fact',
+              needsExternalSources: false,
+              riskLevel: 'low',
+              whyCheckable: 'long claim',
+              contextMessageIds: [],
+            },
+          ],
+        },
+        metadata: {
+          usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
+          escalated: false,
+        },
+        requestJson: {},
+        responseJson: {},
+      }),
+      verifyClaims: vi.fn().mockResolvedValue({
+        result: {
+          findings: [
+            {
+              messageId: 10,
+              claimText: longText,
+              status: 'confirmed',
+              confidence: 0.9,
+              correctedFact: longText,
+              explanation: longText,
+              sourceRequirementsMet: true,
+              sourceIndexes: [],
+              shouldNotifyImmediately: false,
+            },
+          ],
+        },
+        metadata: {
+          usage: { promptTokens: 1, completionTokens: 1, totalTokens: 2 },
+          escalated: false,
+        },
+        requestJson: {},
+        responseJson: {},
+      }),
+    } as unknown as FactCheckReasoningService;
+
+    const findingRepo = {
+      insertFinding: vi.fn().mockResolvedValue(1),
+    } as unknown as FactCheckFindingRepository;
+
+    const pipeline = new DefaultFactCheckPipeline(
+      makeConfig(),
+      {
+        findReadyByChatIdAfterId: vi.fn().mockResolvedValue([batchMsg]),
+        findReadyContextBeforeId: vi.fn().mockResolvedValue([]),
+      } as unknown as FactCheckMessageWindowRepository,
+      {
+        get: vi.fn().mockResolvedValue(null),
+        upsert: vi.fn().mockResolvedValue(undefined),
+      } as unknown as FactCheckWindowRepository,
+      {
+        findById: vi.fn().mockResolvedValue(undefined),
+      } as unknown as ChatRepository,
+      reasoning,
+      {
+        search: vi.fn().mockResolvedValue([]),
+      } as unknown as SourceSearchService,
+      {
+        createRun: vi.fn().mockResolvedValue(42),
+        completeRun: vi.fn().mockResolvedValue(undefined),
+        failRun: vi.fn(),
+      } as unknown as FactCheckRunRepository,
+      findingRepo,
+      {
+        sendImmediate: vi.fn().mockResolvedValue(undefined),
+        sendHourlyDigest: vi.fn().mockResolvedValue(undefined),
+        sendStats: vi.fn(),
+      } as unknown as FactCheckNotifier,
+      makeLoggerFactory()
+    );
+
+    await pipeline.runHourly(chatId);
+
+    const input = (findingRepo.insertFinding as ReturnType<typeof vi.fn>).mock
+      .calls[0][0] as {
+      claimText: string;
+      correctedFact: string;
+      explanation: string;
+    };
+    expect(input.claimText.length).toBeLessThanOrEqual(1000);
+    expect(input.correctedFact.length).toBeLessThanOrEqual(1000);
+    expect(input.explanation.length).toBeLessThanOrEqual(1000);
   });
 });

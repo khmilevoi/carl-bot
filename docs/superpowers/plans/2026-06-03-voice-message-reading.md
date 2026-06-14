@@ -83,6 +83,7 @@ Important project rule: never commit files under `docs/superpowers/`.
 ## Task 1: Domain Types And Migration
 
 **Files:**
+
 - Create: `src/domain/voice/VoiceTypes.ts`
 - Create: `src/domain/repositories/VoiceTranscriptionJobRepository.ts`
 - Create: `migrations/019_voice_messages_and_jobs.up.sql`
@@ -232,9 +233,17 @@ export interface VoiceTranscriptionJobRepository {
     message: StoredMessage,
     job: NewVoiceTranscriptionJob
   ): Promise<VoiceTranscriptionJob>;
-  claimNext(now: string, lockedUntil: string): Promise<VoiceTranscriptionJob | null>;
+  claimNext(
+    now: string,
+    lockedUntil: string
+  ): Promise<VoiceTranscriptionJob | null>;
   markDone(jobId: number, now: string): Promise<void>;
-  requeue(jobId: number, availableAt: string, lastError: string, now: string): Promise<void>;
+  requeue(
+    jobId: number,
+    availableAt: string,
+    lastError: string,
+    now: string
+  ): Promise<void>;
   markFailed(jobId: number, lastError: string, now: string): Promise<void>;
   markCancelled(jobId: number, reason: string, now: string): Promise<void>;
 }
@@ -356,6 +365,7 @@ Expected: PASS.
 ## Task 2: Message Repository Status Support
 
 **Files:**
+
 - Modify: `src/domain/repositories/MessageRepository.ts`
 - Modify: `src/application/interfaces/messages/MessageService.ts`
 - Modify: `src/application/use-cases/messages/RepositoryMessageService.ts`
@@ -459,7 +469,10 @@ export interface MessageRepository {
   findLastByChatId(chatId: number, limit: number): Promise<ChatMessage[]>;
   clearByChatId(chatId: number): Promise<void>;
   findPendingVoiceById(messageId: number): Promise<StoredMessage | null>;
-  markVoiceTranscribed(messageId: number, content: string): Promise<StoredMessage | null>;
+  markVoiceTranscribed(
+    messageId: number,
+    content: string
+  ): Promise<StoredMessage | null>;
   markVoiceFailed(messageId: number): Promise<void>;
 }
 ```
@@ -525,6 +538,7 @@ Expected: PASS. This verifies pending voice placeholders do not leak into prompt
 ## Task 3: SQLite Voice Job Queue Repository
 
 **Files:**
+
 - Create: `src/infrastructure/persistence/sqlite/SQLiteVoiceTranscriptionJobRepository.ts`
 - Modify: `src/infrastructure/persistence/sqlite/DbProvider.ts`
 - Modify: `src/container/repositories.ts`
@@ -647,6 +661,7 @@ Expected: PASS.
 ## Task 4: Voice Configuration
 
 **Files:**
+
 - Create: `src/application/voice/VoiceConfig.ts`
 - Modify: `src/application/interfaces/env/EnvService.ts`
 - Modify: `src/infrastructure/config/envSchema.ts`
@@ -750,6 +765,7 @@ Expected: PASS.
 ## Task 5: Voice Enqueue Use Case
 
 **Files:**
+
 - Create: `src/application/interfaces/voice/VoiceMessageService.ts`
 - Create: `src/application/use-cases/voice/DefaultVoiceMessageService.ts`
 - Modify: `src/container/application.ts`
@@ -920,6 +936,7 @@ Expected: PASS.
 ## Task 6: Voice Worker Use Case
 
 **Files:**
+
 - Create: `src/application/interfaces/voice/VoiceMessageWorker.ts`
 - Create: `src/application/interfaces/voice/TelegramFileDownloadService.ts`
 - Create: `src/application/interfaces/voice/AudioConversionService.ts`
@@ -956,15 +973,23 @@ it('processes a claimed voice job and sends the ready message to behavior pipeli
     }),
     markVoiceFailed: vi.fn(),
   } as unknown as MessageService;
-  const behavior = { handleStoredMessage: vi.fn().mockResolvedValue({ kind: 'queued' }) };
+  const behavior = {
+    handleStoredMessage: vi.fn().mockResolvedValue({ kind: 'queued' }),
+  };
 
   const worker = makeWorker({ repo, messages, behavior, now });
 
   await worker.drainOnce();
 
-  expect(messages.markVoiceTranscribed).toHaveBeenCalledWith(job.messageId, '[voice] hello Carl');
+  expect(messages.markVoiceTranscribed).toHaveBeenCalledWith(
+    job.messageId,
+    '[voice] hello Carl'
+  );
   expect(behavior.handleStoredMessage).toHaveBeenCalledWith({
-    message: expect.objectContaining({ id: job.messageId, content: '[voice] hello Carl' }),
+    message: expect.objectContaining({
+      id: job.messageId,
+      content: '[voice] hello Carl',
+    }),
     directTrigger: null,
   });
   expect(repo.markDone).toHaveBeenCalledWith(job.id, expect.any(String));
@@ -1005,7 +1030,9 @@ export interface ConvertedAudioFile {
 }
 
 export interface AudioConversionService {
-  convertForTranscription(input: TelegramDownloadedFile): Promise<ConvertedAudioFile>;
+  convertForTranscription(
+    input: TelegramDownloadedFile
+  ): Promise<ConvertedAudioFile>;
 }
 ```
 
@@ -1075,6 +1102,7 @@ Expected: PASS.
 ## Task 7: External Services
 
 **Files:**
+
 - Create: `src/infrastructure/external/TelegramFileDownloadService.ts`
 - Create: `src/infrastructure/external/FfmpegAudioConversionService.ts`
 - Create: `src/infrastructure/external/OpenAIAudioTranscriptionService.ts`
@@ -1152,6 +1180,7 @@ Expected: PASS.
 ## Task 8: Telegram Voice Routing
 
 **Files:**
+
 - Modify: `src/view/telegram/routes.ts`
 - Modify: `src/view/telegram/MainService.ts`
 - Test: `test/TelegramVoiceRouting.test.ts`
@@ -1225,6 +1254,7 @@ Expected: PASS.
 ## Task 9: Worker Entrypoint And Build Wiring
 
 **Files:**
+
 - Create: `src/audio-worker.ts`
 - Modify: `rsbuild.config.ts`
 - Modify: `package.json`
@@ -1329,6 +1359,7 @@ Expected: PASS and `dist/audio-worker.js` exists.
 ## Task 10: Docker Runtime Updates
 
 **Files:**
+
 - Modify: `Dockerfile`
 - Modify: `docker-compose.yml`
 - Modify: `docker-compose.dev.yml`
@@ -1379,25 +1410,26 @@ This is the critical change: without converting the script to `ENTRYPOINT`, a `c
 Add a second service that reuses the same image/target and the shared `./data` volume:
 
 ```yaml
-  worker:
-    build:
-      context: .
-      target: runtime
-    env_file:
-      - .env
-    environment:
-      DATABASE_URL: file:///data/memory.db
-      NODE_ENV: production
-    command: ["node", "dist/audio-worker.js"]
-    volumes:
-      - ./data:/data
-    depends_on:
-      - db
-      - app
-    restart: unless-stopped
+worker:
+  build:
+    context: .
+    target: runtime
+  env_file:
+    - .env
+  environment:
+    DATABASE_URL: file:///data/memory.db
+    NODE_ENV: production
+  command: ['node', 'dist/audio-worker.js']
+  volumes:
+    - ./data:/data
+  depends_on:
+    - db
+    - app
+  restart: unless-stopped
 ```
 
-> **First-boot migration ordering:** both `app` and `worker` run the entrypoint migration gate. `depends_on` waits only for container *start*, not readiness, so on a fresh DB both could call `migrate.js up` concurrently (019's `CREATE TABLE` is not `IF NOT EXISTS`). Mitigation options, pick one and note it:
+> **First-boot migration ordering:** both `app` and `worker` run the entrypoint migration gate. `depends_on` waits only for container _start_, not readiness, so on a fresh DB both could call `migrate.js up` concurrently (019's `CREATE TABLE` is not `IF NOT EXISTS`). Mitigation options, pick one and note it:
+>
 > - **Recommended:** add a one-shot `migrate` service (same image, `command: ["node","dist/migrate.js","up"]`, `restart: "no"`) and have both `app` and `worker` `depends_on: { migrate: { condition: service_completed_successfully } }`. This serializes migrations once; the entrypoint's idempotent `migrate.js check` then short-circuits in both long-running containers.
 > - **Minimal:** rely on the WAL + `busy_timeout` hardening from Task 3 plus `restart: unless-stopped` so the loser self-heals on restart. Acceptable on a single-host Pi but logs a scary error on first boot.
 
@@ -1406,21 +1438,21 @@ Add a second service that reuses the same image/target and the shared `./data` v
 Mirror the existing dev `app` override so the worker also runs in watch/dev mode against the `deps` target:
 
 ```yaml
-  worker:
-    build:
-      context: .
-      target: deps
-    command: sh -c "rsbuild build && node dist/audio-worker.js"
-    environment:
-      DATABASE_URL: file:///data/memory.db
-      NODE_ENV: development
-    volumes:
-      - ./src:/app/src
-      - ./prompts:/app/prompts
-      - ./migrations:/app/migrations
-      - ./rsbuild.config.ts:/app/rsbuild.config.ts
-      - ./tsconfig.json:/app/tsconfig.json
-    restart: unless-stopped
+worker:
+  build:
+    context: .
+    target: deps
+  command: sh -c "rsbuild build && node dist/audio-worker.js"
+  environment:
+    DATABASE_URL: file:///data/memory.db
+    NODE_ENV: development
+  volumes:
+    - ./src:/app/src
+    - ./prompts:/app/prompts
+    - ./migrations:/app/migrations
+    - ./rsbuild.config.ts:/app/rsbuild.config.ts
+    - ./tsconfig.json:/app/tsconfig.json
+  restart: unless-stopped
 ```
 
 Match whatever watch command the existing dev `app` uses; keep both services on the same source mounts so a rebuild covers bot and worker.
@@ -1446,6 +1478,7 @@ If Docker is unavailable locally, record that verification could not be run and 
 ## Task 11: End-To-End Voice Job Integration
 
 **Files:**
+
 - Test: `test/VoiceMessageWorker.test.ts`
 - Test: `test/SQLiteVoiceTranscriptionJobRepository.test.ts`
 - Test: `test/BehaviorPipeline.test.ts`
@@ -1485,6 +1518,7 @@ Expected: PASS.
 ## Task 12: Formatting, Linting, Typecheck, Full Test
 
 **Files:**
+
 - All changed implementation files.
 
 - [ ] **Step 1: Run auto-fix commands**

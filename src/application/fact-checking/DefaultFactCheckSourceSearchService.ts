@@ -82,7 +82,7 @@ export function extractUrlCitations(raw: unknown): UrlCitation[] {
   return citations;
 }
 
-function classifyReliability(url: string): FactCheckSourceReliability {
+export function classifyReliability(url: string): FactCheckSourceReliability {
   try {
     const hostname = new URL(url).hostname.toLowerCase();
     if (hostname.endsWith('.gov') || hostname.endsWith('.edu')) {
@@ -96,8 +96,6 @@ function classifyReliability(url: string): FactCheckSourceReliability {
       'pubmed.ncbi.nlm.nih.gov',
       'ncbi.nlm.nih.gov',
       'scholar.google.com',
-      'wikipedia.org',
-      'britannica.com',
     ];
     if (
       authoritative.some((d) => hostname === d || hostname.endsWith(`.${d}`))
@@ -105,6 +103,8 @@ function classifyReliability(url: string): FactCheckSourceReliability {
       return 'authoritative';
     }
     const media = [
+      'wikipedia.org',
+      'britannica.com',
       'bbc.com',
       'bbc.co.uk',
       'reuters.com',

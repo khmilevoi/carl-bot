@@ -55,7 +55,7 @@
   '🥹',
   '🫶',
   '🫠',
-] as const
+] as const;
 ```
 
 The validator drops any `react` action whose `emoji` is not an exact match. `BehaviorExecutor` never attempts to send a reaction that was dropped by validation.

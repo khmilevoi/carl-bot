@@ -186,8 +186,8 @@ independent self-healing layer: the HTTP handler runs
 `findChatsNeedingSweep(now - maxIntervalMs)` from the cursor table. So the two
 layers compose:
 
-- the **queue** guarantees the sweep is *triggered* durably;
-- the **cursor** guarantees per-chat *coverage* inside the sweep (a chat missed
+- the **queue** guarantees the sweep is _triggered_ durably;
+- the **cursor** guarantees per-chat _coverage_ inside the sweep (a chat missed
   by one sweep is picked up by the next as long as some sweep fires within
   `maxIntervalMs`).
 

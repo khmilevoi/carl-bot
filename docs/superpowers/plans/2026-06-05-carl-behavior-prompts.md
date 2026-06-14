@@ -11,6 +11,7 @@
 **Спека:** `docs/superpowers/specs/2026-06-05-carl-behavior-prompts-design.md`
 
 **Правила репо:**
+
 - `docs/superpowers/` — локальные артефакты, **не коммитить**.
 - Без `any`/`@ts-`; не использовать тип `undefined` явно (только через `?`), вместо значения — `null`.
 - Перед коммитом: `pnpm format:fix` и `pnpm lint:fix`.
@@ -21,6 +22,7 @@
 ## Карта файлов
 
 **Миграция / данные (фаза 1):**
+
 - Create: `migrations/021_add_reply_target_fields.up.sql`, `.down.sql`
 - Modify: `src/domain/messages/ChatMessage.ts` — поля `replyToMessageId?`, `replyToUserId?`
 - Modify: `src/application/interfaces/messages/MessageContextExtractor.ts` — поля в `MessageContext`
@@ -29,6 +31,7 @@
 - Modify: `src/infrastructure/persistence/sqlite/SQLiteMessageRepository.ts` — колонки
 
 **Идентичность + бриф (фаза 2):**
+
 - Modify: `src/application/prompts/PromptTypes.ts` — `SelfIdentity`, `selfIdentity?` в контексте
 - Modify: `src/application/behavior/DefaultBehaviorContextAssembler.ts` — заполнить `selfIdentity`
 - Create: `src/application/prompts/BehaviorBrief.ts` — чистая функция синтеза
@@ -36,9 +39,11 @@
 - Modify: `src/application/prompts/PromptDirector.ts` — подключить шаг
 
 **Рендер адресации (фаза 3):**
+
 - Modify: `src/application/prompts/PromptBuilder.ts` (`addBehaviorMessages`) — маркеры `[to:*]`, reply-to-self, `на #N`
 
 **Схемы (фаза 4):**
+
 - Modify: `src/domain/behavior/schemas/gate.ts` — reason `ambient_reaction`
 - Modify: `src/domain/behavior/schemas/evolution.ts` — `truthPatches`
 - Modify: `src/domain/behavior/schemas/patches.ts` — опц. `requestedOrigin` для позиций
@@ -48,9 +53,11 @@
 - Modify: `src/application/behavior/DefaultStateEvolutionPass.ts` — вызвать применение truthPatches
 
 **Конфиг (фаза 5):**
+
 - Modify: `src/application/behavior/BehaviorConfig.ts` — `maxReactionsPerWindow`
 
 **Промпты (фаза 6):**
+
 - Modify: `prompts/neutral_core_prompt.md`
 - Modify: `prompts/personality_state_prompt.md`, `political_state_prompt.md`,
   `user_profiles_prompt.md`, `user_political_profiles_prompt.md`, `truths_prompt.md`
@@ -65,6 +72,7 @@
 ### Task 1: Миграция `021_add_reply_target_fields`
 
 **Files:**
+
 - Create: `migrations/021_add_reply_target_fields.up.sql`
 - Create: `migrations/021_add_reply_target_fields.down.sql`
 
@@ -108,6 +116,7 @@ git commit -m "feat(db): add reply_to_message_id/reply_to_user_id columns"
 ### Task 2: Захват reply-target в экстракторе
 
 **Files:**
+
 - Modify: `src/domain/messages/ChatMessage.ts`
 - Modify: `src/application/interfaces/messages/MessageContextExtractor.ts`
 - Modify: `src/application/use-cases/messages/DefaultMessageContextExtractor.ts`
@@ -176,56 +185,61 @@ Expected: FAIL (`replyToMessageId` is undefined).
 В `src/application/use-cases/messages/DefaultMessageContextExtractor.ts` внутри `extract`, в блоке `if (message?.reply_to_message)` добавить захват и расширить возврат:
 
 ```ts
-    let replyText: string | undefined;
-    let replyUsername: string | undefined;
-    let quoteText: string | undefined;
-    let replyToMessageId: number | undefined;
-    let replyToUserId: number | undefined;
+let replyText: string | undefined;
+let replyUsername: string | undefined;
+let quoteText: string | undefined;
+let replyToMessageId: number | undefined;
+let replyToUserId: number | undefined;
 
-    if (message?.reply_to_message) {
-      const pieces: string[] = [];
-      const reply = message.reply_to_message as Record<string, unknown>;
-      if (typeof reply.text === 'string') {
-        pieces.push(reply.text);
-      }
-      if (typeof reply.caption === 'string') {
-        pieces.push(reply.caption);
-      }
-      if (pieces.length > 0) {
-        replyText = pieces.join('; ');
-      }
-      if (typeof reply.message_id === 'number') {
-        replyToMessageId = reply.message_id;
-      }
+if (message?.reply_to_message) {
+  const pieces: string[] = [];
+  const reply = message.reply_to_message as Record<string, unknown>;
+  if (typeof reply.text === 'string') {
+    pieces.push(reply.text);
+  }
+  if (typeof reply.caption === 'string') {
+    pieces.push(reply.caption);
+  }
+  if (pieces.length > 0) {
+    replyText = pieces.join('; ');
+  }
+  if (typeof reply.message_id === 'number') {
+    replyToMessageId = reply.message_id;
+  }
 
-      const from = message.reply_to_message.from as
-        | { id?: number; first_name?: string; last_name?: string; username?: string }
-        | undefined;
-      if (from) {
-        if (typeof from.id === 'number') {
-          replyToUserId = from.id;
-        }
-        if (from.first_name && from.last_name) {
-          replyUsername = from.first_name + ' ' + from.last_name;
-        } else {
-          replyUsername = from.first_name ?? from.username;
-        }
+  const from = message.reply_to_message.from as
+    | {
+        id?: number;
+        first_name?: string;
+        last_name?: string;
+        username?: string;
       }
+    | undefined;
+  if (from) {
+    if (typeof from.id === 'number') {
+      replyToUserId = from.id;
     }
+    if (from.first_name && from.last_name) {
+      replyUsername = from.first_name + ' ' + from.last_name;
+    } else {
+      replyUsername = from.first_name ?? from.username;
+    }
+  }
+}
 ```
 
 И обновить `return`:
 
 ```ts
-    return {
-      replyText,
-      replyUsername,
-      quoteText,
-      replyToMessageId,
-      replyToUserId,
-      username,
-      fullName,
-    };
+return {
+  replyText,
+  replyUsername,
+  quoteText,
+  replyToMessageId,
+  replyToUserId,
+  username,
+  fullName,
+};
 ```
 
 - [ ] **Step 5: Запустить тест — убедиться, что проходит, и закоммитить**
@@ -243,6 +257,7 @@ git commit -m "feat(messages): capture reply target id/user in extractor"
 ### Task 3: Прокидывание reply-полей в `MessageFactory` (вкл. фикс voice)
 
 **Files:**
+
 - Modify: `src/application/use-cases/messages/MessageFactory.ts`
 - Test: `test/MessageFactory.test.ts`
 
@@ -289,7 +304,12 @@ it('fromUserContent (voice) carries reply context', () => {
     replyToUserId: 42,
   } as MessageContext;
 
-  const stored = MessageFactory.fromUserContent(ctx, meta, 'распознанный текст', 'voice');
+  const stored = MessageFactory.fromUserContent(
+    ctx,
+    meta,
+    'распознанный текст',
+    'voice'
+  );
 
   expect(stored.replyToMessageId).toBe(555);
   expect(stored.replyToUserId).toBe(42);
@@ -312,15 +332,15 @@ Expected: FAIL (поля undefined; voice-ветка не несёт reply).
 `fromUser` — расширить деструктуризацию и объект:
 
 ```ts
-    const {
-      replyText,
-      replyUsername,
-      quoteText,
-      replyToMessageId,
-      replyToUserId,
-      username,
-      fullName,
-    } = meta;
+const {
+  replyText,
+  replyUsername,
+  quoteText,
+  replyToMessageId,
+  replyToUserId,
+  username,
+  fullName,
+} = meta;
 ```
 
 и в возвращаемый объект добавить:
@@ -336,15 +356,15 @@ Expected: FAIL (поля undefined; voice-ветка не несёт reply).
 `fromUserContent` — заменить деструктуризацию и добавить reply-поля в объект:
 
 ```ts
-    const {
-      username,
-      fullName,
-      replyText,
-      replyUsername,
-      quoteText,
-      replyToMessageId,
-      replyToUserId,
-    } = meta;
+const {
+  username,
+  fullName,
+  replyText,
+  replyUsername,
+  quoteText,
+  replyToMessageId,
+  replyToUserId,
+} = meta;
 ```
 
 и в возвращаемый объект (рядом с `content`, `username`, …):
@@ -374,6 +394,7 @@ git commit -m "feat(messages): propagate reply target + fix voice losing reply c
 ### Task 4: Колонки reply-target в `SQLiteMessageRepository`
 
 **Files:**
+
 - Modify: `src/infrastructure/persistence/sqlite/SQLiteMessageRepository.ts`
 - Test: `test/SQLiteMessageRepository.reply.test.ts` (создать)
 
@@ -417,8 +438,8 @@ Expected: FAIL (колонки не читаются/не пишутся).
 `MessageRow` — добавить:
 
 ```ts
-  reply_to_message_id: number | null;
-  reply_to_user_id: number | null;
+reply_to_message_id: number | null;
+reply_to_user_id: number | null;
 ```
 
 `SELECT_MESSAGE_COLUMNS` — добавить колонки `m.reply_to_message_id, m.reply_to_user_id`:
@@ -431,8 +452,9 @@ const SELECT_MESSAGE_COLUMNS =
 `rowToMessage` — добавить маппинг (после quote_text):
 
 ```ts
-  if (r.reply_to_message_id != null) entry.replyToMessageId = r.reply_to_message_id;
-  if (r.reply_to_user_id != null) entry.replyToUserId = r.reply_to_user_id;
+if (r.reply_to_message_id != null)
+  entry.replyToMessageId = r.reply_to_message_id;
+if (r.reply_to_user_id != null) entry.replyToUserId = r.reply_to_user_id;
 ```
 
 `insert` — расширить деструктуризацию параметров:
@@ -457,21 +479,21 @@ const SELECT_MESSAGE_COLUMNS =
 и сам INSERT:
 
 ```ts
-    const result = (await db.run(
-      'INSERT INTO messages (chat_id, message_id, role, content, user_id, reply_text, reply_username, quote_text, reply_to_message_id, reply_to_user_id, source_type, processing_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      chatId,
-      messageId ?? null,
-      role,
-      content,
-      userId ?? 0,
-      replyText ?? null,
-      replyUsername ?? null,
-      quoteText ?? null,
-      replyToMessageId ?? null,
-      replyToUserId ?? null,
-      sourceType ?? 'text',
-      processingStatus ?? 'ready'
-    )) as { lastID?: number };
+const result = (await db.run(
+  'INSERT INTO messages (chat_id, message_id, role, content, user_id, reply_text, reply_username, quote_text, reply_to_message_id, reply_to_user_id, source_type, processing_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+  chatId,
+  messageId ?? null,
+  role,
+  content,
+  userId ?? 0,
+  replyText ?? null,
+  replyUsername ?? null,
+  quoteText ?? null,
+  replyToMessageId ?? null,
+  replyToUserId ?? null,
+  sourceType ?? 'text',
+  processingStatus ?? 'ready'
+)) as { lastID?: number };
 ```
 
 - [ ] **Step 4: Запустить — убедиться, что проходит**
@@ -493,6 +515,7 @@ git commit -m "feat(db): persist and read reply target columns"
 ### Task 5: `selfIdentity` в контексте решения
 
 **Files:**
+
 - Modify: `src/application/prompts/PromptTypes.ts`
 - Modify: `src/application/behavior/DefaultBehaviorContextAssembler.ts`
 - Test: `test/BehaviorContextAssembler.test.ts`
@@ -539,7 +562,11 @@ it('populates selfIdentity from messenger + env', async () => {
     gate,
   });
 
-  expect(ctx.selfIdentity).toEqual({ id: 999, username: 'carl_bot', name: 'Карл' });
+  expect(ctx.selfIdentity).toEqual({
+    id: 999,
+    username: 'carl_bot',
+    name: 'Карл',
+  });
 });
 ```
 
@@ -597,6 +624,7 @@ git commit -m "feat(behavior): thread bot self-identity into decision context"
 ### Task 6: Чистый модуль `BehaviorBrief`
 
 **Files:**
+
 - Create: `src/application/prompts/BehaviorBrief.ts`
 - Test: `test/BehaviorBrief.test.ts` (создать)
 
@@ -620,7 +648,12 @@ function emptyState(chatId = -100): BehaviorPromptState {
       chatId,
       identityNotes: [],
       values: [],
-      speechStyle: { tone: 'neutral', humor: 'none', verbosity: 'short', formality: 'medium' },
+      speechStyle: {
+        tone: 'neutral',
+        humor: 'none',
+        verbosity: 'short',
+        formality: 'medium',
+      },
       socialHabits: [],
       recurringThemes: [],
       lastUpdatedAt: now,
@@ -628,7 +661,12 @@ function emptyState(chatId = -100): BehaviorPromptState {
     political: {
       chatId,
       ideologySummary: '',
-      compass: { economic: 0, social: 0, economicConfidence: 0, socialConfidence: 0 },
+      compass: {
+        economic: 0,
+        social: 0,
+        economicConfidence: 0,
+        socialConfidence: 0,
+      },
       positions: [],
       uncertaintyAreas: [],
       influenceHistory: [],
@@ -640,13 +678,27 @@ function emptyState(chatId = -100): BehaviorPromptState {
   };
 }
 
-function msg(id: number, userId: number, username: string): BehaviorPromptMessage {
-  return { id, chatId: -100, role: 'user', content: 'hi', userId, username } as BehaviorPromptMessage;
+function msg(
+  id: number,
+  userId: number,
+  username: string
+): BehaviorPromptMessage {
+  return {
+    id,
+    chatId: -100,
+    role: 'user',
+    content: 'hi',
+    userId,
+    username,
+  } as BehaviorPromptMessage;
 }
 
 describe('buildBehaviorBrief', () => {
   it('returns reserved-mode text on empty state', () => {
-    const brief = buildBehaviorBrief({ state: emptyState(), messages: [msg(1, 7, 'oleg')] });
+    const brief = buildBehaviorBrief({
+      state: emptyState(),
+      messages: [msg(1, 7, 'oleg')],
+    });
     expect(brief).toContain('отношений пока нет');
     expect(brief).toContain('характер ещё не сформирован');
   });
@@ -661,7 +713,9 @@ describe('buildBehaviorBrief', () => {
         affinityScore: -2,
         labels: [],
         patterns: [],
-        grudges: [{ text: 'слил дедлайн', evidenceMessageIds: [1], status: 'active' }],
+        grudges: [
+          { text: 'слил дедлайн', evidenceMessageIds: [1], status: 'active' },
+        ],
         trustLevel: 'low',
         preferredDistance: 'mocking',
         communicationStyle: '',
@@ -707,16 +761,20 @@ import type {
 } from './PromptTypes';
 import type { UserSocialProfile } from '@/domain/behavior/schemas/state';
 
-const TONE_BY_DISTANCE: Record<UserSocialProfile['preferredDistance'], string> = {
-  warm: 'тёплый, поддерживающий тон',
-  neutral: 'ровный, нейтральный тон',
-  cold: 'холодно и сдержанно',
-  mocking: 'колко, с насмешкой',
-  avoidant: 'коротко, держи дистанцию',
-  hostile: 'резко и конфронтационно',
-};
+const TONE_BY_DISTANCE: Record<UserSocialProfile['preferredDistance'], string> =
+  {
+    warm: 'тёплый, поддерживающий тон',
+    neutral: 'ровный, нейтральный тон',
+    cold: 'холодно и сдержанно',
+    mocking: 'колко, с насмешкой',
+    avoidant: 'коротко, держи дистанцию',
+    hostile: 'резко и конфронтационно',
+  };
 
-const EMOJI_BY_DISTANCE: Record<UserSocialProfile['preferredDistance'], string> = {
+const EMOJI_BY_DISTANCE: Record<
+  UserSocialProfile['preferredDistance'],
+  string
+> = {
   warm: '🔥/🫶/🥹/❤️',
   neutral: '👀/🤔/🙏',
   cold: '🤡/👎/🫠',
@@ -745,7 +803,9 @@ function relationshipCard(profile: UserSocialProfile): string {
   const tone = TONE_BY_DISTANCE[profile.preferredDistance];
   const emoji = EMOJI_BY_DISTANCE[profile.preferredDistance];
   const interests =
-    profile.interests.length > 0 ? ` · интересы: ${profile.interests.join(', ')}` : '';
+    profile.interests.length > 0
+      ? ` · интересы: ${profile.interests.join(', ')}`
+      : '';
   return (
     `${handle(profile)} — affinity ${profile.affinityScore} · distance: ${profile.preferredDistance} · ` +
     `trust: ${profile.trustLevel}${grudgePart}${interests} → ${tone}; reaction-уклон ${emoji}`
@@ -756,7 +816,9 @@ function moodBrief(state: BehaviorPromptState): string {
   const s = state.personality.speechStyle;
   const c = state.political.compass;
   const isBlankStyle =
-    s.tone === 'neutral' && s.humor === 'none' && state.personality.recurringThemes.length === 0;
+    s.tone === 'neutral' &&
+    s.humor === 'none' &&
+    state.personality.recurringThemes.length === 0;
   if (isBlankStyle) {
     return 'Характер ещё не сформирован — держись сдержанно, наблюдай, не строй из себя то, чего пока нет.';
   }
@@ -780,7 +842,9 @@ export function buildBehaviorBrief(params: {
   const lines: string[] = ['# Кто ты сейчас и как относиться к собеседникам'];
 
   if (selfIdentity) {
-    const uname = selfIdentity.username ? `@${selfIdentity.username}` : '(без username)';
+    const uname = selfIdentity.username
+      ? `@${selfIdentity.username}`
+      : '(без username)';
     lines.push(
       `Ты — ${selfIdentity.name} (${uname}). К тебе обращаются ТОЛЬКО когда пишут ${uname}, ` +
         `твоё имя как обращение, или отвечают (reply) на твоё сообщение. Остальное — чужой разговор.`
@@ -799,7 +863,9 @@ export function buildBehaviorBrief(params: {
     lines.push('Отношения с активными собеседниками:');
     lines.push(...cards);
   } else {
-    lines.push('Отношений пока нет — держись нейтрально и наблюдай, кто есть кто.');
+    lines.push(
+      'Отношений пока нет — держись нейтрально и наблюдай, кто есть кто.'
+    );
   }
 
   return lines.join('\n');
@@ -823,6 +889,7 @@ git commit -m "feat(prompts): add deterministic behavior brief synthesis"
 ### Task 7: Подключить бриф в `PromptBuilder` + `PromptDirector`
 
 **Files:**
+
 - Modify: `src/application/prompts/PromptBuilder.ts`
 - Modify: `src/application/prompts/PromptDirector.ts`
 - Test: `test/PromptDirector.test.ts`
@@ -834,8 +901,13 @@ git commit -m "feat(prompts): add deterministic behavior brief synthesis"
 ```ts
 it('includes behavior brief before messages in decision prompt', async () => {
   const prompt = await director.createBehaviorDecisionPrompt(context, refMap);
-  const briefIdx = prompt.findIndex((p) => p.content.includes('Кто ты сейчас и как относиться'));
-  const messagesIdx = prompt.findIndex((p) => p.content.includes('{{behaviorMessages}}') === false && p.role === 'user');
+  const briefIdx = prompt.findIndex((p) =>
+    p.content.includes('Кто ты сейчас и как относиться')
+  );
+  const messagesIdx = prompt.findIndex(
+    (p) =>
+      p.content.includes('{{behaviorMessages}}') === false && p.role === 'user'
+  );
   expect(briefIdx).toBeGreaterThan(-1);
   // бриф идёт раньше пользовательского блока сообщений
   expect(briefIdx).toBeLessThan(prompt.length - 1);
@@ -913,6 +985,7 @@ git commit -m "feat(prompts): inject behavior brief into decision prompt"
 ### Task 8: Адресация в `addBehaviorMessages`
 
 **Files:**
+
 - Modify: `src/application/prompts/PromptBuilder.ts` (`addBehaviorMessages`)
 - Modify: `src/application/prompts/PromptDirector.ts` (передать `selfIdentity`)
 - Test: `test/PromptBuilderBehaviorMessages.test.ts`
@@ -925,13 +998,26 @@ git commit -m "feat(prompts): inject behavior brief into decision prompt"
 it('marks a reply to the bot as addressed to you', async () => {
   // message replying to bot: replyToUserId === selfIdentity.id
   const messages = [
-    { id: 1, chatId: -100, role: 'user', content: 'ты тут?', userId: 7, username: 'oleg',
-      messageId: 100, replyToUserId: 999, replyText: 'предыдущий ответ Carl' },
+    {
+      id: 1,
+      chatId: -100,
+      role: 'user',
+      content: 'ты тут?',
+      userId: 7,
+      username: 'oleg',
+      messageId: 100,
+      replyToUserId: 999,
+      replyText: 'предыдущий ответ Carl',
+    },
   ];
   const refMap = MessageReferenceMap.fromMessages(messages);
   const builder = makeBuilder(); // как в существующих тестах файла
   const prompt = await builder
-    .addBehaviorMessages(messages as any, refMap, undefined, { id: 999, username: 'carl_bot', name: 'Карл' })
+    .addBehaviorMessages(messages as any, refMap, undefined, {
+      id: 999,
+      username: 'carl_bot',
+      name: 'Карл',
+    })
     .build();
   const text = prompt.map((p) => p.content).join('\n');
   expect(text).toContain('[to:you]');
@@ -940,13 +1026,35 @@ it('marks a reply to the bot as addressed to you', async () => {
 
 it('marks a reply to another user and links #N when in context', async () => {
   const messages = [
-    { id: 5, chatId: -100, role: 'user', content: 'оригинал', userId: 8, username: 'anna', messageId: 200 },
-    { id: 6, chatId: -100, role: 'user', content: 'согласен', userId: 7, username: 'oleg',
-      messageId: 201, replyToUserId: 8, replyToMessageId: 200, replyText: 'оригинал' },
+    {
+      id: 5,
+      chatId: -100,
+      role: 'user',
+      content: 'оригинал',
+      userId: 8,
+      username: 'anna',
+      messageId: 200,
+    },
+    {
+      id: 6,
+      chatId: -100,
+      role: 'user',
+      content: 'согласен',
+      userId: 7,
+      username: 'oleg',
+      messageId: 201,
+      replyToUserId: 8,
+      replyToMessageId: 200,
+      replyText: 'оригинал',
+    },
   ];
   const refMap = MessageReferenceMap.fromMessages(messages);
   const prompt = await makeBuilder()
-    .addBehaviorMessages(messages as any, refMap, undefined, { id: 999, username: 'carl_bot', name: 'Карл' })
+    .addBehaviorMessages(messages as any, refMap, undefined, {
+      id: 999,
+      username: 'carl_bot',
+      name: 'Карл',
+    })
     .build();
   const text = prompt.map((p) => p.content).join('\n');
   expect(text).toContain('[to:@anna]');
@@ -955,11 +1063,23 @@ it('marks a reply to another user and links #N when in context', async () => {
 
 it('marks unrelated chatter as to:room', async () => {
   const messages = [
-    { id: 9, chatId: -100, role: 'user', content: 'погода супер', userId: 8, username: 'anna', messageId: 300 },
+    {
+      id: 9,
+      chatId: -100,
+      role: 'user',
+      content: 'погода супер',
+      userId: 8,
+      username: 'anna',
+      messageId: 300,
+    },
   ];
   const refMap = MessageReferenceMap.fromMessages(messages);
   const prompt = await makeBuilder()
-    .addBehaviorMessages(messages as any, refMap, undefined, { id: 999, username: 'carl_bot', name: 'Карл' })
+    .addBehaviorMessages(messages as any, refMap, undefined, {
+      id: 999,
+      username: 'carl_bot',
+      name: 'Карл',
+    })
     .build();
   expect(prompt.map((p) => p.content).join('\n')).toContain('[to:room]');
 });
@@ -1107,6 +1227,7 @@ git commit -m "feat(prompts): render addressing markers and reply-to-self/#N lin
 ### Task 9: Gate reason `ambient_reaction`
 
 **Files:**
+
 - Modify: `src/domain/behavior/schemas/gate.ts`
 - Test: `test/behaviorJsonSchema.test.ts`
 
@@ -1163,6 +1284,7 @@ git commit -m "feat(schema): add ambient_reaction gate reason"
 ### Task 10: `truthPatches` в схеме эволюции
 
 **Files:**
+
 - Modify: `src/domain/behavior/schemas/evolution.ts`
 - Test: `test/behaviorJsonSchema.test.ts`
 
@@ -1175,14 +1297,33 @@ it('state evolution decision accepts truthPatches', () => {
   const decision = {
     evolutionPatches: [],
     truthPatches: [
-      { type: 'truth.add', text: 'Я родился в Одессе', relatedTruthIds: [], contradictsTruthIds: [],
-        evidence: { messageIds: [3], confidence: 0.8 } },
+      {
+        type: 'truth.add',
+        text: 'Я родился в Одессе',
+        relatedTruthIds: [],
+        contradictsTruthIds: [],
+        evidence: { messageIds: [3], confidence: 0.8 },
+      },
     ],
-    personalitySnapshot: { identityNotes: [], values: [],
-      speechStyle: { tone: 'neutral', humor: 'none', verbosity: 'short', formality: 'medium' },
-      socialHabits: [], recurringThemes: [] },
+    personalitySnapshot: {
+      identityNotes: [],
+      values: [],
+      speechStyle: {
+        tone: 'neutral',
+        humor: 'none',
+        verbosity: 'short',
+        formality: 'medium',
+      },
+      socialHabits: [],
+      recurringThemes: [],
+    },
     userSnapshots: [],
-    botCompass: { economic: 0, social: 0, economicConfidence: 0, socialConfidence: 0 },
+    botCompass: {
+      economic: 0,
+      social: 0,
+      economicConfidence: 0,
+      socialConfidence: 0,
+    },
     userPoliticalSnapshots: [],
   };
   expect(stateEvolutionDecisionSchema.safeParse(decision).success).toBe(true);
@@ -1236,6 +1377,7 @@ git commit -m "feat(schema): allow truth patches in state evolution decision"
 ### Task 11: Трансляция ordinal→storeId для эволюционных истин
 
 **Files:**
+
 - Modify: `src/application/behavior/OrdinalTranslation.ts`
 - Modify: `src/infrastructure/external/ChatGPTService.ts`
 - Test: `test/OrdinalTranslation.test.ts`
@@ -1248,8 +1390,15 @@ git commit -m "feat(schema): allow truth patches in state evolution decision"
 it('translateTruthPatches maps evidence ordinals to store ids', () => {
   const refMap = MessageReferenceMap.fromMessages([{ id: 50 }, { id: 60 }]);
   const out = translateTruthPatches(
-    [{ type: 'truth.add', text: 't', relatedTruthIds: [], contradictsTruthIds: [],
-      evidence: { messageIds: [1, 2], confidence: 0.5 } }],
+    [
+      {
+        type: 'truth.add',
+        text: 't',
+        relatedTruthIds: [],
+        contradictsTruthIds: [],
+        evidence: { messageIds: [1, 2], confidence: 0.5 },
+      },
+    ],
     refMap
   );
   expect(out[0].evidence.messageIds).toEqual([50, 60]);
@@ -1293,14 +1442,14 @@ export function translateTruthPatches(
 В `src/infrastructure/external/ChatGPTService.ts` добавить импорт `translateTruthPatches` (рядом с `translateEvolutionPatches`) и в `proposeStateEvolution`, где формируется `decision`, добавить трансляцию `truthPatches`:
 
 ```ts
-      const decision = {
-        ...parsed.data,
-        evolutionPatches: translateEvolutionPatches(
-          parsed.data.evolutionPatches,
-          refMap
-        ),
-        truthPatches: translateTruthPatches(parsed.data.truthPatches, refMap),
-      };
+const decision = {
+  ...parsed.data,
+  evolutionPatches: translateEvolutionPatches(
+    parsed.data.evolutionPatches,
+    refMap
+  ),
+  truthPatches: translateTruthPatches(parsed.data.truthPatches, refMap),
+};
 ```
 
 Run: `pnpm vitest run test/OrdinalTranslation.test.ts`
@@ -1318,6 +1467,7 @@ git commit -m "feat(behavior): translate evolution truth-patch evidence ordinals
 ### Task 12: Применение эволюционных истин
 
 **Files:**
+
 - Modify: `src/application/behavior/StatePatchApplicator.ts` (интерфейс)
 - Modify: `src/application/behavior/DefaultStatePatchApplicator.ts`
 - Modify: `src/application/behavior/DefaultStateEvolutionPass.ts`
@@ -1333,8 +1483,13 @@ it('applyTruthPatches persists a truth.add via evolution lane (no rate limit)', 
   const results = await applicator.applyTruthPatches({
     chatId: -100,
     patches: [
-      { type: 'truth.add', text: 'Я был капитаном', relatedTruthIds: [], contradictsTruthIds: [],
-        evidence: { messageIds: [10], confidence: 0.7 } },
+      {
+        type: 'truth.add',
+        text: 'Я был капитаном',
+        relatedTruthIds: [],
+        contradictsTruthIds: [],
+        evidence: { messageIds: [10], confidence: 0.7 },
+      },
     ],
     nowIso: '2026-06-05T00:00:00.000Z',
   });
@@ -1346,8 +1501,13 @@ it('applyTruthPatches rejects truth with empty evidence', async () => {
   const results = await applicator.applyTruthPatches({
     chatId: -100,
     patches: [
-      { type: 'truth.add', text: 'нет evidence', relatedTruthIds: [], contradictsTruthIds: [],
-        evidence: { messageIds: [], confidence: 0.7 } },
+      {
+        type: 'truth.add',
+        text: 'нет evidence',
+        relatedTruthIds: [],
+        contradictsTruthIds: [],
+        evidence: { messageIds: [], confidence: 0.7 },
+      },
     ],
   });
   expect(results[0].outcome).toBe('rejected');
@@ -1406,19 +1566,19 @@ Expected: FAIL (`applyTruthPatches` нет).
 В `src/application/behavior/DefaultStateEvolutionPass.ts`, в `run`, сразу после `applyEvolutionPatches(...)` добавить применение истин и влить в общий список результатов:
 
 ```ts
-    const patchResults = await this.applicator.applyEvolutionPatches({
-      chatId,
-      patches: result.decision.evolutionPatches,
-      reviewedByStrongModel,
-      nowIso,
-    });
+const patchResults = await this.applicator.applyEvolutionPatches({
+  chatId,
+  patches: result.decision.evolutionPatches,
+  reviewedByStrongModel,
+  nowIso,
+});
 
-    const truthResults = await this.applicator.applyTruthPatches({
-      chatId,
-      patches: result.decision.truthPatches,
-      nowIso,
-    });
-    patchResults.push(...truthResults);
+const truthResults = await this.applicator.applyTruthPatches({
+  chatId,
+  patches: result.decision.truthPatches,
+  nowIso,
+});
+patchResults.push(...truthResults);
 ```
 
 > `patchResults` — массив; если он типизирован как `readonly`/`const`, заменить на `const patchResults = [...await ...]` или объявить `let`. Сохранить порядок: сначала evolution-патчи, затем истины.
@@ -1438,6 +1598,7 @@ git commit -m "feat(behavior): apply truth patches in state evolution as safety 
 ### Task 13: Origin `bot_reflection` для контрарианских позиций
 
 **Files:**
+
 - Modify: `src/domain/behavior/schemas/patches.ts`
 - Modify: `src/application/behavior/DefaultStatePatchApplicator.ts`
 - Test: `test/behaviorJsonSchema.test.ts`, `test/PatchPolicy.test.ts` (или существующий тест аппликатора политики)
@@ -1449,8 +1610,11 @@ git commit -m "feat(behavior): apply truth patches in state evolution as safety 
 ```ts
 it('politics.add_position accepts optional requestedOrigin', () => {
   const patch = {
-    type: 'politics.add_position', topic: 'налоги', stance: 'против',
-    requestedIntensity: 'moderate', requestedOrigin: 'bot_reflection',
+    type: 'politics.add_position',
+    topic: 'налоги',
+    stance: 'против',
+    requestedIntensity: 'moderate',
+    requestedOrigin: 'bot_reflection',
     evidence: { messageIds: [1], confidence: 0.6 },
   };
   expect(politicsAddPositionPatchSchema.safeParse(patch).success).toBe(true);
@@ -1508,6 +1672,7 @@ git commit -m "feat(schema): support bot_reflection origin for contrarian positi
 ### Task 14: Поднять лимит реакций
 
 **Files:**
+
 - Modify: `src/application/behavior/BehaviorConfig.ts`
 - Test: `test/BehaviorRateLimiter.test.ts`
 
@@ -1562,6 +1727,7 @@ git commit -m "feat(behavior): raise reaction rate limit to 20/60s for ambient r
 ### Task 15: `neutral_core_prompt.md` — принципы и интересный голос
 
 **Files:**
+
 - Modify: `prompts/neutral_core_prompt.md`
 
 - [ ] **Step 1: Добавить блок принципов**
@@ -1608,6 +1774,7 @@ git commit -m "feat(prompts): state-as-engine principles, distinctive voice, add
 ### Task 16: Директивные заголовки state-блоков
 
 **Files:**
+
 - Modify: `prompts/personality_state_prompt.md`
 - Modify: `prompts/political_state_prompt.md`
 - Modify: `prompts/user_profiles_prompt.md`
@@ -1679,6 +1846,7 @@ git commit -m "feat(prompts): make state blocks directive instead of passive"
 ### Task 17: `behavior_decision_system_prompt.md` — контекст, реакции, эмодзи, истины
 
 **Files:**
+
 - Modify: `prompts/behavior_decision_system_prompt.md`
 
 - [ ] **Step 1: Добавить «Read the room» и правило адресации**
@@ -1715,7 +1883,7 @@ Selection rules:
 - unsure between text and reaction -> reaction;
 - unsure between reaction and silence -> react, unless you would be repeating the same
   reaction on the same beat;
-- do not spam the *same* reaction back-to-back; vary or stay quiet.
+- do not spam the _same_ reaction back-to-back; vary or stay quiet.
 ```
 
 Сохранить существующий абзац о том, что ladder НЕ глушит живые споры/прямые триггеры/ответы Carl.
@@ -1779,6 +1947,7 @@ git commit -m "feat(prompts): read-the-room, ambient reactions, deeper emoji gui
 ### Task 18: `behavior_gate_system_prompt.md` — ambient + адресация
 
 **Files:**
+
 - Modify: `prompts/behavior_gate_system_prompt.md`
 
 - [ ] **Step 1: Разрешить gate пропускать reaction-worthy моменты**
@@ -1817,6 +1986,7 @@ git commit -m "feat(prompts): let gate pass ambient reaction moments"
 ### Task 19: `state_evolution_system_prompt.md` — интересный голос, острота, истины
 
 **Files:**
+
 - Modify: `prompts/state_evolution_system_prompt.md`
 
 - [ ] **Step 1: Добавить objective «interesting voice» + селективную остроту**
@@ -1831,7 +2001,7 @@ character — real tastes, recurring themes, recognizable humor, memorable opini
 neutrality.
 
 Selective edge: when the chat settles into lazy consensus on a discussable topic, Carl may
-*sometimes* deliberately take a minority or opposing position — but only with a real argument
+_sometimes_ deliberately take a minority or opposing position — but only with a real argument
 behind it, never reflexively. Interesting means well-reasoned and surprising, not contrarian
 for its own sake. If Carl already holds a sincere position, that matters more than the urge to
 disagree. Always opposing everyone is boring and predictable — the goal is to be unpredictable
@@ -1895,6 +2065,7 @@ Expected: все тесты зелёные.
 - [ ] **Step 4: Ручная проверка собранного промпта**
 
 С `LOG_PROMPTS=1` прогнать decision-сценарий (или существующий способ логирования промптов) и глазами проверить:
+
 - бриф (identity line + mood + relationship cards) стоит перед сообщениями;
 - у сообщений видны маркеры `[to:you]` / `[to:@handle]` / `[to:room]`;
 - reply-на-Carl рендерится как «ОТВЕЧАЮТ ТЕБЕ» + `на #N`;
@@ -1912,6 +2083,7 @@ git commit -m "test: stabilize behavior pipeline tests after prompt/schema chang
 ## Самопроверка плана (для автора плана)
 
 **Покрытие спеки:**
+
 - A. Принципы → Task 15 (neutral_core).
 - B. Слой синтеза (бриф) → Task 6, 7.
 - C. Эволюция/острота → Task 13 (origin), Task 19 (промпт).

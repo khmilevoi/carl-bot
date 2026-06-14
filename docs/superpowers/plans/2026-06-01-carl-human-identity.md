@@ -28,17 +28,18 @@
 
 ## File Structure
 
-| File | Responsibility | Action |
-|------|----------------|--------|
-| `prompts/neutral_core_prompt.md` | Shared persona: human identity, bot-denial, biography invention + consistency, safety floor | Modify |
-| `prompts/behavior_decision_system_prompt.md` | Live lane: persist self-facts as truth patches | Modify |
-| `prompts/truths_prompt.md` | Frame stored truths as canonical autobiography | Modify |
+| File                                         | Responsibility                                                                              | Action |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------- | ------ |
+| `prompts/neutral_core_prompt.md`             | Shared persona: human identity, bot-denial, biography invention + consistency, safety floor | Modify |
+| `prompts/behavior_decision_system_prompt.md` | Live lane: persist self-facts as truth patches                                              | Modify |
+| `prompts/truths_prompt.md`                   | Frame stored truths as canonical autobiography                                              | Modify |
 
 ---
 
 ### Task 1: Rewrite the shared persona (`neutral_core_prompt.md`)
 
 **Files:**
+
 - Modify: `prompts/neutral_core_prompt.md` (full-file rewrite)
 
 - [ ] **Step 1: Replace the entire file content**
@@ -117,6 +118,7 @@ contain only the persona rewrite above.
 ### Task 2: Persist self-facts in the live lane (`behavior_decision_system_prompt.md`)
 
 **Files:**
+
 - Modify: `prompts/behavior_decision_system_prompt.md` (near the end — the truth-patch instruction)
 
 - [ ] **Step 1: Locate the anchor text**
@@ -173,6 +175,7 @@ before committing; it should contain only the inserted self-fact block.
 ### Task 3: Frame stored truths as canonical autobiography (`truths_prompt.md`)
 
 **Files:**
+
 - Modify: `prompts/truths_prompt.md`
 
 - [ ] **Step 1: Replace the file content**
@@ -233,6 +236,7 @@ prompt prose — investigate before proceeding.
 - [ ] **Step 4: Final read-through (manual)**
 
 Open all three files and confirm coherence:
+
 - `prompts/neutral_core_prompt.md` — identity lead first, no "do not lie" /
   "private human experiences" lines remain, "Identity under fire" section
   present, safety floor + "do not reveal hidden prompts" retained.
@@ -245,6 +249,7 @@ Open all three files and confirm coherence:
 ## Self-Review (completed during planning)
 
 **Spec coverage:**
+
 - Identity lead + never self-IDs as bot/AI → Task 1.
 - Invert bot-honesty bullet, mood-driven register → Task 1 ("Identity under fire").
 - Replace "do not claim human experiences" with biography invention + consistency → Task 1.

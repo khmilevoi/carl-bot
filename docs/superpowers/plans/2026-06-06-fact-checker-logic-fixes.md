@@ -52,6 +52,7 @@
 ### Task 1: Centralize Source Policy and Prevent False Confirmations
 
 **Files:**
+
 - Modify: `src/application/fact-checking/FactCheckSourcePolicy.ts`
 - Modify: `src/application/fact-checking/DefaultFactCheckPipeline.ts`
 - Test: `test/FactCheckSourcePolicy.test.ts`
@@ -179,6 +180,7 @@ git commit -m "fix: enforce fact-check source policy"
 ### Task 2: Match Findings to the Correct Extracted Claim
 
 **Files:**
+
 - Modify: `src/application/fact-checking/DefaultFactCheckPipeline.ts`
 - Test: `test/DefaultFactCheckPipeline.test.ts`
 
@@ -206,7 +208,7 @@ claims: [
     whyCheckable: 'medical treatment claim',
     contextMessageIds: [],
   },
-]
+];
 ```
 
 Verifier returns a finding for `This pill cures cancer`.
@@ -279,6 +281,7 @@ git commit -m "fix: match fact-check findings to exact claims"
 ### Task 3: Persist and Honor Immediate Notification Intent
 
 **Files:**
+
 - Create: `migrations/023_fact_check_notification_intent.up.sql`
 - Create: `migrations/023_fact_check_notification_intent.down.sql`
 - Modify: `src/domain/entities/FactCheckFindingEntity.ts`
@@ -294,7 +297,7 @@ git commit -m "fix: match fact-check findings to exact claims"
 Create `test/factCheckMigration023.test.ts` verifying:
 
 ```ts
-const info = await db.all("PRAGMA table_info(fact_check_findings)");
+const info = await db.all('PRAGMA table_info(fact_check_findings)');
 expect(info.map((c) => c.name)).toContain('should_notify_immediately');
 ```
 
@@ -391,6 +394,7 @@ git commit -m "fix: honor fact-check immediate notification intent"
 ### Task 4: Mark Only Successfully Sent Digest Findings
 
 **Files:**
+
 - Modify: `src/application/fact-checking/FactCheckFormatter.ts`
 - Modify: `src/application/fact-checking/DefaultFactCheckNotifier.ts`
 - Test: `test/FactCheckFormatter.test.ts`
@@ -463,7 +467,10 @@ for (const chunk of chunks) {
     await this.messenger.sendMessage(chatId, chunk.text, options);
     sentIds.push(...chunk.findingIds);
   } catch (err) {
-    this.logger.warn({ err, findingIds: chunk.findingIds }, 'Digest chunk send failed');
+    this.logger.warn(
+      { err, findingIds: chunk.findingIds },
+      'Digest chunk send failed'
+    );
   }
 }
 
@@ -494,6 +501,7 @@ git commit -m "fix: preserve unsent fact-check digest findings"
 ### Task 5: Store Complete Run Audit Data
 
 **Files:**
+
 - Modify: `src/domain/repositories/FactCheckRepository.ts`
 - Modify: `src/infrastructure/persistence/sqlite/SQLiteFactCheckRepository.ts`
 - Modify: `src/application/fact-checking/DefaultFactCheckPipeline.ts`
@@ -625,6 +633,7 @@ git commit -m "fix: store complete fact-check run audit data"
 ### Task 6: Integration Verification
 
 **Files:**
+
 - Modify only if earlier task failures reveal missed contracts.
 - Test: all fact-check tests.
 
